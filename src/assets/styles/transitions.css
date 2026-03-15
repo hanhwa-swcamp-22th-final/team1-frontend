@@ -1,0 +1,105 @@
+/*
+  transitions.css — 페이지/모달/토스트/드롭다운 전환 애니메이션 정의
+  Vue <Transition> 컴포넌트의 name 속성과 1:1 매핑됩니다.
+
+  사용법:
+    <Transition name="fade">
+      <div v-if="show">...</div>
+    </Transition>
+
+  주의: enter/leave 대칭 쌍이 한 세트입니다.
+        한쪽만 수정하면 들어올 때와 나갈 때 비대칭이 됩니다.
+*/
+
+/* ─────────────────────────────────────────────────────────
+   fade — 단순 불투명도 전환
+   사용: App.vue RouterView, Sidebar.vue의 텍스트 표시/숨김
+   ───────────────────────────────────────────────────────── */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity var(--ease-default);  /* 0.2s ease */
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* ─────────────────────────────────────────────────────────
+   slide-left — 좌로 밀리며 페이지 전환
+   사용: router/index.js에서 페이지 이동 시 RouterView에 적용
+   enter: 오른쪽(+16px)에서 슬라이드 인
+   leave: 왼쪽(-16px)으로 슬라이드 아웃
+   ───────────────────────────────────────────────────────── */
+.slide-left-enter-active,
+.slide-left-leave-active {
+  transition: opacity var(--ease-default), transform var(--ease-default);
+}
+.slide-left-enter-from {
+  opacity: 0;
+  transform: translateX(16px);  /* 오른쪽에서 진입 */
+}
+.slide-left-leave-to {
+  opacity: 0;
+  transform: translateX(-16px); /* 왼쪽으로 퇴장 */
+}
+
+/* ─────────────────────────────────────────────────────────
+   modal-overlay — BaseModal.vue 어두운 배경 오버레이
+   사용: <Transition name="modal-overlay"> (BaseModal.vue)
+   ───────────────────────────────────────────────────────── */
+.modal-overlay-enter-active,
+.modal-overlay-leave-active {
+  transition: opacity var(--ease-default);
+}
+.modal-overlay-enter-from,
+.modal-overlay-leave-to {
+  opacity: 0;
+}
+
+/* ─────────────────────────────────────────────────────────
+   modal-panel — BaseModal.vue 패널 박스 슬라이드+페이드
+   사용: <Transition name="modal-panel"> (BaseModal.vue 내부 패널)
+   enter: 위에서(-12px) 내려오며 scale(0.97 → 1)
+   leave: 위로(-12px) 올라가며 축소
+   ───────────────────────────────────────────────────────── */
+.modal-panel-enter-active,
+.modal-panel-leave-active {
+  transition: opacity var(--ease-default), transform var(--ease-default);
+}
+.modal-panel-enter-from,
+.modal-panel-leave-to {
+  opacity: 0;
+  transform: translateY(-12px) scale(0.97);
+}
+
+/* ─────────────────────────────────────────────────────────
+   toast — ToastMessage.vue 우하단 슬라이드 인
+   사용: <Transition name="toast"> (ToastMessage.vue)
+   enter: 오른쪽(+24px)에서 슬라이드 인
+   leave: 오른쪽(+24px)으로 슬라이드 아웃
+   ───────────────────────────────────────────────────────── */
+.toast-enter-active,
+.toast-leave-active {
+  transition: opacity var(--ease-fast), transform var(--ease-fast);  /* 0.15s */
+}
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(24px);  /* 화면 오른쪽 방향 */
+}
+
+/* ─────────────────────────────────────────────────────────
+   dropdown — Header.vue 알림 패널, 드롭다운 메뉴
+   사용: <Transition name="dropdown"> (Header.vue .notif-panel)
+   enter: 위에서(-6px) 내려오며 나타남
+   leave: 위로(-6px) 사라짐
+   ───────────────────────────────────────────────────────── */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: opacity var(--ease-fast), transform var(--ease-fast);
+}
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);  /* 패널이 위에서 아래로 열리는 효과 */
+}
