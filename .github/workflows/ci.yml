@@ -1,0 +1,27 @@
+name: CONK Frontend CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-check:
+    name: ESLint + Prettier 검사
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 패키지 설치
+        run: npm ci
+
+      - name: ESLint 검사
+        run: npm run lint:check
+
+      - name: Prettier 검사
+        run: npm run format:check
