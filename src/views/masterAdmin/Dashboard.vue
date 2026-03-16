@@ -1,100 +1,84 @@
 <script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useUiStore } from '@/stores/ui'
+import { formatDate, formatNumber } from '@/utils/format'
+import { getOutboundStats } from '@/api/order'
+import { getAsnStats, getInventoryStats, getWarehouseStatus } from '@/api/wms'
+import { getSellerStats } from '@/api/member'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 
 const breadcrumb = [{ label: 'CONK' }, { label: '통합 대시보드' }]
 
-const summaryCards = [
-  {
-    label: '전체 출고 예정 건수',
-    value: '1,284',
-    trend: '+12.4%',
-    trendLabel: 'vs 어제',
-    trendType: 'up',
-  },
-  {
-    label: '미처리 ASN (검수 대기)',
-    value: '42',
-    trend: '2건 증가',
-    trendLabel: '지연 1시간',
-    trendType: 'down',
-    valueColor: 'amber',
-  },
-  {
-    label: '재고 부족 경고 SKU',
-    value: '18',
-    trend: '4건 증가',
-    trendLabel: '긴급 보충 필요',
-    trendType: 'down',
-    valueColor: 'red',
-  },
-  {
-    label: '활성 셀러 업체 수',
-    value: '156',
-    trend: '3개사',
-    trendLabel: '이번 달 신규',
-    trendType: 'up',
-  },
-]
+const ui           = useUiStore()
+const summaryCards = ref([])
+const warehouses   = ref([])
+const fetchedAt    = ref(null)
+const errorMsg     = ref('')
 
-const warehouses = [
-  {
-    name: 'LA West Coast Hub',
-    tag: '메인 거점',
-    progress: 92,
-    status: 'active',
-    statusLabel: '정상 운영중',
-    kpis: [
-      { label: '출고 대기 건수', value: '142', unit: '건' },
-      { label: '미처리 ASN', value: '12', unit: '건' },
-      { label: '재고 부족 경고', value: '3', unit: 'SKU', alert: true },
+const sectionDate = computed(() =>
+  fetchedAt.value ? formatDate(fetchedAt.value, 'datetime') + ' 실시간 기준' : ''
+)
+
+async function fetchDashboard() {
+  errorMsg.value = ''
+  ui.setLoading(true)
+  try {
+    const [outboundRes, asnRes, inventoryRes, sellerRes, whRes] = await Promise.all([
+      getOutboundStats(),
+      getAsnStats(),
+      getInventoryStats(),
+      getSellerStats(),
+      getWarehouseStatus(),
+    ])
+    const o = outboundRes.data.data
+    const a = asnRes.data.data
+    const i = inventoryRes.data.data
+    const s = sellerRes.data.data
+
+    summaryCards.value = [
       {
-        label: '집하 마감중',
-        carriers: [
-          { name: 'USPS', time: '16:00' },
-          { name: 'FedEx', time: '18:30' },
-        ],
+        label: '전체 출고 예정 건수',
+        value: formatNumber(o.pendingOutboundCount),
+        trend: o.trend,
+        trendLabel: o.trendLabel,
+        trendType: o.trendType,
       },
-    ],
-  },
-  {
-    name: 'Central Dallas Center',
-    tag: null,
-    progress: 65,
-    status: 'active',
-    statusLabel: '정상 운영중',
-    kpis: [
-      { label: '출고 대기 건수', value: '81', unit: '건' },
-      { label: '미처리 ASN', value: '4', unit: '건' },
-      { label: '재고 부족 경고', value: '1', unit: 'SKU', alert: true },
       {
-        label: '집하 마감중',
-        carriers: [
-          { name: 'UPS', time: '17:30' },
-          { name: 'FedEx', time: '19:10' },
-        ],
+        label: '미처리 ASN (검수 대기)',
+        value: String(a.unprocessedCount),
+        trend: a.trend,
+        trendLabel: a.trendLabel,
+        trendType: a.trendType,
+        valueColor: 'amber',
       },
-    ],
-  },
-  {
-    name: 'East NY Hub',
-    tag: null,
-    progress: 48,
-    status: 'idle',
-    statusLabel: '주의 모니터링',
-    kpis: [
-      { label: '출고 대기 건수', value: '96', unit: '건' },
-      { label: '미처리 ASN', value: '26', unit: '건' },
-      { label: '재고 부족 경고', value: '8', unit: 'SKU', alert: true },
       {
-        label: '집하 마감중',
-        carriers: [
-          { name: 'USPS', time: '15:30' },
-          { name: 'DHL', time: '17:00' },
-        ],
+        label: '재고 부족 경고 SKU',
+        value: String(i.lowStockSkuCount),
+        trend: i.trend,
+        trendLabel: i.trendLabel,
+        trendType: i.trendType,
+        valueColor: 'red',
       },
-    ],
-  },
-]
+      {
+        label: '활성 셀러 업체 수',
+        value: String(s.activeSellerCount),
+        trend: `${s.newThisMonth}개사`,
+        trendLabel: '이번 달 신규',
+        trendType: s.trendType,
+      },
+    ]
+    warehouses.value = whRes.data.data
+    fetchedAt.value  = new Date()
+  } catch (err) {
+    errorMsg.value = '데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
+    console.error('[Dashboard] fetchDashboard error:', err)
+  } finally {
+    ui.setLoading(false)
+  }
+}
+
+onMounted(fetchDashboard)
 </script>
 
 <template>
@@ -143,6 +127,13 @@ const warehouses = [
       </button>
     </template>
 
+    <LoadingSpinner v-if="ui.isLoading" fullscreen />
+
+    <div v-if="errorMsg" class="fetch-error">
+      {{ errorMsg }}
+      <button @click="fetchDashboard">다시 시도</button>
+    </div>
+
     <!-- ① 요약 카드 그리드 -->
     <div class="summary-grid">
       <div v-for="card in summaryCards" :key="card.label" class="summary-card">
@@ -170,7 +161,7 @@ const warehouses = [
     <!-- ② 섹션 헤더 -->
     <div class="section-header">
       <span class="section-title">주요 창고 운영 현황</span>
-      <span class="section-date">2026.03.12 14:30 실시간 기준</span>
+      <span class="section-date">{{ sectionDate }}</span>
     </div>
 
     <!-- ③ 창고 카드 목록 -->
@@ -258,6 +249,21 @@ const warehouses = [
   width: 14px;
   height: 14px;
   flex-shrink: 0;
+}
+
+/* ── 에러 배너 ─────────────────────────────────────────── */
+.fetch-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-5);
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid var(--red);
+  border-radius: var(--radius-md);
+  color: var(--red);
+  font-size: var(--font-size-sm);
 }
 
 /* ── 요약 카드 그리드 ──────────────────────────────────── */
