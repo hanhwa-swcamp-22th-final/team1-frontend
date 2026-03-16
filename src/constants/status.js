@@ -5,48 +5,46 @@
    ══════════════════════════════════════════════════════════ */
 
 /**
- * ORDER_STATUS — 주문 처리 6단계
+ * ORDER_STATUS — 주문 처리 4단계
  *
  * 상태 전이 흐름:
  *
- *   PENDING → CONFIRMED → PICKING → PACKING → SHIPPED
- *      ↓           ↓          ↓         ↓
- *   CANCELLED   CANCELLED  CANCELLED CANCELLED
+ *   PENDING → CONFIRMED → PREPARING_ITEM → SHIPPED
+ *      ↓           ↓           ↓
+ *   CANCELLED   CANCELLED   CANCELLED
  *
- * PICKING/PACKING: WH_WORKER가 작업 수행
- * SHIPPED: WH_MANAGER가 출고 확인 후 전환
- * CANCELLED: 어느 단계에서든 취소 가능
+ * PREPARING_ITEM: WH_WORKER가 피킹&패킹 진행
+ * SHIPPED: 출고 완료 (최종 상태)
+ * CANCELLED: PENDING·CONFIRMED·PREPARING_ITEM 단계에서 취소 가능
  *
  * StatusBadge.vue의 MAP.order와 연동됨.
  */
 export const ORDER_STATUS = {
-  PENDING: 'PENDING', // 주문 접수 (셀러가 등록한 초기 상태)
+  PENDING: 'PENDING', // 주문 접수 (셀러 등록 초기 상태)
   CONFIRMED: 'CONFIRMED', // 주문 확인 (WH_MANAGER 확인)
-  PICKING: 'PICKING', // 피킹 중 (WH_WORKER 작업)
-  PACKING: 'PACKING', // 패킹 중 (WH_WORKER 작업)
+  PREPARING_ITEM: 'PREPARING_ITEM', // 물품 준비 중 (피킹&패킹 진행)
   SHIPPED: 'SHIPPED', // 출고 완료 (최종 상태)
   CANCELLED: 'CANCELLED', // 취소
 }
 
 /**
- * ASN_STATUS — 입고 예정 통보서(Advance Shipping Notice) 4단계
+ * ASN_STATUS — 입고 예정 통보서(Advance Shipping Notice) 2단계
  *
  * 상태 전이 흐름:
  *
- *   DRAFT → SUBMITTED → RECEIVED
- *     ↓          ↓
- *  CANCELLED  CANCELLED
+ *   SUBMITTED → RECEIVED
+ *       ↓
+ *   CANCELLED
  *
- * DRAFT:     셀러가 작성 중 (미제출 상태)
- * SUBMITTED: 셀러가 제출 완료 → WH_MANAGER에게 입고 예정 알림
- * RECEIVED:  WH_MANAGER가 실제 입고 처리 완료
+ * SUBMITTED: 셀러가 ASN 등록 완료 → ITEM_STATUS.INBOUND_SCHEDULED 자동 생성
+ * RECEIVED:  WH_MANAGER가 실제 입고 처리 완료 (최종 상태)
+ * CANCELLED: SUBMITTED 단계에서만 취소 가능
  *
  * StatusBadge.vue의 MAP.asn과 연동됨.
  */
 export const ASN_STATUS = {
-  DRAFT: 'DRAFT', // 작성 중
   SUBMITTED: 'SUBMITTED', // 제출됨
-  RECEIVED: 'RECEIVED', // 입고 완료
+  RECEIVED: 'RECEIVED', // 입고 완료 (최종 상태)
   CANCELLED: 'CANCELLED', // 취소
 }
 
@@ -69,4 +67,46 @@ export const ACCOUNT_STATUS = {
   ACTIVE: 'ACTIVE', // 정상
   TEMP_PASSWORD: 'TEMP_PASSWORD', // 임시 비밀번호 (첫 로그인 강제 변경)
   INACTIVE: 'INACTIVE', // 비활성
+}
+
+/**
+ * ITEM_STATUS — 물품 상태 7단계 (REQ-074)
+ *
+ * 상태 전이 흐름:
+ *
+ *   INBOUND_SCHEDULED → INBOUND → INSPECTION_LOADING → STORED
+ *                                                          ↓
+ *                                         OUTBOUND_COMPLETE ← OUTBOUND_WAITING ← PICKING_PACKING
+ *
+ * INBOUND_SCHEDULED:  SELLER가 ASN을 등록하는 즉시 자동 생성
+ * INBOUND:            물품이 Dock에 도착하고 WH_MANAGER가 1차 외관 검수 완료
+ * INSPECTION_LOADING: 작업자가 수량/상태 정밀 검수 후 Bin에 적재
+ * STORED:             적재 완료 후 피킹 전까지의 보관 상태
+ * PICKING_PACKING:    출고 오더에 따라 피킹 + 포장 + 송장 부착
+ * OUTBOUND_WAITING:   포장 완료 후 Stage Area로 이동된 상태
+ * OUTBOUND_COMPLETE:  택배사(송장 스캔) 또는 운송 수단에 인계 완료 (최종 상태)
+ *
+ * StatusBadge.vue의 MAP.item과 연동됨.
+ */
+export const ITEM_STATUS = {
+  INBOUND_SCHEDULED: 'INBOUND_SCHEDULED', // 입고예정
+  INBOUND: 'INBOUND', // 입고
+  INSPECTION_LOADING: 'INSPECTION_LOADING', // 검수&적재
+  STORED: 'STORED', // 보관중
+  PICKING_PACKING: 'PICKING_PACKING', // 피킹&패킹
+  OUTBOUND_WAITING: 'OUTBOUND_WAITING', // 출고대기
+  OUTBOUND_COMPLETE: 'OUTBOUND_COMPLETE', // 출고완료 (최종 상태)
+}
+
+/**
+ * WORKER_STATUS — 작업자 상태 2단계 (REQ-075)
+ *
+ * INSPECTION_LOADING: 입고된 물품을 확인하고 Bin에 배치하는 작업 상태
+ * PICKING_PACKING:    출고 오더에 따라 물품을 집어오고 포장하는 작업 상태
+ *
+ * StatusBadge.vue의 MAP.worker와 연동됨.
+ */
+export const WORKER_STATUS = {
+  INSPECTION_LOADING: 'INSPECTION_LOADING', // 검수&적재 작업 중
+  PICKING_PACKING: 'PICKING_PACKING', // 피킹&패킹 작업 중
 }

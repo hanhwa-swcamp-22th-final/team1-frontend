@@ -36,6 +36,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ROLES, ROUTE_NAMES } from '@/constants'
+import { MENU_BY_ROLE } from '@/components/layout/menus'
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -89,29 +90,12 @@ const roleLabel = computed(
 )
 
 /**
- * 메뉴 그룹 — 각 라우트 파일에서 meta.sidebar 정보로 동적 구성.
- * 현재는 auth.role 기반으로 필터링된 라우터에서 읽어온다.
- *
- * TODO (팀원 작업):
- *   아래 return [] 를 실제 메뉴 데이터로 교체.
- *
- *   방법 A (권장): 라우트 파일에 meta.sidebar 추가 후 router.getRoutes()로 수집
- *     import { useRouter } from 'vue-router'
- *     const router = useRouter()
- *     const routes = router.getRoutes().filter(r => r.meta.role === auth.role && r.meta.sidebar)
- *     // meta.sidebar = { group: '주문 관리', label: '주문 목록', icon: '📦' }
- *
- *   방법 B: Role별 하드코딩 (빠르지만 이중관리 문제)
- *     if (auth.role === ROLES.SELLER) return [ { label: '주문', items: [...] } ]
+ * 메뉴 그룹 — 역할별 메뉴는 components/layout/menus/ 에서 관리
+ * 각 팀원은 자신의 역할 파일(menus/seller.js 등)만 수정하면 됨
  */
 const menuGroups = computed(() => {
-  // TODO: router.getRoutes()를 순회하여 meta.sidebar 정보로 동적 구성
-  // 현재는 역할별 하드코딩 없이 빈 그룹 반환 (팀원이 채워넣을 영역)
-  if (route.name === DEV_COMPONENTS_ROUTE_NAME) {
-    return DEV_MENU_GROUPS
-  }
-
-  return []
+  if (route.name === DEV_COMPONENTS_ROUTE_NAME) return DEV_MENU_GROUPS
+  return MENU_BY_ROLE[auth.role] ?? []
 })
 
 /**
