@@ -28,9 +28,9 @@
  *   </EmptyState>
  */
 defineProps({
-  title:       { type: String, default: '데이터가 없습니다' },
+  title: { type: String, default: '데이터가 없습니다' },
   description: { type: String, default: '' },
-  icon:        { type: String, default: '' },
+  icon: { type: String, default: '' },
 })
 </script>
 
@@ -41,11 +41,31 @@ defineProps({
       <slot name="icon">
         <span v-if="icon">{{ icon }}</span>
         <!-- 기본 아이콘: 클립보드 형태 SVG -->
-        <svg v-else viewBox="0 0 48 48" fill="none">
-          <rect x="8" y="12" width="32" height="28" rx="3" stroke="currentColor" stroke-width="2"/>
-          <path d="M16 12V9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3" stroke="currentColor" stroke-width="2"/>
-          <line x1="18" y1="22" x2="30" y2="22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <line x1="18" y1="28" x2="26" y2="28" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <svg v-else fill="none" viewBox="0 0 48 48">
+          <rect height="28" rx="3" stroke="currentColor" stroke-width="2" width="32" x="8" y="12" />
+          <path
+            d="M16 12V9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3"
+            stroke="currentColor"
+            stroke-width="2"
+          />
+          <line
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-width="2"
+            x1="18"
+            x2="30"
+            y1="22"
+            y2="22"
+          />
+          <line
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-width="2"
+            x1="18"
+            x2="26"
+            y1="28"
+            y2="28"
+          />
         </svg>
       </slot>
     </div>
@@ -62,24 +82,45 @@ defineProps({
 
 <style scoped>
 .empty-state {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 48px 24px;
   text-align: center;
 }
 
 .empty-icon {
-  width: 56px; height: 56px;
+  width: 56px;
+  height: 56px;
   border-radius: var(--radius-xl);
   background: var(--surface-2);
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 4px;
   color: var(--t4);
 }
-.empty-icon svg { width: 28px; height: 28px; }
-.empty-icon span { font-size: 24px; }
+.empty-icon svg {
+  width: 28px;
+  height: 28px;
+}
+.empty-icon span {
+  font-size: 24px;
+}
 
-.empty-title { font-size: var(--font-size-md); font-weight: 600; color: var(--t2); }
-.empty-desc  { font-size: var(--font-size-sm); color: var(--t3); line-height: 1.5; }
-.empty-action { margin-top: 12px; }
+.empty-title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--t2);
+}
+.empty-desc {
+  font-size: var(--font-size-sm);
+  color: var(--t3);
+  line-height: 1.5;
+}
+.empty-action {
+  margin-top: 12px;
+}
 </style>

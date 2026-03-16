@@ -16,7 +16,6 @@ export default [
       },
     },
     rules: {
-
       // ────────────────────────────────────────
       // 5장. 기타 규칙
       // ────────────────────────────────────────
@@ -28,24 +27,32 @@ export default [
       'prefer-const': 'error',
 
       // == 금지, === 강제
-      'eqeqeq': ['error', 'always'],
+      eqeqeq: ['error', 'always'],
 
       // console.log 경고, warn/error만 허용
       'no-console': ['warn', { allow: ['warn', 'error'] }],
 
       // 사용하지 않는 변수 에러 (_로 시작하면 허용)
-      'no-unused-vars': ['error', {
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-      }],
+      'no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+        },
+      ],
 
       // axios 직접 import 금지 (api/ 폴더 함수만 사용)
-      'no-restricted-imports': ['error', {
-        patterns: [{
-          group: ['axios'],
-          message: '[CONK 규칙] axios 직접 import 금지. @/api/instance.js를 사용하세요.',
-        }],
-      }],
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['axios'],
+              message: '[CONK 규칙] axios 직접 import 금지. @/api/instance.js를 사용하세요.',
+            },
+          ],
+        },
+      ],
 
       // ────────────────────────────────────────
       // 1장. 네이밍 규칙
@@ -57,9 +64,12 @@ export default [
       // ────────────────────────────────────────
       // 3장. Vue 블록 순서 — script → template → style
       // ────────────────────────────────────────
-      'vue/block-order': ['error', {
-        order: ['script', 'template', 'style'],
-      }],
+      'vue/block-order': [
+        'error',
+        {
+          order: ['script', 'template', 'style'],
+        },
+      ],
 
       // ────────────────────────────────────────
       // 기타 Vue 규칙

@@ -3,6 +3,7 @@
 > **한 줄 요약**: 전역 상태를 Pinia로 관리하며, 로그인 정보와 창고 선택은 로컬스토리지에 자동 저장됨.
 
 ## 목차 (Table of Contents)
+
 - [설정](#설정)
 - [스토어 목록](#스토어-목록)
 - [useAuthStore](#useauthstore-srcstoresauthjs)
@@ -44,12 +45,12 @@ createApp(App)
 
 ## 스토어 목록
 
-| 스토어 | 파일 | persist | 로컬스토리지 키 | 용도 |
-|---|---|---|---|---|
-| `auth` | `src/stores/auth.js` | ✅ | `conk-auth` | 로그인 유저 정보, JWT 토큰 |
-| `ui` | `src/stores/ui.js` | ❌ | — | 로딩 상태, 사이드바 열림/닫힘 |
-| `notification` | `src/stores/notification.js` | ❌ | — | 인앱 알림 목록 |
-| `warehouse` | `src/stores/warehouse.js` | ✅ | `conk-warehouse` | WH_MANAGER 선택 창고 |
+| 스토어            | 파일                           | persist | 로컬스토리지 키         | 용도                |
+|----------------|------------------------------|---------|------------------|-------------------|
+| `auth`         | `src/stores/auth.js`         | ✅       | `conk-auth`      | 로그인 유저 정보, JWT 토큰 |
+| `ui`           | `src/stores/ui.js`           | ❌       | —                | 로딩 상태, 사이드바 열림/닫힘 |
+| `notification` | `src/stores/notification.js` | ❌       | —                | 인앱 알림 목록          |
+| `warehouse`    | `src/stores/warehouse.js`    | ✅       | `conk-warehouse` | WH_MANAGER 선택 창고  |
 
 ---
 
@@ -60,18 +61,18 @@ createApp(App)
 
 ### State
 
-| 필드 | 타입 | 기본값 | 설명 |
-|---|---|---|---|
-| `user` | `Object \| null` | `null` | `{ name, email, status, organization?, avatar? }` |
-| `token` | `string \| null` | `null` | JWT 액세스 토큰 |
-| `role` | `string \| null` | `null` | `ROLES` 상수 값 중 하나 (`SYSTEM_ADMIN`, `MASTER_ADMIN`, `WH_MANAGER`, `WH_WORKER`, `SELLER`) |
-| `tenantCode` | `string \| null` | `null` | 창고사 코드. 모든 API 요청의 `X-Tenant-Code` 헤더에 자동 주입됨 |
-| `customerCode` | `string \| null` | `null` | 셀러 고객사 코드 (SELLER Role 전용) |
+| 필드             | 타입               | 기본값    | 설명                                                                                      |
+|----------------|------------------|--------|-----------------------------------------------------------------------------------------|
+| `user`         | `Object \| null` | `null` | `{ name, email, status, organization?, avatar? }`                                       |
+| `token`        | `string \| null` | `null` | JWT 액세스 토큰                                                                              |
+| `role`         | `string \| null` | `null` | `ROLES` 상수 값 중 하나 (`SYSTEM_ADMIN`, `MASTER_ADMIN`, `WH_MANAGER`, `WH_WORKER`, `SELLER`) |
+| `tenantCode`   | `string \| null` | `null` | 창고사 코드. 모든 API 요청의 `X-Tenant-Code` 헤더에 자동 주입됨                                           |
+| `customerCode` | `string \| null` | `null` | 셀러 고객사 코드 (SELLER Role 전용)                                                              |
 
 ### Computed
 
-| 이름 | 반환 타입 | 설명 |
-|---|---|---|
+| 이름           | 반환 타입     | 설명                           |
+|--------------|-----------|------------------------------|
 | `isLoggedIn` | `boolean` | `!!token` — 토큰 여부로 로그인 상태 판단 |
 
 ### Actions
@@ -84,13 +85,13 @@ createApp(App)
 setAuth({ user, token, role, tenantCode, customerCode })
 ```
 
-| 매개변수 | 타입 | 설명 |
-|---|---|---|
-| `user` | `Object` | `{ name, email, status, organization?, avatar? }` |
-| `token` | `string` | JWT 액세스 토큰 |
-| `role` | `string` | `ROLES.X` 값 |
-| `tenantCode` | `string` | 창고사 코드 |
-| `customerCode` | `string` | 셀러 고객사 코드 (optional) |
+| 매개변수           | 타입       | 설명                                                |
+|----------------|----------|---------------------------------------------------|
+| `user`         | `Object` | `{ name, email, status, organization?, avatar? }` |
+| `token`        | `string` | JWT 액세스 토큰                                        |
+| `role`         | `string` | `ROLES.X` 값                                       |
+| `tenantCode`   | `string` | 창고사 코드                                            |
+| `customerCode` | `string` | 셀러 고객사 코드 (optional)                              |
 
 #### clearAuth()
 
@@ -159,10 +160,10 @@ function handleLogout() {
 
 ### State
 
-| 필드 | 타입 | 기본값 | 설명 |
-|---|---|---|---|
-| `isLoading` | `boolean` | `false` | 전역 로딩 오버레이 표시 여부 |
-| `isSidebarOpen` | `boolean` | `true` | 사이드바 펼침/접힘 상태 |
+| 필드              | 타입        | 기본값     | 설명               |
+|-----------------|-----------|---------|------------------|
+| `isLoading`     | `boolean` | `false` | 전역 로딩 오버레이 표시 여부 |
+| `isSidebarOpen` | `boolean` | `true`  | 사이드바 펼침/접힘 상태    |
 
 ### Actions
 
@@ -248,8 +249,8 @@ function toggleSidebar() {
 
 ### State
 
-| 필드 | 타입 | 기본값 | 설명 |
-|---|---|---|---|
+| 필드              | 타입              | 기본값  | 설명                                         |
+|-----------------|-----------------|------|--------------------------------------------|
 | `notifications` | `Array<Object>` | `[]` | 알림 배열 `[{ id, message, time, read }, ...]` |
 
 ### Computed
@@ -334,8 +335,8 @@ function handleNotifClick(id) {
 
 ### State
 
-| 필드 | 타입 | 기본값 | 설명 |
-|---|---|---|---|
+| 필드                  | 타입               | 기본값    | 설명                                 |
+|---------------------|------------------|--------|------------------------------------|
 | `selectedWarehouse` | `Object \| null` | `null` | `{ id, name, code, address, ... }` |
 
 ### Actions
@@ -462,6 +463,7 @@ auth.setAuth({ token: 'new-token', ... })
 ---
 
 ## 관련 문서
+
 - [step-08-router.md](./step-08-router.md) — 라우터 가드와의 상호작용
 - [step-11-entrypoint.md](./step-11-entrypoint.md) — Pinia 플러그인 등록 순서
 - [CLAUDE.md](../CLAUDE.md) — 프로젝트 아키텍처 규칙

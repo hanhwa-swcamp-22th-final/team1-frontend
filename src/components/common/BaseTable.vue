@@ -44,11 +44,11 @@
  *   </BaseTable>
  */
 const props = defineProps({
-  columns:    { type: Array,   required: true },
-  rows:       { type: Array,   default: () => [] },
-  loading:    { type: Boolean, default: false },
-  pagination: { type: Object,  default: null },
-  rowKey:     { type: String,  default: 'id' },
+  columns: { type: Array, required: true },
+  rows: { type: Array, default: () => [] },
+  loading: { type: Boolean, default: false },
+  pagination: { type: Object, default: null },
+  rowKey: { type: String, default: 'id' },
 })
 
 const emit = defineEmits(['sort', 'page-change'])
@@ -72,7 +72,7 @@ const totalPages = computed(() => {
  * @returns {Array<number|string>}
  */
 function pageNumbers() {
-  const cur   = props.pagination?.page ?? 1
+  const cur = props.pagination?.page ?? 1
   const total = totalPages.value
 
   // 총 페이지가 7 이하면 ellipsis 없이 전부 표시
@@ -80,11 +80,11 @@ function pageNumbers() {
 
   const pages = [1]
   // 현재 페이지가 3보다 크면 앞쪽 ellipsis
-  if (cur > 3)          pages.push('...')
+  if (cur > 3) pages.push('...')
   // 현재 페이지 주변 ±1 범위 (1과 total 경계 피함)
   for (let i = Math.max(2, cur - 1); i <= Math.min(total - 1, cur + 1); i++) pages.push(i)
   // 현재 페이지가 끝에서 3보다 멀면 뒤쪽 ellipsis
-  if (cur < total - 2)  pages.push('...')
+  if (cur < total - 2) pages.push('...')
   pages.push(total)
   return pages
 }
@@ -100,8 +100,8 @@ function pageNumbers() {
             <th
               v-for="col in columns"
               :key="col.key"
-              :style="{ width: col.width, textAlign: col.align ?? 'left' }"
               :class="{ sortable: col.sortable }"
+              :style="{ width: col.width, textAlign: col.align ?? 'left' }"
               @click="col.sortable && emit('sort', col.key)"
             >
               {{ col.label }}
@@ -126,17 +126,8 @@ function pageNumbers() {
           </tr>
 
           <!-- 데이터 행 -->
-          <tr
-            v-else
-            v-for="row in rows"
-            :key="row[rowKey]"
-            class="data-row"
-          >
-            <td
-              v-for="col in columns"
-              :key="col.key"
-              :style="{ textAlign: col.align ?? 'left' }"
-            >
+          <tr v-for="row in rows" v-else :key="row[rowKey]" class="data-row">
+            <td v-for="col in columns" :key="col.key" :style="{ textAlign: col.align ?? 'left' }">
               <!--
                 cell-{key} 슬롯이 없으면 기본값(row[col.key] ?? '-') 표시.
                 커스텀 렌더링 필요 시 <template #cell-{key}="{ row, value }"> 사용.
@@ -153,30 +144,38 @@ function pageNumbers() {
     <!-- 페이지네이션: pagination prop이 있고 2페이지 이상일 때만 표시 -->
     <div v-if="pagination && totalPages > 1" class="pagination">
       <button
-        class="page-btn"
         :disabled="pagination.page <= 1"
+        class="page-btn"
         @click="emit('page-change', pagination.page - 1)"
-      >‹</button>
+      >
+        ‹
+      </button>
 
       <template v-for="p in pageNumbers()" :key="p">
         <span v-if="p === '...'" class="page-ellipsis">…</span>
         <button
           v-else
-          class="page-btn"
           :class="{ active: p === pagination.page }"
+          class="page-btn"
           @click="emit('page-change', p)"
-        >{{ p }}</button>
+        >
+          {{ p }}
+        </button>
       </template>
 
       <button
-        class="page-btn"
         :disabled="pagination.page >= totalPages"
+        class="page-btn"
         @click="emit('page-change', pagination.page + 1)"
-      >›</button>
+      >
+        ›
+      </button>
 
       <!-- 전체 데이터 수 및 현재 범위 표시 -->
       <span class="page-info">
-        {{ pagination.total }}건 중 {{ (pagination.page - 1) * pagination.pageSize + 1 }}–{{ Math.min(pagination.page * pagination.pageSize, pagination.total) }}
+        {{ pagination.total }}건 중 {{ (pagination.page - 1) * pagination.pageSize + 1 }}–{{
+          Math.min(pagination.page * pagination.pageSize, pagination.total)
+        }}
       </span>
     </div>
   </div>
@@ -184,17 +183,26 @@ function pageNumbers() {
 
 <script>
 import LoadingSpinner from './LoadingSpinner.vue'
-import EmptyState     from './EmptyState.vue'
+import EmptyState from './EmptyState.vue'
 export default { components: { LoadingSpinner, EmptyState } }
 </script>
 
 <style scoped>
-.base-table-wrap { display: flex; flex-direction: column; gap: 12px; }
+.base-table-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
-.table-scroll { overflow-x: auto; border-radius: var(--radius-md); border: 1px solid var(--border); }
+.table-scroll {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
 
 .base-table {
-  width: 100%; border-collapse: collapse;
+  width: 100%;
+  border-collapse: collapse;
   font-size: var(--font-size-sm);
 }
 
@@ -214,16 +222,32 @@ th {
   user-select: none;
 }
 
-th.sortable { cursor: pointer; }
-th.sortable:hover { color: var(--t1); }
+th.sortable {
+  cursor: pointer;
+}
+th.sortable:hover {
+  color: var(--t1);
+}
 
-.sort-icon { margin-left: 4px; opacity: 0.5; font-size: 10px; }
+.sort-icon {
+  margin-left: 4px;
+  opacity: 0.5;
+  font-size: 10px;
+}
 
-tbody tr { border-bottom: 1px solid var(--border); }
-tbody tr:last-child { border-bottom: none; }
+tbody tr {
+  border-bottom: 1px solid var(--border);
+}
+tbody tr:last-child {
+  border-bottom: none;
+}
 
-.data-row { transition: background var(--ease-fast); }
-.data-row:hover { background: var(--blue-pale); }
+.data-row {
+  transition: background var(--ease-fast);
+}
+.data-row:hover {
+  background: var(--blue-pale);
+}
 
 td {
   padding: 13px 16px;
@@ -231,7 +255,10 @@ td {
   font-size: var(--font-size-sm);
 }
 
-.state-cell { padding: 48px 16px; text-align: center; }
+.state-cell {
+  padding: 48px 16px;
+  text-align: center;
+}
 
 /* ── Pagination ─────────────────────────────── */
 .pagination {
@@ -242,7 +269,8 @@ td {
 }
 
 .page-btn {
-  min-width: 32px; height: 32px;
+  min-width: 32px;
+  height: 32px;
   padding: 0 8px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -261,9 +289,15 @@ td {
   color: #fff;
   font-weight: 600;
 }
-.page-btn:disabled { opacity: 0.35; cursor: default; }
+.page-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
 
-.page-ellipsis { padding: 0 4px; color: var(--t4); }
+.page-ellipsis {
+  padding: 0 4px;
+  color: var(--t4);
+}
 
 .page-info {
   margin-left: 12px;

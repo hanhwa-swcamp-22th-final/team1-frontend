@@ -22,13 +22,13 @@
  */
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { ROLES, ACCOUNT_STATUS, ROUTE_NAMES } from '@/constants'
+import { ACCOUNT_STATUS, ROLES, ROUTE_NAMES } from '@/constants'
 
-import authRoutes        from './routes/auth.js'
-import sellerRoutes      from './routes/seller.js'
+import authRoutes from './routes/auth.js'
+import sellerRoutes from './routes/seller.js'
 import masterAdminRoutes from './routes/masterAdmin.js'
-import whManagerRoutes   from './routes/whManager.js'
-import whWorkerRoutes    from './routes/whWorker.js'
+import whManagerRoutes from './routes/whManager.js'
+import whWorkerRoutes from './routes/whWorker.js'
 import systemAdminRoutes from './routes/systemAdmin.js'
 
 /**
@@ -36,10 +36,10 @@ import systemAdminRoutes from './routes/systemAdmin.js'
  * Role이 추가되면 여기도 업데이트 필요
  */
 const DASHBOARD_BY_ROLE = {
-  [ROLES.SELLER]:       ROUTE_NAMES.SELLER_DASHBOARD,
+  [ROLES.SELLER]: ROUTE_NAMES.SELLER_DASHBOARD,
   [ROLES.MASTER_ADMIN]: ROUTE_NAMES.MASTER_DASHBOARD,
-  [ROLES.WH_MANAGER]:   ROUTE_NAMES.WH_MANAGER_DASHBOARD,
-  [ROLES.WH_WORKER]:    ROUTE_NAMES.WH_WORKER_TASK_LIST,
+  [ROLES.WH_MANAGER]: ROUTE_NAMES.WH_MANAGER_DASHBOARD,
+  [ROLES.WH_WORKER]: ROUTE_NAMES.WH_WORKER_TASK_LIST,
   [ROLES.SYSTEM_ADMIN]: ROUTE_NAMES.SYS_COMPANY_LIST,
 }
 
@@ -54,21 +54,21 @@ const router = createRouter({
     ...systemAdminRoutes,
     // [DEV ONLY] 공통 컴포넌트 데모 페이지 — 개발 확인용, 배포 전 제거
     {
-      path:      '/dev/components',
-      name:      'dev-components',
+      path: '/dev/components',
+      name: 'dev-components',
       component: () => import('@/views/common/ComponentDemoView.vue'),
-      meta:      { public: true },
+      meta: { public: true },
     },
     // 403 Forbidden
     {
-      path:      '/403',
-      name:      ROUTE_NAMES.FORBIDDEN,
+      path: '/403',
+      name: ROUTE_NAMES.FORBIDDEN,
       component: () => import('@/views/common/ForbiddenView.vue'),
     },
     // 404 Not Found — 반드시 마지막에 위치
     {
-      path:      '/:pathMatch(.*)*',
-      name:      ROUTE_NAMES.NOT_FOUND,
+      path: '/:pathMatch(.*)*',
+      name: ROUTE_NAMES.NOT_FOUND,
       component: () => import('@/views/common/NotFoundView.vue'),
     },
   ],

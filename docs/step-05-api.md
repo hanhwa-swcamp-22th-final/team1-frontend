@@ -3,6 +3,7 @@
 > **한 줄 요약**: Axios 인스턴스 설정, 인터셉터 처리, API 함수 작성 방법 및 에러 처리 패턴 완전 가이드
 
 ## 목차
+
 - [파일 구조](#파일-구조)
 - [Axios 인스턴스 (instance.js)](#axios-인스턴스-instancejs)
 - [인터셉터 흐름](#인터셉터-흐름)
@@ -136,6 +137,7 @@ instance.interceptors.request.use(
 ```
 
 **동작 흐름**:
+
 ```
 [API 함수 호출]
    ↓
@@ -192,6 +194,7 @@ instance.interceptors.response.use(
 ```
 
 **에러 처리 흐름**:
+
 ```
 [백엔드 응답]
    ├─ 200-299 ✅
@@ -336,6 +339,7 @@ export async function deleteOrder(orderId) {
 ```
 
 예시:
+
 ```js
 /**
  * 사용자 프로필 조회
@@ -630,6 +634,7 @@ export const useAuthStore = defineStore('auth', () => {
 ```
 
 **주요 특징**:
+
 - `pinia-plugin-persistedstate` 사용으로 새로고침 후에도 토큰 유지
 - 인터셉터가 자동으로 `token`과 `tenantCode` 읽음
 
@@ -645,6 +650,7 @@ if (auth.tenantCode) {
 ```
 
 컴포넌트에서는 별도 처리 불필요:
+
 ```js
 // ✅ 올바른 방법 (헤더는 인터셉터가 자동으로 추가)
 const orders = await getOrders()
@@ -747,6 +753,7 @@ export const useUiStore = defineStore('ui', () => {
 ```
 
 컴포넌트에서 사용:
+
 ```vue
 <script setup>
 import { useUiStore } from '@/stores/ui'

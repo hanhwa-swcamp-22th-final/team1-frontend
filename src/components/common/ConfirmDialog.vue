@@ -54,10 +54,10 @@ const emit = defineEmits(['confirm', 'cancel'])
     이 컴포넌트의 .actions div에서 직접 버튼 구성.
   -->
   <BaseModal
-    :title="title"
     :isOpen="isOpen"
-    width="420px"
+    :title="title"
     hide-footer
+    width="420px"
     @cancel="emit('cancel')"
   >
     <p class="message">{{ message }}</p>
@@ -65,8 +65,8 @@ const emit = defineEmits(['confirm', 'cancel'])
     <div class="actions">
       <button class="ui-btn ui-btn--ghost" @click="emit('cancel')">{{ cancelLabel }}</button>
       <button
-        class="ui-btn"
-        :class="danger ? 'ui-btn--danger' : 'ui-btn--primary'"  <!-- danger=true면 빨간 버튼 -->
+        :class="danger ? 'ui-btn--danger' : 'ui-btn--primary'"
+        class="ui-btn"  <!-- danger=true면 빨간 버튼 -->
         @click="emit('confirm')"
       >{{ confirmLabel }}</button>
     </div>

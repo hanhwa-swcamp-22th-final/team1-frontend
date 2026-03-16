@@ -21,9 +21,9 @@
       <span class="footer-copy">© 2026 CONK Fulfillment Platform. All rights reserved.</span>
     </div>
     <div class="footer-right">
-      <a href="#" class="footer-link">이용약관</a>
-      <a href="#" class="footer-link">개인정보처리방침</a>
-      <a href="#" class="footer-link">고객센터</a>
+      <a class="footer-link" href="#">이용약관</a>
+      <a class="footer-link" href="#">개인정보처리방침</a>
+      <a class="footer-link" href="#">고객센터</a>
       <span class="footer-version">v0.1.0</span>
     </div>
   </footer>
@@ -33,10 +33,10 @@
 .app-footer {
   position: fixed;
   bottom: 0;
-  left: 0;                       /* 전체 너비 (사이드바 포함) */
+  left: 0; /* 전체 너비 (사이드바 포함) */
   right: 0;
-  height: var(--footer-height);  /* 105px */
-  background: #0d0d0d;           /* 진한 검정 */
+  height: var(--footer-height); /* 105px */
+  background: #0d0d0d; /* 진한 검정 */
   border-top: none;
   display: flex;
   align-items: center;
@@ -57,7 +57,7 @@
   font-weight: 700;
   color: #fff;
   font-size: 18px;
-  letter-spacing: 4px;           /* 기존 0.5px → 4px */
+  letter-spacing: 4px; /* 기존 0.5px → 4px */
 }
 
 .footer-dot {
@@ -71,7 +71,7 @@
 .footer-copy {
   font-family: 'Inter', sans-serif;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.6);  /* 기존 t4 → 반투명 흰색 */
+  color: rgba(255, 255, 255, 0.6); /* 기존 t4 → 반투명 흰색 */
 }
 
 .footer-right {
@@ -83,7 +83,7 @@
 .footer-link {
   font-family: var(--font-barlow);
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.72);  /* 기존 t4 → 반투명 흰색 */
+  color: rgba(255, 255, 255, 0.72); /* 기존 t4 → 반투명 흰색 */
   text-decoration: none;
 }
 

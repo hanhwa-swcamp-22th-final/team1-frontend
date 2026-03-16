@@ -3,6 +3,7 @@
 > **한 줄 요약**: Vue Router를 통한 Role별 페이지 접근 제어 및 네비게이션 가드 규칙.
 
 ## 목차 (Table of Contents)
+
 - [파일 구조](#파일-구조)
 - [핵심 개념](#핵심-개념)
 - [네비게이션 가드 흐름](#네비게이션-가드-흐름)
@@ -102,6 +103,7 @@ if (auth.isLoggedIn && to.name === ROUTE_NAMES.LOGIN) {
 ```
 
 **예시**:
+
 - SELLER 사용자가 `/login` 접근 → `/seller/dashboard`로 리다이렉트
 - WH_MANAGER 사용자가 `/login` 접근 → `/wh-manager/dashboard`로 리다이렉트
 
@@ -120,6 +122,7 @@ if (!to.meta.public && !auth.isLoggedIn) {
 ```
 
 **예시**:
+
 - 비로그인 사용자가 `/seller/orders` 접근
 - → `/login?redirect=/seller/orders`로 리다이렉트
 - → 로그인 후 원래 경로로 자동 복귀
@@ -138,6 +141,7 @@ if (auth.user?.status === 'TEMP_PASSWORD' &&
 ```
 
 **흐름**:
+
 1. 사용자 로그인 (임시 비밀번호로 생성됨)
 2. 어떤 페이지 접근 시도
 3. 가드 #3 동작 → `/change-password` 강제 진입
@@ -156,6 +160,7 @@ if (to.meta.role && to.meta.role !== auth.role) {
 ```
 
 **예시**:
+
 - SELLER 사용자가 `/wh-manager/dashboard` 접근 시도
 - 가드에서 `meta.role: ROLES.WH_MANAGER`와 `auth.role: ROLES.SELLER` 비교
 - → `/403` 에러 페이지 표시
@@ -277,6 +282,7 @@ meta: {
 ```
 
 **사용 가능한 Role 값**:
+
 - `ROLES.SYSTEM_ADMIN`
 - `ROLES.MASTER_ADMIN`
 - `ROLES.WH_MANAGER`
@@ -316,6 +322,7 @@ meta: {
 ```
 
 구조 예:
+
 ```
 주문 관리
   ├─ 📦 주문 목록
@@ -517,6 +524,7 @@ router.replace(redirect ?? { name: DASHBOARD_BY_ROLE[auth.role] })
 ---
 
 ## 관련 문서
+
 - [step-06-stores.md](./step-06-stores.md) — useAuthStore와의 통합
 - [step-11-entrypoint.md](./step-11-entrypoint.md) — 라우터 등록 순서
 - [CLAUDE.md](../CLAUDE.md) — 프로젝트 라우터 가드 규칙

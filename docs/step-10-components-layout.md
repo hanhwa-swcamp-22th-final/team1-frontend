@@ -3,6 +3,7 @@
 > **한 줄 요약**: 인증된 화면의 전체 구조(사이드바 + 헤더 + 콘텐츠)를 담당하는 3개 레이아웃 컴포넌트.
 
 ## 목차 (Table of Contents)
+
 - [파일 구조](#파일-구조)
 - [전체 구조](#전체-구조)
 - [AppLayout](#applayout)
@@ -89,10 +90,10 @@ src/components/layout/
 
 ### Props
 
-| Prop | 타입 | 필수 | 설명 |
-|---|---|---|---|
-| `title` | `string` | | 헤더에 표시될 페이지 제목 |
-| `breadcrumb` | `Breadcrumb[]` | | 브레드크럼 경로 배열 |
+| Prop         | 타입             | 필수 | 설명             |
+|--------------|----------------|----|----------------|
+| `title`      | `string`       |    | 헤더에 표시될 페이지 제목 |
+| `breadcrumb` | `Breadcrumb[]` |    | 브레드크럼 경로 배열    |
 
 ### Breadcrumb 타입 정의
 
@@ -105,10 +106,10 @@ type Breadcrumb = {
 
 ### Slots
 
-| 슬롯 | props | 설명 |
-|---|---|---|
-| `default` | — | 페이지 본문 콘텐츠 |
-| `header-action` | — | 헤더 우측 커스텀 버튼 영역 |
+| 슬롯              | props | 설명              |
+|-----------------|-------|-----------------|
+| `default`       | —     | 페이지 본문 콘텐츠      |
+| `header-action` | —     | 헤더 우측 커스텀 버튼 영역 |
 
 ### 구조
 
@@ -350,11 +351,13 @@ ui.js의 `isSidebarOpen` 상태로 제어합니다.
 ```
 
 **접혀있을 때**:
+
 - 너비: 64px
 - 텍스트 숨김 (`opacity: 0`)
 - 아이콘만 표시
 
 **펼쳐있을 때**:
+
 - 너비: 250px
 - 아이콘 + 텍스트 모두 표시
 
@@ -391,6 +394,7 @@ ui.js의 `isSidebarOpen` 상태로 제어합니다.
 ### 2. 알림 패널 (우측)
 
 헤더의 알림 아이콘 클릭 시:
+
 - 패널 표시/숨김 토글
 - 패널 외부 클릭 시 자동 닫힘
 - 미읽음 배지 표시
@@ -417,6 +421,7 @@ ui.js의 `isSidebarOpen` 상태로 제어합니다.
 ### 3. 프로필 메뉴 (우측)
 
 헤더의 프로필 아이콘 클릭 시:
+
 - 드롭다운 메뉴 표시
 - 설정, 로그아웃 등
 
@@ -614,6 +619,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 ### 4. Padding 고려
 
 AppLayout 콘텐츠는 자동으로 다음 padding 적용:
+
 - `padding-top: 108px` (헤더 높이)
 - `padding-left: 250px` (사이드바 너비)
 - `padding-bottom: 105px` (푸터 높이)
@@ -623,5 +629,6 @@ AppLayout 콘텐츠는 자동으로 다음 padding 적용:
 ---
 
 ## 관련 문서
+
 - [step-06-stores.md](./step-06-stores.md) — useAuthStore, useUiStore, useNotificationStore
 - [step-09-components-common.md](./step-09-components-common.md) — 공통 컴포넌트들

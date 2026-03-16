@@ -3,6 +3,7 @@
 > **한 줄 요약**: main.js에서 Vue, Pinia, Router를 올바른 순서로 등록하고, App.vue를 마운트하는 과정.
 
 ## 목차 (Table of Contents)
+
 - [main.js 구조](#mainjs-구조)
 - [플러그인 등록 순서](#플러그인-등록-순서)
 - [App.vue 구조](#appvue-구조)
@@ -147,6 +148,7 @@ router.beforeEach((to, from, next) => {
 ```
 
 **이 코드가 정상 동작하려면**:
+
 - Pinia가 Vue 앱에 등록되어 있어야 함 (`.use(pinia)` 호출됨)
 - 라우터가 등록될 때 Pinia가 이미 준비되어 있어야 함
 
@@ -499,6 +501,7 @@ import { createApp } from 'vue'
 ---
 
 ## 관련 문서
+
 - [step-06-stores.md](./step-06-stores.md) — Pinia 스토어 및 persist 설정
 - [step-08-router.md](./step-08-router.md) — 라우터 가드 상세 설명
 - [step-10-components-layout.md](./step-10-components-layout.md) — AppLayout 컴포넌트

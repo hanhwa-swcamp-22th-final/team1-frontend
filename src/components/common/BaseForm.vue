@@ -22,18 +22,18 @@
  *   </BaseForm>
  */
 defineProps({
-  label:    { type: String,  default: '' },
-  error:    { type: String,  default: '' },
+  label: { type: String, default: '' },
+  error: { type: String, default: '' },
   required: { type: Boolean, default: false },
-  hint:     { type: String,  default: '' },
+  hint: { type: String, default: '' },
 })
 </script>
 
 <template>
-  <div class="form-field" :class="{ 'has-error': error }">
+  <div :class="{ 'has-error': error }" class="form-field">
     <label v-if="label" class="field-label">
       {{ label }}
-      <span v-if="required" class="required-mark" aria-hidden="true">*</span>
+      <span v-if="required" aria-hidden="true" class="required-mark">*</span>
     </label>
 
     <div class="field-input">
@@ -41,13 +41,17 @@ defineProps({
     </div>
 
     <!-- 에러 우선, 에러 없을 때만 힌트 표시 -->
-    <p v-if="error"      class="field-error" role="alert">{{ error }}</p>
-    <p v-else-if="hint"  class="field-hint">{{ hint }}</p>
+    <p v-if="error" class="field-error" role="alert">{{ error }}</p>
+    <p v-else-if="hint" class="field-hint">{{ hint }}</p>
   </div>
 </template>
 
 <style scoped>
-.form-field { display: flex; flex-direction: column; gap: 6px; }
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
 .field-label {
   font-size: var(--font-size-sm);
@@ -55,7 +59,10 @@ defineProps({
   color: var(--t2);
 }
 
-.required-mark { color: var(--red); margin-left: 2px; }
+.required-mark {
+  color: var(--red);
+  margin-left: 2px;
+}
 
 /*
   :deep() 사용 이유:
@@ -74,7 +81,9 @@ defineProps({
   color: var(--t1);
   font-size: var(--font-size-md);
   outline: none;
-  transition: border-color var(--ease-fast), box-shadow var(--ease-fast);
+  transition:
+    border-color var(--ease-fast),
+    box-shadow var(--ease-fast);
 }
 .field-input :deep(input):focus,
 .field-input :deep(select):focus,
@@ -100,6 +109,12 @@ defineProps({
   color: var(--t4);
 }
 
-.field-error { font-size: var(--font-size-xs); color: var(--red); }
-.field-hint  { font-size: var(--font-size-xs); color: var(--t3); }
+.field-error {
+  font-size: var(--font-size-xs);
+  color: var(--red);
+}
+.field-hint {
+  font-size: var(--font-size-xs);
+  color: var(--t3);
+}
 </style>

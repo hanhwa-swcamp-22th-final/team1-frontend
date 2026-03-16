@@ -8,5 +8,5 @@ const ui = useUiStore()
 
 <template>
   <RouterView />
-  <LoadingSpinner fullscreen v-if="ui.isLoading" />
+  <LoadingSpinner v-if="ui.isLoading" fullscreen />
 </template>

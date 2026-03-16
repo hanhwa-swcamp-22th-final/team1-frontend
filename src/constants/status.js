@@ -20,12 +20,12 @@
  * StatusBadge.vue의 MAP.order와 연동됨.
  */
 export const ORDER_STATUS = {
-  PENDING:    'PENDING',      // 주문 접수 (셀러가 등록한 초기 상태)
-  CONFIRMED:  'CONFIRMED',    // 주문 확인 (WH_MANAGER 확인)
-  PICKING:    'PICKING',      // 피킹 중 (WH_WORKER 작업)
-  PACKING:    'PACKING',      // 패킹 중 (WH_WORKER 작업)
-  SHIPPED:    'SHIPPED',      // 출고 완료 (최종 상태)
-  CANCELLED:  'CANCELLED',    // 취소
+  PENDING: 'PENDING', // 주문 접수 (셀러가 등록한 초기 상태)
+  CONFIRMED: 'CONFIRMED', // 주문 확인 (WH_MANAGER 확인)
+  PICKING: 'PICKING', // 피킹 중 (WH_WORKER 작업)
+  PACKING: 'PACKING', // 패킹 중 (WH_WORKER 작업)
+  SHIPPED: 'SHIPPED', // 출고 완료 (최종 상태)
+  CANCELLED: 'CANCELLED', // 취소
 }
 
 /**
@@ -44,10 +44,10 @@ export const ORDER_STATUS = {
  * StatusBadge.vue의 MAP.asn과 연동됨.
  */
 export const ASN_STATUS = {
-  DRAFT:      'DRAFT',        // 작성 중
-  SUBMITTED:  'SUBMITTED',    // 제출됨
-  RECEIVED:   'RECEIVED',     // 입고 완료
-  CANCELLED:  'CANCELLED',    // 취소
+  DRAFT: 'DRAFT', // 작성 중
+  SUBMITTED: 'SUBMITTED', // 제출됨
+  RECEIVED: 'RECEIVED', // 입고 완료
+  CANCELLED: 'CANCELLED', // 취소
 }
 
 /**
@@ -66,7 +66,7 @@ export const ASN_STATUS = {
  * router/index.js의 beforeEach 가드에서 TEMP_PASSWORD 체크.
  */
 export const ACCOUNT_STATUS = {
-  ACTIVE:           'ACTIVE',           // 정상
-  TEMP_PASSWORD:    'TEMP_PASSWORD',    // 임시 비밀번호 (첫 로그인 강제 변경)
-  INACTIVE:         'INACTIVE',         // 비활성
+  ACTIVE: 'ACTIVE', // 정상
+  TEMP_PASSWORD: 'TEMP_PASSWORD', // 임시 비밀번호 (첫 로그인 강제 변경)
+  INACTIVE: 'INACTIVE', // 비활성
 }

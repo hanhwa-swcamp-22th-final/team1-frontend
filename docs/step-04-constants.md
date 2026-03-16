@@ -3,6 +3,7 @@
 > **한 줄 요약**: CONK 프론트엔드에서 사용하는 모든 상수 정의 및 사용 가이드
 
 ## 목차
+
 - [파일 구조](#파일-구조)
 - [Import 방법](#import-방법)
 - [ROLES (역할/권한)](#roles-역할권한)
@@ -85,13 +86,13 @@ export const ROLES = {
 
 ### Role별 담당 화면
 
-| Role | 상수 | 화면 경로 | 역할 |
-|---|---|---|---|
+| Role    | 상수                   | 화면 경로                | 역할                |
+|---------|----------------------|----------------------|-------------------|
 | 시스템 관리자 | `ROLES.SYSTEM_ADMIN` | `views/systemAdmin/` | 전체 시스템 설정, 테넌트 관리 |
-| 마스터 관리자 | `ROLES.MASTER_ADMIN` | `views/masterAdmin/` | 다중 창고 운영, 비용 분석 |
-| 창고 관리자 | `ROLES.WH_MANAGER` | `views/whManager/` | 단일 창고 운영, 출고 관리 |
-| 창고 작업자 | `ROLES.WH_WORKER` | `views/whWorker/` | 피킹/패킹/재고 확인 (태블릿) |
-| 판매자 | `ROLES.SELLER` | `views/seller/` | ASN 등록, 주문 조회 |
+| 마스터 관리자 | `ROLES.MASTER_ADMIN` | `views/masterAdmin/` | 다중 창고 운영, 비용 분석   |
+| 창고 관리자  | `ROLES.WH_MANAGER`   | `views/whManager/`   | 단일 창고 운영, 출고 관리   |
+| 창고 작업자  | `ROLES.WH_WORKER`    | `views/whWorker/`    | 피킹/패킹/재고 확인 (태블릿) |
+| 판매자     | `ROLES.SELLER`       | `views/seller/`      | ASN 등록, 주문 조회     |
 
 ### Role별 화면 구조
 
@@ -161,6 +162,7 @@ router.beforeEach((to, from, next) => {
 ```
 
 라우트 메타 정의:
+
 ```js
 {
   path: '/system-admin/dashboard',
@@ -225,14 +227,14 @@ export const ORDER_STATUS = {
 
 ### 상태별 설명 및 담당
 
-| 상수 | 값 | 설명 | 담당자 | 다음 상태 |
-|---|---|---|---|---|
-| `PENDING` | `'PENDING'` | 판매자가 주문 등록, 창고에서 미확인 | 창고 관리자 | CONFIRMED, CANCELLED |
-| `CONFIRMED` | `'CONFIRMED'` | 창고가 주문 확인, 재고 예약 | 창고 작업자 | PICKING, CANCELLED |
-| `PICKING` | `'PICKING'` | 상품을 선반에서 꺼내는 중 | 창고 작업자 | PACKING, CANCELLED |
-| `PACKING` | `'PACKING'` | 상품을 포장하는 중 | 창고 작업자 | SHIPPED, CANCELLED |
-| `SHIPPED` | `'SHIPPED'` | 출고 완료, 배송 준비 | - | (최종) |
-| `CANCELLED` | `'CANCELLED'` | 주문 취소됨 | - | (최종) |
+| 상수          | 값             | 설명                   | 담당자    | 다음 상태                |
+|-------------|---------------|----------------------|--------|----------------------|
+| `PENDING`   | `'PENDING'`   | 판매자가 주문 등록, 창고에서 미확인 | 창고 관리자 | CONFIRMED, CANCELLED |
+| `CONFIRMED` | `'CONFIRMED'` | 창고가 주문 확인, 재고 예약     | 창고 작업자 | PICKING, CANCELLED   |
+| `PICKING`   | `'PICKING'`   | 상품을 선반에서 꺼내는 중       | 창고 작업자 | PACKING, CANCELLED   |
+| `PACKING`   | `'PACKING'`   | 상품을 포장하는 중           | 창고 작업자 | SHIPPED, CANCELLED   |
+| `SHIPPED`   | `'SHIPPED'`   | 출고 완료, 배송 준비         | -      | (최종)                 |
+| `CANCELLED` | `'CANCELLED'` | 주문 취소됨               | -      | (최종)                 |
 
 ### StatusBadge 컴포넌트 연동
 
@@ -320,12 +322,12 @@ export const ASN_STATUS = {
 
 ### 상태별 설명
 
-| 상수 | 값 | 설명 | 담당자 | 다음 상태 |
-|---|---|---|---|---|
-| `DRAFT` | `'DRAFT'` | 셀러가 ASN 작성 중 | 판매자 | SUBMITTED, CANCELLED |
-| `SUBMITTED` | `'SUBMITTED'` | 셀러가 ASN 제출, 창고 입고 예정 | 창고 관리자 | RECEIVED, CANCELLED |
-| `RECEIVED` | `'RECEIVED'` | 창고가 상품 입고 완료 | - | (최종) |
-| `CANCELLED` | `'CANCELLED'` | ASN 취소됨 | - | (최종) |
+| 상수          | 값             | 설명                   | 담당자    | 다음 상태                |
+|-------------|---------------|----------------------|--------|----------------------|
+| `DRAFT`     | `'DRAFT'`     | 셀러가 ASN 작성 중         | 판매자    | SUBMITTED, CANCELLED |
+| `SUBMITTED` | `'SUBMITTED'` | 셀러가 ASN 제출, 창고 입고 예정 | 창고 관리자 | RECEIVED, CANCELLED  |
+| `RECEIVED`  | `'RECEIVED'`  | 창고가 상품 입고 완료         | -      | (최종)                 |
+| `CANCELLED` | `'CANCELLED'` | ASN 취소됨              | -      | (최종)                 |
 
 ---
 
@@ -346,11 +348,11 @@ export const ACCOUNT_STATUS = {
 
 ### 상태별 설명 및 라우터 처리
 
-| 상수 | 값 | 설명 | 라우터 동작 |
-|---|---|---|---|
-| `ACTIVE` | `'ACTIVE'` | 정상 계정 | 로그인 후 Role별 대시보드로 이동 |
+| 상수              | 값                 | 설명                              | 라우터 동작                                   |
+|-----------------|-------------------|---------------------------------|------------------------------------------|
+| `ACTIVE`        | `'ACTIVE'`        | 정상 계정                           | 로그인 후 Role별 대시보드로 이동                     |
 | `TEMP_PASSWORD` | `'TEMP_PASSWORD'` | 임시 비밀번호 상태 (관리자가 계정 생성 후 초기 상태) | 로그인 후 **반드시** `/set-password` 페이지로 강제 이동 |
-| `INACTIVE` | `'INACTIVE'` | 비활성 계정 (관리자가 비활성화함) | 로그인 거부, 에러 메시지 표시 |
+| `INACTIVE`      | `'INACTIVE'`      | 비활성 계정 (관리자가 비활성화함)             | 로그인 거부, 에러 메시지 표시                        |
 
 ### 라우터 가드 구현
 
@@ -385,14 +387,14 @@ router.beforeEach(async (to, from, next) => {
 
 ### 라우트 이름 명명 규칙
 
-| Role | 접두어 | 예시 |
-|---|---|---|
-| 공용 (Auth) | (없음) | `login`, `set-password`, `forbidden` |
-| Seller | `seller-` | `seller-dashboard`, `seller-asn-list` |
+| Role         | 접두어       | 예시                                          |
+|--------------|-----------|---------------------------------------------|
+| 공용 (Auth)    | (없음)      | `login`, `set-password`, `forbidden`        |
+| Seller       | `seller-` | `seller-dashboard`, `seller-asn-list`       |
 | Master Admin | `master-` | `master-dashboard`, `master-warehouse-list` |
-| WH Manager | `whm-` | `whm-dashboard`, `whm-inventory` |
-| WH Worker | `whw-` | `whw-picking`, `whw-packing` |
-| System Admin | `sys-` | `sys-dashboard`, `sys-tenant-management` |
+| WH Manager   | `whm-`    | `whm-dashboard`, `whm-inventory`            |
+| WH Worker    | `whw-`    | `whw-picking`, `whw-packing`                |
+| System Admin | `sys-`    | `sys-dashboard`, `sys-tenant-management`    |
 
 ### ROUTE_NAMES 상수 예시
 
@@ -481,6 +483,7 @@ router.push({
 ### 1. 새로운 상태 추가 (예: 새로운 ORDER_STATUS)
 
 **Step 1**: `src/constants/status.js`에 상수 추가
+
 ```js
 export const ORDER_STATUS = {
   PENDING: 'PENDING',
@@ -494,6 +497,7 @@ export const ORDER_STATUS = {
 ```
 
 **Step 2**: `src/components/common/StatusBadge.vue`의 MAP 동기화
+
 ```js
 const statusLabel = computed(() => {
   const MAP = {
@@ -510,6 +514,7 @@ const statusLabel = computed(() => {
 ```
 
 **Step 3**: 색상 매핑 추가
+
 ```js
 const statusColor = computed(() => {
   const COLORS = {
@@ -523,6 +528,7 @@ const statusColor = computed(() => {
 ### 2. 새로운 라우트 이름 추가
 
 **Step 1**: `src/constants/routes.js`에 상수 추가
+
 ```js
 export const ROUTE_NAMES = {
   // ... 기존
@@ -531,6 +537,7 @@ export const ROUTE_NAMES = {
 ```
 
 **Step 2**: `src/router/routes/seller.js`에 라우트 정의
+
 ```js
 {
   path: 'orders/return',

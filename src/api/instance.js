@@ -40,8 +40,8 @@
 import axios from 'axios'
 
 const instance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,  /* .env의 VITE_API_BASE_URL */
-  timeout: 10000,  /* 10초 초과 시 AxiosError(timeout) 발생 */
+  baseURL: import.meta.env.VITE_API_BASE_URL /* .env의 VITE_API_BASE_URL */,
+  timeout: 10000 /* 10초 초과 시 AxiosError(timeout) 발생 */,
 })
 
 // ── 요청 인터셉터 ────────────────────────────────────────
@@ -52,8 +52,8 @@ instance.interceptors.request.use((config) => {
   if (raw) {
     try {
       const { token, tenantCode } = JSON.parse(raw)
-      if (token)      config.headers['Authorization']  = `Bearer ${token}`
-      if (tenantCode) config.headers['X-Tenant-Code']  = tenantCode
+      if (token) config.headers['Authorization'] = `Bearer ${token}`
+      if (tenantCode) config.headers['X-Tenant-Code'] = tenantCode
     } catch {
       // JSON.parse 실패(손상된 데이터) 시 무시하고 헤더 미설정
     }

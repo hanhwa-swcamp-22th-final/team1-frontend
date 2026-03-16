@@ -3,6 +3,7 @@
 > **한 줄 요약**: 전역에서 재사용되는 10개 공통 컴포넌트(테이블, 모달, 폼, 배지 등)의 사용법 및 Props/Slots 명세.
 
 ## 목차 (Table of Contents)
+
 - [개요](#개요)
 - [BaseTable](#basetable)
 - [BaseModal](#basemodal)
@@ -60,15 +61,15 @@ import BaseModal from '@/components/common/BaseModal.vue'
 
 ### Props
 
-| Prop | 타입 | 필수 | 기본값 | 설명 |
-|---|---|---|---|---|
-| `columns` | `Column[]` | ✅ | — | 컬럼 정의 배열 |
-| `rows` | `Object[]` | | `[]` | 데이터 행 배열 |
-| `loading` | `boolean` | | `false` | 로딩 중 표시 여부 |
-| `pagination` | `Pagination \| null` | | `null` | null이면 페이지네이션 숨김 |
-| `rowKey` | `string` | | `'id'` | 행 고유키 필드명 |
-| `striped` | `boolean` | | `false` | 줄무늬 스타일 |
-| `bordered` | `boolean` | | `false` | 테두리 표시 |
+| Prop         | 타입                   | 필수 | 기본값     | 설명               |
+|--------------|----------------------|----|---------|------------------|
+| `columns`    | `Column[]`           | ✅  | —       | 컬럼 정의 배열         |
+| `rows`       | `Object[]`           |    | `[]`    | 데이터 행 배열         |
+| `loading`    | `boolean`            |    | `false` | 로딩 중 표시 여부       |
+| `pagination` | `Pagination \| null` |    | `null`  | null이면 페이지네이션 숨김 |
+| `rowKey`     | `string`             |    | `'id'`  | 행 고유키 필드명        |
+| `striped`    | `boolean`            |    | `false` | 줄무늬 스타일          |
+| `bordered`   | `boolean`            |    | `false` | 테두리 표시           |
 
 ### Column 타입 정의
 
@@ -94,18 +95,18 @@ type Pagination = {
 
 ### Emits
 
-| 이벤트 | 인자 | 발생 시점 |
-|---|---|---|
-| `sort` | `key: string` | 정렬 가능 헤더 클릭 (토글 방식) |
-| `page-change` | `page: number` | 페이지 버튼 클릭 |
+| 이벤트           | 인자             | 발생 시점               |
+|---------------|----------------|---------------------|
+| `sort`        | `key: string`  | 정렬 가능 헤더 클릭 (토글 방식) |
+| `page-change` | `page: number` | 페이지 버튼 클릭           |
 
 ### Slots
 
-| 슬롯 이름 | Props | 설명 |
-|---|---|---|
+| 슬롯 이름        | Props            | 설명                  |
+|--------------|------------------|---------------------|
 | `cell-{key}` | `{ row, value }` | 특정 컬럼의 셀 내용 커스텀 렌더링 |
-| `empty` | — | 데이터가 없을 때 표시 |
-| `loading` | — | 로딩 중 표시 |
+| `empty`      | —                | 데이터가 없을 때 표시        |
+| `loading`    | —                | 로딩 중 표시             |
 
 ### 기본 사용 예
 
@@ -195,26 +196,26 @@ function handlePageChange(page) {
 
 ### Props
 
-| Prop | 타입 | 기본값 | 설명 |
-|---|---|---|---|
-| `title` | `string` | — (필수) | 모달 제목 |
-| `isOpen` | `boolean` | — (필수) | 표시 여부 |
-| `width` | `string` | `'520px'` | 모달 패널 너비 |
-| `hideFooter` | `boolean` | `false` | 기본 footer 버튼 숨김 여부 |
+| Prop         | 타입        | 기본값       | 설명                 |
+|--------------|-----------|-----------|--------------------|
+| `title`      | `string`  | — (필수)    | 모달 제목              |
+| `isOpen`     | `boolean` | — (필수)    | 표시 여부              |
+| `width`      | `string`  | `'520px'` | 모달 패널 너비           |
+| `hideFooter` | `boolean` | `false`   | 기본 footer 버튼 숨김 여부 |
 
 ### Emits
 
-| 이벤트 | 인자 | 발생 시점 |
-|---|---|---|
-| `confirm` | — | confirm 버튼 클릭 |
-| `cancel` | — | 배경/cancel 버튼 클릭 |
+| 이벤트       | 인자 | 발생 시점           |
+|-----------|----|-----------------|
+| `confirm` | —  | confirm 버튼 클릭   |
+| `cancel`  | —  | 배경/cancel 버튼 클릭 |
 
 ### Slots
 
-| 슬롯 | 설명 |
-|---|---|
-| `default` | 모달 본문 내용 |
-| `footer` | 버튼 영역 커스텀 (hideFooter=true 시에만 사용) |
+| 슬롯        | 설명                                 |
+|-----------|------------------------------------|
+| `default` | 모달 본문 내용                           |
+| `footer`  | 버튼 영역 커스텀 (hideFooter=true 시에만 사용) |
 
 ### 기본 사용 예
 
@@ -291,17 +292,17 @@ function handleCancel() {
 
 ### Props
 
-| Prop | 타입 | 기본값 | 설명 |
-|---|---|---|---|
-| `label` | `string` | — (필수) | 필드 라벨 |
-| `error` | `string` | `''` | 에러 메시지 |
+| Prop       | 타입        | 기본값     | 설명        |
+|------------|-----------|---------|-----------|
+| `label`    | `string`  | — (필수)  | 필드 라벨     |
+| `error`    | `string`  | `''`    | 에러 메시지    |
 | `required` | `boolean` | `false` | 필수 표시 (*) |
-| `hint` | `string` | `''` | 힌트 텍스트 |
+| `hint`     | `string`  | `''`    | 힌트 텍스트    |
 
 ### Slots
 
-| 슬롯 | 설명 |
-|---|---|
+| 슬롯        | 설명                            |
+|-----------|-------------------------------|
 | `default` | input/select/textarea 등 입력 요소 |
 
 ### 사용 예
@@ -348,14 +349,15 @@ function validate() {
 
 ### Props
 
-| Prop | 타입 | 필수 | 기본값 | 설명 |
-|---|---|---|---|---|
-| `status` | `string` | ✅ | — | 상태값 (예: 'PENDING', 'ACTIVE') |
-| `type` | `'order' \| 'asn' \| 'account'` | | `'order'` | 상태 타입 (색상 테마) |
+| Prop     | 타입                              | 필수 | 기본값       | 설명                           |
+|----------|---------------------------------|----|-----------|------------------------------|
+| `status` | `string`                        | ✅  | —         | 상태값 (예: 'PENDING', 'ACTIVE') |
+| `type`   | `'order' \| 'asn' \| 'account'` |    | `'order'` | 상태 타입 (색상 테마)                |
 
 ### 상태 매핑
 
 **type="order"** (주문 상태):
+
 - `PENDING` → 회색
 - `PROCESSING` → 파란색
 - `SHIPPED` → 초록색
@@ -363,12 +365,14 @@ function validate() {
 - `CANCELLED` → 빨강색
 
 **type="asn"** (ASN 상태):
+
 - `DRAFT` → 회색
 - `CONFIRMED` → 파란색
 - `RECEIVED` → 초록색
 - `REJECTED` → 빨강색
 
 **type="account"** (계정 상태):
+
 - `ACTIVE` → 초록색
 - `PENDING` → 노랑색
 - `SUSPENDED` → 빨강색
@@ -401,10 +405,10 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 
 ### Props
 
-| Prop | 타입 | 필수 | 설명 |
-|---|---|---|---|
-| `steps` | `Step[]` | ✅ | 단계 배열 |
-| `currentStep` | `string` | ✅ | 현재 단계 (step의 key 값) |
+| Prop          | 타입       | 필수 | 설명                  |
+|---------------|----------|----|---------------------|
+| `steps`       | `Step[]` | ✅  | 단계 배열               |
+| `currentStep` | `string` | ✅  | 현재 단계 (step의 key 값) |
 
 ### Step 타입 정의
 
@@ -447,16 +451,16 @@ const currentStep = 'PICKING'
 
 ### Props
 
-| Prop | 타입 | 기본값 | 설명 |
-|---|---|---|---|
-| `accept` | `string` | `'.xlsx,.xls'` | 허용 파일 확장자 |
-| `multiple` | `boolean` | `false` | 다중 파일 선택 허용 |
-| `disabled` | `boolean` | `false` | 비활성화 |
+| Prop       | 타입        | 기본값            | 설명          |
+|------------|-----------|----------------|-------------|
+| `accept`   | `string`  | `'.xlsx,.xls'` | 허용 파일 확장자   |
+| `multiple` | `boolean` | `false`        | 다중 파일 선택 허용 |
+| `disabled` | `boolean` | `false`        | 비활성화        |
 
 ### Emits
 
-| 이벤트 | 인자 | 발생 시점 |
-|---|---|---|
+| 이벤트             | 인자               | 발생 시점    |
+|-----------------|------------------|----------|
 | `file-selected` | `File \| File[]` | 파일 선택 완료 |
 
 ### 사용 예
@@ -493,21 +497,21 @@ async function handleFileSelected(file) {
 
 ### Props
 
-| Prop | 타입 | 기본값 | 설명 |
-|---|---|---|---|
-| `isOpen` | `boolean` | — (필수) | 표시 여부 |
-| `title` | `string` | `'확인'` | 제목 |
-| `message` | `string` | — (필수) | 확인 메시지 |
-| `confirmLabel` | `string` | `'확인'` | confirm 버튼 텍스트 |
-| `cancelLabel` | `string` | `'취소'` | cancel 버튼 텍스트 |
-| `danger` | `boolean` | `false` | 위험 버튼 스타일 (빨강) |
+| Prop           | 타입        | 기본값     | 설명             |
+|----------------|-----------|---------|----------------|
+| `isOpen`       | `boolean` | — (필수)  | 표시 여부          |
+| `title`        | `string`  | `'확인'`  | 제목             |
+| `message`      | `string`  | — (필수)  | 확인 메시지         |
+| `confirmLabel` | `string`  | `'확인'`  | confirm 버튼 텍스트 |
+| `cancelLabel`  | `string`  | `'취소'`  | cancel 버튼 텍스트  |
+| `danger`       | `boolean` | `false` | 위험 버튼 스타일 (빨강) |
 
 ### Emits
 
-| 이벤트 | 발생 시점 |
-|---|---|
-| `confirm` | confirm 버튼 클릭 |
-| `cancel` | cancel 버튼 또는 배경 클릭 |
+| 이벤트       | 발생 시점              |
+|-----------|--------------------|
+| `confirm` | confirm 버튼 클릭      |
+| `cancel`  | cancel 버튼 또는 배경 클릭 |
 
 ### 사용 예
 
@@ -552,12 +556,12 @@ async function doDelete() {
 
 ### Props
 
-| Prop | 타입 | 기본값 | 설명 |
-|---|---|---|---|
-| `visible` (v-model) | `boolean` | — (필수) | 표시 여부 |
-| `message` | `string` | — (필수) | 메시지 텍스트 |
-| `type` | `'success' \| 'error' \| 'info' \| 'warning'` | `'info'` | 토스트 타입 |
-| `duration` | `number` | `3500` | 자동 닫힘 시간(ms). 0 = 자동 닫힘 안 함 |
+| Prop                | 타입                                            | 기본값      | 설명                          |
+|---------------------|-----------------------------------------------|----------|-----------------------------|
+| `visible` (v-model) | `boolean`                                     | — (필수)   | 표시 여부                       |
+| `message`           | `string`                                      | — (필수)   | 메시지 텍스트                     |
+| `type`              | `'success' \| 'error' \| 'info' \| 'warning'` | `'info'` | 토스트 타입                      |
+| `duration`          | `number`                                      | `3500`   | 자동 닫힘 시간(ms). 0 = 자동 닫힘 안 함 |
 
 ### 사용 예
 
@@ -632,18 +636,18 @@ async function handleLongOperation() {
 
 ### Props
 
-| Prop | 타입 | 설명 |
-|---|---|---|
-| `title` | `string` | 제목 (필수) |
-| `description` | `string` | 설명 (선택) |
-| `icon` | `string` | 아이콘 emoji (선택) |
+| Prop          | 타입       | 설명             |
+|---------------|----------|----------------|
+| `title`       | `string` | 제목 (필수)        |
+| `description` | `string` | 설명 (선택)        |
+| `icon`        | `string` | 아이콘 emoji (선택) |
 
 ### Slots
 
-| 슬롯 | 설명 |
-|---|---|
-| `icon` | 커스텀 아이콘 (prop icon 대신) |
-| `action` | 액션 버튼 영역 |
+| 슬롯       | 설명                     |
+|----------|------------------------|
+| `icon`   | 커스텀 아이콘 (prop icon 대신) |
+| `action` | 액션 버튼 영역               |
 
 ### 사용 예
 
@@ -677,11 +681,11 @@ CSS 스피너. 인라인 또는 전체 화면 모드.
 
 ### Props
 
-| Prop | 타입 | 기본값 | 설명 |
-|---|---|---|---|
-| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | 크기 |
-| `fullscreen` | `boolean` | `false` | 전체 화면 오버레이 |
-| `color` | `string` | `'--color-primary'` | CSS 변수 또는 색상값 |
+| Prop         | 타입                     | 기본값                 | 설명            |
+|--------------|------------------------|---------------------|---------------|
+| `size`       | `'sm' \| 'md' \| 'lg'` | `'md'`              | 크기            |
+| `fullscreen` | `boolean`              | `false`             | 전체 화면 오버레이    |
+| `color`      | `string`               | `'--color-primary'` | CSS 변수 또는 색상값 |
 
 ### 사용 예
 
@@ -842,5 +846,6 @@ async function handleConfirm() {
 ---
 
 ## 관련 문서
+
 - [step-10-components-layout.md](./step-10-components-layout.md) — 레이아웃 컴포넌트
 - [step-07-utils.md](./step-07-utils.md) — 유틸리티 함수들

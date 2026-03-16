@@ -55,7 +55,7 @@ export const useWarehouseStore = defineStore(
   {
     // 새로고침 후에도 선택된 창고 유지
     persist: {
-      key:     'conk-warehouse',
+      key: 'conk-warehouse',
       storage: localStorage,
     },
   }

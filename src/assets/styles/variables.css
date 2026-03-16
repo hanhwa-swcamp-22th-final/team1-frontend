@@ -20,202 +20,202 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,600&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500&family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* ══════════════════════════════════════════════
-     Layout — 주요 구조물 치수
-     사용: Sidebar.vue, Header.vue, AppLayout.vue
-     ══════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════
+       Layout — 주요 구조물 치수
+       사용: Sidebar.vue, Header.vue, AppLayout.vue
+       ══════════════════════════════════════════════ */
 
-  /* 사이드바 너비
-     1920px → 13vw = 249.6px ≈ 250px (기준)
-     clamp: 1540px 이하에서 200px 고정 */
-  --sidebar-width:     clamp(200px, 13vw,    260px);
+    /* 사이드바 너비
+       1920px → 13vw = 249.6px ≈ 250px (기준)
+       clamp: 1540px 이하에서 200px 고정 */
+    --sidebar-width: clamp(200px, 13vw, 260px);
 
-  /* 헤더 높이 (= 사이드바 로고 영역과 동일하게 맞춤)
-     1080px → 10vh = 108px (기준) */
-  --header-height:     clamp(68px,  10vh,    108px);
+    /* 헤더 높이 (= 사이드바 로고 영역과 동일하게 맞춤)
+       1080px → 10vh = 108px (기준) */
+    --header-height: clamp(68px, 10vh, 108px);
 
-  /* 사이드바 하단 푸터 높이
-     1080px → 9.72vh = 104.98px ≈ 105px */
-  --footer-height:     clamp(76px,  9.72vh,  105px);
+    /* 사이드바 하단 푸터 높이
+       1080px → 9.72vh = 104.98px ≈ 105px */
+    --footer-height: clamp(76px, 9.72vh, 105px);
 
-  /* 사이드바 로고 영역 높이 — 헤더와 동일 높이로 맞춰 수평 정렬 */
-  --sidebar-logo-h:    clamp(68px,  10vh,    108px);
+    /* 사이드바 로고 영역 높이 — 헤더와 동일 높이로 맞춰 수평 정렬 */
+    --sidebar-logo-h: clamp(68px, 10vh, 108px);
 
-  /* 사이드바 프로필 카드 높이
-     1080px → 13.52vh = 146.02px ≈ 146px */
-  --sidebar-profile-h: clamp(124px, 13.52vh, 160px);
+    /* 사이드바 프로필 카드 높이
+       1080px → 13.52vh = 146.02px ≈ 146px */
+    --sidebar-profile-h: clamp(124px, 13.52vh, 160px);
 
-  /* ══════════════════════════════════════════════
-     Layout Padding — 컴포넌트 내부 여백
-     사용: Sidebar.vue의 --sidebar-px,
-           Header.vue의 --header-px,
-           AppLayout.vue의 --content-px/--content-py
-     ══════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════
+       Layout Padding — 컴포넌트 내부 여백
+       사용: Sidebar.vue의 --sidebar-px,
+             Header.vue의 --header-px,
+             AppLayout.vue의 --content-px/--content-py
+       ══════════════════════════════════════════════ */
 
-  /* 사이드바 좌우 내부 패딩 — 1920px → 1.042vw = 20px */
-  --sidebar-px:  clamp(12px, 1.042vw, 20px);
+    /* 사이드바 좌우 내부 패딩 — 1920px → 1.042vw = 20px */
+    --sidebar-px: clamp(12px, 1.042vw, 20px);
 
-  /* 헤더 좌우 내부 패딩 — 1920px → 1.667vw = 32px */
-  --header-px:   clamp(20px, 1.667vw, 32px);
+    /* 헤더 좌우 내부 패딩 — 1920px → 1.667vw = 32px */
+    --header-px: clamp(20px, 1.667vw, 32px);
 
-  /* 콘텐츠 영역 좌우 패딩 — 헤더와 동일 */
-  --content-px:  clamp(20px, 1.667vw, 32px);
+    /* 콘텐츠 영역 좌우 패딩 — 헤더와 동일 */
+    --content-px: clamp(20px, 1.667vw, 32px);
 
-  /* 콘텐츠 영역 상하 패딩 — 1920px → 1.458vw = 28px */
-  --content-py:  clamp(18px, 1.458vw, 28px);
+    /* 콘텐츠 영역 상하 패딩 — 1920px → 1.458vw = 28px */
+    --content-py: clamp(18px, 1.458vw, 28px);
 
-  /* ══════════════════════════════════════════════
-     Avatar / Icon Sizes
-     사용: Sidebar.vue 로고 아이콘(.logo-icon), 유저 아바타(.avatar)
-     ══════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════
+       Avatar / Icon Sizes
+       사용: Sidebar.vue 로고 아이콘(.logo-icon), 유저 아바타(.avatar)
+       ══════════════════════════════════════════════ */
 
-  /* 사이드바 로고 아이콘 크기 — 1920px → 2.083vw = 40px */
-  --avatar-logo:    clamp(32px, 2.083vw, 40px);
+    /* 사이드바 로고 아이콘 크기 — 1920px → 2.083vw = 40px */
+    --avatar-logo: clamp(32px, 2.083vw, 40px);
 
-  /* 유저 프로필 아바타 크기 — 1920px → 2.292vw = 44px */
-  --avatar-profile: clamp(36px, 2.292vw, 44px);
+    /* 유저 프로필 아바타 크기 — 1920px → 2.292vw = 44px */
+    --avatar-profile: clamp(36px, 2.292vw, 44px);
 
-  /* ══════════════════════════════════════════════
-     Sidebar Palette — 사이드바 전용 어두운 색상
-     사용: Sidebar.vue 전용. 다른 컴포넌트에서 사용 금지.
-     ══════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════
+       Sidebar Palette — 사이드바 전용 어두운 색상
+       사용: Sidebar.vue 전용. 다른 컴포넌트에서 사용 금지.
+       ══════════════════════════════════════════════ */
 
-  --sidebar:    #1A1A2E;  /* 사이드바 배경 (어두운 네이비) */
-  --sidebar-lt: #252540;  /* 활성/호버 메뉴 배경 */
-  --sidebar-bd: #2E2E4A;  /* 구분선, 토글 버튼 배경 */
+    --sidebar: #1A1A2E; /* 사이드바 배경 (어두운 네이비) */
+    --sidebar-lt: #252540; /* 활성/호버 메뉴 배경 */
+    --sidebar-bd: #2E2E4A; /* 구분선, 토글 버튼 배경 */
 
-  /* ══════════════════════════════════════════════
-     Accent — 브랜드 골드 강조색
-     사용: 버튼, 활성 메뉴 인디케이터, 아바타 배경
-     ══════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════
+       Accent — 브랜드 골드 강조색
+       사용: 버튼, 활성 메뉴 인디케이터, 아바타 배경
+       ══════════════════════════════════════════════ */
 
-  --gold:      #F5A623;   /* 골드 기본 */
-  --gold-lt:   #F7B84B;   /* 골드 밝음 (hover) */
-  --gold-pale: #FEF3DC;   /* 골드 연함 (배경용) */
+    --gold: #F5A623; /* 골드 기본 */
+    --gold-lt: #F7B84B; /* 골드 밝음 (hover) */
+    --gold-pale: #FEF3DC; /* 골드 연함 (배경용) */
 
-  /* ══════════════════════════════════════════════
-     Page / Surface — 페이지 배경 및 카드 배경
-     ══════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════
+       Page / Surface — 페이지 배경 및 카드 배경
+       ══════════════════════════════════════════════ */
 
-  --bg:        #F4F6FA;   /* 전체 페이지 배경 (회색빛 흰색) */
-  --surface:   #FFFFFF;   /* 카드, 테이블, 모달 배경 */
-  --surface-2: #F8F9FC;   /* 테이블 헤더, 호버 배경 등 */
+    --bg: #F4F6FA; /* 전체 페이지 배경 (회색빛 흰색) */
+    --surface: #FFFFFF; /* 카드, 테이블, 모달 배경 */
+    --surface-2: #F8F9FC; /* 테이블 헤더, 호버 배경 등 */
 
-  /* ══════════════════════════════════════════════
-     Semantic Colors — 상태 색상
-     각 색상은 기본(진함)과 pale(연한 배경)로 쌍으로 제공됨.
-     StatusBadge.vue의 색상 매핑과 연동됨.
-     ══════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════
+       Semantic Colors — 상태 색상
+       각 색상은 기본(진함)과 pale(연한 배경)로 쌍으로 제공됨.
+       StatusBadge.vue의 색상 매핑과 연동됨.
+       ══════════════════════════════════════════════ */
 
-  --blue:        #4C74FF;   /* 정보, 링크, 활성 상태 */
-  --blue-pale:   #EEF2FF;   /* blue 배경용 (호버, 배지 bg) */
-  --blue-hover:  #3A5FE0;   /* primary hover */
+    --blue: #4C74FF; /* 정보, 링크, 활성 상태 */
+    --blue-pale: #EEF2FF; /* blue 배경용 (호버, 배지 bg) */
+    --blue-hover: #3A5FE0; /* primary hover */
 
-  --purple:      #7C3AED;   /* 진행 중 상태 (피킹/패킹) */
-  --purple-pale: #EDE9FE;
+    --purple: #7C3AED; /* 진행 중 상태 (피킹/패킹) */
+    --purple-pale: #EDE9FE;
 
-  --green:       #2ECC87;   /* 성공, 완료 상태 */
-  --green-pale:  #E8F9F1;
+    --green: #2ECC87; /* 성공, 완료 상태 */
+    --green-pale: #E8F9F1;
 
-  --amber:       #F5C842;   /* 경고, 대기 상태 */
-  --amber-pale:  #FFFBE8;
+    --amber: #F5C842; /* 경고, 대기 상태 */
+    --amber-pale: #FFFBE8;
 
-  --red:         #EF4444;   /* 오류, 취소, 삭제 */
-  --red-pale:    #FEE2E2;
-  --red-hover:   #D63030;   /* danger hover */
+    --red: #EF4444; /* 오류, 취소, 삭제 */
+    --red-pale: #FEE2E2;
+    --red-hover: #D63030; /* danger hover */
 
-  /* ══════════════════════════════════════════════
-     Text Colors — 텍스트 계층 (t1: 강조 → t4: 비활성)
-     ══════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════
+       Text Colors — 텍스트 계층 (t1: 강조 → t4: 비활성)
+       ══════════════════════════════════════════════ */
 
-  --t1: #1A1A2E;   /* 제목, 강조 텍스트 */
-  --t2: #3D4460;   /* 본문 텍스트 (기본) */
-  --t3: #7B859A;   /* 보조 텍스트, placeholder */
-  --t4: #B0B8CC;   /* 비활성, 구분선 인접 텍스트 */
+    --t1: #1A1A2E; /* 제목, 강조 텍스트 */
+    --t2: #3D4460; /* 본문 텍스트 (기본) */
+    --t3: #7B859A; /* 보조 텍스트, placeholder */
+    --t4: #B0B8CC; /* 비활성, 구분선 인접 텍스트 */
 
-  /* ══════════════════════════════════════════════
-     Border
-     ══════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════
+       Border
+       ══════════════════════════════════════════════ */
 
-  --border:    #E4E8F0;   /* 기본 구분선 */
-  --border-dk: #C8D0E0;   /* 강조 구분선 (hover 등) */
+    --border: #E4E8F0; /* 기본 구분선 */
+    --border-dk: #C8D0E0; /* 강조 구분선 (hover 등) */
 
-  /* ══════════════════════════════════════════════
-     Typography — 폰트 크기
-     기준: 1920px 최대, 1366px 최소 (vw 기반 선형 스케일)
-     사용 예: font-size: var(--font-size-md)
-     ══════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════
+       Typography — 폰트 크기
+       기준: 1920px 최대, 1366px 최소 (vw 기반 선형 스케일)
+       사용 예: font-size: var(--font-size-md)
+       ══════════════════════════════════════════════ */
 
-  --font-base:      'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-barlow:    'Barlow', sans-serif;              /* UI 라벨, 버튼, 네비, 테이블 헤더 */
-  --font-condensed: 'Barlow Condensed', sans-serif;   /* 페이지 타이틀, 섹션 제목, KPI 수치 */
-  --font-mono:      'IBM Plex Sans', monospace;        /* ASN번호, 코드형 식별자 */
+    --font-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-barlow: 'Barlow', sans-serif; /* UI 라벨, 버튼, 네비, 테이블 헤더 */
+    --font-condensed: 'Barlow Condensed', sans-serif; /* 페이지 타이틀, 섹션 제목, KPI 수치 */
+    --font-mono: 'IBM Plex Sans', monospace; /* ASN번호, 코드형 식별자 */
 
-  --font-size-xs:  clamp(10px, 0.573vw, 11px);   /* 배지, 캡션       */
-  --font-size-sm:  clamp(11px, 0.625vw, 12px);   /* 테이블 셀, 힌트  */
-  --font-size-md:  clamp(12px, 0.729vw, 14px);   /* 본문 기본        */
-  --font-size-lg:  clamp(14px, 0.833vw, 16px);   /* 섹션 제목        */
-  --font-size-xl:  clamp(15px, 0.938vw, 18px);   /* 페이지 제목      */
-  --font-size-2xl: clamp(18px, 1.146vw, 22px);   /* 대형 수치, 통계  */
+    --font-size-xs: clamp(10px, 0.573vw, 11px); /* 배지, 캡션       */
+    --font-size-sm: clamp(11px, 0.625vw, 12px); /* 테이블 셀, 힌트  */
+    --font-size-md: clamp(12px, 0.729vw, 14px); /* 본문 기본        */
+    --font-size-lg: clamp(14px, 0.833vw, 16px); /* 섹션 제목        */
+    --font-size-xl: clamp(15px, 0.938vw, 18px); /* 페이지 제목      */
+    --font-size-2xl: clamp(18px, 1.146vw, 22px); /* 대형 수치, 통계  */
 
-  /* ══════════════════════════════════════════════
-     Spacing — 간격 토큰
-     8px 기반 척도. vw로 스케일되어 화면에 비례적으로 조정.
-     사용 예: gap: var(--space-4), padding: var(--space-3) var(--space-5)
-     ══════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════
+       Spacing — 간격 토큰
+       8px 기반 척도. vw로 스케일되어 화면에 비례적으로 조정.
+       사용 예: gap: var(--space-4), padding: var(--space-3) var(--space-5)
+       ══════════════════════════════════════════════ */
 
-  --space-1:  clamp(3px,  0.208vw, 4px);    /* ~4px  */
-  --space-2:  clamp(6px,  0.417vw, 8px);    /* ~8px  */
-  --space-3:  clamp(10px, 0.625vw, 12px);   /* ~12px */
-  --space-4:  clamp(12px, 0.833vw, 16px);   /* ~16px */
-  --space-5:  clamp(16px, 1.042vw, 20px);   /* ~20px */
-  --space-6:  clamp(18px, 1.25vw,  24px);   /* ~24px */
-  --space-8:  clamp(24px, 1.667vw, 32px);   /* ~32px */
-  --space-10: clamp(30px, 2.083vw, 40px);   /* ~40px */
+    --space-1: clamp(3px, 0.208vw, 4px); /* ~4px  */
+    --space-2: clamp(6px, 0.417vw, 8px); /* ~8px  */
+    --space-3: clamp(10px, 0.625vw, 12px); /* ~12px */
+    --space-4: clamp(12px, 0.833vw, 16px); /* ~16px */
+    --space-5: clamp(16px, 1.042vw, 20px); /* ~20px */
+    --space-6: clamp(18px, 1.25vw, 24px); /* ~24px */
+    --space-8: clamp(24px, 1.667vw, 32px); /* ~32px */
+    --space-10: clamp(30px, 2.083vw, 40px); /* ~40px */
 
-  /* Shared UI tokens */
-  --ui-btn-height:      38px;                         /* BaseModal, ConfirmDialog */
-  --ui-btn-px:          20px;                         /* BaseModal, ConfirmDialog */
-  --ui-focus-ring-size: 3px;                          /* shared button focus ring */
-  --error-code-size:    clamp(64px, 4.167vw, 80px);  /* 403/404 code size */
+    /* Shared UI tokens */
+    --ui-btn-height: 38px; /* BaseModal, ConfirmDialog */
+    --ui-btn-px: 20px; /* BaseModal, ConfirmDialog */
+    --ui-focus-ring-size: 3px; /* shared button focus ring */
+    --error-code-size: clamp(64px, 4.167vw, 80px); /* 403/404 code size */
 
-  /* ══════════════════════════════════════════════
-     Border Radius
-     ══════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════
+       Border Radius
+       ══════════════════════════════════════════════ */
 
-  --radius-sm:   4px;    /* 작은 버튼, 배지 */
-  --radius-md:   8px;    /* 입력 필드, 버튼, 카드 */
-  --radius-lg:   12px;   /* 모달, 패널, 드롭다운 */
-  --radius-xl:   16px;   /* 큰 카드 */
-  --radius-full: 9999px; /* 완전한 pill 형태 */
+    --radius-sm: 4px; /* 작은 버튼, 배지 */
+    --radius-md: 8px; /* 입력 필드, 버튼, 카드 */
+    --radius-lg: 12px; /* 모달, 패널, 드롭다운 */
+    --radius-xl: 16px; /* 큰 카드 */
+    --radius-full: 9999px; /* 완전한 pill 형태 */
 
-  /* ══════════════════════════════════════════════
-     Shadow — 그림자 계층
-     ══════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════
+       Shadow — 그림자 계층
+       ══════════════════════════════════════════════ */
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);    /* 카드 기본 */
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10);   /* 플로팅 요소 */
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);   /* 드롭다운, 패널 */
-  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.14);  /* 모달 */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08); /* 카드 기본 */
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10); /* 플로팅 요소 */
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12); /* 드롭다운, 패널 */
+    --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.14); /* 모달 */
 
-  /* ══════════════════════════════════════════════
-     Z-index — 레이어 순서 (낮을수록 아래)
-     sidebar < header < dropdown < modal < toast
-     ══════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════
+       Z-index — 레이어 순서 (낮을수록 아래)
+       sidebar < header < dropdown < modal < toast
+       ══════════════════════════════════════════════ */
 
-  --z-sidebar:  100;  /* Sidebar.vue (fixed) */
-  --z-header:   110;  /* Header.vue (fixed, 사이드바 위) */
-  --z-dropdown: 200;  /* 드롭다운, 알림 패널 */
-  --z-modal:    300;  /* BaseModal, ConfirmDialog, LoadingSpinner(fullscreen) */
-  --z-toast:    400;  /* ToastMessage (최상위) */
+    --z-sidebar: 100; /* Sidebar.vue (fixed) */
+    --z-header: 110; /* Header.vue (fixed, 사이드바 위) */
+    --z-dropdown: 200; /* 드롭다운, 알림 패널 */
+    --z-modal: 300; /* BaseModal, ConfirmDialog, LoadingSpinner(fullscreen) */
+    --z-toast: 400; /* ToastMessage (최상위) */
 
-  /* ══════════════════════════════════════════════
-     Transition — 애니메이션 지속 시간
-     사용: transition: all var(--ease-default)
-           transition: background var(--ease-fast)
-     ══════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════
+       Transition — 애니메이션 지속 시간
+       사용: transition: all var(--ease-default)
+             transition: background var(--ease-fast)
+       ══════════════════════════════════════════════ */
 
-  --ease-default: 0.2s ease;   /* 일반 전환 (hover, 상태 변화) */
-  --ease-fast:    0.15s ease;  /* 빠른 전환 (버튼 hover) */
-  --ease-slow:    0.35s ease;  /* 느린 전환 (사이드바 width 변화) */
+    --ease-default: 0.2s ease; /* 일반 전환 (hover, 상태 변화) */
+    --ease-fast: 0.15s ease; /* 빠른 전환 (버튼 hover) */
+    --ease-slow: 0.35s ease; /* 느린 전환 (사이드바 width 변화) */
 }

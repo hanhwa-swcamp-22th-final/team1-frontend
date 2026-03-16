@@ -27,7 +27,7 @@
 import { computed } from 'vue'
 
 const props = defineProps({
-  steps:       { type: Array,  required: true },
+  steps: { type: Array, required: true },
   currentStep: { type: String, required: true },
 })
 
@@ -35,9 +35,7 @@ const props = defineProps({
  * currentStep의 steps 배열 내 인덱스.
  * 일치하는 key가 없으면 -1 → 모든 단계가 pending 상태로 표시됨.
  */
-const currentIndex = computed(
-  () => props.steps.findIndex((s) => s.key === props.currentStep)
-)
+const currentIndex = computed(() => props.steps.findIndex((s) => s.key === props.currentStep))
 
 /**
  * 각 단계의 상태 계산
@@ -45,9 +43,9 @@ const currentIndex = computed(
  * @returns {'done'|'active'|'pending'}
  */
 function stepState(index) {
-  if (index < currentIndex.value)  return 'done'    // 완료된 단계
-  if (index === currentIndex.value) return 'active'  // 현재 단계
-  return 'pending'                                   // 아직 안 된 단계
+  if (index < currentIndex.value) return 'done' // 완료된 단계
+  if (index === currentIndex.value) return 'active' // 현재 단계
+  return 'pending' // 아직 안 된 단계
 }
 </script>
 
@@ -56,16 +54,16 @@ function stepState(index) {
     <div
       v-for="(step, i) in steps"
       :key="step.key"
-      class="step"
-      :class="`step--${stepState(i)}`"
-      role="listitem"
       :aria-current="i === currentIndex ? 'step' : undefined"
+      :class="`step--${stepState(i)}`"
+      class="step"
+      role="listitem"
     >
       <!--
         커넥터 라인: 첫 번째 단계(i===0) 이후부터 표시.
         connector--done: i <= currentIndex (현재 단계 진입 전까지의 연결선을 초록으로)
       -->
-      <div v-if="i > 0" class="connector" :class="{ 'connector--done': i <= currentIndex }" />
+      <div v-if="i > 0" :class="{ 'connector--done': i <= currentIndex }" class="connector" />
 
       <!-- 아이콘 영역 -->
       <div class="step-icon">
@@ -79,8 +77,8 @@ function stepState(index) {
             l5.1-5.1   → 오른쪽 긴 대각선
             L13 5      → 끝점
         -->
-        <svg v-if="stepState(i) === 'done'" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M6.5 11.5 3 8l1.4-1.4 2.1 2.1 5.1-5.1L13 5z"/>
+        <svg v-if="stepState(i) === 'done'" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M6.5 11.5 3 8l1.4-1.4 2.1 2.1 5.1-5.1L13 5z" />
         </svg>
         <!-- done이 아닌 상태: 단계 번호(1-based) 표시 -->
         <span v-else>{{ i + 1 }}</span>
@@ -112,35 +110,46 @@ function stepState(index) {
 /* ── 커넥터 (단계 사이 가로선) ────────────────── */
 .connector {
   position: absolute;
-  top: 15px;                        /* 아이콘 중심 높이에 맞춤 (32px/2 - 1px) */
-  right: calc(50% + 16px);          /* 오른쪽 아이콘 가장자리까지 */
-  left: calc(-50% + 16px);          /* 왼쪽 아이콘 가장자리부터 */
+  top: 15px; /* 아이콘 중심 높이에 맞춤 (32px/2 - 1px) */
+  right: calc(50% + 16px); /* 오른쪽 아이콘 가장자리까지 */
+  left: calc(-50% + 16px); /* 왼쪽 아이콘 가장자리부터 */
   height: 2px;
   background: var(--border);
   transition: background var(--ease-default);
 }
-.connector--done { background: var(--green); }
+.connector--done {
+  background: var(--green);
+}
 
 /* ── 아이콘 원형 ────────────────────────────── */
 .step-icon {
-  width: 32px; height: 32px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: var(--font-size-sm);
   font-weight: 700;
   position: relative;
-  z-index: 1;                       /* 커넥터 라인 위에 오도록 */
+  z-index: 1; /* 커넥터 라인 위에 오도록 */
   transition: all var(--ease-default);
   flex-shrink: 0;
 }
 
-.step-icon svg { width: 16px; height: 16px; }
+.step-icon svg {
+  width: 16px;
+  height: 16px;
+}
 
-.step--done    .step-icon { background: var(--green);      color: #fff; }
-.step--active  .step-icon {
+.step--done .step-icon {
+  background: var(--green);
+  color: #fff;
+}
+.step--active .step-icon {
   background: var(--blue);
   color: #fff;
-  box-shadow: 0 0 0 4px var(--blue-pale);  /* 활성 단계 강조 링 */
+  box-shadow: 0 0 0 4px var(--blue-pale); /* 활성 단계 강조 링 */
 }
 .step--pending .step-icon {
   background: var(--surface-2);
@@ -156,7 +165,14 @@ function stepState(index) {
   text-align: center;
   white-space: nowrap;
 }
-.step--done    .step-label { color: var(--green); }
-.step--active  .step-label { color: var(--blue); font-weight: 700; }
-.step--pending .step-label { color: var(--t4); }
+.step--done .step-label {
+  color: var(--green);
+}
+.step--active .step-label {
+  color: var(--blue);
+  font-weight: 700;
+}
+.step--pending .step-label {
+  color: var(--t4);
+}
 </style>

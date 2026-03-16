@@ -30,9 +30,9 @@
  *   <LoadingSpinner size="lg" color="var(--gold)" />
  */
 defineProps({
-  size:       { type: String,  default: 'md' },
+  size: { type: String, default: 'md' },
   fullscreen: { type: Boolean, default: false },
-  color:      { type: String,  default: '' },
+  color: { type: String, default: '' },
 })
 </script>
 
@@ -40,17 +40,17 @@ defineProps({
   <!-- fullscreen=true: 오버레이 div로 감쌈 -->
   <div v-if="fullscreen" class="fullscreen-overlay">
     <span
-      class="spinner"
       :class="`spinner--${size}`"
       :style="color ? { borderTopColor: color } : {}"
+      class="spinner"
     />
   </div>
   <!-- fullscreen=false: 인라인 span으로 바로 표시 -->
   <span
     v-else
-    class="spinner"
     :class="`spinner--${size}`"
     :style="color ? { borderTopColor: color } : {}"
+    class="spinner"
   />
 </template>
 
@@ -58,26 +58,43 @@ defineProps({
 .spinner {
   display: inline-block;
   border-radius: 50%;
-  border: 2px solid var(--border);         /* 회색 기본 테두리 */
-  border-top-color: var(--blue);           /* 파란 회전 색상 (color prop으로 override 가능) */
+  border: 2px solid var(--border); /* 회색 기본 테두리 */
+  border-top-color: var(--blue); /* 파란 회전 색상 (color prop으로 override 가능) */
   animation: spin 0.7s linear infinite;
   flex-shrink: 0;
 }
 
 /* 크기 변형: sm/md/lg에 따라 크기와 border-width 조정 */
-.spinner--sm { width: 16px; height: 16px; border-width: 2px; }
-.spinner--md { width: 28px; height: 28px; border-width: 3px; }
-.spinner--lg { width: 44px; height: 44px; border-width: 4px; }
+.spinner--sm {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+.spinner--md {
+  width: 28px;
+  height: 28px;
+  border-width: 3px;
+}
+.spinner--lg {
+  width: 44px;
+  height: 44px;
+  border-width: 4px;
+}
 
 .fullscreen-overlay {
-  position: fixed; inset: 0;
+  position: fixed;
+  inset: 0;
   background: rgba(244, 246, 250, 0.75);
-  display: flex; align-items: center; justify-content: center;
-  z-index: var(--z-modal);       /* 300: 모달과 동일 레벨 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal); /* 300: 모달과 동일 레벨 */
   backdrop-filter: blur(2px);
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

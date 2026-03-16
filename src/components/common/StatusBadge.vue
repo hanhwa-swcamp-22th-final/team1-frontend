@@ -36,33 +36,33 @@
  *   <StatusBadge :status="user.accountStatus" type="account" />
  */
 import { computed } from 'vue'
-import { ORDER_STATUS, ASN_STATUS, ACCOUNT_STATUS } from '@/constants'
+import { ACCOUNT_STATUS, ASN_STATUS, ORDER_STATUS } from '@/constants'
 
 const props = defineProps({
   status: { type: String, required: true },
-  type:   { type: String, default: 'order' },
+  type: { type: String, default: 'order' },
 })
 
 /** type별 상태→표시정보 매핑 */
 const MAP = {
   order: {
-    [ORDER_STATUS.PENDING]:   { label: '접수',    color: 'amber'  },
-    [ORDER_STATUS.CONFIRMED]: { label: '확인',    color: 'blue'   },
-    [ORDER_STATUS.PICKING]:   { label: '피킹중',  color: 'purple' },
-    [ORDER_STATUS.PACKING]:   { label: '패킹중',  color: 'purple' },
-    [ORDER_STATUS.SHIPPED]:   { label: '출고완료', color: 'green'  },
-    [ORDER_STATUS.CANCELLED]: { label: '취소',    color: 'red'    },
+    [ORDER_STATUS.PENDING]: { label: '접수', color: 'amber' },
+    [ORDER_STATUS.CONFIRMED]: { label: '확인', color: 'blue' },
+    [ORDER_STATUS.PICKING]: { label: '피킹중', color: 'purple' },
+    [ORDER_STATUS.PACKING]: { label: '패킹중', color: 'purple' },
+    [ORDER_STATUS.SHIPPED]: { label: '출고완료', color: 'green' },
+    [ORDER_STATUS.CANCELLED]: { label: '취소', color: 'red' },
   },
   asn: {
-    [ASN_STATUS.DRAFT]:     { label: '작성중',   color: 'amber' },
-    [ASN_STATUS.SUBMITTED]: { label: '제출됨',   color: 'blue'  },
-    [ASN_STATUS.RECEIVED]:  { label: '입고완료', color: 'green' },
-    [ASN_STATUS.CANCELLED]: { label: '취소',     color: 'red'   },
+    [ASN_STATUS.DRAFT]: { label: '작성중', color: 'amber' },
+    [ASN_STATUS.SUBMITTED]: { label: '제출됨', color: 'blue' },
+    [ASN_STATUS.RECEIVED]: { label: '입고완료', color: 'green' },
+    [ASN_STATUS.CANCELLED]: { label: '취소', color: 'red' },
   },
   account: {
-    [ACCOUNT_STATUS.ACTIVE]:        { label: '정상',        color: 'green' },
+    [ACCOUNT_STATUS.ACTIVE]: { label: '정상', color: 'green' },
     [ACCOUNT_STATUS.TEMP_PASSWORD]: { label: '임시비밀번호', color: 'amber' },
-    [ACCOUNT_STATUS.INACTIVE]:      { label: '비활성',      color: 'red'   },
+    [ACCOUNT_STATUS.INACTIVE]: { label: '비활성', color: 'red' },
   },
 }
 
@@ -77,12 +77,13 @@ const info = computed(() => {
 </script>
 
 <template>
-  <span class="badge" :class="`badge--${info.color}`">{{ info.label }}</span>
+  <span :class="`badge--${info.color}`" class="badge">{{ info.label }}</span>
 </template>
 
 <style scoped>
 .badge {
-  display: inline-flex; align-items: center;
+  display: inline-flex;
+  align-items: center;
   padding: 3px 10px;
   border-radius: var(--radius-full);
   font-size: var(--font-size-xs);
@@ -91,10 +92,28 @@ const info = computed(() => {
   letter-spacing: 0.02em;
 }
 /* 색상별 스타일 (variables.css의 semantic color 쌍 사용) */
-.badge--blue    { background: var(--blue-pale);   color: var(--blue);   }
-.badge--green   { background: var(--green-pale);  color: var(--green);  }
-.badge--amber   { background: var(--amber-pale);  color: #B45309;       }  /* amber 텍스트는 어두운 톤 */
-.badge--red     { background: var(--red-pale);    color: var(--red);    }
-.badge--purple  { background: var(--purple-pale); color: var(--purple); }
-.badge--default { background: var(--surface-2);   color: var(--t3);     }  /* 알 수 없는 상태 */
+.badge--blue {
+  background: var(--blue-pale);
+  color: var(--blue);
+}
+.badge--green {
+  background: var(--green-pale);
+  color: var(--green);
+}
+.badge--amber {
+  background: var(--amber-pale);
+  color: #b45309;
+} /* amber 텍스트는 어두운 톤 */
+.badge--red {
+  background: var(--red-pale);
+  color: var(--red);
+}
+.badge--purple {
+  background: var(--purple-pale);
+  color: var(--purple);
+}
+.badge--default {
+  background: var(--surface-2);
+  color: var(--t3);
+} /* 알 수 없는 상태 */
 </style>

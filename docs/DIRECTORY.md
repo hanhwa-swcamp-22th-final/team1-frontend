@@ -57,7 +57,7 @@ api/
 └── integration.js    # Amazon SP-API 인증, 마진 시뮬레이터 단가 조회 API
 ```
 
-> ⚠️ API 함수는 반드시 이 폴더 안에서만 작성합니다. 
+> ⚠️ API 함수는 반드시 이 폴더 안에서만 작성합니다.
 > View나 Store에서 Axios를 직접 import하지 않습니다.
 
 ---
@@ -119,7 +119,8 @@ layout/
 
 ---
 
-### `components/seller/` `components/masterAdmin/` `components/whManager/` `components/whWorker/` `components/systemAdmin/`
+### `components/seller/` `components/masterAdmin/` `components/whManager/` `components/whWorker/`
+`components/systemAdmin/`
 
 각 Role 전용으로 **해당 Role의 여러 View에서 반복 사용**되는 컴포넌트입니다.
 단 하나의 View에서만 쓰이는 컴포넌트는 View 파일 내부에 인라인으로 작성합니다.
@@ -146,6 +147,7 @@ constants/
 Vue Router 인스턴스 생성 및 **전역 네비게이션 가드**를 정의합니다.
 
 가드에서 처리하는 항목:
+
 - 비로그인 상태 → 로그인 페이지 리다이렉트
 - 임시 비밀번호 상태(`TEMP_PASSWORD`) → 비밀번호 변경 페이지 강제 이동
 - Role 불일치 접근 → 403 페이지
@@ -316,11 +318,11 @@ systemAdmin/
 
 ## 개발 규칙 요약
 
-| 항목 | 규칙 |
-|---|---|
-| API 호출 | 반드시 `api/` 폴더의 함수만 사용, View에서 Axios 직접 import 금지 |
-| 상수 | `constants/` 에서 import, 문자열 하드코딩 금지 |
-| 공통 컴포넌트 추가 | 팀원과 협의 후 `components/common/` 에 추가 |
-| 스토어 사용 | 전역 공유 상태만 Pinia로 관리, 단일 화면 상태는 `ref/reactive` 로 처리 |
-| Role별 화면 | `views/{role}/` 와 `components/{role}/` 에만 작성, 다른 Role 폴더 수정 금지 |
-| 태블릿 UI | `views/whWorker/` 는 터치 친화적 UI (큰 버튼, 넓은 터치 영역) 적용 |
+| 항목         | 규칙                                                             |
+|------------|----------------------------------------------------------------|
+| API 호출     | 반드시 `api/` 폴더의 함수만 사용, View에서 Axios 직접 import 금지               |
+| 상수         | `constants/` 에서 import, 문자열 하드코딩 금지                            |
+| 공통 컴포넌트 추가 | 팀원과 협의 후 `components/common/` 에 추가                             |
+| 스토어 사용     | 전역 공유 상태만 Pinia로 관리, 단일 화면 상태는 `ref/reactive` 로 처리             |
+| Role별 화면   | `views/{role}/` 와 `components/{role}/` 에만 작성, 다른 Role 폴더 수정 금지 |
+| 태블릿 UI     | `views/whWorker/` 는 터치 친화적 UI (큰 버튼, 넓은 터치 영역) 적용              |

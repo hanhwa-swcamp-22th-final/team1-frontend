@@ -17,11 +17,12 @@
    ───────────────────────────────────────────────────────── */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity var(--ease-default);  /* 0.2s ease */
+    transition: opacity var(--ease-default); /* 0.2s ease */
 }
+
 .fade-enter-from,
 .fade-leave-to {
-  opacity: 0;
+    opacity: 0;
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -32,15 +33,17 @@
    ───────────────────────────────────────────────────────── */
 .slide-left-enter-active,
 .slide-left-leave-active {
-  transition: opacity var(--ease-default), transform var(--ease-default);
+    transition: opacity var(--ease-default), transform var(--ease-default);
 }
+
 .slide-left-enter-from {
-  opacity: 0;
-  transform: translateX(16px);  /* 오른쪽에서 진입 */
+    opacity: 0;
+    transform: translateX(16px); /* 오른쪽에서 진입 */
 }
+
 .slide-left-leave-to {
-  opacity: 0;
-  transform: translateX(-16px); /* 왼쪽으로 퇴장 */
+    opacity: 0;
+    transform: translateX(-16px); /* 왼쪽으로 퇴장 */
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -49,11 +52,12 @@
    ───────────────────────────────────────────────────────── */
 .modal-overlay-enter-active,
 .modal-overlay-leave-active {
-  transition: opacity var(--ease-default);
+    transition: opacity var(--ease-default);
 }
+
 .modal-overlay-enter-from,
 .modal-overlay-leave-to {
-  opacity: 0;
+    opacity: 0;
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -64,12 +68,13 @@
    ───────────────────────────────────────────────────────── */
 .modal-panel-enter-active,
 .modal-panel-leave-active {
-  transition: opacity var(--ease-default), transform var(--ease-default);
+    transition: opacity var(--ease-default), transform var(--ease-default);
 }
+
 .modal-panel-enter-from,
 .modal-panel-leave-to {
-  opacity: 0;
-  transform: translateY(-12px) scale(0.97);
+    opacity: 0;
+    transform: translateY(-12px) scale(0.97);
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -80,12 +85,13 @@
    ───────────────────────────────────────────────────────── */
 .toast-enter-active,
 .toast-leave-active {
-  transition: opacity var(--ease-fast), transform var(--ease-fast);  /* 0.15s */
+    transition: opacity var(--ease-fast), transform var(--ease-fast); /* 0.15s */
 }
+
 .toast-enter-from,
 .toast-leave-to {
-  opacity: 0;
-  transform: translateX(24px);  /* 화면 오른쪽 방향 */
+    opacity: 0;
+    transform: translateX(24px); /* 화면 오른쪽 방향 */
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -96,10 +102,11 @@
    ───────────────────────────────────────────────────────── */
 .dropdown-enter-active,
 .dropdown-leave-active {
-  transition: opacity var(--ease-fast), transform var(--ease-fast);
+    transition: opacity var(--ease-fast), transform var(--ease-fast);
 }
+
 .dropdown-enter-from,
 .dropdown-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);  /* 패널이 위에서 아래로 열리는 효과 */
+    opacity: 0;
+    transform: translateY(-6px); /* 패널이 위에서 아래로 열리는 효과 */
 }

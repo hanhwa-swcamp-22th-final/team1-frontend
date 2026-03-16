@@ -40,12 +40,12 @@
  *   </AppLayout>
  */
 import Sidebar from './Sidebar.vue'
-import Header  from './Header.vue'
-import Footer  from './Footer.vue'
+import Header from './Header.vue'
+import Footer from './Footer.vue'
 
 defineProps({
-  title:      { type: String, default: '' },
-  breadcrumb: { type: Array,  default: () => [] },
+  title: { type: String, default: '' },
+  breadcrumb: { type: Array, default: () => [] },
 })
 </script>
 
@@ -57,7 +57,7 @@ defineProps({
     <!-- 우측 메인 영역 (사이드바 너비만큼 margin-left) -->
     <div class="app-main">
       <!-- 헤더 (position: fixed, 108px) — header-action 슬롯 전달 -->
-      <Header :title="title" :breadcrumb="breadcrumb">
+      <Header :breadcrumb="breadcrumb" :title="title">
         <template #action>
           <slot name="header-action" />
         </template>
@@ -84,17 +84,17 @@ defineProps({
   사이드바가 fixed이므로 우측 main 영역에 margin-left 적용.
 */
 .app-main {
-  margin-left: var(--sidebar-width);      /* 250px */
+  margin-left: var(--sidebar-width); /* 250px */
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
 .app-content {
-  margin-top: var(--header-height);       /* 108px */
+  margin-top: var(--header-height); /* 108px */
   flex: 1;
   padding: var(--content-py) var(--content-px);
-  padding-bottom: calc(var(--content-py) + var(--footer-height));  /* 푸터에 가려지지 않도록 */
+  padding-bottom: calc(var(--content-py) + var(--footer-height)); /* 푸터에 가려지지 않도록 */
   background: var(--bg);
   min-height: calc(100vh - var(--header-height));
 }

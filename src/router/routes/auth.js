@@ -17,21 +17,21 @@ import { ROUTE_NAMES } from '@/constants'
 
 export default [
   {
-    path:      '/login',
-    name:      ROUTE_NAMES.LOGIN,
+    path: '/login',
+    name: ROUTE_NAMES.LOGIN,
     component: () => import('@/views/auth/LoginView.vue'),
-    meta:      { public: true },
+    meta: { public: true },
   },
   {
-    path:      '/set-password',
-    name:      ROUTE_NAMES.SET_PASSWORD,
+    path: '/set-password',
+    name: ROUTE_NAMES.SET_PASSWORD,
     component: () => import('@/views/auth/SetPasswordView.vue'),
-    meta:      { public: true },  // 초대 링크로 접근 (토큰 미필요)
+    meta: { public: true }, // 초대 링크로 접근 (토큰 미필요)
   },
   {
-    path:      '/change-password',
-    name:      ROUTE_NAMES.CHANGE_PASSWORD,
+    path: '/change-password',
+    name: ROUTE_NAMES.CHANGE_PASSWORD,
     component: () => import('@/views/auth/ChangePasswordView.vue'),
-    meta:      { public: true },  // TEMP_PASSWORD 상태 사용자는 token 있지만 public 처리
+    meta: { public: true }, // TEMP_PASSWORD 상태 사용자는 token 있지만 public 처리
   },
 ]

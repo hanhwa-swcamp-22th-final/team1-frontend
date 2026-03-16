@@ -3,6 +3,7 @@
 > **한 줄 요약**: 데이터 포맷팅, 입력값 검증, Excel 작업, 로컬스토리지 작업을 위한 헬퍼 함수 모음.
 
 ## 목차 (Table of Contents)
+
 - [파일 구조](#파일-구조)
 - [format.js](#formatjs)
 - [validate.js](#validatejs)
@@ -34,10 +35,10 @@ src/utils/
 import { formatDate } from '@/utils/format'
 ```
 
-| 매개변수 | 타입 | 기본값 | 설명 |
-|---|---|---|---|
-| `date` | `Date \| string \| number \| null` | — (필수) | ISO 문자열, Unix 타임스탬프, Date 객체 |
-| `pattern` | `'date' \| 'datetime' \| 'time'` | `'date'` | 출력 형식 |
+| 매개변수      | 타입                                 | 기본값      | 설명                           |
+|-----------|------------------------------------|----------|------------------------------|
+| `date`    | `Date \| string \| number \| null` | — (필수)   | ISO 문자열, Unix 타임스탬프, Date 객체 |
+| `pattern` | `'date' \| 'datetime' \| 'time'`   | `'date'` | 출력 형식                        |
 
 #### 사용 예
 
@@ -62,8 +63,8 @@ formatDate('invalid')                           // '-'
 import { formatCurrency } from '@/utils/format'
 ```
 
-| 매개변수 | 타입 | 설명 |
-|---|---|---|
+| 매개변수     | 타입               | 설명        |
+|----------|------------------|-----------|
 | `amount` | `number \| null` | USD 단위 숫자 |
 
 #### 사용 예
@@ -99,11 +100,12 @@ import { formatCurrency } from '@/utils/format'
 import { formatWeight } from '@/utils/format'
 ```
 
-| 매개변수 | 타입 | 설명 |
-|---|---|---|
+| 매개변수    | 타입               | 설명       |
+|---------|------------------|----------|
 | `grams` | `number \| null` | 그램(g) 단위 |
 
 #### 규칙
+
 - 1000g 미만: `{n} g`
 - 1000g 이상: `{n.00} kg` (소수점 2자리)
 
@@ -128,8 +130,8 @@ formatWeight(null)     // '-'
 import { formatNumber } from '@/utils/format'
 ```
 
-| 매개변수 | 타입 | 설명 |
-|---|---|---|
+| 매개변수  | 타입               | 설명       |
+|-------|------------------|----------|
 | `num` | `number \| null` | 정수 또는 소수 |
 
 #### 사용 예
@@ -154,8 +156,8 @@ formatNumber(null)         // '-'
 import { validateEmail } from '@/utils/validate'
 ```
 
-| 매개변수 | 타입 | 설명 |
-|---|---|---|
+| 매개변수    | 타입       | 설명     |
+|---------|----------|--------|
 | `email` | `string` | 이메일 주소 |
 
 **규칙**: 표준 이메일 정규식 (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`)
@@ -207,11 +209,12 @@ function checkEmail() {
 import { validatePassword } from '@/utils/validate'
 ```
 
-| 매개변수 | 타입 | 설명 |
-|---|---|---|
+| 매개변수       | 타입       | 설명   |
+|------------|----------|------|
 | `password` | `string` | 비밀번호 |
 
 **규칙**:
+
 - 최소 8자
 - 소문자 포함 (a-z)
 - 대문자 포함 (A-Z)
@@ -271,11 +274,12 @@ SKU(Stock Keeping Unit) 형식 검증.
 import { validateSku } from '@/utils/validate'
 ```
 
-| 매개변수 | 타입 | 설명 |
-|---|---|---|
+| 매개변수  | 타입       | 설명     |
+|-------|----------|--------|
 | `sku` | `string` | SKU 코드 |
 
 **규칙**:
+
 - 길이: 4~32자
 - 문자: 영문자(대소 구분 없음), 숫자, 하이픈(`-`)만 허용
 - 공백·특수문자 불가
@@ -337,8 +341,8 @@ Excel 파일을 JSON 배열로 파싱.
 import { parseExcel } from '@/utils/excel'
 ```
 
-| 매개변수 | 타입 | 설명 |
-|---|---|---|
+| 매개변수   | 타입     | 설명                          |
+|--------|--------|-----------------------------|
 | `file` | `File` | input[type="file"]에서 선택한 파일 |
 
 **반환**: `Promise<Array<Object>>` — 첫 번째 시트의 행 배열 (헤더를 키로 변환)
@@ -396,10 +400,10 @@ JSON 배열을 Excel 파일로 다운로드.
 import { downloadExcel } from '@/utils/excel'
 ```
 
-| 매개변수 | 타입 | 기본값 | 설명 |
-|---|---|---|---|
-| `rows` | `Array<Object>` | — (필수) | 행 배열 |
-| `filename` | `string` | `'export'` | 다운로드 파일명 (`.xlsx` 자동 추가) |
+| 매개변수       | 타입              | 기본값        | 설명                       |
+|------------|-----------------|------------|--------------------------|
+| `rows`     | `Array<Object>` | — (필수)     | 행 배열                     |
+| `filename` | `string`        | `'export'` | 다운로드 파일명 (`.xlsx` 자동 추가) |
 
 #### 사용 예
 
@@ -478,11 +482,11 @@ import { ls, ss } from '@/utils/storage'
 
 ### ls (localStorage)
 
-| 메서드 | 설명 |
-|---|---|
-| `ls.set(key, value)` | 값 저장 (JSON 자동 직렬화) |
-| `ls.get(key)` | 값 조회 (JSON 자동 역직렬화, 없으면 null) |
-| `ls.remove(key)` | 값 삭제 |
+| 메서드                  | 설명                            |
+|----------------------|-------------------------------|
+| `ls.set(key, value)` | 값 저장 (JSON 자동 직렬화)            |
+| `ls.get(key)`        | 값 조회 (JSON 자동 역직렬화, 없으면 null) |
+| `ls.remove(key)`     | 값 삭제                          |
 
 ```js
 // 저장
@@ -497,11 +501,11 @@ ls.remove('user-prefs')
 
 ### ss (sessionStorage)
 
-| 메서드 | 설명 |
-|---|---|
+| 메서드                  | 설명   |
+|----------------------|------|
 | `ss.set(key, value)` | 값 저장 |
-| `ss.get(key)` | 값 조회 |
-| `ss.remove(key)` | 값 삭제 |
+| `ss.get(key)`        | 값 조회 |
+| `ss.remove(key)`     | 값 삭제 |
 
 ```js
 // 임시 폼 데이터 저장 (탭 닫으면 자동 삭제)
@@ -516,12 +520,12 @@ if (draft) {
 
 ### ls vs ss 비교
 
-| 구분 | localStorage | sessionStorage |
-|---|---|---|
-| 저장 위치 | 브라우저 로컬 저장소 | 메모리 (탭별) |
-| 유지 기간 | 브라우저 닫아도 유지 | 탭 닫으면 삭제 |
-| 용도 | 사용자 설정, 환경 설정 | 임시 폼 데이터, 세션 정보 |
-| 예시 | 테마, 언어, 사이드바 접힘 | 입력 중인 폼, 검색 필터 |
+| 구분    | localStorage    | sessionStorage  |
+|-------|-----------------|-----------------|
+| 저장 위치 | 브라우저 로컬 저장소     | 메모리 (탭별)        |
+| 유지 기간 | 브라우저 닫아도 유지     | 탭 닫으면 삭제        |
+| 용도    | 사용자 설정, 환경 설정   | 임시 폼 데이터, 세션 정보 |
+| 예시    | 테마, 언어, 사이드바 접힘 | 입력 중인 폼, 검색 필터  |
 
 ### ⚠️ Pinia persist와의 차이
 
@@ -659,5 +663,6 @@ async function handleFileUpload(file) {
 ---
 
 ## 관련 문서
+
 - [step-06-stores.md](./step-06-stores.md) — localStorage를 통한 Pinia persist
 - [step-09-components-common.md](./step-09-components-common.md) — BaseForm 컴포넌트

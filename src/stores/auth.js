@@ -27,22 +27,22 @@
  *   auth.clearAuth()  // 로그아웃
  */
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 
 export const useAuthStore = defineStore(
   'auth',
   () => {
     // 로그인 유저 정보 객체 (위 user 예시 참조)
-    const user         = ref(null)
+    const user = ref(null)
 
     // JWT 액세스 토큰 — Authorization: Bearer {token}
-    const token        = ref(null)
+    const token = ref(null)
 
     // 현재 유저의 역할 — constants/roles.js의 ROLES 값 중 하나
-    const role         = ref(null)
+    const role = ref(null)
 
     // 창고사(테넌트) 코드 — X-Tenant-Code 헤더에 사용
-    const tenantCode   = ref(null)
+    const tenantCode = ref(null)
 
     // 셀러 고객사 코드 (SELLER Role 전용, 나머지 Role은 null)
     const customerCode = ref(null)
@@ -55,10 +55,10 @@ export const useAuthStore = defineStore(
      * @param {{ user, token, role, tenantCode, customerCode }} payload
      */
     function setAuth(payload) {
-      user.value         = payload.user         ?? null
-      token.value        = payload.token        ?? null
-      role.value         = payload.role         ?? null
-      tenantCode.value   = payload.tenantCode   ?? null
+      user.value = payload.user ?? null
+      token.value = payload.token ?? null
+      role.value = payload.role ?? null
+      tenantCode.value = payload.tenantCode ?? null
       customerCode.value = payload.customerCode ?? null
     }
 
@@ -76,7 +76,7 @@ export const useAuthStore = defineStore(
     // pinia-plugin-persistedstate: 브라우저 새로고침 후에도 상태 유지
     // key 이름을 변경하면 api/instance.js의 localStorage.getItem 키도 함께 변경할 것
     persist: {
-      key:     'conk-auth',
+      key: 'conk-auth',
       storage: localStorage,
     },
   }

@@ -21,22 +21,22 @@
  *   - watch(showNotifPanel)    → 패널 열릴 때 document 리스너 등록, 닫힐 때 해제
  *   - onUnmounted              → 컴포넌트 제거 시 리스너 정리(메모리 누수 방지)
  */
-import { ref, watch, onUnmounted } from 'vue'
+import { onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore }         from '@/stores/auth'
+import { useAuthStore } from '@/stores/auth'
 import { useNotificationStore } from '@/stores/notification'
-import { useUiStore }           from '@/stores/ui'
-import { ROUTE_NAMES }          from '@/constants'
+import { useUiStore } from '@/stores/ui'
+import { ROUTE_NAMES } from '@/constants'
 
 defineProps({
-  title:      { type: String, default: '' },
-  breadcrumb: { type: Array,  default: () => [] },
+  title: { type: String, default: '' },
+  breadcrumb: { type: Array, default: () => [] },
 })
 
-const router         = useRouter()
-const auth           = useAuthStore()
-const notif          = useNotificationStore()
-const ui             = useUiStore()
+const router = useRouter()
+const auth = useAuthStore()
+const notif = useNotificationStore()
+const ui = useUiStore()
 const showNotifPanel = ref(false)
 
 /** 패널 외부 클릭 시 닫힘 처리 */
@@ -70,15 +70,16 @@ async function logout() {
 
 <template>
   <header class="app-header">
-
     <!-- 좌측: 타이틀 + 브레드크럼 -->
     <div class="header-left">
       <h1 class="page-title">{{ title }}</h1>
-      <nav v-if="breadcrumb.length" class="breadcrumb" aria-label="breadcrumb">
+      <nav v-if="breadcrumb.length" aria-label="breadcrumb" class="breadcrumb">
         <template v-for="(crumb, i) in breadcrumb" :key="i">
           <span v-if="i > 0" class="breadcrumb-sep">/</span>
-          <RouterLink v-if="crumb.to" :to="crumb.to" class="crumb-link">{{ crumb.label }}</RouterLink>
-          <span v-else class="crumb-current" aria-current="page">{{ crumb.label }}</span>
+          <RouterLink v-if="crumb.to" :to="crumb.to" class="crumb-link">{{
+            crumb.label
+          }}</RouterLink>
+          <span v-else aria-current="page" class="crumb-current">{{ crumb.label }}</span>
         </template>
       </nav>
     </div>
@@ -95,13 +96,11 @@ async function logout() {
         패널 외부 클릭 시 패널을 닫음.
       -->
       <div class="notif-wrap" @click.stop>
-        <button
-          class="icon-btn"
-          @click="showNotifPanel = !showNotifPanel"
-          aria-label="알림"
-        >
-          <svg viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10 2a6 6 0 0 0-6 6v3.17L2.5 13H17.5l-1.5-1.83V8a6 6 0 0 0-6-6zm0 16a2 2 0 0 0 2-2H8a2 2 0 0 0 2 2z"/>
+        <button aria-label="알림" class="icon-btn" @click="showNotifPanel = !showNotifPanel">
+          <svg fill="currentColor" viewBox="0 0 20 20">
+            <path
+              d="M10 2a6 6 0 0 0-6 6v3.17L2.5 13H17.5l-1.5-1.83V8a6 6 0 0 0-6-6zm0 16a2 2 0 0 0 2-2H8a2 2 0 0 0 2 2z"
+            />
           </svg>
           <!-- 미읽음 개수 배지: 99개 초과 시 "99+" 표시 -->
           <span v-if="notif.unreadCount > 0" class="badge">
@@ -122,11 +121,11 @@ async function logout() {
               <div
                 v-for="item in notif.notifications.slice(0, 20)"
                 :key="item.id"
-                class="notif-item"
                 :class="{ unread: !item.read }"
+                class="notif-item"
                 @click="notif.markAsRead(item.id)"
               >
-                <span class="notif-dot" v-if="!item.read" />
+                <span v-if="!item.read" class="notif-dot" />
                 <p class="notif-msg">{{ item.message }}</p>
                 <span class="notif-time">{{ item.time }}</span>
               </div>
@@ -136,22 +135,25 @@ async function logout() {
       </div>
 
       <!-- 로그아웃 -->
-      <button class="icon-btn logout-btn" @click="logout" title="로그아웃">
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M13 3h4v14h-4M9 14l4-4-4-4M13 10H3" stroke-linecap="round" stroke-linejoin="round"/>
+      <button class="icon-btn logout-btn" title="로그아웃" @click="logout">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 20 20">
+          <path
+            d="M13 3h4v14h-4M9 14l4-4-4-4M13 10H3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
       </button>
     </div>
-
   </header>
 </template>
 
 <style scoped>
 .app-header {
-  height: var(--header-height);       /* 108px */
+  height: var(--header-height); /* 108px */
   position: fixed;
   top: 0;
-  left: var(--sidebar-width);         /* 250px */
+  left: var(--sidebar-width); /* 250px */
   right: 0;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -164,7 +166,11 @@ async function logout() {
 }
 
 /* ── 좌측 ────────────────────────────────────────── */
-.header-left { display: flex; flex-direction: column; gap: 4px; }
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
 .page-title {
   font-family: var(--font-condensed);
@@ -182,10 +188,19 @@ async function logout() {
   font-family: var(--font-barlow);
   font-size: var(--font-size-xs);
 }
-.breadcrumb-sep { color: var(--t4); }
-.crumb-link     { color: var(--blue); text-decoration: none; }
-.crumb-link:hover { text-decoration: underline; }
-.crumb-current  { color: var(--t3); }
+.breadcrumb-sep {
+  color: var(--t4);
+}
+.crumb-link {
+  color: var(--blue);
+  text-decoration: none;
+}
+.crumb-link:hover {
+  text-decoration: underline;
+}
+.crumb-current {
+  color: var(--t3);
+}
 
 /* ── 우측 ────────────────────────────────────────── */
 .header-right {
@@ -195,34 +210,49 @@ async function logout() {
 }
 
 .icon-btn {
-  width: clamp(34px, 2.083vw, 40px); height: clamp(34px, 2.083vw, 40px);
+  width: clamp(34px, 2.083vw, 40px);
+  height: clamp(34px, 2.083vw, 40px);
   border: none;
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--t3);
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
   transition: all var(--ease-fast);
 }
-.icon-btn:hover { background: var(--surface-2); color: var(--t1); }
-.icon-btn svg { width: clamp(15px, 0.938vw, 18px); height: clamp(15px, 0.938vw, 18px); }
+.icon-btn:hover {
+  background: var(--surface-2);
+  color: var(--t1);
+}
+.icon-btn svg {
+  width: clamp(15px, 0.938vw, 18px);
+  height: clamp(15px, 0.938vw, 18px);
+}
 
 .badge {
   position: absolute;
-  top: 5px; right: 5px;
-  min-width: 16px; height: 16px;
+  top: 5px;
+  right: 5px;
+  min-width: 16px;
+  height: 16px;
   padding: 0 4px;
   border-radius: var(--radius-full);
   background: var(--red);
   color: #fff;
   font-size: 10px;
   font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1;
 }
 
 /* ── 알림 패널 ───────────────────────────────────── */
-.notif-wrap { position: relative; }
+.notif-wrap {
+  position: relative;
+}
 
 .notif-panel {
   position: absolute;
@@ -238,14 +268,29 @@ async function logout() {
 }
 
 .notif-header {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 14px 16px;
   border-bottom: 1px solid var(--border);
 }
-.notif-title    { font-size: var(--font-size-md); font-weight: 600; color: var(--t1); }
-.notif-all-read { font-size: var(--font-size-xs); color: var(--blue); background: none; border: none; cursor: pointer; }
+.notif-title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--t1);
+}
+.notif-all-read {
+  font-size: var(--font-size-xs);
+  color: var(--blue);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
 
-.notif-body { max-height: clamp(240px, 33.3vh, 420px); overflow-y: auto; }
+.notif-body {
+  max-height: clamp(240px, 33.3vh, 420px);
+  overflow-y: auto;
+}
 
 .notif-empty {
   padding: 32px 16px;
@@ -255,27 +300,50 @@ async function logout() {
 }
 
 .notif-item {
-  display: flex; align-items: flex-start; gap: 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   padding: 12px 16px;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: background var(--ease-fast);
 }
-.notif-item:last-child { border-bottom: none; }
-.notif-item:hover { background: var(--surface-2); }
-.notif-item.unread { background: var(--blue-pale); }
+.notif-item:last-child {
+  border-bottom: none;
+}
+.notif-item:hover {
+  background: var(--surface-2);
+}
+.notif-item.unread {
+  background: var(--blue-pale);
+}
 
 .notif-dot {
-  width: 7px; height: 7px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--blue);
   flex-shrink: 0;
   margin-top: 5px;
 }
-.notif-msg  { flex: 1; font-size: var(--font-size-sm); color: var(--t2); line-height: 1.4; }
-.notif-time { font-size: var(--font-size-xs); color: var(--t4); flex-shrink: 0; }
+.notif-msg {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  color: var(--t2);
+  line-height: 1.4;
+}
+.notif-time {
+  font-size: var(--font-size-xs);
+  color: var(--t4);
+  flex-shrink: 0;
+}
 
 /* 로그아웃 버튼 강조 */
-.logout-btn { margin-left: 4px; }
-.logout-btn:hover { color: var(--red); background: var(--red-pale); }
+.logout-btn {
+  margin-left: 4px;
+}
+.logout-btn:hover {
+  color: var(--red);
+  background: var(--red-pale);
+}
 </style>

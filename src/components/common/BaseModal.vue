@@ -66,11 +66,11 @@ const emit = defineEmits(['confirm', 'cancel'])
       >
         <!-- 패널 슬라이드+페이드 전환 (transitions.css: modal-panel) -->
         <Transition name="modal-panel">
-          <div v-if="isOpen" class="panel" :style="{ width }">
+          <div v-if="isOpen" :style="{ width }" class="panel">
             <!-- 헤더 -->
             <div class="modal-header">
               <h3 class="modal-title">{{ title }}</h3>
-              <button class="close-btn" @click="emit('cancel')" aria-label="닫기">✕</button>
+              <button aria-label="닫기" class="close-btn" @click="emit('cancel')">✕</button>
             </div>
 
             <!-- 본문 (overflow-y: auto로 긴 콘텐츠 스크롤) -->

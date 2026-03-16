@@ -22,16 +22,14 @@
  *   3. Header.vue 마운트 시 또는 로그인 후 fetchNotifications() 호출
  */
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 
 export const useNotificationStore = defineStore('notification', () => {
   /** 알림 목록. 위 아이템 형태 참조 */
   const notifications = ref([])
 
   /** 미읽음 개수 (Header.vue 배지에 표시) */
-  const unreadCount = computed(
-    () => notifications.value.filter((n) => !n.read).length
-  )
+  const unreadCount = computed(() => notifications.value.filter((n) => !n.read).length)
 
   /**
    * 서버에서 알림 목록 로드

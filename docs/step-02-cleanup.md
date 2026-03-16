@@ -3,6 +3,7 @@
 > **한 줄 요약**: Vite 스캐폴드 생성 직후 CONK 프로젝트 구조에 맞추기 위해 제거/수정한 파일 목록
 
 ## 목차
+
 - [삭제된 파일](#삭제된-파일)
 - [수정된 파일](#수정된-파일)
 - [신규 추가 파일](#신규-추가-파일)
@@ -14,28 +15,28 @@
 
 ### 기본 CSS 및 로고
 
-| 파일 | 삭제 이유 |
-|---|---|
+| 파일                    | 삭제 이유                                                                             |
+|-----------------------|-----------------------------------------------------------------------------------|
 | `src/assets/base.css` | CONK 디자인 시스템(`src/assets/styles/variables.css`)으로 대체. Vite 기본 스타일과 프로젝트 스타일 혼재 방지 |
-| `src/assets/logo.svg` | Vite 공식 로고. CONK 브랜딩과 무관하므로 제거 |
+| `src/assets/logo.svg` | Vite 공식 로고. CONK 브랜딩과 무관하므로 제거                                                    |
 
 ### 예시 컴포넌트
 
-| 파일 | 삭제 이유 |
-|---|---|
-| `src/components/HelloWorld.vue` | Vite 기본 예시 컴포넌트. 실제 프로젝트에 불필요 |
-| `src/components/TheWelcome.vue` | Vite 기본 랜딩 페이지 컴포넌트 |
-| `src/components/WelcomeItem.vue` | Vite 기본 예시 컴포넌트 |
+| 파일                               | 삭제 이유                         |
+|----------------------------------|-------------------------------|
+| `src/components/HelloWorld.vue`  | Vite 기본 예시 컴포넌트. 실제 프로젝트에 불필요 |
+| `src/components/TheWelcome.vue`  | Vite 기본 랜딩 페이지 컴포넌트           |
+| `src/components/WelcomeItem.vue` | Vite 기본 예시 컴포넌트               |
 
 ### 기본 아이콘 세트
 
-| 파일 | 삭제 이유 |
-|---|---|
-| `src/components/icons/IconCommunity.vue` | Vite 기본 아이콘 세트. CONK 프로젝트에 맞는 아이콘으로 대체 예정 |
-| `src/components/icons/IconDocumentation.vue` | Vite 기본 아이콘 |
-| `src/components/icons/IconEcosystem.vue` | Vite 기본 아이콘 |
-| `src/components/icons/IconSupport.vue` | Vite 기본 아이콘 |
-| `src/components/icons/IconTooling.vue` | Vite 기본 아이콘 |
+| 파일                                           | 삭제 이유                                     |
+|----------------------------------------------|-------------------------------------------|
+| `src/components/icons/IconCommunity.vue`     | Vite 기본 아이콘 세트. CONK 프로젝트에 맞는 아이콘으로 대체 예정 |
+| `src/components/icons/IconDocumentation.vue` | Vite 기본 아이콘                               |
+| `src/components/icons/IconEcosystem.vue`     | Vite 기본 아이콘                               |
+| `src/components/icons/IconSupport.vue`       | Vite 기본 아이콘                               |
+| `src/components/icons/IconTooling.vue`       | Vite 기본 아이콘                               |
 
 ---
 
@@ -68,6 +69,7 @@
 ```
 
 **이유**:
+
 - CONK 스타일 시스템 import 추가
 - Vue Router 라우팅 초기화
 - Pinia 상태 관리 + persistedstate 플러그인 등록
@@ -75,6 +77,7 @@
 ### 2. src/App.vue
 
 **변경 전**:
+
 ```vue
 <template>
   <header>
@@ -96,6 +99,7 @@ header { ... }
 ```
 
 **변경 후**:
+
 ```vue
 <template>
   <RouterView />
@@ -111,6 +115,7 @@ import { RouterView } from 'vue-router'
 ```
 
 **이유**:
+
 - SPA 라우팅 구조에 맞춰 `<RouterView>` 사용
 - 모든 페이지 콘텐츠는 라우트별 View에서 렌더링
 
@@ -150,6 +155,7 @@ import { RouterView } from 'vue-router'
 ```
 
 **이유**:
+
 - Vite 기본 스타일 제거
 - CONK UI 초기화 (버튼, 입력창 기본값 제거)
 - CSS 변수 기반 색상 시스템 호환성 확보
@@ -174,6 +180,7 @@ import { RouterView } from 'vue-router'
 ```
 
 **설치 명령어**:
+
 ```bash
 npm install
 ```
@@ -186,61 +193,61 @@ npm install
 
 ### 스타일 시스템 (`src/assets/styles/`)
 
-| 파일 | 설명 |
-|---|---|
-| `variables.css` | CSS 커스텀 변수 (색상, 치수, z-index) |
-| `transitions.css` | Vue Transition 애니메이션 클래스 |
+| 파일                | 설명                           |
+|-------------------|------------------------------|
+| `variables.css`   | CSS 커스텀 변수 (색상, 치수, z-index) |
+| `transitions.css` | Vue Transition 애니메이션 클래스     |
 
 ### 상수 (`src/constants/`)
 
-| 파일 | 설명 |
-|---|---|
-| `index.js` | 모든 상수 re-export |
-| `roles.js` | Role 상수 (SYSTEM_ADMIN, MASTER_ADMIN 등) |
-| `status.js` | 상태 상수 (ORDER_STATUS, ASN_STATUS 등) |
-| `routes.js` | 라우트 이름 상수 |
+| 파일          | 설명                                     |
+|-------------|----------------------------------------|
+| `index.js`  | 모든 상수 re-export                        |
+| `roles.js`  | Role 상수 (SYSTEM_ADMIN, MASTER_ADMIN 등) |
+| `status.js` | 상태 상수 (ORDER_STATUS, ASN_STATUS 등)     |
+| `routes.js` | 라우트 이름 상수                              |
 
 ### API 레이어 (`src/api/`)
 
-| 파일 | 설명 |
-|---|---|
+| 파일            | 설명                   |
+|---------------|----------------------|
 | `instance.js` | Axios 인스턴스 + 공통 인터셉터 |
 
 ### 상태 관리 (`src/stores/`)
 
-| 파일 | 설명 |
-|---|---|
-| `auth.js` | 로그인 유저 정보, JWT 토큰 (persist) |
-| `ui.js` | 전역 로딩, 사이드바 토글 |
-| `notification.js` | 인앱 알림 목록, 배지 |
-| `warehouse.js` | 창고 관리자 선택 창고 (persist) |
+| 파일                | 설명                          |
+|-------------------|-----------------------------|
+| `auth.js`         | 로그인 유저 정보, JWT 토큰 (persist) |
+| `ui.js`           | 전역 로딩, 사이드바 토글              |
+| `notification.js` | 인앱 알림 목록, 배지                |
+| `warehouse.js`    | 창고 관리자 선택 창고 (persist)      |
 
 ### 라우터 (`src/router/`)
 
-| 파일 | 설명 |
-|---|---|
-| `index.js` | 라우터 인스턴스 + 네비게이션 가드 |
-| `routes/auth.js` | 로그인, 비밀번호 설정 라우트 |
+| 파일               | 설명                  |
+|------------------|---------------------|
+| `index.js`       | 라우터 인스턴스 + 네비게이션 가드 |
+| `routes/auth.js` | 로그인, 비밀번호 설정 라우트    |
 
 ### 레이아웃 및 공통 컴포넌트 (`src/components/`)
 
-| 파일 | 설명 |
-|---|---|
-| `layout/AppLayout.vue` | 인증 후 기본 레이아웃 (사이드바 + 헤더) |
-| `layout/Sidebar.vue` | 사이드바 + 네비게이션 메뉴 |
-| `layout/Header.vue` | 헤더 (사용자 프로필, 알림, 로그아웃) |
-| `common/BaseButton.vue` | 기본 버튼 컴포넌트 |
-| `common/BaseInput.vue` | 기본 입력창 컴포넌트 |
-| 등 | 10개 공통 컴포넌트 |
+| 파일                      | 설명                       |
+|-------------------------|--------------------------|
+| `layout/AppLayout.vue`  | 인증 후 기본 레이아웃 (사이드바 + 헤더) |
+| `layout/Sidebar.vue`    | 사이드바 + 네비게이션 메뉴          |
+| `layout/Header.vue`     | 헤더 (사용자 프로필, 알림, 로그아웃)   |
+| `common/BaseButton.vue` | 기본 버튼 컴포넌트               |
+| `common/BaseInput.vue`  | 기본 입력창 컴포넌트              |
+| 등                       | 10개 공통 컴포넌트              |
 
 ### 유틸리티 (`src/utils/`)
 
-| 파일 | 설명 |
-|---|---|
-| `format.js` | 날짜, 금액, 상태 포맷팅 |
+| 파일            | 설명                 |
+|---------------|--------------------|
+| `format.js`   | 날짜, 금액, 상태 포맷팅     |
 | `validate.js` | 이메일, 전화번호 등 유효성 검사 |
-| `excel.js` | Excel 파싱 및 생성 |
-| `storage.js` | localStorage 편의 함수 |
+| `excel.js`    | Excel 파싱 및 생성      |
+| `storage.js`  | localStorage 편의 함수 |
 
 ---
 
@@ -249,6 +256,7 @@ npm install
 ### 1. 명확한 프로젝트 구조 확립
 
 Vite 스캐폴드의 예시 코드를 제거함으로써 다음을 달성:
+
 - 팀 전체가 동일한 프로젝트 구조 인식
 - 불필요한 파일 탐색 시간 제거
 - "이 폴더는 뭐 하는 곳인가?" 같은 혼란 최소화

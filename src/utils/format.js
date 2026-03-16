@@ -22,12 +22,12 @@
 export function formatDate(date, pattern = 'date') {
   if (!date) return '-'
   const d = new Date(date)
-  if (isNaN(d)) return '-'  // 파싱 실패 시 '-' 반환
+  if (isNaN(d)) return '-' // 파싱 실패 시 '-' 반환
 
   const pad = (n) => String(n).padStart(2, '0')
   const ymd = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 
-  if (pattern === 'time')     return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+  if (pattern === 'time') return `${pad(d.getHours())}:${pad(d.getMinutes())}`
   if (pattern === 'datetime') return `${ymd} ${pad(d.getHours())}:${pad(d.getMinutes())}`
   return ymd
 }
@@ -48,8 +48,8 @@ export function formatDate(date, pattern = 'date') {
 export function formatCurrency(amount) {
   if (amount == null || isNaN(amount)) return '-'
   return new Intl.NumberFormat('en-US', {
-    style:                 'currency',
-    currency:              'USD',
+    style: 'currency',
+    currency: 'USD',
     minimumFractionDigits: 2,
   }).format(amount)
 }

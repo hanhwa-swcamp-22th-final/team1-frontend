@@ -37,7 +37,7 @@
 import { ref } from 'vue'
 
 const props = defineProps({
-  accept:   { type: String,  default: '.xlsx,.xls' },
+  accept: { type: String, default: '.xlsx,.xls' },
   multiple: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
 })
@@ -46,7 +46,7 @@ const emit = defineEmits(['file-selected'])
 
 const isDragging = ref(false)
 /** 숨겨진 input[type="file"]에 대한 ref — 클릭 시 programmatic 트리거 */
-const inputRef   = ref(null)
+const inputRef = ref(null)
 
 /**
  * 파일 처리 공통 로직
@@ -70,32 +70,32 @@ function onDrop(e) {
 
 <template>
   <div
-    class="upload-zone"
-    :class="{ dragging: isDragging, disabled }"
-    @click="!disabled && inputRef?.click()"
-    @dragover.prevent="!disabled && (isDragging = true)"
-    @dragleave="isDragging = false"
-    @drop.prevent="onDrop"
-    tabindex="0"
-    @keydown.enter="!disabled && inputRef?.click()"
-    role="button"
     :aria-disabled="disabled"
+    :class="{ dragging: isDragging, disabled }"
+    class="upload-zone"
+    role="button"
+    tabindex="0"
+    @click="!disabled && inputRef?.click()"
+    @dragleave="isDragging = false"
+    @dragover.prevent="!disabled && (isDragging = true)"
+    @drop.prevent="onDrop"
+    @keydown.enter="!disabled && inputRef?.click()"
   >
     <!-- input은 숨겨두고 zone 클릭 시 programmatic click으로 파일 선택 다이얼로그 열기 -->
     <input
       ref="inputRef"
-      type="file"
-      class="hidden-input"
       :accept="accept"
       :multiple="multiple"
+      class="hidden-input"
+      type="file"
       @change="handleFiles($event.target.files)"
     />
 
     <div class="upload-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-        <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
-        <polyline points="16 12 12 8 8 12"/>
-        <line x1="12" y1="8" x2="12" y2="20"/>
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+        <polyline points="16 12 12 8 8 12" />
+        <line x1="12" x2="12" y1="8" y2="20" />
       </svg>
     </div>
 
@@ -107,10 +107,15 @@ function onDrop(e) {
 </template>
 
 <style scoped>
-.hidden-input { display: none; }
+.hidden-input {
+  display: none;
+}
 
 .upload-zone {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 10px;
   padding: 36px 24px;
   border: 2px dashed var(--border);
@@ -131,19 +136,27 @@ function onDrop(e) {
 }
 
 .upload-icon {
-  width: 48px; height: 48px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-lg);
   background: var(--blue-pale);
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--blue);
 }
-.upload-icon svg { width: 24px; height: 24px; }
+.upload-icon svg {
+  width: 24px;
+  height: 24px;
+}
 
 .upload-label {
   font-size: var(--font-size-md);
   color: var(--t2);
 }
-.upload-label strong { color: var(--blue); }
+.upload-label strong {
+  color: var(--blue);
+}
 
 .upload-hint {
   font-size: var(--font-size-xs);

@@ -35,9 +35,9 @@ export function parseExcel(file) {
     reader.onload = (e) => {
       try {
         // ArrayBuffer로 읽어 xlsx 파싱 (type: 'array')
-        const wb   = XLSX.read(e.target.result, { type: 'array' })
+        const wb = XLSX.read(e.target.result, { type: 'array' })
         // 첫 번째 시트만 처리
-        const ws   = wb.Sheets[wb.SheetNames[0]]
+        const ws = wb.Sheets[wb.SheetNames[0]]
         // defval: '' — 빈 셀을 null 대신 빈 문자열로 처리
         const data = XLSX.utils.sheet_to_json(ws, { defval: '' })
         resolve(data)
@@ -66,8 +66,8 @@ export function parseExcel(file) {
 export function downloadExcel(data, filename = 'download') {
   // 확장자 중복 방지: 이미 .xlsx로 끝나면 그대로 사용
   const name = filename.endsWith('.xlsx') ? filename : `${filename}.xlsx`
-  const ws   = XLSX.utils.json_to_sheet(data)
-  const wb   = XLSX.utils.book_new()
+  const ws = XLSX.utils.json_to_sheet(data)
+  const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Sheet1')
   XLSX.writeFile(wb, name)
 }

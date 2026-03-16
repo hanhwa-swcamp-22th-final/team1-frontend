@@ -1,5 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router'
+
 const router = useRouter()
 </script>
 
@@ -12,5 +13,7 @@ const router = useRouter()
 </template>
 
 <style scoped>
-.not-found-code { color: var(--blue); }
+.not-found-code {
+  color: var(--blue);
+}
 </style>
