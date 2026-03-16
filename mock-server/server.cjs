@@ -51,74 +51,44 @@ server.post('/auth/login', (req, res) => {
   })
 })
 
-// 3. ASN mock 데이터
+// 3. ASN mock 데이터 — status: ASN_STATUS 상수값(SUBMITTED/RECEIVED/CANCELLED) 사용
 const MOCK_ASNS = [
-  {
-    id: 'ASN-2024-0312-001',
-    seller: '이수빈',
-    company: 'Glow Beauty',
-    sku: '앰플 세럼 30ml 외 2종',
-    plannedQty: 1000,
-    actualQty: null,
-    expectedDate: '2026-03-14',
-    registeredDate: '2026-03-10',
-    status: 'pending',
-  },
-  {
-    id: 'ASN-2024-0311-005',
-    seller: '박정호',
-    company: 'K-Style',
-    sku: '티셔츠 L 외 3종',
-    plannedQty: 500,
-    actualQty: null,
-    expectedDate: '2026-03-13',
-    registeredDate: '2026-03-09',
-    status: 'transit',
-  },
-  {
-    id: 'ASN-2024-0310-003',
-    seller: '최민수',
-    company: 'Eco Pure',
-    sku: '텀블러 350ml',
-    plannedQty: 200,
-    actualQty: 185,
-    expectedDate: '2026-03-12',
-    registeredDate: '2026-03-08',
-    status: 'mismatch',
-  },
-  {
-    id: 'ASN-2024-0309-002',
-    seller: '이수빈',
-    company: 'Glow Beauty',
-    sku: '마스크팩 10매입',
-    plannedQty: 800,
-    actualQty: 800,
-    expectedDate: '2026-03-12',
-    registeredDate: '2026-03-07',
-    status: 'received',
-  },
-  {
-    id: 'ASN-2024-0308-001',
-    seller: '강은채',
-    company: 'K-Farm',
-    sku: '특산 진액 30팩',
-    plannedQty: 300,
-    actualQty: 298,
-    expectedDate: '2026-03-11',
-    registeredDate: '2026-03-06',
-    status: 'received',
-  },
-  {
-    id: 'ASN-2024-0307-004',
-    seller: '김지훈',
-    company: 'Beauty Lab',
-    sku: 'BB크림 외 1종',
-    plannedQty: 400,
-    actualQty: null,
-    expectedDate: '2026-03-16',
-    registeredDate: '2026-03-05',
-    status: 'pending',
-  },
+  { id:'ASN-2026-0312-001', seller:'이수빈',  company:'Glow Beauty',
+    warehouse:'LA West Coast Hub',     skuCount:3, sku:'앰플 세럼 30ml 외 2종',
+    plannedQty:1000, actualQty:null,  expectedDate:'2026-03-19', registeredDate:'2026-03-12', status:'SUBMITTED' },
+  { id:'ASN-2026-0311-007', seller:'박정호',  company:'아모레US',
+    warehouse:'LA West Coast Hub',     skuCount:5, sku:'에센스 50ml 외 4종',
+    plannedQty:1200, actualQty:null,  expectedDate:'2026-03-20', registeredDate:'2026-03-11', status:'SUBMITTED' },
+  { id:'ASN-2026-0310-003', seller:'최민수',  company:'코스맥스',
+    warehouse:'Central Dallas Center', skuCount:2, sku:'텀블러 350ml 외 1종',
+    plannedQty:360,  actualQty:null,  expectedDate:'2026-03-18', registeredDate:'2026-03-10', status:'SUBMITTED' },
+  { id:'ASN-2026-0308-012', seller:'이수빈',  company:'K뷰티샵',
+    warehouse:'LA West Coast Hub',     skuCount:4, sku:'마스크팩 10매 외 3종',
+    plannedQty:720,  actualQty:720,   expectedDate:'2026-03-09', registeredDate:'2026-03-08', status:'RECEIVED' },
+  { id:'ASN-2026-0307-005', seller:'박정호',  company:'아모레US',
+    warehouse:'East NY Hub',           skuCount:6, sku:'선크림 30g 외 5종',
+    plannedQty:2400, actualQty:2400,  expectedDate:'2026-03-08', registeredDate:'2026-03-07', status:'RECEIVED' },
+  { id:'ASN-2026-0312-002', seller:'강은채',  company:'서울스낵',
+    warehouse:'LA West Coast Hub',     skuCount:1, sku:'한과 선물세트',
+    plannedQty:200,  actualQty:null,  expectedDate:'2026-03-22', registeredDate:'2026-03-12', status:'SUBMITTED' },
+  { id:'ASN-2026-0306-009', seller:'김지훈',  company:'Beauty Lab',
+    warehouse:'Central Dallas Center', skuCount:3, sku:'BB크림 외 2종',
+    plannedQty:400,  actualQty:398,   expectedDate:'2026-03-07', registeredDate:'2026-03-06', status:'RECEIVED' },
+  { id:'ASN-2026-0305-004', seller:'최민수',  company:'Eco Pure',
+    warehouse:'East NY Hub',           skuCount:2, sku:'친환경 텀블러 외 1종',
+    plannedQty:600,  actualQty:null,  expectedDate:'2026-03-17', registeredDate:'2026-03-05', status:'CANCELLED' },
+  { id:'ASN-2026-0304-011', seller:'이수빈',  company:'Glow Beauty',
+    warehouse:'East NY Hub',           skuCount:4, sku:'수분크림 50ml 외 3종',
+    plannedQty:800,  actualQty:800,   expectedDate:'2026-03-05', registeredDate:'2026-03-04', status:'RECEIVED' },
+  { id:'ASN-2026-0303-006', seller:'강은채',  company:'K-Farm',
+    warehouse:'LA West Coast Hub',     skuCount:2, sku:'특산 진액 30팩 외 1종',
+    plannedQty:300,  actualQty:298,   expectedDate:'2026-03-04', registeredDate:'2026-03-03', status:'RECEIVED' },
+  { id:'ASN-2026-0302-008', seller:'박정호',  company:'K-Style',
+    warehouse:'Central Dallas Center', skuCount:3, sku:'티셔츠 L 외 2종',
+    plannedQty:500,  actualQty:500,   expectedDate:'2026-03-03', registeredDate:'2026-03-02', status:'RECEIVED' },
+  { id:'ASN-2026-0301-010', seller:'김지훈',  company:'아모레US',
+    warehouse:'East NY Hub',           skuCount:5, sku:'립스틱 외 4종',
+    plannedQty:1500, actualQty:null,  expectedDate:'2026-03-02', registeredDate:'2026-03-01', status:'CANCELLED' },
 ]
 
 // GET /asns — 전체 목록 (상태 필터 지원: ?status=pending)
@@ -130,16 +100,15 @@ server.get('/asns', (req, res) => {
   res.json({ success: true, data: result })
 })
 
-// GET /asns/kpi — 상태별 건수 집계
+// GET /asns/kpi — 상태별 건수 집계 (ASN_STATUS 상수값 키 사용)
 server.get('/asns/kpi', (req, res) => {
   res.json({
     success: true,
     data: {
-      total:    MOCK_ASNS.length,
-      pending:  MOCK_ASNS.filter(a => a.status === 'pending').length,
-      transit:  MOCK_ASNS.filter(a => a.status === 'transit').length,
-      received: MOCK_ASNS.filter(a => a.status === 'received').length,
-      mismatch: MOCK_ASNS.filter(a => a.status === 'mismatch').length,
+      total:     MOCK_ASNS.length,
+      submitted: MOCK_ASNS.filter(a => a.status === 'SUBMITTED').length,
+      received:  MOCK_ASNS.filter(a => a.status === 'RECEIVED').length,
+      cancelled: MOCK_ASNS.filter(a => a.status === 'CANCELLED').length,
     },
   })
 })
@@ -194,6 +163,8 @@ server.get('/wms/warehouses/status', (req, res) => {
       },
     ],
   })
+})
+
 // GET /asns/:id — 단건 상세 조회
 server.get('/asns/:id', (req, res) => {
   const asn = MOCK_ASNS.find(a => a.id === req.params.id)

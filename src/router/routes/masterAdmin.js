@@ -41,11 +41,11 @@ export default [
     meta: { role: ROLES.MASTER_ADMIN },
   },
 
-  // ── 입출고 (스텁) ──────────────────────────────────────────────────────────
+  // ── 입출고 ────────────────────────────────────────────────────────────────
   {
     path: '/master/asn',
-    name: 'master-asn-list',
-    component: () => import('@/views/masterAdmin/Dashboard.vue'),
+    name: ROUTE_NAMES.MASTER_ASN_LIST,
+    component: () => import('@/views/masterAdmin/AsnList.vue'),
     meta: { role: ROLES.MASTER_ADMIN },
   },
   {
