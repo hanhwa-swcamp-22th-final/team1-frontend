@@ -51,111 +51,104 @@ server.post('/auth/login', (req, res) => {
   })
 })
 
-// 3. GET /orders/outbound/stats — 출고 통계 (order-service)
-server.get('/orders/outbound/stats', (req, res) => {
-  res.status(200).json({
+// 3. ASN mock 데이터
+const MOCK_ASNS = [
+  {
+    id: 'ASN-2024-0312-001',
+    seller: '이수빈',
+    company: 'Glow Beauty',
+    sku: '앰플 세럼 30ml 외 2종',
+    plannedQty: 1000,
+    actualQty: null,
+    expectedDate: '2026-03-14',
+    registeredDate: '2026-03-10',
+    status: 'pending',
+  },
+  {
+    id: 'ASN-2024-0311-005',
+    seller: '박정호',
+    company: 'K-Style',
+    sku: '티셔츠 L 외 3종',
+    plannedQty: 500,
+    actualQty: null,
+    expectedDate: '2026-03-13',
+    registeredDate: '2026-03-09',
+    status: 'transit',
+  },
+  {
+    id: 'ASN-2024-0310-003',
+    seller: '최민수',
+    company: 'Eco Pure',
+    sku: '텀블러 350ml',
+    plannedQty: 200,
+    actualQty: 185,
+    expectedDate: '2026-03-12',
+    registeredDate: '2026-03-08',
+    status: 'mismatch',
+  },
+  {
+    id: 'ASN-2024-0309-002',
+    seller: '이수빈',
+    company: 'Glow Beauty',
+    sku: '마스크팩 10매입',
+    plannedQty: 800,
+    actualQty: 800,
+    expectedDate: '2026-03-12',
+    registeredDate: '2026-03-07',
+    status: 'received',
+  },
+  {
+    id: 'ASN-2024-0308-001',
+    seller: '강은채',
+    company: 'K-Farm',
+    sku: '특산 진액 30팩',
+    plannedQty: 300,
+    actualQty: 298,
+    expectedDate: '2026-03-11',
+    registeredDate: '2026-03-06',
+    status: 'received',
+  },
+  {
+    id: 'ASN-2024-0307-004',
+    seller: '김지훈',
+    company: 'Beauty Lab',
+    sku: 'BB크림 외 1종',
+    plannedQty: 400,
+    actualQty: null,
+    expectedDate: '2026-03-16',
+    registeredDate: '2026-03-05',
+    status: 'pending',
+  },
+]
+
+// GET /asns — 전체 목록 (상태 필터 지원: ?status=pending)
+server.get('/asns', (req, res) => {
+  const { status } = req.query
+  const result = status
+    ? MOCK_ASNS.filter(a => a.status === status)
+    : MOCK_ASNS
+  res.json({ success: true, data: result })
+})
+
+// GET /asns/kpi — 상태별 건수 집계
+server.get('/asns/kpi', (req, res) => {
+  res.json({
     success: true,
-    message: '출고 통계 조회 성공',
     data: {
-      pendingOutboundCount: 1284,
-      trend: '+12.4%',
-      trendLabel: 'vs 어제',
-      trendType: 'up',
+      total:    MOCK_ASNS.length,
+      pending:  MOCK_ASNS.filter(a => a.status === 'pending').length,
+      transit:  MOCK_ASNS.filter(a => a.status === 'transit').length,
+      received: MOCK_ASNS.filter(a => a.status === 'received').length,
+      mismatch: MOCK_ASNS.filter(a => a.status === 'mismatch').length,
     },
   })
 })
 
-// 4. GET /wms/asn/stats — ASN 통계 (wms-service)
-server.get('/wms/asn/stats', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'ASN 통계 조회 성공',
-    data: {
-      unprocessedCount: 42,
-      trend: '2건 증가',
-      trendLabel: '지연 1시간',
-      trendType: 'down',
-    },
-  })
-})
-
-// 5. GET /wms/inventory/stats — 재고 부족 통계 (wms-service)
-server.get('/wms/inventory/stats', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: '재고 통계 조회 성공',
-    data: {
-      lowStockSkuCount: 18,
-      trend: '4건 증가',
-      trendLabel: '긴급 보충 필요',
-      trendType: 'down',
-    },
-  })
-})
-
-// 6. GET /members/sellers/stats — 셀러 통계 (member-service)
-server.get('/members/sellers/stats', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: '셀러 통계 조회 성공',
-    data: {
-      activeSellerCount: 156,
-      newThisMonth: 3,
-      trendType: 'up',
-    },
-  })
-})
-
-// 7. GET /wms/warehouses/status — 창고 운영 현황 (wms-service)
-server.get('/wms/warehouses/status', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: '창고 운영 현황 조회 성공',
-    data: [
-      {
-        id: 1,
-        name: 'LA West Coast Hub',
-        tag: '메인 거점',
-        progress: 92,
-        status: 'active',
-        statusLabel: '정상 운영중',
-        kpis: [
-          { label: '출고 대기 건수', value: '142', unit: '건' },
-          { label: '미처리 ASN', value: '12', unit: '건' },
-          { label: '재고 부족 경고', value: '3', unit: 'SKU', alert: true },
-          { label: '집하 마감중', carriers: [{ name: 'USPS', time: '16:00' }, { name: 'FedEx', time: '18:30' }] },
-        ],
-      },
-      {
-        id: 2,
-        name: 'Central Dallas Center',
-        tag: null,
-        progress: 65,
-        status: 'active',
-        statusLabel: '정상 운영중',
-        kpis: [
-          { label: '출고 대기 건수', value: '81', unit: '건' },
-          { label: '미처리 ASN', value: '4', unit: '건' },
-          { label: '재고 부족 경고', value: '1', unit: 'SKU', alert: true },
-          { label: '집하 마감중', carriers: [{ name: 'UPS', time: '17:30' }, { name: 'FedEx', time: '19:10' }] },
-        ],
-      },
-      {
-        id: 3,
-        name: 'East NY Hub',
-        tag: null,
-        progress: 48,
-        status: 'idle',
-        statusLabel: '주의 모니터링',
-        kpis: [
-          { label: '출고 대기 건수', value: '96', unit: '건' },
-          { label: '미처리 ASN', value: '26', unit: '건' },
-          { label: '재고 부족 경고', value: '8', unit: 'SKU', alert: true },
-          { label: '집하 마감중', carriers: [{ name: 'USPS', time: '15:30' }, { name: 'DHL', time: '17:00' }] },
-        ],
-      },
-    ],
-  })
+// GET /asns/:id — 단건 상세 조회
+server.get('/asns/:id', (req, res) => {
+  const asn = MOCK_ASNS.find(a => a.id === req.params.id)
+  if (!asn) return res.status(404).json({ success: false, message: 'ASN을 찾을 수 없습니다.' })
+  res.json({ success: true, data: asn })
 })
 
 // 나머지 모든 라우트는 db.json을 기반으로 자동 생성된 REST API 사용
