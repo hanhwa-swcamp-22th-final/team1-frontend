@@ -4,82 +4,113 @@
  * 접근: /dev/components (meta.public, 로그인 불필요)
  * 삭제 시점: 팀원 개발 완료 후 이 파일 + router/index.js의 해당 라우트 함께 제거
  */
-import { ref } from 'vue'
-import { useUiStore } from '@/stores/ui'
-import AppLayout from '@/components/layout/AppLayout.vue'
-import StatusBadge from '@/components/common/StatusBadge.vue'
-import BaseTable from '@/components/common/BaseTable.vue'
-import BaseForm from '@/components/common/BaseForm.vue'
-import BaseModal from '@/components/common/BaseModal.vue'
-import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
-import ToastMessage from '@/components/common/ToastMessage.vue'
-import EmptyState from '@/components/common/EmptyState.vue'
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import TimelineStepper from '@/components/common/TimelineStepper.vue'
-import FileUpload from '@/components/common/FileUpload.vue'
-import { ACCOUNT_STATUS, ASN_STATUS, ORDER_STATUS } from '@/constants'
+import {ref} from "vue";
+import {useUiStore} from "@/stores/ui";
+import AppLayout from "@/components/layout/AppLayout.vue";
+import StatusBadge from "@/components/common/StatusBadge.vue";
+import BaseTable from "@/components/common/BaseTable.vue";
+import BaseForm from "@/components/common/BaseForm.vue";
+import BaseModal from "@/components/common/BaseModal.vue";
+import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
+import ToastMessage from "@/components/common/ToastMessage.vue";
+import EmptyState from "@/components/common/EmptyState.vue";
+import LoadingSpinner from "@/components/common/LoadingSpinner.vue";
+import TimelineStepper from "@/components/common/TimelineStepper.vue";
+import FileUpload from "@/components/common/FileUpload.vue";
+import {ACCOUNT_STATUS, ASN_STATUS, ORDER_STATUS} from "@/constants";
 
-const uiStore = useUiStore()
+const uiStore = useUiStore();
 
-const breadcrumb = [{ label: '개발 도구' }, { label: '컴포넌트 데모' }]
+const breadcrumb = [{label: "개발 도구"}, {label: "컴포넌트 데모"}];
 
 // ── Global Loading ─────────────────────────────────────────
 function testGlobalLoading() {
-  uiStore.setLoading(true)
+  uiStore.setLoading(true);
   setTimeout(() => {
-    uiStore.setLoading(false)
-  }, 2000)
+    uiStore.setLoading(false);
+  }, 2000);
 }
 
 // ── Modal / Dialog ─────────────────────────────────────
-const showModal = ref(false)
-const showConfirm = ref(false)
+const showModal = ref(false);
+const showConfirm = ref(false);
 
 // ── Toast ───────────────────────────────────────────────
-const toast = ref({ visible: false, message: '', type: 'info' })
+const toast = ref({visible: false, message: "", type: "info"});
+
 function showToast(type) {
   const messages = {
-    success: '저장되었습니다.',
-    error: '오류가 발생했습니다.',
-    info: '처리 중입니다.',
-    warning: '주의가 필요합니다.',
-  }
-  toast.value = { visible: true, message: messages[type], type }
+    success: "저장되었습니다.",
+    error: "오류가 발생했습니다.",
+    info: "처리 중입니다.",
+    warning: "주의가 필요합니다.",
+  };
+  toast.value = {visible: true, message: messages[type], type};
 }
 
 // ── Table ───────────────────────────────────────────────
 const tableColumns = [
-  { key: 'id', label: 'ID', width: '60px', align: 'center' },
-  { key: 'name', label: '상품명', sortable: true },
-  { key: 'quantity', label: '수량', width: '80px', align: 'right' },
-  { key: 'status', label: '상태', width: '100px', align: 'center' },
-  { key: 'amount', label: '금액', width: '120px', align: 'right' },
-]
+  {key: "id", label: "ID", width: "60px", align: "center"},
+  {key: "name", label: "상품명", sortable: true},
+  {key: "quantity", label: "수량", width: "80px", align: "right"},
+  {key: "status", label: "상태", width: "100px", align: "center"},
+  {key: "amount", label: "금액", width: "120px", align: "right"},
+];
 const tableRows = [
-  { id: 1, name: 'CONK 프리미엄 박스 (L)', quantity: 24, status: 'PENDING', amount: '$1,200.00' },
-  { id: 2, name: 'ECO 완충재 세트', quantity: 150, status: 'CONFIRMED', amount: '$450.00' },
-  { id: 3, name: '방습 포장지 (100매)', quantity: 10, status: 'PICKING', amount: '$89.00' },
-  { id: 4, name: '테이프 디스펜서 Pro', quantity: 5, status: 'SHIPPED', amount: '$199.00' },
-  { id: 5, name: '라벨 프린터 용지 A4', quantity: 3, status: 'CANCELLED', amount: '$34.00' },
-]
-const pagination = ref({ page: 1, pageSize: 5, total: 5 })
+  {
+    id: 1,
+    name: "CONK 프리미엄 박스 (L)",
+    quantity: 24,
+    status: "PENDING",
+    amount: "$1,200.00",
+  },
+  {
+    id: 2,
+    name: "ECO 완충재 세트",
+    quantity: 150,
+    status: "CONFIRMED",
+    amount: "$450.00",
+  },
+  {
+    id: 3,
+    name: "방습 포장지 (100매)",
+    quantity: 10,
+    status: "PICKING",
+    amount: "$89.00",
+  },
+  {
+    id: 4,
+    name: "테이프 디스펜서 Pro",
+    quantity: 5,
+    status: "SHIPPED",
+    amount: "$199.00",
+  },
+  {
+    id: 5,
+    name: "라벨 프린터 용지 A4",
+    quantity: 3,
+    status: "CANCELLED",
+    amount: "$34.00",
+  },
+];
+const pagination = ref({page: 1, pageSize: 5, total: 5});
 
 // ── Stepper ─────────────────────────────────────────────
 const ORDER_STEPS = [
-  { key: ORDER_STATUS.PENDING, label: '접수' },
-  { key: ORDER_STATUS.CONFIRMED, label: '확인' },
-  { key: ORDER_STATUS.PICKING, label: '피킹' },
-  { key: ORDER_STATUS.PACKING, label: '패킹' },
-  { key: ORDER_STATUS.SHIPPED, label: '출고완료' },
-]
-const currentStep = ref(ORDER_STATUS.PICKING)
+  {key: ORDER_STATUS.PENDING, label: "접수"},
+  {key: ORDER_STATUS.CONFIRMED, label: "확인"},
+  {key: ORDER_STATUS.PICKING, label: "피킹"},
+  {key: ORDER_STATUS.PACKING, label: "패킹"},
+  {key: ORDER_STATUS.SHIPPED, label: "출고완료"},
+];
+const currentStep = ref(ORDER_STATUS.PICKING);
 
 // ── Form ────────────────────────────────────────────────
-const formValues = ref({ name: '', email: '', memo: '' })
-const formError = ref('')
+const formValues = ref({name: "", email: "", memo: ""});
+const formError = ref("");
 
 // ── FileUpload ──────────────────────────────────────────
-const uploadedFile = ref(null)
+const uploadedFile = ref(null);
 </script>
 
 <template>
@@ -101,7 +132,9 @@ const uploadedFile = ref(null)
               <span class="font-meta">Barlow Condensed 700</span>
             </div>
             <p class="font-sample font-condensed">페이지 타이틀 · Page Title</p>
-            <p class="font-sample font-condensed font-sample--sm">섹션 제목 · Section Heading</p>
+            <p class="font-sample font-condensed font-sample--sm">
+              섹션 제목 · Section Heading
+            </p>
             <div class="font-usage-list">
               <span class="font-usage-chip">Header .page-title</span>
               <span class="font-usage-chip">Footer .footer-brand</span>
@@ -116,7 +149,9 @@ const uploadedFile = ref(null)
               <span class="font-meta">Barlow 500</span>
             </div>
             <p class="font-sample font-barlow">UI 라벨 · Navigation Label</p>
-            <p class="font-sample font-barlow font-sample--sm">테이블 헤더 · Table Header</p>
+            <p class="font-sample font-barlow font-sample--sm">
+              테이블 헤더 · Table Header
+            </p>
             <div class="font-usage-list">
               <span class="font-usage-chip">Sidebar .nav-item</span>
               <span class="font-usage-chip">Sidebar .nav-group-label</span>
@@ -131,7 +166,9 @@ const uploadedFile = ref(null)
               <span class="font-meta">IBM Plex Sans 400</span>
             </div>
             <p class="font-sample font-mono">ASN-20240315-001</p>
-            <p class="font-sample font-mono font-sample--sm">SKU-KR-PROD-0042</p>
+            <p class="font-sample font-mono font-sample--sm">
+              SKU-KR-PROD-0042
+            </p>
             <div class="font-usage-list">
               <span class="font-usage-chip">ASN 번호</span>
               <span class="font-usage-chip">코드형 식별자</span>
@@ -145,7 +182,9 @@ const uploadedFile = ref(null)
               <span class="font-meta">Inter 400/500</span>
             </div>
             <p class="font-sample font-base">본문 텍스트 · Body Text</p>
-            <p class="font-sample font-base font-sample--sm">상태 배지 · Status Badge</p>
+            <p class="font-sample font-base font-sample--sm">
+              상태 배지 · Status Badge
+            </p>
             <div class="font-usage-list">
               <span class="font-usage-chip">본문 기본</span>
               <span class="font-usage-chip">StatusBadge</span>
@@ -156,20 +195,25 @@ const uploadedFile = ref(null)
 
         <!-- 실제 헤더 타이틀 비교 -->
         <div class="font-compare-card">
-          <p class="compare-label">실제 렌더링 비교 — 헤더 타이틀 (Barlow Condensed vs Inter)</p>
+          <p class="compare-label">
+            실제 렌더링 비교 — 헤더 타이틀 (Barlow Condensed vs Inter)
+          </p>
           <div class="compare-row">
             <div class="compare-item">
               <span class="compare-sub">Barlow Condensed 700 (현재 적용)</span>
               <span class="compare-title font-condensed">컴포넌트 데모</span>
             </div>
-            <div class="compare-divider" />
+            <div class="compare-divider"/>
             <div class="compare-item">
               <span class="compare-sub">Inter 700 (이전)</span>
-              <span class="compare-title font-base" style="font-weight: 700">컴포넌트 데모</span>
+              <span class="compare-title font-base" style="font-weight: 700"
+              >컴포넌트 데모</span
+              >
             </div>
           </div>
           <p class="font-check-note">
-            ↑ 상단 헤더의 "컴포넌트 데모" 타이틀이 Barlow Condensed로 렌더링되어야 합니다.
+            ↑ 상단 헤더의 "컴포넌트 데모" 타이틀이 Barlow Condensed로
+            렌더링되어야 합니다.
           </p>
         </div>
       </section>
@@ -202,7 +246,7 @@ const uploadedFile = ref(null)
                   <span class="pd-org">CONK 본사</span>
                 </div>
               </div>
-              <div class="pd-divider" />
+              <div class="pd-divider"/>
               <div class="pd-bottom">
                 <span class="pd-email">admin@conk.com</span>
                 <div class="pd-actions">
@@ -214,12 +258,18 @@ const uploadedFile = ref(null)
               <div class="pd-nav">
                 <div class="pd-nav-group">
                   <span class="pd-nav-label">주문 관리</span>
-                  <div class="pd-nav-item active"><span class="pd-nav-icon">📦</span>주문 목록</div>
-                  <div class="pd-nav-item"><span class="pd-nav-icon">➕</span>주문 등록</div>
+                  <div class="pd-nav-item active">
+                    <span class="pd-nav-icon">📦</span>주문 목록
+                  </div>
+                  <div class="pd-nav-item">
+                    <span class="pd-nav-icon">➕</span>주문 등록
+                  </div>
                 </div>
                 <div class="pd-nav-group">
                   <span class="pd-nav-label">시스템</span>
-                  <div class="pd-nav-item"><span class="pd-nav-icon">⚙️</span>설정</div>
+                  <div class="pd-nav-item">
+                    <span class="pd-nav-icon">⚙️</span>설정
+                  </div>
                 </div>
               </div>
             </div>
@@ -237,7 +287,9 @@ const uploadedFile = ref(null)
             <ul class="layout-parts">
               <li>
                 <span class="part-label">좌측</span
-                ><span class="part-dim">페이지 제목 (Barlow Condensed) + 브레드크럼 (Barlow)</span>
+                ><span class="part-dim"
+              >페이지 제목 (Barlow Condensed) + 브레드크럼 (Barlow)</span
+              >
               </li>
               <li>
                 <span class="part-label">우측</span
@@ -245,7 +297,8 @@ const uploadedFile = ref(null)
               </li>
             </ul>
             <p class="layout-tip">
-              ↑ 상단 헤더가 실제 컴포넌트입니다. 벨 아이콘 클릭 시 알림 패널 열림.
+              ↑ 상단 헤더가 실제 컴포넌트입니다. 벨 아이콘 클릭 시 알림 패널
+              열림.
             </p>
           </div>
 
@@ -253,7 +306,9 @@ const uploadedFile = ref(null)
           <div class="layout-card layout-card--full">
             <div class="layout-card-header">
               <span class="layout-tag app-tag">AppLayout.vue</span>
-              <span class="layout-dim">Sidebar + Header + Footer + 콘텐츠 래퍼</span>
+              <span class="layout-dim"
+              >Sidebar + Header + Footer + 콘텐츠 래퍼</span
+              >
             </div>
             <div class="layout-code">
               <pre>
@@ -277,26 +332,29 @@ const uploadedFile = ref(null)
         <div class="demo-card">
           <p class="demo-label">주문 상태 (type="order")</p>
           <div class="badge-row">
-            <StatusBadge :status="ORDER_STATUS.PENDING" type="order" />
-            <StatusBadge :status="ORDER_STATUS.CONFIRMED" type="order" />
-            <StatusBadge :status="ORDER_STATUS.PICKING" type="order" />
-            <StatusBadge :status="ORDER_STATUS.PACKING" type="order" />
-            <StatusBadge :status="ORDER_STATUS.SHIPPED" type="order" />
-            <StatusBadge :status="ORDER_STATUS.CANCELLED" type="order" />
+            <StatusBadge :status="ORDER_STATUS.PENDING" type="order"/>
+            <StatusBadge :status="ORDER_STATUS.CONFIRMED" type="order"/>
+            <StatusBadge :status="ORDER_STATUS.PICKING" type="order"/>
+            <StatusBadge :status="ORDER_STATUS.PACKING" type="order"/>
+            <StatusBadge :status="ORDER_STATUS.SHIPPED" type="order"/>
+            <StatusBadge :status="ORDER_STATUS.CANCELLED" type="order"/>
           </div>
           <p class="demo-label mt">ASN 상태 (type="asn")</p>
           <div class="badge-row">
-            <StatusBadge :status="ASN_STATUS.DRAFT" type="asn" />
-            <StatusBadge :status="ASN_STATUS.SUBMITTED" type="asn" />
-            <StatusBadge :status="ASN_STATUS.RECEIVED" type="asn" />
-            <StatusBadge :status="ASN_STATUS.CANCELLED" type="asn" />
+            <StatusBadge :status="ASN_STATUS.DRAFT" type="asn"/>
+            <StatusBadge :status="ASN_STATUS.SUBMITTED" type="asn"/>
+            <StatusBadge :status="ASN_STATUS.RECEIVED" type="asn"/>
+            <StatusBadge :status="ASN_STATUS.CANCELLED" type="asn"/>
           </div>
           <p class="demo-label mt">계정 상태 (type="account")</p>
           <div class="badge-row">
-            <StatusBadge :status="ACCOUNT_STATUS.ACTIVE" type="account" />
-            <StatusBadge :status="ACCOUNT_STATUS.TEMP_PASSWORD" type="account" />
-            <StatusBadge :status="ACCOUNT_STATUS.INACTIVE" type="account" />
-            <StatusBadge status="UNKNOWN_STATUS" type="order" />
+            <StatusBadge :status="ACCOUNT_STATUS.ACTIVE" type="account"/>
+            <StatusBadge
+                :status="ACCOUNT_STATUS.TEMP_PASSWORD"
+                type="account"
+            />
+            <StatusBadge :status="ACCOUNT_STATUS.INACTIVE" type="account"/>
+            <StatusBadge status="UNKNOWN_STATUS" type="order"/>
           </div>
         </div>
       </section>
@@ -305,14 +363,14 @@ const uploadedFile = ref(null)
       <section class="demo-section">
         <h2 class="section-title">TimelineStepper</h2>
         <div class="demo-card">
-          <TimelineStepper :currentStep="currentStep" :steps="ORDER_STEPS" />
+          <TimelineStepper :currentStep="currentStep" :steps="ORDER_STEPS"/>
           <div class="step-btns">
             <button
-              v-for="s in ORDER_STEPS"
-              :key="s.key"
-              :class="{ active: currentStep === s.key }"
-              class="step-pick-btn"
-              @click="currentStep = s.key"
+                v-for="s in ORDER_STEPS"
+                :key="s.key"
+                :class="{ active: currentStep === s.key }"
+                class="step-pick-btn"
+                @click="currentStep = s.key"
             >
               {{ s.label }}
             </button>
@@ -339,20 +397,22 @@ const uploadedFile = ref(null)
             >
           </div>
           <BaseTable
-            :columns="tableColumns"
-            :pagination="pagination"
-            :rows="tableRows"
-            @sort="(key) => console.log('sort:', key)"
-            @page-change="(p) => (pagination.page = p)"
+              :columns="tableColumns"
+              :pagination="pagination"
+              :rows="tableRows"
+              @sort="(key) => console.log('sort:', key)"
+              @page-change="(p) => (pagination.page = p)"
           >
             <template #cell-status="{ row }">
-              <StatusBadge :status="row.status" type="order" />
+              <StatusBadge :status="row.status" type="order"/>
             </template>
             <template #cell-amount="{ value }">
               <strong>{{ value }}</strong>
             </template>
           </BaseTable>
-          <p class="demo-note">↑ status 셀에 StatusBadge 슬롯 적용, amount 셀 bold 처리</p>
+          <p class="demo-note">
+            ↑ status 셀에 StatusBadge 슬롯 적용, amount 셀 bold 처리
+          </p>
         </div>
       </section>
 
@@ -362,17 +422,28 @@ const uploadedFile = ref(null)
         <div class="demo-card form-grid">
           <BaseForm :error="formError" label="이름" required>
             <input
-              v-model="formValues.name"
-              placeholder="홍길동"
-              type="text"
-              @input="formError = formValues.name.length < 2 ? '2자 이상 입력해주세요' : ''"
+                v-model="formValues.name"
+                placeholder="홍길동"
+                type="text"
+                @input="
+                formError =
+                  formValues.name.length < 2 ? '2자 이상 입력해주세요' : ''
+              "
             />
           </BaseForm>
           <BaseForm hint="example@domain.com" label="이메일">
-            <input v-model="formValues.email" placeholder="user@example.com" type="email" />
+            <input
+                v-model="formValues.email"
+                placeholder="user@example.com"
+                type="email"
+            />
           </BaseForm>
           <BaseForm label="메모 (선택)">
-            <textarea v-model="formValues.memo" placeholder="내용을 입력하세요" rows="3" />
+            <textarea
+                v-model="formValues.memo"
+                placeholder="내용을 입력하세요"
+                rows="3"
+            />
           </BaseForm>
           <BaseForm label="창고 선택">
             <select>
@@ -389,16 +460,21 @@ const uploadedFile = ref(null)
       <section class="demo-section">
         <h2 class="section-title">EmptyState</h2>
         <div class="demo-card empty-grid">
-          <div class="empty-box"><EmptyState /></div>
+          <div class="empty-box">
+            <EmptyState/>
+          </div>
           <div class="empty-box">
             <EmptyState
-              description="아직 등록된 주문이 없습니다."
-              icon="📦"
-              title="주문이 없습니다"
+                description="아직 등록된 주문이 없습니다."
+                icon="📦"
+                title="주문이 없습니다"
             />
           </div>
           <div class="empty-box">
-            <EmptyState description="해당 SKU의 재고가 없습니다." title="재고 없음">
+            <EmptyState
+                description="해당 SKU의 재고가 없습니다."
+                title="재고 없음"
+            >
               <template #action>
                 <button class="btn-demo">ASN 등록하기</button>
               </template>
@@ -416,24 +492,25 @@ const uploadedFile = ref(null)
               전역 로딩 테스트 (2초)
             </button>
             <p class="demo-note" style="margin-top: 8px">
-              <code>ui.setLoading(true)</code> 호출 시 전체 화면 로딩 오버레이가 나타납니다.
+              <code>ui.setLoading(true)</code> 호출 시 전체 화면 로딩 오버레이가
+              나타납니다.
             </p>
           </div>
           <div class="spinner-row">
             <div class="spinner-item">
-              <LoadingSpinner size="sm" />
+              <LoadingSpinner size="sm"/>
               <span class="spinner-label">sm (16px)</span>
             </div>
             <div class="spinner-item">
-              <LoadingSpinner size="md" />
+              <LoadingSpinner size="md"/>
               <span class="spinner-label">md (28px)</span>
             </div>
             <div class="spinner-item">
-              <LoadingSpinner size="lg" />
+              <LoadingSpinner size="lg"/>
               <span class="spinner-label">lg (44px)</span>
             </div>
             <div class="spinner-item spinner-item--dark">
-              <LoadingSpinner color="#F5A623" size="md" />
+              <LoadingSpinner color="#F5A623" size="md"/>
               <span class="spinner-label">gold color</span>
             </div>
           </div>
@@ -445,9 +522,9 @@ const uploadedFile = ref(null)
         <h2 class="section-title">FileUpload</h2>
         <div class="demo-card">
           <FileUpload
-            @file-selected="
+              @file-selected="
               (f) => {
-                uploadedFile = f
+                uploadedFile = f;
               }
             "
           />
@@ -467,7 +544,8 @@ const uploadedFile = ref(null)
           <h2 class="section-title">BaseModal</h2>
           <div class="demo-card">
             <p class="demo-label">
-              Props: <code>isOpen</code>, <code>title</code><br />Emits: <code>@confirm</code>,
+              Props: <code>isOpen</code>, <code>title</code><br/>Emits:
+              <code>@confirm</code>,
               <code>@cancel</code>
             </p>
             <div class="layout-code" style="margin-bottom: 20px">
@@ -481,18 +559,20 @@ const uploadedFile = ref(null)
 &lt;/BaseModal&gt;</pre
               >
             </div>
-            <button class="btn-demo btn-blue" @click="showModal = true">모달 열기</button>
+            <button class="btn-demo btn-blue" @click="showModal = true">
+              모달 열기
+            </button>
             <BaseModal
-              :isOpen="showModal"
-              title="재고 수정"
-              @cancel="showModal = false"
-              @confirm="showModal = false"
+                :isOpen="showModal"
+                title="재고 수정"
+                @cancel="showModal = false"
+                @confirm="showModal = false"
             >
               <BaseForm hint="영문+숫자 4~32자" label="SKU">
-                <input placeholder="SKU-001" type="text" />
+                <input placeholder="SKU-001" type="text"/>
               </BaseForm>
               <BaseForm class="mt" label="수량">
-                <input placeholder="0" type="number" />
+                <input placeholder="0" type="number"/>
               </BaseForm>
             </BaseModal>
           </div>
@@ -501,8 +581,9 @@ const uploadedFile = ref(null)
           <h2 class="section-title">ConfirmDialog</h2>
           <div class="demo-card">
             <p class="demo-label">
-              Props: <code>isOpen</code>, <code>title</code>, <code>message</code>,
-              <code>danger</code>(bool)<br />Emits: <code>@confirm</code>, <code>@cancel</code>
+              Props: <code>isOpen</code>, <code>title</code>,
+              <code>message</code>, <code>danger</code>(bool)<br/>Emits:
+              <code>@confirm</code>, <code>@cancel</code>
             </p>
             <div class="layout-code" style="margin-bottom: 20px">
               <pre>
@@ -516,17 +597,18 @@ const uploadedFile = ref(null)
   @cancel="showConfirm = false" /&gt;</pre
               >
             </div>
-            <button class="btn-demo btn-red" @click="showConfirm = true">삭제 확인</button>
+            <button class="btn-demo btn-red" @click="showConfirm = true">
+              삭제 확인
+            </button>
             <ConfirmDialog
-              :danger="true"
-              :isOpen="showConfirm"
-              confirmLabel="삭제"
-              message="삭제하면 복구할 수 없습니다. 정말 삭제하겠습니까?"
-              title="ASN 삭제"
-              @cancel="showConfirm = false"
-              @confirm="
-                showConfirm = false
-                showToast('success')
+                :danger="true"
+                :isOpen="showConfirm"
+                confirmLabel="삭제"
+                message="삭제하면 복구할 수 없습니다. 정말 삭제하겠습니까?"
+                title="ASN 삭제"
+                @cancel="showConfirm = false"
+                @confirm="showConfirm = false;
+                showToast('success');
               "
             />
           </div>
@@ -538,15 +620,23 @@ const uploadedFile = ref(null)
         <h2 class="section-title">ToastMessage</h2>
         <div class="demo-card">
           <div class="toast-btns">
-            <button class="btn-demo btn-green" @click="showToast('success')">Success</button>
-            <button class="btn-demo btn-red" @click="showToast('error')">Error</button>
-            <button class="btn-demo btn-blue" @click="showToast('info')">Info</button>
-            <button class="btn-demo btn-amber" @click="showToast('warning')">Warning</button>
+            <button class="btn-demo btn-green" @click="showToast('success')">
+              Success
+            </button>
+            <button class="btn-demo btn-red" @click="showToast('error')">
+              Error
+            </button>
+            <button class="btn-demo btn-blue" @click="showToast('info')">
+              Info
+            </button>
+            <button class="btn-demo btn-amber" @click="showToast('warning')">
+              Warning
+            </button>
           </div>
           <ToastMessage
-            v-model:visible="toast.visible"
-            :message="toast.message"
-            :type="toast.type"
+              v-model:visible="toast.visible"
+              :message="toast.message"
+              :type="toast.type"
           />
         </div>
       </section>
@@ -581,10 +671,12 @@ const uploadedFile = ref(null)
   flex-direction: column;
   gap: 10px;
 }
+
 .demo-section.two-col {
   flex-direction: row;
   gap: 24px;
 }
+
 .demo-section.two-col > div {
   flex: 1;
   display: flex;
@@ -626,15 +718,19 @@ const uploadedFile = ref(null)
   flex-direction: column;
   gap: 14px;
 }
+
 .font-card--condensed {
   border-top: 3px solid var(--gold);
 }
+
 .font-card--barlow {
   border-top: 3px solid var(--blue);
 }
+
 .font-card--mono {
   border-top: 3px solid var(--green);
 }
+
 .font-card--base {
   border-top: 3px solid var(--t4);
 }
@@ -654,18 +750,22 @@ const uploadedFile = ref(null)
   font-family: monospace;
   width: fit-content;
 }
+
 .tag-condensed {
   background: rgba(245, 166, 35, 0.15);
   color: var(--gold);
 }
+
 .tag-barlow {
   background: rgba(76, 116, 255, 0.12);
   color: var(--blue);
 }
+
 .tag-mono {
   background: rgba(46, 204, 135, 0.15);
   color: var(--green);
 }
+
 .tag-base {
   background: var(--surface-2);
   color: var(--t3);
@@ -682,6 +782,7 @@ const uploadedFile = ref(null)
   line-height: 1.2;
   margin: 0;
 }
+
 .font-sample--sm {
   font-size: 15px;
   color: var(--t2);
@@ -691,14 +792,17 @@ const uploadedFile = ref(null)
   font-family: var(--font-condensed);
   font-weight: 700;
 }
+
 .font-barlow {
   font-family: var(--font-barlow);
   font-weight: 500;
 }
+
 .font-mono {
   font-family: var(--font-mono);
   font-weight: 400;
 }
+
 .font-base {
   font-family: var(--font-base);
   font-weight: 400;
@@ -996,14 +1100,17 @@ const uploadedFile = ref(null)
   font-weight: 700;
   font-family: monospace;
 }
+
 .sidebar-tag {
   background: rgba(245, 166, 35, 0.15);
   color: var(--gold);
 }
+
 .header-tag {
   background: rgba(74, 122, 233, 0.15);
   color: var(--blue);
 }
+
 .app-tag {
   background: rgba(51, 195, 122, 0.15);
   color: var(--green);
@@ -1037,6 +1144,7 @@ const uploadedFile = ref(null)
   font-weight: 600;
   color: var(--t2);
 }
+
 .part-dim {
   font-size: 11px;
   color: var(--t4);
@@ -1072,9 +1180,11 @@ const uploadedFile = ref(null)
   color: var(--t3);
   margin-bottom: 10px;
 }
+
 .demo-label.mt {
   margin-top: 16px;
 }
+
 .demo-note {
   font-size: 12px;
   color: var(--t4);
@@ -1097,6 +1207,7 @@ const uploadedFile = ref(null)
   padding-top: 16px;
   border-top: 1px solid var(--border);
 }
+
 .step-pick-btn {
   padding: 5px 14px;
   border: 1px solid var(--border);
@@ -1106,11 +1217,13 @@ const uploadedFile = ref(null)
   font-size: 12px;
   transition: all var(--ease-fast);
 }
+
 .step-pick-btn.active {
   border-color: var(--blue);
   background: var(--blue);
   color: #fff;
 }
+
 .step-pick-btn:hover:not(.active) {
   border-color: var(--blue);
   color: var(--blue);
@@ -1122,6 +1235,7 @@ const uploadedFile = ref(null)
   grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
+
 .mt {
   margin-top: 20px;
 }
@@ -1132,6 +1246,7 @@ const uploadedFile = ref(null)
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 }
+
 .empty-box {
   border: 1px dashed var(--border);
   border-radius: var(--radius-md);
@@ -1145,17 +1260,20 @@ const uploadedFile = ref(null)
   gap: 40px;
   flex-wrap: wrap;
 }
+
 .spinner-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
 }
+
 .spinner-item--dark {
   background: var(--sidebar);
   padding: 12px 20px;
   border-radius: var(--radius-md);
 }
+
 .spinner-label {
   font-size: 11px;
   color: var(--t4);
@@ -1179,43 +1297,52 @@ const uploadedFile = ref(null)
   border: 1px solid var(--border);
   transition: all var(--ease-fast);
 }
+
 .btn-demo:hover {
   background: var(--surface);
   border-color: var(--blue);
   color: var(--blue);
 }
+
 .btn-blue {
   background: var(--blue);
   color: #fff;
   border-color: var(--blue);
 }
+
 .btn-blue:hover {
   background: #3a5fe0;
   color: #fff;
 }
+
 .btn-red {
   background: var(--red);
   color: #fff;
   border-color: var(--red);
 }
+
 .btn-red:hover {
   background: #d63030;
   color: #fff;
 }
+
 .btn-green {
   background: var(--green);
   color: #fff;
   border-color: var(--green);
 }
+
 .btn-green:hover {
   background: #27b576;
   color: #fff;
 }
+
 .btn-amber {
   background: var(--amber);
   color: var(--t1);
   border-color: var(--amber);
 }
+
 .btn-amber:hover {
   background: #e0b400;
 }
