@@ -17,7 +17,7 @@ import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import TimelineStepper from '@/components/common/TimelineStepper.vue'
 import FileUpload from '@/components/common/FileUpload.vue'
-import { ACCOUNT_STATUS, ASN_STATUS, ORDER_STATUS } from '@/constants'
+import { ACCOUNT_STATUS, ASN_STATUS, ITEM_STATUS, ORDER_STATUS, WORKER_STATUS } from '@/constants'
 
 const uiStore = useUiStore()
 
@@ -58,7 +58,7 @@ const tableColumns = [
 const tableRows = [
   { id: 1, name: 'CONK 프리미엄 박스 (L)', quantity: 24, status: 'PENDING', amount: '$1,200.00' },
   { id: 2, name: 'ECO 완충재 세트', quantity: 150, status: 'CONFIRMED', amount: '$450.00' },
-  { id: 3, name: '방습 포장지 (100매)', quantity: 10, status: 'PICKING', amount: '$89.00' },
+  { id: 3, name: '방습 포장지 (100매)', quantity: 10, status: 'PREPARING_ITEM', amount: '$89.00' },
   { id: 4, name: '테이프 디스펜서 Pro', quantity: 5, status: 'SHIPPED', amount: '$199.00' },
   { id: 5, name: '라벨 프린터 용지 A4', quantity: 3, status: 'CANCELLED', amount: '$34.00' },
 ]
@@ -68,11 +68,10 @@ const pagination = ref({ page: 1, pageSize: 5, total: 5 })
 const ORDER_STEPS = [
   { key: ORDER_STATUS.PENDING, label: '접수' },
   { key: ORDER_STATUS.CONFIRMED, label: '확인' },
-  { key: ORDER_STATUS.PICKING, label: '피킹' },
-  { key: ORDER_STATUS.PACKING, label: '패킹' },
+  { key: ORDER_STATUS.PREPARING_ITEM, label: '물품준비중' },
   { key: ORDER_STATUS.SHIPPED, label: '출고완료' },
 ]
-const currentStep = ref(ORDER_STATUS.PICKING)
+const currentStep = ref(ORDER_STATUS.PREPARING_ITEM)
 
 // ── Form ────────────────────────────────────────────────
 const formValues = ref({ name: '', email: '', memo: '' })
@@ -279,14 +278,12 @@ const uploadedFile = ref(null)
           <div class="badge-row">
             <StatusBadge :status="ORDER_STATUS.PENDING" type="order" />
             <StatusBadge :status="ORDER_STATUS.CONFIRMED" type="order" />
-            <StatusBadge :status="ORDER_STATUS.PICKING" type="order" />
-            <StatusBadge :status="ORDER_STATUS.PACKING" type="order" />
+            <StatusBadge :status="ORDER_STATUS.PREPARING_ITEM" type="order" />
             <StatusBadge :status="ORDER_STATUS.SHIPPED" type="order" />
             <StatusBadge :status="ORDER_STATUS.CANCELLED" type="order" />
           </div>
           <p class="demo-label mt">ASN 상태 (type="asn")</p>
           <div class="badge-row">
-            <StatusBadge :status="ASN_STATUS.DRAFT" type="asn" />
             <StatusBadge :status="ASN_STATUS.SUBMITTED" type="asn" />
             <StatusBadge :status="ASN_STATUS.RECEIVED" type="asn" />
             <StatusBadge :status="ASN_STATUS.CANCELLED" type="asn" />
@@ -297,6 +294,21 @@ const uploadedFile = ref(null)
             <StatusBadge :status="ACCOUNT_STATUS.TEMP_PASSWORD" type="account" />
             <StatusBadge :status="ACCOUNT_STATUS.INACTIVE" type="account" />
             <StatusBadge status="UNKNOWN_STATUS" type="order" />
+          </div>
+          <p class="demo-label mt">물품 상태 (type="item")</p>
+          <div class="badge-row">
+            <StatusBadge :status="ITEM_STATUS.INBOUND_SCHEDULED" type="item" />
+            <StatusBadge :status="ITEM_STATUS.INBOUND" type="item" />
+            <StatusBadge :status="ITEM_STATUS.INSPECTION_LOADING" type="item" />
+            <StatusBadge :status="ITEM_STATUS.STORED" type="item" />
+            <StatusBadge :status="ITEM_STATUS.PICKING_PACKING" type="item" />
+            <StatusBadge :status="ITEM_STATUS.OUTBOUND_WAITING" type="item" />
+            <StatusBadge :status="ITEM_STATUS.OUTBOUND_COMPLETE" type="item" />
+          </div>
+          <p class="demo-label mt">작업자 상태 (type="worker")</p>
+          <div class="badge-row">
+            <StatusBadge :status="WORKER_STATUS.INSPECTION_LOADING" type="worker" />
+            <StatusBadge :status="WORKER_STATUS.PICKING_PACKING" type="worker" />
           </div>
         </div>
       </section>
@@ -524,10 +536,8 @@ const uploadedFile = ref(null)
               message="삭제하면 복구할 수 없습니다. 정말 삭제하겠습니까?"
               title="ASN 삭제"
               @cancel="showConfirm = false"
-              @confirm="
-                showConfirm = false
-                showToast('success')
-              "
+              @confirm="showConfirm = false;
+              showToast('success')"
             />
           </div>
         </div>
