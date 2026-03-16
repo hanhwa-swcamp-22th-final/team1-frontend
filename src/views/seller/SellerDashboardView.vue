@@ -12,6 +12,49 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 
 /** Header 브레드크럼 표시용 */
 const breadcrumb = [{ label: 'Seller' }, { label: 'Dashboard' }]
+/** Dashboard mock 데이터 */
+const dashboardData = {
+  summary: {
+    availableStockQty: 12840,
+    availableSkuCount: 236,
+    todayNewOrders: 87,
+    outbound: {
+      pending: 12,
+      inProgress: 31,
+      completed: 44,
+    },
+    lowStockSkuCount: 9,
+  },
+  memoBanner: {
+    title: '운영 메모',
+    message: '금주 입고 예정 물량이 증가하여 ASN 등록 일정 확인 필요',
+    updatedAt: '2026-03-17 09:00',
+  },
+  weeklyTrend: [
+    { label: '03/11', orders: 42, shipped: 35 },
+    { label: '03/12', orders: 51, shipped: 39 },
+    { label: '03/13', orders: 48, shipped: 41 },
+    { label: '03/14', orders: 66, shipped: 52 },
+    { label: '03/15', orders: 73, shipped: 61 },
+    { label: '03/16', orders: 58, shipped: 46 },
+    { label: '03/17', orders: 87, shipped: 44 },
+  ],
+  ratioChart: [
+    { label: '정상 재고', value: 78 },
+    { label: '할당 재고', value: 15 },
+    { label: '부족 재고', value: 7 },
+  ],
+  recentActivities: [
+    { id: 1, type: 'ORDER', message: '주문 12건이 신규 등록됨', time: '10분 전' },
+    { id: 2, type: 'ASN', message: 'ASN-20260317-001 입고 완료', time: '32분 전' },
+    { id: 3, type: 'ALERT', message: 'SKU-203 재고 부족 알림 발생', time: '1시간 전' },
+  ],
+  inboundInventory: [
+    { id: 1, asnNo: 'ASN-20260317-001', warehouse: 'NJ Warehouse', qty: 1200, eta: '2026-03-19', status: '입고예정' },
+    { id: 2, asnNo: 'ASN-20260316-004', warehouse: 'LA Warehouse', qty: 860, eta: '2026-03-18', status: '입고중' },
+  ],
+}
+
 </script>
 
 <template>
@@ -32,11 +75,32 @@ const breadcrumb = [{ label: 'Seller' }, { label: 'Dashboard' }]
     <section class="seller-dashboard">
       <!-- KPI 카드 4개 영역 -->
       <div class="kpi-grid">
-        <div class="dashboard-card">가용 재고 총 수량</div>
-        <div class="dashboard-card">금일 신규 주문</div>
-        <div class="dashboard-card">출고 처리 현황</div>
-        <div class="dashboard-card">재고 부족 알림</div>
+        <div class="dashboard-card">
+          <p class="card-label">가용 재고 총 수량</p>
+          <strong class="card-value">{{ dashboardData.summary.availableStockQty }}</strong>
+          <span class="card-sub">{{ dashboardData.summary.availableSkuCount }} SKU</span>
+        </div>
+
+        <div class="dashboard-card">
+          <p class="card-label">금일 신규 주문</p>
+          <strong class="card-value">{{ dashboardData.summary.todayNewOrders }}</strong>
+          <span class="card-sub">오늘 기준 신규 등록 건수</span>
+        </div>
+
+        <div class="dashboard-card">
+          <p class="card-label">출고 처리 현황</p>
+          <strong class="card-value">{{ dashboardData.summary.outbound.completed }}</strong>
+          <span class="card-sub">대기 {{ dashboardData.summary.outbound.pending }} / 진행 {{ dashboardData.summary.outbound.inProgress }}
+          </span>
+        </div>
+
+        <div class="dashboard-card">
+          <p class="card-label">재고 부족 알림</p>
+          <strong class="card-value">{{ dashboardData.summary.lowStockSkuCount }}</strong>
+          <span class="card-sub">안전재고 이하 SKU 수</span>
+        </div>
       </div>
+
 
       <!-- 운영 메모 배너 -->
       <div class="dashboard-card dashboard-banner">운영 메모 배너</div>
@@ -88,4 +152,26 @@ const breadcrumb = [{ label: 'Seller' }, { label: 'Dashboard' }]
 .dashboard-banner {
   min-height: 120px;
 }
+/* kpi 카드 style */
+.card-label {
+  font-size: var(--font-size-sm);
+  color: var(--t3);
+}
+
+.card-value {
+  display: block;
+  margin-top: var(--space-3);
+  font-family: var(--font-condensed);
+  font-size: 32px;
+  color: var(--t1);
+  line-height: 1;
+}
+
+.card-sub {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--t3);
+}
+
 </style>
