@@ -1,2 +1,10 @@
-// TODO: 팀원 담당 라우트
-export default []
+import { ROLES, ROUTE_NAMES } from '@/constants'
+
+export default [
+  {
+    path: '/whm/asn-list',
+    name: ROUTE_NAMES.WH_MANAGER_ASN_LIST,
+    component: () => import('@/views/whManager/AsnListView.vue'),
+    meta: { role: ROLES.WH_MANAGER },
+  },
+]

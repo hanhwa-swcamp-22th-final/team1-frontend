@@ -51,6 +51,106 @@ server.post('/auth/login', (req, res) => {
   })
 })
 
+// 3. ASN mock 데이터
+const MOCK_ASNS = [
+  {
+    id: 'ASN-2024-0312-001',
+    seller: '이수빈',
+    company: 'Glow Beauty',
+    sku: '앰플 세럼 30ml 외 2종',
+    plannedQty: 1000,
+    actualQty: null,
+    expectedDate: '2026-03-14',
+    registeredDate: '2026-03-10',
+    status: 'pending',
+  },
+  {
+    id: 'ASN-2024-0311-005',
+    seller: '박정호',
+    company: 'K-Style',
+    sku: '티셔츠 L 외 3종',
+    plannedQty: 500,
+    actualQty: null,
+    expectedDate: '2026-03-13',
+    registeredDate: '2026-03-09',
+    status: 'transit',
+  },
+  {
+    id: 'ASN-2024-0310-003',
+    seller: '최민수',
+    company: 'Eco Pure',
+    sku: '텀블러 350ml',
+    plannedQty: 200,
+    actualQty: 185,
+    expectedDate: '2026-03-12',
+    registeredDate: '2026-03-08',
+    status: 'mismatch',
+  },
+  {
+    id: 'ASN-2024-0309-002',
+    seller: '이수빈',
+    company: 'Glow Beauty',
+    sku: '마스크팩 10매입',
+    plannedQty: 800,
+    actualQty: 800,
+    expectedDate: '2026-03-12',
+    registeredDate: '2026-03-07',
+    status: 'received',
+  },
+  {
+    id: 'ASN-2024-0308-001',
+    seller: '강은채',
+    company: 'K-Farm',
+    sku: '특산 진액 30팩',
+    plannedQty: 300,
+    actualQty: 298,
+    expectedDate: '2026-03-11',
+    registeredDate: '2026-03-06',
+    status: 'received',
+  },
+  {
+    id: 'ASN-2024-0307-004',
+    seller: '김지훈',
+    company: 'Beauty Lab',
+    sku: 'BB크림 외 1종',
+    plannedQty: 400,
+    actualQty: null,
+    expectedDate: '2026-03-16',
+    registeredDate: '2026-03-05',
+    status: 'pending',
+  },
+]
+
+// GET /asns — 전체 목록 (상태 필터 지원: ?status=pending)
+server.get('/asns', (req, res) => {
+  const { status } = req.query
+  const result = status
+    ? MOCK_ASNS.filter(a => a.status === status)
+    : MOCK_ASNS
+  res.json({ success: true, data: result })
+})
+
+// GET /asns/kpi — 상태별 건수 집계
+server.get('/asns/kpi', (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      total:    MOCK_ASNS.length,
+      pending:  MOCK_ASNS.filter(a => a.status === 'pending').length,
+      transit:  MOCK_ASNS.filter(a => a.status === 'transit').length,
+      received: MOCK_ASNS.filter(a => a.status === 'received').length,
+      mismatch: MOCK_ASNS.filter(a => a.status === 'mismatch').length,
+    },
+  })
+})
+
+// GET /asns/:id — 단건 상세 조회
+server.get('/asns/:id', (req, res) => {
+  const asn = MOCK_ASNS.find(a => a.id === req.params.id)
+  if (!asn) return res.status(404).json({ success: false, message: 'ASN을 찾을 수 없습니다.' })
+  res.json({ success: true, data: asn })
+})
+
 // 나머지 모든 라우트는 db.json을 기반으로 자동 생성된 REST API 사용
 server.use(router)
 

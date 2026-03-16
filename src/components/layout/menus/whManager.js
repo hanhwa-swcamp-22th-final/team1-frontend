@@ -16,11 +16,16 @@
 import { ROUTE_NAMES } from '@/constants'
 
 export const WH_MANAGER_MENU_GROUPS = [
-  // TODO: 아래 주석을 참고하여 메뉴 그룹을 작성하세요
-  // {
-  //   label: '그룹명',
-  //   items: [
-  //     { name: ROUTE_NAMES.WH_MANAGER_DASHBOARD, label: '대시보드', icon: '⊞' },
-  //   ],
-  // },
+  {
+    label: '개요',
+    items: [
+      { name: ROUTE_NAMES.WH_MANAGER_DASHBOARD, label: '대시보드', icon: '⊞' },
+    ],
+  },
+  {
+    label: '입고 관리',
+    items: [
+      { name: ROUTE_NAMES.WH_MANAGER_ASN_LIST, label: 'ASN 목록', icon: '📥' },
+    ],
+  },
 ]
