@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from '@/components/layout/AppLayout.vue'
 
-const breadcrumb = [{label: 'CONK'}, {label: '통합 대시보드'}]
+const breadcrumb = [{ label: 'CONK' }, { label: '통합 대시보드' }]
 
 const summaryCards = [
   {
@@ -44,14 +44,14 @@ const warehouses = [
     status: 'active',
     statusLabel: '정상 운영중',
     kpis: [
-      {label: '출고 대기 건수', value: '142', unit: '건'},
-      {label: '미처리 ASN', value: '12', unit: '건'},
-      {label: '재고 부족 경고', value: '3', unit: 'SKU', alert: true},
+      { label: '출고 대기 건수', value: '142', unit: '건' },
+      { label: '미처리 ASN', value: '12', unit: '건' },
+      { label: '재고 부족 경고', value: '3', unit: 'SKU', alert: true },
       {
         label: '집하 마감중',
         carriers: [
-          {name: 'USPS', time: '16:00'},
-          {name: 'FedEx', time: '18:30'},
+          { name: 'USPS', time: '16:00' },
+          { name: 'FedEx', time: '18:30' },
         ],
       },
     ],
@@ -63,14 +63,14 @@ const warehouses = [
     status: 'active',
     statusLabel: '정상 운영중',
     kpis: [
-      {label: '출고 대기 건수', value: '81', unit: '건'},
-      {label: '미처리 ASN', value: '4', unit: '건'},
-      {label: '재고 부족 경고', value: '1', unit: 'SKU', alert: true},
+      { label: '출고 대기 건수', value: '81', unit: '건' },
+      { label: '미처리 ASN', value: '4', unit: '건' },
+      { label: '재고 부족 경고', value: '1', unit: 'SKU', alert: true },
       {
         label: '집하 마감중',
         carriers: [
-          {name: 'UPS', time: '17:30'},
-          {name: 'FedEx', time: '19:10'},
+          { name: 'UPS', time: '17:30' },
+          { name: 'FedEx', time: '19:10' },
         ],
       },
     ],
@@ -82,14 +82,14 @@ const warehouses = [
     status: 'idle',
     statusLabel: '주의 모니터링',
     kpis: [
-      {label: '출고 대기 건수', value: '96', unit: '건'},
-      {label: '미처리 ASN', value: '26', unit: '건'},
-      {label: '재고 부족 경고', value: '8', unit: 'SKU', alert: true},
+      { label: '출고 대기 건수', value: '96', unit: '건' },
+      { label: '미처리 ASN', value: '26', unit: '건' },
+      { label: '재고 부족 경고', value: '8', unit: 'SKU', alert: true },
       {
         label: '집하 마감중',
         carriers: [
-          {name: 'USPS', time: '15:30'},
-          {name: 'DHL', time: '17:00'},
+          { name: 'USPS', time: '15:30' },
+          { name: 'DHL', time: '17:00' },
         ],
       },
     ],
@@ -100,43 +100,43 @@ const warehouses = [
 <template>
   <AppLayout :breadcrumb="breadcrumb" title="통합 대시보드">
     <template #header-action>
-      <button class="btn-export">
+      <button class="ui-btn ui-btn--ghost btn-export">
         <svg fill="none" height="14" viewBox="0 0 14 14" width="14">
           <path
-              d="M7 1v8M3.5 6.5L7 10l3.5-3.5"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.5"
+            d="M7 1v8M3.5 6.5L7 10l3.5-3.5"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
           />
           <path
-              d="M1.5 11v1.5h11V11"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-width="1.5"
+            d="M1.5 11v1.5h11V11"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-width="1.5"
           />
         </svg>
         데이터 내보내기
       </button>
-      <button class="btn-gold">
+      <button class="ui-btn btn-gold">
         <svg fill="none" height="14" viewBox="0 0 14 14" width="14">
           <line
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-width="2"
-              x1="7"
-              x2="7"
-              y1="2"
-              y2="12"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-width="2"
+            x1="7"
+            x2="7"
+            y1="2"
+            y2="12"
           />
           <line
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-width="2"
-              x1="2"
-              x2="12"
-              y1="7"
-              y2="7"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-width="2"
+            x1="2"
+            x2="12"
+            y1="7"
+            y2="7"
           />
         </svg>
         신규 출고 지시
@@ -148,19 +148,18 @@ const warehouses = [
       <div v-for="card in summaryCards" :key="card.label" class="summary-card">
         <span class="summary-label">{{ card.label }}</span>
         <span
-            :class="{
+          :class="{
             'summary-value--amber': card.valueColor === 'amber',
             'summary-value--red': card.valueColor === 'red',
           }"
-            class="summary-value"
-        >{{ card.value }}</span
-        >
+          class="summary-value"
+        >{{ card.value }}</span>
         <div
-            :class="{
+          :class="{
             'trend-up': card.trendType === 'up',
             'trend-down': card.trendType === 'down',
           }"
-            class="summary-trend"
+          class="summary-trend"
         >
           {{ card.trend }}
           <span class="trend-sub">{{ card.trendLabel }}</span>
@@ -190,17 +189,17 @@ const warehouses = [
                 <span class="progress-pct">{{ wh.progress }}%</span>
               </div>
               <div class="progress-bar">
-                <div :style="{ width: wh.progress + '%' }" class="progress-fill"/>
+                <div :style="{ width: wh.progress + '%' }" class="progress-fill" />
               </div>
             </div>
             <span
-                :class="{
+              :class="{
                 'status-badge--active': wh.status === 'active',
                 'status-badge--idle': wh.status === 'idle',
               }"
-                class="status-badge"
+              class="status-badge"
             >
-              <span class="status-dot"/>
+              <span class="status-dot" />
               {{ wh.statusLabel }}
             </span>
           </div>
@@ -233,29 +232,11 @@ const warehouses = [
 </template>
 
 <style scoped>
-/* ── 헤더 액션 버튼 ────────────────────────────── */
 .btn-export {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  font-family: var(--font-barlow);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--t2);
-  cursor: pointer;
-  transition: all var(--ease-fast);
+  border-radius: var(--radius-sm);   /* ui-btn의 --radius-md 대신 sm 사용 */
+  font-family: var(--font-barlow);   /* ui-btn 기본 폰트(Inter) 대신 Barlow */
+  font-weight: 500;                  /* ui-btn 기본 600 대신 500 */
 }
-
-.btn-export:hover {
-  background: var(--surface-2);
-  border-color: var(--border-dk);
-}
-
 .btn-export svg {
   width: 14px;
   height: 14px;
@@ -263,55 +244,45 @@ const warehouses = [
 }
 
 .btn-gold {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 20px;
-  border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-sm);      /* ui-btn의 --radius-md 대신 sm */
   background: var(--gold);
   font-family: var(--font-barlow);
-  font-size: 13px;
   font-weight: 700;
   color: var(--t1);
-  cursor: pointer;
-  transition: background var(--ease-fast);
+  border: none;
 }
-
 .btn-gold:hover {
   background: var(--gold-lt);
 }
-
 .btn-gold svg {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
 }
 
-/* ── 요약 카드 그리드 ─────────────────────────── */
+/* ── 요약 카드 그리드 ──────────────────────────────────── */
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 32px;
+  gap: var(--space-5);                 /* 20px */
+  margin-bottom: var(--space-8);       /* 32px */
 }
 
 .summary-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 20px 24px;
+  padding: var(--space-5) var(--space-6); /* 20px 24px */
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);                 /* 8px */
   box-shadow: var(--shadow-sm);
 }
 
 .summary-label {
   font-family: var(--font-barlow);
   font-weight: 600;
-  font-size: 11px;
+  font-size: var(--font-size-xs);      /* 11px */
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--t3);
@@ -324,62 +295,50 @@ const warehouses = [
   color: var(--t1);
   line-height: 1;
 }
-
-.summary-value--amber {
-  color: var(--amber);
-}
-
-.summary-value--red {
-  color: var(--red);
-}
+.summary-value--amber { color: var(--amber); }
+.summary-value--red   { color: var(--red); }
 
 .summary-trend {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);                 /* 6px */
   font-family: var(--font-base);
-  font-size: 12px;
+  font-size: var(--font-size-sm);      /* 12px */
 }
-
-.trend-up {
-  color: var(--green);
-}
-
-.trend-down {
-  color: var(--red);
-}
+.trend-up   { color: var(--green); }
+.trend-down { color: var(--red); }
 
 .trend-sub {
-  font-size: 11px;
+  font-size: var(--font-size-xs);      /* 11px */
   color: var(--t3);
 }
 
-/* ── 섹션 헤더 ───────────────────────────────── */
+/* ── 섹션 헤더 ─────────────────────────────────────────── */
 .section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);       /* 16px */
 }
 
 .section-title {
   font-family: var(--font-condensed);
   font-weight: 700;
-  font-size: 18px;
+  font-size: var(--font-size-xl);      /* clamp(15px, 0.938vw, 18px) */
   letter-spacing: 0.5px;
   color: var(--t1);
 }
 
 .section-date {
-  font-size: 12px;
+  font-size: var(--font-size-sm);      /* 12px */
   color: var(--t3);
 }
 
-/* ── 창고 카드 ───────────────────────────────── */
+/* ── 창고 카드 ─────────────────────────────────────────── */
 .warehouse-cards {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-4);                 /* 16px */
 }
 
 .wh-card {
@@ -389,7 +348,6 @@ const warehouses = [
   overflow: hidden;
   transition: all var(--ease-default);
 }
-
 .wh-card:hover {
   border-color: var(--gold);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
@@ -401,7 +359,7 @@ const warehouses = [
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
+  padding: var(--space-4) var(--space-6); /* 16px 24px */
   background: var(--surface-2);
   border-bottom: 1px solid var(--border);
 }
@@ -409,23 +367,23 @@ const warehouses = [
 .wh-info-top {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);                 /* 12px */
 }
 
 .wh-name {
   font-family: var(--font-condensed);
   font-weight: 700;
-  font-size: 22px;
+  font-size: var(--font-size-2xl);     /* clamp(18px, 1.146vw, 22px) */
   color: var(--t1);
 }
 
 .wh-tag {
-  padding: 2px 8px;
+  padding: var(--space-1) var(--space-2); /* 2px 8px */
   border-radius: var(--radius-sm);
   background: var(--sidebar);
   font-family: var(--font-barlow);
   font-weight: 600;
-  font-size: 10px;
+  font-size: var(--font-size-xs);      /* 10px */
   color: #fff;
   white-space: nowrap;
 }
@@ -433,14 +391,14 @@ const warehouses = [
 .wh-header-right {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: var(--space-6);                 /* 24px */
 }
 
 /* 출고 진행률 */
 .progress-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);                 /* 4px */
   width: 180px;
 }
 
@@ -452,14 +410,14 @@ const warehouses = [
 
 .progress-label {
   font-family: var(--font-barlow);
-  font-size: 11px;
+  font-size: var(--font-size-xs);      /* 11px */
   color: var(--t3);
 }
 
 .progress-pct {
   font-family: var(--font-base);
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--font-size-md);      /* 14px */
   color: var(--green);
 }
 
@@ -469,7 +427,6 @@ const warehouses = [
   border-radius: 3px;
   overflow: hidden;
 }
-
 .progress-fill {
   height: 100%;
   background: var(--green);
@@ -480,25 +437,22 @@ const warehouses = [
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 20px;
+  gap: var(--space-2);                 /* 6px */
+  padding: var(--space-2) var(--space-3); /* 6px 12px */
+  border-radius: var(--radius-full);
   font-family: var(--font-barlow);
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--font-size-xs);      /* 11px */
   white-space: nowrap;
 }
-
 .status-badge--active {
   background: var(--green-pale);
   color: var(--green);
 }
-
 .status-badge--idle {
   background: var(--amber-pale);
   color: #b45309;
 }
-
 .status-dot {
   width: 6px;
   height: 6px;
@@ -513,13 +467,12 @@ const warehouses = [
 }
 
 .kpi-box {
-  padding: 24px;
+  padding: var(--space-6);             /* 24px */
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);                 /* 4px */
 }
-
 .kpi-box:last-child {
   border-right: none;
 }
@@ -527,7 +480,7 @@ const warehouses = [
 .kpi-label {
   font-family: var(--font-barlow);
   font-weight: 600;
-  font-size: 10px;
+  font-size: var(--font-size-xs);      /* 10px */
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--t3);
@@ -540,7 +493,6 @@ const warehouses = [
   color: var(--t1);
   line-height: 1.1;
 }
-
 .kpi-value--alert {
   color: var(--red);
 }
@@ -548,11 +500,10 @@ const warehouses = [
 .kpi-unit {
   font-family: var(--font-barlow);
   font-weight: 500;
-  font-size: 14px;
+  font-size: var(--font-size-md);      /* 14px */
   color: var(--t3);
-  margin-left: 4px;
+  margin-left: var(--space-1);         /* 4px */
 }
-
 .kpi-value--alert .kpi-unit {
   color: var(--red);
 }
@@ -561,8 +512,8 @@ const warehouses = [
 .carrier-schedule {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 4px;
+  gap: var(--space-2);                 /* 6px */
+  margin-top: var(--space-1);          /* 4px */
 }
 
 .carrier-row {
@@ -570,14 +521,13 @@ const warehouses = [
   align-items: center;
   justify-content: space-between;
   font-family: var(--font-base);
-  font-size: 12px;
+  font-size: var(--font-size-sm);      /* 12px */
 }
 
 .carrier-name {
   font-weight: 600;
   color: var(--t2);
 }
-
 .carrier-time {
   color: var(--t3);
 }
