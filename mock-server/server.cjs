@@ -122,7 +122,7 @@ server.get('/wms/warehouses/status', (req, res) => {
         kpis: [
           { label: '출고 대기 건수', value: '142', unit: '건' },
           { label: '미처리 ASN', value: '12', unit: '건' },
-          { label: '재고 부족 경고', value: '3', unit: 'SKU', alert: true },
+          { label: '재고 부족 경고', value: '7', unit: 'SKU', alert: true },
           { label: '집하 마감중', carriers: [{ name: 'USPS', time: '16:00' }, { name: 'FedEx', time: '18:30' }] },
         ],
       },
@@ -136,7 +136,7 @@ server.get('/wms/warehouses/status', (req, res) => {
         kpis: [
           { label: '출고 대기 건수', value: '81', unit: '건' },
           { label: '미처리 ASN', value: '4', unit: '건' },
-          { label: '재고 부족 경고', value: '1', unit: 'SKU', alert: true },
+          { label: '재고 부족 경고', value: '3', unit: 'SKU', alert: true },
           { label: '집하 마감중', carriers: [{ name: 'UPS', time: '17:30' }, { name: 'FedEx', time: '19:10' }] },
         ],
       },
@@ -153,6 +153,90 @@ server.get('/wms/warehouses/status', (req, res) => {
           { label: '재고 부족 경고', value: '8', unit: 'SKU', alert: true },
           { label: '집하 마감중', carriers: [{ name: 'USPS', time: '15:30' }, { name: 'DHL', time: '17:00' }] },
         ],
+      },
+    ],
+  })
+})
+
+// 8. GET /wms/warehouses/summary — 창고 목록 페이지 요약 카드 (wms-service)
+//    ※ /wms/warehouses 보다 먼저 등록해야 함 (더 구체적인 경로 우선)
+server.get('/wms/warehouses/summary', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: '창고 목록 요약 조회 성공',
+    data: {
+      totalCount: 4,
+      activeCount: 3,
+      totalInventory: 18420,
+      todayOutbound: 203,
+      avgLocationUtil: 69,
+    },
+  })
+})
+
+// 9. GET /wms/warehouses — 창고 목록 (카드 그리드 + 관리자 테이블 공용)
+server.get('/wms/warehouses', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: '창고 목록 조회 성공',
+    data: [
+      {
+        id: 1,
+        code: 'WH-US-LA-001',
+        name: 'LA West Coast Hub',
+        location: 'Los Angeles, CA',
+        status: 'ACTIVE',
+        stats: { inventory: 8240, todayOutbound: 89, pendingAsn: 3, sellerCount: 6 },
+        locationUtil: 72,
+        manager: {
+          name: '김태영',
+          email: 't.kim@glsm-la.com',
+          phone: '+1-213-555-0182',
+          lastLogin: '오늘 14:22',
+          status: 'ACTIVE',
+        },
+      },
+      {
+        id: 2,
+        code: 'WH-US-TX-002',
+        name: 'Central Dallas Center',
+        location: 'Dallas, TX',
+        status: 'ACTIVE',
+        stats: { inventory: 5180, todayOutbound: 54, pendingAsn: 1, sellerCount: 4 },
+        locationUtil: 48,
+        manager: {
+          name: '박지훈',
+          email: 'j.park@glsm-tx.com',
+          phone: '+1-214-555-0391',
+          lastLogin: '2시간 전',
+          status: 'ACTIVE',
+        },
+      },
+      {
+        id: 3,
+        code: 'WH-US-NY-003',
+        name: 'East NY Hub',
+        location: 'Newark, NJ',
+        status: 'CAUTION',
+        stats: { inventory: 5000, todayOutbound: 60, pendingAsn: 2, sellerCount: 5 },
+        locationUtil: 88,
+        manager: {
+          name: '이소윤',
+          email: 's.lee@glsm-ny.com',
+          phone: '+1-201-555-0844',
+          lastLogin: '오늘 09:11',
+          status: 'CAUTION',
+        },
+      },
+      {
+        id: 4,
+        code: 'WH-US-IL-004',
+        name: 'Chicago Midwest Depot',
+        location: 'Chicago, IL',
+        status: 'INACTIVE',
+        stats: { inventory: 0, todayOutbound: 0, pendingAsn: 0, sellerCount: 0 },
+        locationUtil: 0,
+        manager: null,
       },
     ],
   })

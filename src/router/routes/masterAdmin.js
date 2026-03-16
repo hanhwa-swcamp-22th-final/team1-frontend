@@ -5,10 +5,11 @@ import { ROUTE_NAMES } from '@/constants/routes'
  * masterAdmin 라우트
  *
  * ✅ 구현 완료:
- *   master-dashboard — Dashboard.vue
+ *   master-dashboard      — Dashboard.vue
+ *   master-warehouse-list — WarehouseList.vue
  *
  * 🚧 스텁 (UI 미구현 — Dashboard.vue 임시 사용):
- *   나머지 13개 라우트는 Sidebar.vue의 RouterLink 오류 방지를 위해
+ *   나머지 12개 라우트는 Sidebar.vue의 RouterLink 오류 방지를 위해
  *   named route만 등록해 두었음. 각 담당자가 Vue 파일 생성 후 교체할 것.
  */
 export default [
@@ -20,11 +21,11 @@ export default [
     meta: { role: ROLES.MASTER_ADMIN },
   },
 
-  // ── 창고 관리 (스텁) ───────────────────────────────────────────────────────
+  // ── 창고 관리 ─────────────────────────────────────────────────────────────
   {
     path: '/master/warehouses',
     name: ROUTE_NAMES.MASTER_WAREHOUSE_LIST,
-    component: () => import('@/views/masterAdmin/Dashboard.vue'),
+    component: () => import('@/views/masterAdmin/WarehouseList.vue'),
     meta: { role: ROLES.MASTER_ADMIN },
   },
   {
