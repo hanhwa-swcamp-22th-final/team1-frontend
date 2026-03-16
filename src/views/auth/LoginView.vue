@@ -25,11 +25,11 @@ const DASHBOARD_BY_ROLE = {
 }
 
 const roles = [
-  { id: 'sys',    name: '시스템 관리자', desc: '플랫폼 전체 사용자·업체 관리',              loginId: 'sys.admin@conk.com',       pw: 'Temp!234Aa', note: '정상 로그인 예시' },
-  { id: 'master', name: '총괄 관리자',   desc: '3PL 업체 운영, 셀러 회사·계정 관리',        loginId: 'master.admin@glsm.com',    pw: 'Temp!234Bb', note: '정상 로그인 예시' },
-  { id: 'whm',    name: '창고 관리자',   desc: '창고 운영, 로케이션·재고·작업자 관리',      loginId: 'warehouse.admin@glsm.com', pw: 'Temp!234Cc', note: '정상 로그인 예시' },
-  { id: 'worker', name: '창고 작업자',   desc: '이메일 미등록 가능 · 작업자 코드 로그인',   loginId: 'WORKER-0007',              pw: 'Temp!234Dd', note: '로그인 시 작업 화면으로 이동' },
-  { id: 'seller', name: '셀러 담당자',   desc: '상품·ASN·주문·재고 알림 확인',             loginId: 'seller.ops@brandco.com',   pw: 'Temp!234Ee', note: '정상 로그인 예시' },
+  { id: 'sys',    name: '시스템 관리자', desc: '플랫폼 전체 사용자·업체 관리',            loginId: 'sys.admin@conk.com',    pw: '1234', note: '정상 로그인 예시' },
+  { id: 'master', name: '총괄 관리자',   desc: '3PL 업체 운영, 셀러 회사·계정 관리',      loginId: 'master.admin@conk.com', pw: '1234', note: '정상 로그인 예시' },
+  { id: 'whm',    name: '창고 관리자',   desc: '창고 운영, 로케이션·재고·작업자 관리',    loginId: 'wh.manager@conk.com',   pw: '1234', note: '정상 로그인 예시' },
+  { id: 'worker', name: '창고 작업자',   desc: '이메일 미등록 가능 · 작업자 코드 로그인', loginId: 'WORKER-001',            pw: '1234', note: '로그인 시 작업 화면으로 이동' },
+  { id: 'seller', name: '셀러 담당자',   desc: '상품·ASN·주문·재고 알림 확인',           loginId: 'seller@conk.com',       pw: '1234', note: '정상 로그인 예시' },
 ]
 
 const openRoles = ref({})
