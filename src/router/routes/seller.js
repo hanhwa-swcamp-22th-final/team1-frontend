@@ -4,13 +4,13 @@
 import { ROLES, ROUTE_NAMES } from '@/constants'
 
 export default [
-    // 기본 진입
+    // Seller 기본 진입 경로 → Dashboard로 리다이렉트
     {
         path: '/seller',
         redirect: { name: ROUTE_NAMES.SELLER_DASHBOARD },
     },
 
-    // Dashboard
+    // Seller Dashboard 메인 화면
     {
         path: '/seller/dashboard',
         name: ROUTE_NAMES.SELLER_DASHBOARD,
@@ -18,7 +18,7 @@ export default [
         meta: { role: ROLES.SELLER },
     },
 
-    // 주문 관리
+    // Seller 주문 등록 화면
     {
         path: '/seller/orders/register',
         name: ROUTE_NAMES.SELLER_ORDER_REGISTER,
@@ -35,7 +35,7 @@ export default [
     // 재고 관리
     // TODO(frontend): 재고 목록 라우트 추가
 
-    // ASN 관리
+    // Seller ASN 등록 화면
     {
         path: '/seller/asn/create',
         name: ROUTE_NAMES.SELLER_ASN_CREATE,
