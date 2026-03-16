@@ -61,6 +61,7 @@ export const ROUTE_NAMES = {
   WH_MANAGER_ORDER_LIST: 'whm-order-list',
   WH_MANAGER_ORDER_DETAIL: 'whm-order-detail',
   WH_MANAGER_OUTBOUND: 'whm-outbound',
+  WH_MANAGER_PICKING_LIST: 'whm-picking-list',
   WH_MANAGER_LABEL_PRINT: 'whm-label-print',
   WH_MANAGER_OUTBOUND_CONFIRM: 'whm-outbound-confirm',
   WH_MANAGER_WORKER_ACCOUNT: 'whm-worker-account',

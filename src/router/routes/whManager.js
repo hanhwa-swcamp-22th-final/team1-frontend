@@ -1,2 +1,10 @@
-// TODO: 팀원 담당 라우트
-export default []
+import { ROLES, ROUTE_NAMES } from '@/constants'
+
+export default [
+  {
+    path: '/whm/dashboard',
+    name: ROUTE_NAMES.WH_MANAGER_DASHBOARD,
+    component: () => import('@/views/whManager/DashboardView.vue'),
+    meta: { role: ROLES.WH_MANAGER },
+  },
+]
