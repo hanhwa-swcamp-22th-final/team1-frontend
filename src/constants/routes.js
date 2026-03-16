@@ -48,6 +48,7 @@ export const ROUTE_NAMES = {
   MASTER_SELLER_COMPANY_LIST: 'master-seller-company-list',
   MASTER_SELLER_COMPANY_REGISTER: 'master-seller-company-register',
   MASTER_RBAC_SETTING: 'master-rbac-setting',
+  MASTER_WAREHOUSE_DETAIL: 'master-warehouse-detail',
   MASTER_FEE_SETTING: 'master-fee-setting',
 
   // ── WH Manager — 창고 운영 (views/whManager/)
