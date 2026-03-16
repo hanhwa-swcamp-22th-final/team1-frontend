@@ -235,15 +235,95 @@ onMounted(fetchWarehouseList)
       </div>
     </div>
 
-    <!-- ── 리스트 뷰 (viewMode === 'list') — TODO: 디자인 확정 후 구현 ── -->
-    <div v-else class="list-placeholder">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-        <rect x="3" y="3" width="18" height="18" rx="2"/>
-        <line x1="3" y1="9" x2="21" y2="9"/>
-        <line x1="3" y1="15" x2="21" y2="15"/>
-        <line x1="9" y1="3" x2="9" y2="21"/>
-      </svg>
-      <p>리스트 뷰는 준비 중입니다.</p>
+    <!-- ── 리스트 뷰 (viewMode === 'list') ── -->
+    <div v-else class="wh-list-section">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>창고</th>
+              <th>상태</th>
+              <th class="th-right">재고(EA)</th>
+              <th class="th-right">금일 출고</th>
+              <th class="th-right">입고 예정</th>
+              <th class="th-right">셀러 수</th>
+              <th>로케이션 가동률</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="wh in warehouses"
+              :key="wh.id"
+              :class="{ 'wh-list-row--inactive': wh.status === 'INACTIVE' }"
+            >
+              <!-- 창고명: code 태그 + 이름 + 위치 -->
+              <td>
+                <div class="wl-name-col">
+                  <span class="wh-id-tag">{{ wh.code }}</span>
+                  <span class="wl-name">{{ wh.name }}</span>
+                  <span class="wl-loc">{{ wh.location }}</span>
+                </div>
+              </td>
+              <!-- 상태 배지 -->
+              <td>
+                <span :class="['wh-status-badge', statusBadgeClass(wh.status)]">
+                  <span class="wh-status-dot"></span>
+                  {{ statusLabel(wh.status) }}
+                </span>
+              </td>
+              <!-- 재고 -->
+              <td class="td-right">
+                <span v-if="wh.status !== 'INACTIVE'" class="list-num">
+                  {{ formatNumber(wh.stats.inventory) }}<em class="list-unit">EA</em>
+                </span>
+                <span v-else class="cell-empty">-</span>
+              </td>
+              <!-- 금일 출고 -->
+              <td class="td-right">
+                <span v-if="wh.status !== 'INACTIVE'" class="list-num">
+                  {{ wh.stats.todayOutbound }}<em class="list-unit">건</em>
+                </span>
+                <span v-else class="cell-empty">-</span>
+              </td>
+              <!-- 입고 예정 (ASN) -->
+              <td class="td-right">
+                <span v-if="wh.status !== 'INACTIVE'" class="list-num">
+                  {{ wh.stats.pendingAsn }}<em class="list-unit">건</em>
+                </span>
+                <span v-else class="cell-empty">-</span>
+              </td>
+              <!-- 셀러 수 -->
+              <td class="td-right">
+                <span v-if="wh.status !== 'INACTIVE'" class="list-num">
+                  {{ wh.stats.sellerCount }}<em class="list-unit">개</em>
+                </span>
+                <span v-else class="cell-empty">-</span>
+              </td>
+              <!-- 로케이션 가동률 -->
+              <td>
+                <div v-if="wh.status !== 'INACTIVE'" class="list-util-track">
+                  <div class="list-util-bar">
+                    <div
+                      class="util-fill"
+                      :class="utilClass(wh.locationUtil)"
+                      :style="{ width: wh.locationUtil + '%' }"
+                    />
+                  </div>
+                  <span :class="['util-pct-label', utilClass(wh.locationUtil)]">
+                    {{ wh.locationUtil }}%
+                  </span>
+                </div>
+                <span v-else class="cell-empty">-</span>
+              </td>
+              <!-- 액션 -->
+              <td>
+                <button class="action-btn" @click="goDetail(wh.id)">상세보기</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- ── 창고별 관리자 현황 테이블 ── -->
@@ -642,28 +722,66 @@ onMounted(fetchWarehouseList)
 }
 .wh-detail-link svg { width: 12px; height: 12px; }
 
-/* ── 리스트 뷰 placeholder ───────────────────────────────────────────────── */
-.list-placeholder {
+/* ── 리스트 뷰 ───────────────────────────────────────────────────────────── */
+.wh-list-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* INACTIVE 창고 행 — 흐리게 */
+.wh-list-row--inactive td { opacity: 0.45; }
+
+/* 창고 이름 컬럼 */
+.wl-name-col {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 60px 0;
-  background: var(--surface);
-  border: 1px dashed var(--border-dk);
-  border-radius: var(--radius-md);
-  color: var(--t4);
+  gap: 3px;
 }
-.list-placeholder svg {
-  width: 40px;
-  height: 40px;
-  color: var(--t4);
+.wl-name {
+  font-family: 'Barlow', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--t1);
 }
-.list-placeholder p {
+.wl-loc {
   font-family: 'Inter', sans-serif;
-  font-size: 13px;
+  font-size: 11px;
   color: var(--t3);
+}
+
+/* 숫자 셀 우측 정렬 */
+.th-right { text-align: right; }
+.td-right { text-align: right; }
+
+/* 숫자 값 + 단위 */
+.list-num {
+  font-family: var(--font-condensed), sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--t1);
+}
+.list-unit {
+  font-family: 'Inter', sans-serif;
+  font-style: normal;
+  font-size: 10px;
+  color: var(--t3);
+  margin-left: 2px;
+}
+
+/* 인라인 가동률 바 */
+.list-util-track {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.list-util-bar {
+  width: 80px;
+  height: 5px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
 }
 
 /* ── 관리자 현황 테이블 ───────────────────────────────────────────────────── */
