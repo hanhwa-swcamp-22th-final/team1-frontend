@@ -34,6 +34,12 @@ export default [
     component: () => import('@/views/masterAdmin/Dashboard.vue'),
     meta: { role: ROLES.MASTER_ADMIN },
   },
+  {
+    path: '/master/warehouses/detail/:id',
+    name: ROUTE_NAMES.MASTER_WAREHOUSE_DETAIL,
+    component: () => import('@/views/masterAdmin/WarehouseDetail.vue'),
+    meta: { role: ROLES.MASTER_ADMIN },
+  },
 
   // ── 입출고 (스텁) ──────────────────────────────────────────────────────────
   {

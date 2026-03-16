@@ -41,3 +41,39 @@ export async function getWarehouseListSummary() {
 export async function getWarehouseList() {
   return instance.get('/wms/warehouses')
 }
+
+/**
+ * 창고 상세 — 재고 현황 (SKU별 가용/할당/총합)
+ * @param {number} id — 창고 ID
+ * @returns {Promise<AxiosResponse>}
+ */
+export function getWarehouseInventory(id) {
+  return instance.get(`/wms/warehouses/${id}/inventory`)
+}
+
+/**
+ * 창고 상세 — 출고 현황 (금일/주간/월간 3탭 데이터 포함)
+ * @param {number} id — 창고 ID
+ * @returns {Promise<AxiosResponse>} { data: { today, week, month } }
+ */
+export function getWarehouseOutbound(id) {
+  return instance.get(`/wms/warehouses/${id}/outbound`)
+}
+
+/**
+ * 창고 상세 — 주문 처리 상세 (통계 + 목록)
+ * @param {number} id — 창고 ID
+ * @returns {Promise<AxiosResponse>} { data: { stats, list } }
+ */
+export function getWarehouseOrders(id) {
+  return instance.get(`/wms/warehouses/${id}/orders`)
+}
+
+/**
+ * 창고 상세 — 로케이션 가용률 (Zone별 Bin 현황)
+ * @param {number} id — 창고 ID
+ * @returns {Promise<AxiosResponse>} { data: Zone[] }
+ */
+export function getWarehouseLocations(id) {
+  return instance.get(`/wms/warehouses/${id}/locations`)
+}

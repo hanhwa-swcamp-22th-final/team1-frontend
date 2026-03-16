@@ -40,10 +40,8 @@ function utilClass(pct) {
 }
 
 // ── 라우터 이동 ───────────────────────────────────────────────────────────────
-// TODO: MASTER_WAREHOUSE_DETAIL 라우트 추가 후 아래 주석 해제
 function goDetail(warehouseId) {
-  // router.push({ name: ROUTE_NAMES.MASTER_WAREHOUSE_DETAIL, params: { id: warehouseId } })
-  console.log('[WarehouseList] goDetail — warehouseId:', warehouseId)
+  router.push({ name: ROUTE_NAMES.MASTER_WAREHOUSE_DETAIL, params: { id: warehouseId } })
 }
 
 function goRegister() {
