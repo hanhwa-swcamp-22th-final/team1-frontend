@@ -20,24 +20,26 @@ server.use((req, res, next) => {
 
 // 2. 로그인 커스텀 라우트
 // POST /auth/login 요청을 가로채서 가짜 토큰을 발급합니다.
+// 모든 계정의 비밀번호는 1234로 통일 (LoginView.vue 토글 계정과 동일)
+const MOCK_ACCOUNTS = {
+  'sys.admin@conk.com':      { token: 'mock-token-sys',    user: { id: 1, email: 'sys.admin@conk.com',      name: '시스템 관리자', role: 'SYSTEM_ADMIN', status: 'ACTIVE', organization: 'CONK 본사'      } },
+  'master.admin@conk.com':   { token: 'mock-token-master', user: { id: 2, email: 'master.admin@conk.com',   name: '총괄 관리자',   role: 'MASTER_ADMIN', status: 'ACTIVE', organization: 'GLS Mega Hub'   } },
+  'wh.manager@conk.com':     { token: 'mock-token-whm',    user: { id: 3, email: 'wh.manager@conk.com',     name: '창고 관리자',   role: 'WH_MANAGER',   status: 'ACTIVE', organization: 'GLS Mega Hub'   } },
+  'WORKER-001':               { token: 'mock-token-worker', user: { id: 4, email: null,                      name: '창고 작업자',   role: 'WH_WORKER',    status: 'ACTIVE', organization: 'GLS Mega Hub'   } },
+  'seller@conk.com':         { token: 'mock-token-seller', user: { id: 5, email: 'seller@conk.com',         name: '셀러 담당자',   role: 'SELLER',       status: 'ACTIVE', organization: 'BrandCo Korea'  } },
+}
+
 server.post('/auth/login', (req, res) => {
   const { email, password } = req.body
+  const account = MOCK_ACCOUNTS[email]
 
-  // 임시 하드코딩된 계정 검증
-  if (email === 'admin@conk.com' && password === '1234') {
+  if (account && password === '1234') {
     return res.status(200).json({
       success: true,
       message: '로그인 성공',
       data: {
-        token: 'mock-jwt-token-for-admin-12345',
-        user: {
-          id: 1,
-          email: 'admin@conk.com',
-          name: '시스템 최고관리자',
-          role: 'SYSTEM_ADMIN',
-          status: 'ACTIVE',
-          organization: 'CONK 본사',
-        },
+        token: account.token,
+        user: account.user,
       },
     })
   }
@@ -55,5 +57,10 @@ server.use(router)
 server.listen(PORT, () => {
   console.log(`\n🚀 CONK Mock Server is running at http://localhost:${PORT}`)
   console.log(`⏳ Global delay: 500ms`)
-  console.log(`🔑 Test login: admin@conk.com / 1234\n`)
+  console.log(`🔑 Test accounts (password: 1234 for all)`)
+  console.log(`   SYSTEM_ADMIN : sys.admin@conk.com`)
+  console.log(`   MASTER_ADMIN : master.admin@conk.com`)
+  console.log(`   WH_MANAGER   : wh.manager@conk.com`)
+  console.log(`   WH_WORKER    : WORKER-001`)
+  console.log(`   SELLER       : seller@conk.com\n`)
 })
