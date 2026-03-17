@@ -1,20 +1,17 @@
 <script setup>
 /**
  * 셀러 주문 등록 화면.
- * 수동 등록 검증과 엑셀 업로드 미리보기까지 한 화면에서 처리한다.
+ * 현재는 수동 등록, 엑셀 업로드 안내, 포맷 미리보기 레이아웃을 렌더링한다.
  */
 import { reactive, ref } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import FileUpload from '@/components/common/FileUpload.vue'
-import { parseExcel } from '@/utils/excel'
 import {
   ORDER_PREVIEW_COLUMNS,
   ORDER_TEMPLATE_PREVIEW_ROWS,
   ORDER_UPLOAD_REQUIRED_COLUMNS,
-  getMissingOrderUploadColumns,
-  mapOrderUploadRows,
   validateOrderForm,
 } from './orderRegister.utils'
 
@@ -25,12 +22,6 @@ const breadcrumb = [{ label: 'Seller' }, { label: '주문 등록' }]
 const selectedFileName = ref('')
 // 실제 제출 API 연결 전까지 임시 완료 메시지를 보여준다.
 const submitMessage = ref('')
-// 업로드 처리 결과를 구분해서 보여주기 위한 성공/실패 상태값.
-const uploadErrorMessage = ref('')
-const uploadSuccessMessage = ref('')
-// 업로드 전에는 샘플 포맷을, 성공 후에는 실제 업로드 결과를 표에 표시한다.
-const previewRows = ref(ORDER_TEMPLATE_PREVIEW_ROWS)
-const isPreviewSample = ref(true)
 
 // 초기화 시 동일한 기본값을 재사용하기 위한 폼 생성 함수.
 function createInitialForm() {
@@ -92,49 +83,7 @@ function handleManualSubmit() {
   submitMessage.value = '주문 등록 준비가 완료되었습니다.'
 }
 
-// 업로드 실패나 초기 상태에서는 기본 샘플 미리보기로 되돌린다.
-function resetUploadPreview() {
-  previewRows.value = ORDER_TEMPLATE_PREVIEW_ROWS
-  isPreviewSample.value = true
-}
-
-// 선택한 엑셀 파일을 파싱하고 필수 헤더 검증 후 미리보기 표에 반영한다.
-async function handleFileSelected(file) {
-  const targetFile = Array.isArray(file) ? file[0] : file
-
-  selectedFileName.value = targetFile?.name ?? ''
-  uploadErrorMessage.value = ''
-  uploadSuccessMessage.value = ''
-
-  if (!targetFile) {
-    resetUploadPreview()
-    return
-  }
-
-  try {
-    const rows = await parseExcel(targetFile)
-
-    if (!rows.length) {
-      resetUploadPreview()
-      uploadErrorMessage.value = '업로드한 파일에 주문 데이터가 없습니다.'
-      return
-    }
-
-    const missingColumns = getMissingOrderUploadColumns(Object.keys(rows[0] ?? {}))
-    if (missingColumns.length) {
-      resetUploadPreview()
-      uploadErrorMessage.value = `필수 컬럼이 누락되었습니다: ${missingColumns.join(', ')}`
-      return
-    }
-
-    previewRows.value = mapOrderUploadRows(rows)
-    isPreviewSample.value = false
-    uploadSuccessMessage.value = `${targetFile.name} 파일에서 ${previewRows.value.length}건을 불러왔습니다.`
-  } catch (error) {
-    resetUploadPreview()
-    uploadErrorMessage.value = '엑셀 파일을 읽지 못했습니다. 파일 형식을 확인하세요.'
-  }
-}
+// TODO(frontend): 업로드 파일 파싱 결과를 BaseTable 미리보기에 연결한다.
 </script>
 
 <template>
@@ -244,10 +193,12 @@ async function handleFileSelected(file) {
           </div>
 
           <p class="upload-description">
-            업로드 전에 필수 컬럼 구성을 맞춰두면 파일 선택 즉시 미리보기와 헤더 검증을 확인할 수 있습니다.
+            업로드 전에 필수 컬럼 구성을 맞춰두면 다음 단계에서 바로 미리보기와 검증을 연결할 수 있습니다.
           </p>
 
-          <FileUpload @file-selected="handleFileSelected" />
+          <FileUpload
+            @file-selected="selectedFileName = Array.isArray($event) ? $event.map((file) => file.name).join(', ') : $event?.name ?? ''"
+          />
 
           <div class="upload-status">
             <span class="upload-status-label">선택 파일</span>
@@ -255,14 +206,6 @@ async function handleFileSelected(file) {
               {{ selectedFileName || '아직 선택된 파일이 없습니다' }}
             </strong>
           </div>
-
-          <!-- 업로드 직후 파싱 성공 또는 실패 결과를 바로 알려준다. -->
-          <p v-if="uploadErrorMessage" class="upload-feedback upload-feedback--error">
-            {{ uploadErrorMessage }}
-          </p>
-          <p v-else-if="uploadSuccessMessage" class="upload-feedback upload-feedback--success">
-            {{ uploadSuccessMessage }}
-          </p>
 
           <div class="guide-card">
             <p class="guide-title">필수 컬럼</p>
@@ -286,16 +229,15 @@ async function handleFileSelected(file) {
             <p class="section-eyebrow">Preview Format</p>
             <h3 class="section-title">엑셀 포맷 미리보기</h3>
           </div>
-          <span class="section-caption">{{ isPreviewSample ? '샘플 1행' : `업로드 ${previewRows.length}건` }}</span>
+          <span class="section-caption">샘플 1행</span>
         </div>
 
         <p class="preview-description">
-          {{ isPreviewSample
-            ? '업로드 전에는 샘플 포맷을 먼저 보여줍니다.'
-            : '현재 표에는 업로드한 엑셀 데이터를 그대로 표시하고 있습니다.' }}
+          실제 업로드 파싱 전 단계라 샘플 포맷만 먼저 노출합니다.
+          다음 단계에서는 업로드 결과를 이 표에 그대로 연결합니다.
         </p>
 
-        <BaseTable :columns="ORDER_PREVIEW_COLUMNS" :rows="previewRows" row-key="id" />
+        <BaseTable :columns="ORDER_PREVIEW_COLUMNS" :rows="ORDER_TEMPLATE_PREVIEW_ROWS" row-key="id" />
       </div>
     </section>
   </AppLayout>
@@ -456,20 +398,6 @@ async function handleFileSelected(file) {
   font-size: var(--font-size-sm);
   color: var(--t2);
   word-break: break-word;
-}
-
-.upload-feedback {
-  margin-top: calc(var(--space-4) * -0.5);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-}
-
-.upload-feedback--error {
-  color: var(--danger, #d14343);
-}
-
-.upload-feedback--success {
-  color: var(--success, #0f6b4b);
 }
 
 .guide-card {
