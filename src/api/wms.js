@@ -77,3 +77,20 @@ export function getWarehouseOrders(id) {
 export function getWarehouseLocations(id) {
   return instance.get(`/wms/warehouses/${id}/locations`)
 }
+
+/**
+ * ASN 목록 조회
+ * @param {{ status?:string }} params — 상태 필터 (옵션)
+ * @returns {Promise<AxiosResponse>} { success, data: ASN[] }
+ */
+export function getAsnList(params = {}) {
+  return instance.get('/wms/asns', { params })
+}
+
+/**
+ * ASN KPI 집계 — 상태별 건수
+ * @returns {Promise<AxiosResponse>} { success, data: { total, submitted, received, cancelled } }
+ */
+export function getAsnKpi() {
+  return instance.get('/wms/asns/kpi')
+}
