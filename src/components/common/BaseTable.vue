@@ -141,8 +141,8 @@ function pageNumbers() {
       </table>
     </div>
 
-    <!-- 페이지네이션: pagination prop이 있고 2페이지 이상일 때만 표시 -->
-    <div v-if="pagination && totalPages > 1" class="pagination">
+    <!-- 페이지네이션: pagination prop이 있고 2페이지 이상이며 로딩 중이 아닐 때만 표시 -->
+    <div v-if="pagination && totalPages > 1 && !loading" class="pagination">
       <button
         :disabled="pagination.page <= 1"
         class="page-btn"
