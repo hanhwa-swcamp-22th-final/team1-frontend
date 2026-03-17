@@ -1,13 +1,17 @@
 // routes/orders.cjs — GET /orders/*
 // 담당: whManager
 const { Router } = require('express')
-const { OUTBOUND_STATS } = require('../mock-data/order.cjs')
+const axios = require('axios')
 
-const router = Router()
+module.exports = function (BASE_URL) {
+  const http = axios.create({ baseURL: BASE_URL })
+  const router = Router()
 
-// GET /orders/outbound/stats — 대시보드용 출고 예정 통계
-router.get('/outbound/stats', (req, res) => {
-  res.json({ success: true, data: OUTBOUND_STATS })
-})
+  // GET /orders/outbound/stats — 대시보드용 출고 예정 통계
+  router.get('/outbound/stats', async (req, res) => {
+    const { data } = await http.get('/outbound_stats')
+    res.json({ success: true, data })
+  })
 
-module.exports = router
+  return router
+}

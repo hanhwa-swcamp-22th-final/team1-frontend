@@ -13,7 +13,8 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
-import { ROUTE_NAMES } from '@/constants'
+import { ROUTE_NAMES, ORDER_STATUS } from '@/constants'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 import {
   getWarehouseList,
   getWarehouseInventory,
@@ -102,18 +103,6 @@ onMounted(fetchDetail)
 watch(warehouseId, fetchDetail)
 
 // ── 헬퍼 ─────────────────────────────────────────────────────────────────────
-function badgeClass(status) {
-  return (
-    {
-      출고완료: 'badge-green',
-      패킹중:   'badge-amber',
-      피킹중:   'badge-amber',
-      출고지시: 'badge-blue',
-      지연:     'badge-red',
-    }[status] ?? 'badge-blue'
-  )
-}
-
 function binClass(state) {
   return { avail: 'bin-avail', used: 'bin-used', off: 'bin-off' }[state] ?? ''
 }
@@ -358,13 +347,11 @@ function goToWarehouse(evt) {
                   <td class="order-id">{{ row.orderId }}</td>
                   <td>{{ row.seller }}</td>
                   <td>
-                    <span :class="['badge', badgeClass(row.status)]">
-                      <span class="badge-dot" />{{ row.status }}
-                    </span>
+                    <StatusBadge :status="row.status" type="order" />
                   </td>
                   <td class="action-cell">
                     <button
-                      v-if="row.status !== '출고완료'"
+                      v-if="row.status !== ORDER_STATUS.SHIPPED"
                       class="btn-action-sm"
                       @click="() => {}"
                     >
@@ -421,9 +408,7 @@ function goToWarehouse(evt) {
                   <td class="col-num">{{ ord.qty }}</td>
                   <td class="dest-cell">{{ ord.dest }}</td>
                   <td>
-                    <span :class="['badge', badgeClass(ord.status)]">
-                      <span class="badge-dot" />{{ ord.status }}
-                    </span>
+                    <StatusBadge :status="ord.status" type="order" />
                   </td>
                   <td>{{ ord.worker }}</td>
                 </tr>
@@ -897,30 +882,6 @@ function goToWarehouse(evt) {
 .num-total { font-weight: 700; color: var(--t1); }
 .sku-code  { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--t2); }
 .order-id  { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #3B82F6; }
-
-/* ── 상태 배지 ──────────────────────────────────────────────────────────── */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-family: 'Barlow', sans-serif;
-  font-weight: 600;
-  font-size: 11px;
-  white-space: nowrap;
-}
-.badge-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: currentColor;
-  flex-shrink: 0;
-}
-.badge-green { background: rgba(46,  204, 135, .12); color: var(--green); }
-.badge-amber { background: rgba(245, 166,  35, .12); color: #B45309; }
-.badge-blue  { background: rgba( 59, 130, 246, .12); color: #3B82F6; }
-.badge-red   { background: rgba(239,  68,  68, .12); color: var(--red); }
 
 /* ── 출고 액션 버튼 ─────────────────────────────────────────────────────── */
 .btn-action-sm {
