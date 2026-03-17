@@ -7,7 +7,7 @@
  *   - 엑셀 업로드 가이드 및 포맷 미리보기 배치
  *   - 실제 제출/API 연동은 후속 단계에서 연결 예정
  */
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
@@ -16,26 +16,69 @@ import {
   ORDER_PREVIEW_COLUMNS,
   ORDER_TEMPLATE_PREVIEW_ROWS,
   ORDER_UPLOAD_REQUIRED_COLUMNS,
+  validateOrderForm,
 } from './orderRegister.utils'
 
 /** Header 브레드크럼 표시용 */
 const breadcrumb = [{ label: 'Seller' }, { label: '주문 등록' }]
 
 const selectedFileName = ref('')
-// TODO(frontend): 수동 등록 제출 API와 필드별 검증 규칙을 연결한다.
-const manualForm = ref({
+const submitMessage = ref('')
+
+function createInitialForm() {
+  return {
+    orderNo: '',
+    orderDate: '',
+    salesChannel: '자사몰',
+    recipient: '',
+    contact: '',
+    postalCode: '',
+    address1: '',
+    address2: '',
+    sku: '',
+    quantity: 1,
+    memo: '',
+  }
+}
+
+const manualForm = ref(createInitialForm())
+const formErrors = reactive({
   orderNo: '',
   orderDate: '',
-  salesChannel: '자사몰',
   recipient: '',
   contact: '',
-  postalCode: '',
   address1: '',
-  address2: '',
   sku: '',
-  quantity: 1,
-  memo: '',
+  quantity: '',
 })
+
+function clearFormErrors() {
+  Object.keys(formErrors).forEach((key) => {
+    formErrors[key] = ''
+  })
+}
+
+function handleReset() {
+  manualForm.value = createInitialForm()
+  submitMessage.value = ''
+  clearFormErrors()
+}
+
+function handleManualSubmit() {
+  submitMessage.value = ''
+  clearFormErrors()
+
+  const errors = validateOrderForm(manualForm.value)
+  Object.entries(errors).forEach(([key, value]) => {
+    formErrors[key] = value
+  })
+
+  if (Object.values(errors).some(Boolean)) return
+
+  // TODO(frontend): 수동 등록 제출 API와 성공 응답 후처리를 연결한다.
+  submitMessage.value = '주문 등록 준비가 완료되었습니다.'
+}
+
 // TODO(frontend): 업로드 파일 파싱 결과를 BaseTable 미리보기에 연결한다.
 </script>
 
@@ -60,7 +103,7 @@ const manualForm = ref({
       </div>
 
       <div class="register-grid">
-        <form class="form-card" @submit.prevent>
+        <form class="form-card" @submit.prevent="handleManualSubmit">
           <div class="section-head">
             <div>
               <p class="section-eyebrow">Manual Entry</p>
@@ -70,11 +113,11 @@ const manualForm = ref({
           </div>
 
           <div class="form-grid">
-            <BaseForm label="주문번호" required hint="예: ORD-20260317-001">
+            <BaseForm label="주문번호" required hint="예: ORD-20260317-001" :error="formErrors.orderNo">
               <input v-model="manualForm.orderNo" type="text" placeholder="주문번호를 입력하세요" />
             </BaseForm>
 
-            <BaseForm label="주문일자" required>
+            <BaseForm label="주문일자" required :error="formErrors.orderDate">
               <input v-model="manualForm.orderDate" type="date" />
             </BaseForm>
 
@@ -87,11 +130,11 @@ const manualForm = ref({
               </select>
             </BaseForm>
 
-            <BaseForm label="수령인" required>
+            <BaseForm label="수령인" required :error="formErrors.recipient">
               <input v-model="manualForm.recipient" type="text" placeholder="수령인 이름" />
             </BaseForm>
 
-            <BaseForm label="연락처" required hint="숫자와 하이픈 형식으로 정리 예정">
+            <BaseForm label="연락처" required hint="숫자와 하이픈 형식으로 정리 예정" :error="formErrors.contact">
               <input v-model="manualForm.contact" type="text" placeholder="010-0000-0000" />
             </BaseForm>
 
@@ -99,7 +142,7 @@ const manualForm = ref({
               <input v-model="manualForm.postalCode" type="text" placeholder="06234" />
             </BaseForm>
 
-            <BaseForm class="form-span-2" label="기본 배송지" required>
+            <BaseForm class="form-span-2" label="기본 배송지" required :error="formErrors.address1">
               <input v-model="manualForm.address1" type="text" placeholder="도로명 주소를 입력하세요" />
             </BaseForm>
 
@@ -107,11 +150,11 @@ const manualForm = ref({
               <input v-model="manualForm.address2" type="text" placeholder="상세 주소를 입력하세요" />
             </BaseForm>
 
-            <BaseForm label="SKU" required hint="영문/숫자/하이픈 형식 검증 예정">
+            <BaseForm label="SKU" required hint="영문/숫자/하이픈 형식 검증 예정" :error="formErrors.sku">
               <input v-model="manualForm.sku" type="text" placeholder="SKU-AMPLE-001" />
             </BaseForm>
 
-            <BaseForm label="수량" required>
+            <BaseForm label="수량" required :error="formErrors.quantity">
               <input v-model="manualForm.quantity" type="number" min="1" step="1" />
             </BaseForm>
 
@@ -125,9 +168,11 @@ const manualForm = ref({
           </div>
 
           <div class="form-actions">
-            <button class="ui-btn ui-btn--ghost" type="button">초기화</button>
+            <button class="ui-btn ui-btn--ghost" type="button" @click="handleReset">초기화</button>
             <button class="ui-btn ui-btn--primary" type="submit">주문 등록</button>
           </div>
+
+          <p v-if="submitMessage" class="submit-message">{{ submitMessage }}</p>
         </form>
 
         <div class="upload-card">
@@ -305,6 +350,17 @@ const manualForm = ref({
   justify-content: flex-end;
   gap: var(--space-3);
   margin-top: var(--space-5);
+}
+
+.submit-message {
+  margin-top: var(--space-4);
+  padding: 12px 14px;
+  border: 1px solid rgba(46, 204, 135, 0.24);
+  border-radius: var(--radius-md);
+  background: rgba(46, 204, 135, 0.08);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: #0f6b4b;
 }
 
 .upload-card {
