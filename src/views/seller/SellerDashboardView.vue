@@ -60,16 +60,8 @@ const dashboardData = {
 <template>
   <AppLayout title="Seller Dashboard" :breadcrumb="breadcrumb">
     <template #header-action>
-      <RouterLink :to="{ name: ROUTE_NAMES.SELLER_ASN_CREATE }" class="ui-btn ui-
-  btn--ghost">
-        ASN 등록
-      </RouterLink>
-      <RouterLink
-          :to="{ name: ROUTE_NAMES.SELLER_ORDER_REGISTER }"
-          class="ui-btn ui-btn--primary"
-      >
-        주문 등록
-      </RouterLink>
+      <RouterLink :to="{ name: ROUTE_NAMES.SELLER_ASN_CREATE }" class="ui-btn ui-btn--ghost">ASN 등록</RouterLink>
+      <RouterLink :to="{ name: ROUTE_NAMES.SELLER_ORDER_REGISTER }" class="ui-btn ui-btn--primary">주문 등록</RouterLink>
     </template>
 
     <section class="seller-dashboard">
@@ -115,7 +107,7 @@ const dashboardData = {
         <div class="dashboard-card">비율 차트</div>
       </div>
 
-      <!-- 하단 테이블 2개 영역 -->
+      <!-- 하단 테이블 2개 영역 - 최근 활동, 기간별 입고 재고 목록 -->
       <div class="table-grid">
         <div class="dashboard-card">
           <div class="section-head">
@@ -137,8 +129,33 @@ const dashboardData = {
             </li>
           </ul>
         </div>
-        <div class="dashboard-card">기간별 입고 재고 목록</div>
+
+        <div class="dashboard-card">
+          <div class="section-head">
+            <h2 class="section-title">기간별 입고 재고 목록</h2>
+            <span class="section-count">{{ dashboardData.inboundInventory.length }}건</span>
+          </div>
+
+          <ul class="inventory-list">
+            <li
+                v-for="item in dashboardData.inboundInventory"
+                :key="item.id"
+                class="inventory-item"
+            >
+              <div class="inventory-main">
+                <strong class="inventory-id">{{ item.asnNo }}</strong>
+                <p class="inventory-meta">{{ item.warehouse }} · ETA {{ item.eta }}</p>
+              </div>
+
+              <div class="inventory-side">
+                <strong class="inventory-qty">{{ item.qty }}</strong>
+                <span class="inventory-status">{{ item.status }}</span>
+              </div>
+            </li>
+          </ul>
+        </div>
       </div>
+
     </section>
   </AppLayout>
 </template>
@@ -266,4 +283,61 @@ const dashboardData = {
   color: var(--t3);
   white-space: nowrap;
 }
+
+/* 기간별 입고 재고 목록 Style */
+.inventory-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.inventory-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.inventory-item:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.inventory-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.inventory-id {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--t1);
+}
+
+.inventory-meta {
+  font-size: var(--font-size-sm);
+  color: var(--t3);
+}
+
+.inventory-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+}
+
+.inventory-qty {
+  font-family: var(--font-condensed);
+  font-size: var(--font-size-lg);
+  color: var(--t1);
+}
+
+.inventory-status {
+  font-size: var(--font-size-sm);
+  color: var(--blue);
+}
+
 </style>
