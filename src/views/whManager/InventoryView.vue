@@ -18,8 +18,12 @@ const PAGE_SIZE   = 7
 const inventories = ref([])
 
 async function fetchInventories() {
-  const { data } = await getInventories()
-  inventories.value = data
+  try {
+    const { data } = await getInventories()
+    inventories.value = data
+  } catch (e) {
+    console.error('재고 데이터 로드 실패:', e)
+  }
 }
 
 onMounted(fetchInventories)
