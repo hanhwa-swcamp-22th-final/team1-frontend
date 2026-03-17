@@ -328,8 +328,15 @@ function kpiValueClass(key) {
   color: var(--t2);
 }
 
+.filter-tab.active {
+  background: rgba(245, 166, 35, 0.12);
+  border-color: var(--gold);
+  color: var(--gold);
+  font-weight: 700;
+}
+
 .filter-tab.active .filter-count {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--gold);
   color: #fff;
 }
 
