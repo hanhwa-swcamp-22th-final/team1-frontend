@@ -477,5 +477,34 @@
     "pendingCount": 23,
     "pickingCount": 38,
     "shippedCount": 66
+  },
+
+  "sellers": [
+    { "id": 1, "brandNameEn": "Glow Beauty",  "brandNameKo": "글로우뷰티", "contactName": "이수빈", "contactEmail": "subin@glowbeauty.com",  "customerCode": "CUST-001", "warehouseIds": [1, 3] },
+    { "id": 2, "brandNameEn": "AmorUs",        "brandNameKo": "아모레US",   "contactName": "박정호", "contactEmail": "jh@amorus.com",         "customerCode": "CUST-002", "warehouseIds": [1, 3] },
+    { "id": 3, "brandNameEn": "Cosmaxco",      "brandNameKo": "코스맥스",   "contactName": "최민수", "contactEmail": "ms@cosmaxco.com",       "customerCode": "CUST-003", "warehouseIds": [2]    },
+    { "id": 4, "brandNameEn": "K Beauty Shop", "brandNameKo": "K뷰티샵",   "contactName": "이수빈", "contactEmail": "subin@kbeautyshop.com", "customerCode": "CUST-004", "warehouseIds": [1]    },
+    { "id": 5, "brandNameEn": "Beauty Lab",    "brandNameKo": "뷰티랩",     "contactName": "김지훈", "contactEmail": "jih@beautylab.com",     "customerCode": "CUST-005", "warehouseIds": [2]    },
+    { "id": 6, "brandNameEn": "Eco Pure",      "brandNameKo": "에코퓨어",   "contactName": "최민수", "contactEmail": "ms@ecopure.com",        "customerCode": "CUST-006", "warehouseIds": [3]    },
+    { "id": 7, "brandNameEn": "K-Farm",        "brandNameKo": "K팜",        "contactName": "강은채", "contactEmail": "ec@kfarm.com",          "customerCode": "CUST-007", "warehouseIds": [1]    },
+    { "id": 8, "brandNameEn": "K-Style",       "brandNameKo": "K스타일",    "contactName": "박정호", "contactEmail": "jh@kstyle.com",         "customerCode": "CUST-008", "warehouseIds": [2]    },
+    { "id": 9, "brandNameEn": "Seoul Snack",   "brandNameKo": "서울스낵",   "contactName": "강은채", "contactEmail": "ec@seoulsnak.com",      "customerCode": "CUST-009", "warehouseIds": [1]    }
+  ],
+
+  "users": [
+    { "id": 1, "name": "창고 관리자",  "email": "wh.manager@conk.com", "role": "WH_MANAGER", "accountStatus": "ACTIVE",        "warehouseId": 1, "warehouse": "LA West Coast Hub",    "createdAt": "2026-01-10", "lastLogin": "2026-03-16" },
+    { "id": 2, "name": "창고 작업자",  "email": null,                  "role": "WH_WORKER",  "accountStatus": "ACTIVE",        "warehouseId": 1, "warehouse": "LA West Coast Hub",    "workerCode": "WORKER-001", "createdAt": "2026-01-15", "lastLogin": "2026-03-15" },
+    { "id": 3, "name": "셀러 담당자",  "email": "seller@conk.com",     "role": "SELLER",     "accountStatus": "ACTIVE",        "sellerId": 1,    "seller": "글로우뷰티",              "createdAt": "2026-02-01", "lastLogin": "2026-03-14" },
+    { "id": 4, "name": "박지훈",       "email": "j.park@glsm-tx.com",  "role": "WH_MANAGER", "accountStatus": "ACTIVE",        "warehouseId": 2, "warehouse": "Central Dallas Center", "createdAt": "2025-12-01", "lastLogin": "2026-03-15" },
+    { "id": 5, "name": "이소윤",       "email": "s.lee@glsm-ny.com",   "role": "WH_MANAGER", "accountStatus": "ACTIVE",        "warehouseId": 3, "warehouse": "East NY Hub",          "createdAt": "2025-11-20", "lastLogin": "2026-03-16" },
+    { "id": 6, "name": "신규 작업자",  "email": null,                  "role": "WH_WORKER",  "accountStatus": "TEMP_PASSWORD", "warehouseId": 2, "warehouse": "Central Dallas Center", "workerCode": "WORKER-002", "createdAt": "2026-03-10", "lastLogin": "-" }
+  ],
+
+  "fee_settings": {
+    "storage":      { "palletRate": "28.50", "minBillingUnit": "1", "proRataRule": "입고일 포함 일할 청구" },
+    "pickPack":     { "basePickRate": "2.50", "additionalSkuRate": "0.75", "packingMaterialRate": "0.30", "specialPackagingSurcharge": "1.20" },
+    "lastMile":     { "USPS": ["4.20","5.10","6.40","7.80","9.50","12.30"], "UPS": ["5.50","6.80","8.20","10.40","14.60","19.90"], "FedEx": ["5.90","7.30","8.80","11.20","15.80","21.50"] },
+    "seaSurcharge": { "mpfRate": "0.3464", "mpfMin": "32.71", "mpfMax": "634.62", "hmfRate": "0.125", "isfFee": "35.00", "drayage": "320.00" },
+    "airSurcharge": { "securityFee": "0.18", "airportTransport": "180.00", "documentFee": "45.00", "hazmatSurcharge": "60.00", "temperatureSurcharge": "120.00" }
   }
 }
