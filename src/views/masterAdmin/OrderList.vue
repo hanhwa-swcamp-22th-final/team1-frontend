@@ -140,7 +140,7 @@ function channelInfo(channel) {
 </script>
 
 <template>
-  <AppLayout :breadcrumb="breadcrumb" title="주문 목록">
+  <AppLayout :breadcrumb="breadcrumb" title="주문 목록" :loading="isLoading">
     <template #header-action>
       <button class="ui-btn ui-btn--ghost btn-refresh" @click="fetchAll">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">

@@ -6,7 +6,6 @@ import { ROUTE_NAMES } from '@/constants'
 import { registerWarehouse } from '@/api/wms'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 
 /** 헤더 브레드크럼: 창고 관리 › 창고 등록 */
 const breadcrumb = [{ label: '창고 관리' }, { label: '창고 등록' }]
@@ -95,7 +94,7 @@ async function submitForm() {
 </script>
 
 <template>
-  <AppLayout :breadcrumb="breadcrumb" title="창고 등록">
+  <AppLayout :breadcrumb="breadcrumb" title="창고 등록" :loading="ui.isLoading">
 
     <!-- 헤더 액션 버튼 -->
     <template #header-action>
@@ -103,8 +102,6 @@ async function submitForm() {
         목록으로 취소
       </button>
     </template>
-
-    <LoadingSpinner v-if="ui.isLoading" fullscreen />
 
     <div class="wr-page">
 

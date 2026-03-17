@@ -23,7 +23,6 @@ import {
   getWarehouseLocations,
 } from '@/api/wms'
 import AppLayout from '@/components/layout/AppLayout.vue'
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 
 const route  = useRoute()
 const router = useRouter()
@@ -131,7 +130,7 @@ function goToWarehouse(evt) {
 </script>
 
 <template>
-  <AppLayout :breadcrumb="breadcrumb" :title="warehouse?.name ?? '창고 상세'">
+  <AppLayout :breadcrumb="breadcrumb" :title="warehouse?.name ?? '창고 상세'" :loading="ui.isLoading">
 
     <!-- ── 헤더 액션 슬롯 ─────────────────────────────────────────────────── -->
     <template #header-action>
@@ -166,9 +165,6 @@ function goToWarehouse(evt) {
         리포트 다운로드
       </button>
     </template>
-
-    <!-- ── 전역 로딩 ──────────────────────────────────────────────────────── -->
-    <LoadingSpinner v-if="ui.isLoading" fullscreen />
 
     <!-- ── 에러 배너 ──────────────────────────────────────────────────────── -->
     <div v-if="errorMsg" class="fetch-error">
