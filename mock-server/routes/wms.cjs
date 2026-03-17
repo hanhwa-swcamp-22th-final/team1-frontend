@@ -79,5 +79,42 @@ module.exports = function (BASE_URL) {
     res.json({ data })
   })
 
+  // ── 창고 등록 ────────────────────────────────────────────────────────────────
+
+  // POST /wms/warehouses
+  router.post('/warehouses', async (req, res) => {
+    const body = req.body
+
+    // 주(State) → 인근 공항 코드 매핑
+    const airportMap = { CA: 'LAX', TX: 'DAL', NY: 'JFK', GA: 'ATL', IL: 'ORD' }
+    const airport = airportMap[body.state] ?? 'GEN'
+
+    // 전체 창고 수 기반으로 순번 생성
+    const { data: list } = await http.get('/warehouses')
+    const seq = String(list.length + 1).padStart(3, '0')
+    const code = `WH-${airport}-${seq}`
+
+    const { data: created } = await http.post('/warehouses', {
+      code,
+      name:        body.name,
+      location:    `${body.city}, ${body.state}`,
+      address:     body.address,
+      city:        body.city,
+      state:       body.state,
+      sqft:        Number(body.sqft),
+      timezone:    body.timezone,
+      openTime:    body.openTime,
+      closeTime:   body.closeTime,
+      status:      'ACTIVE',
+      stats:       { inventory: 0, todayOutbound: 0, pendingAsn: 0, sellerCount: 0 },
+      locationUtil: 0,
+      manager: body.managerName
+        ? { name: body.managerName, email: body.managerEmail, phone: '', lastLogin: '-', status: 'ACTIVE' }
+        : null,
+    })
+
+    res.status(201).json({ success: true, message: '창고가 등록되었습니다.', data: created })
+  })
+
   return router
 }
