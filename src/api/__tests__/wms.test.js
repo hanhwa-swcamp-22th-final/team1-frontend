@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import instance from '@/api/instance'
-import { getAsnStats, getInventoryStats, getWarehouseStatus } from '@/api/wms'
+import { getAsnStats, getInventoryStats, getWarehouseStatus, getAsnList, getAsnKpi } from '@/api/wms'
 
 vi.mock('@/api/instance', () => ({
   default: {
@@ -30,5 +30,17 @@ describe('wms API', () => {
     await getWarehouseStatus()
     expect(instance.get).toHaveBeenCalledOnce()
     expect(instance.get).toHaveBeenCalledWith('/wms/warehouses/status')
+  })
+
+  it('getAsnList는 GET /asns를 호출한다', async () => {
+    await getAsnList()
+    expect(instance.get).toHaveBeenCalledOnce()
+    expect(instance.get).toHaveBeenCalledWith('/asns', { params: {} })
+  })
+
+  it('getAsnKpi는 GET /asns/kpi를 호출한다', async () => {
+    await getAsnKpi()
+    expect(instance.get).toHaveBeenCalledOnce()
+    expect(instance.get).toHaveBeenCalledWith('/asns/kpi')
   })
 })

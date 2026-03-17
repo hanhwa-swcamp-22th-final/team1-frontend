@@ -113,6 +113,39 @@ server.get('/asns/kpi', (req, res) => {
   })
 })
 
+// 3-1. GET /wms/asn/stats — 대시보드용 미처리 ASN 통계
+server.get('/wms/asn/stats', (req, res) => {
+  res.json({ success: true, data: {
+    unprocessedCount: 5,
+    trend: '+2', trendLabel: '어제 대비', trendType: 'up',
+  }})
+})
+
+// 3-2. GET /wms/inventory/stats — 대시보드용 재고 부족 SKU 통계
+server.get('/wms/inventory/stats', (req, res) => {
+  res.json({ success: true, data: {
+    lowStockSkuCount: 3,
+    trend: '+1', trendLabel: '지난주 대비', trendType: 'up',
+  }})
+})
+
+// 3-3. GET /orders/outbound/stats — 대시보드용 출고 예정 통계
+server.get('/orders/outbound/stats', (req, res) => {
+  res.json({ success: true, data: {
+    pendingOutboundCount: 203,
+    trend: '+15', trendLabel: '전주 대비', trendType: 'up',
+  }})
+})
+
+// 3-4. GET /members/sellers/stats — 대시보드용 활성 셀러 수
+server.get('/members/sellers/stats', (req, res) => {
+  res.json({ success: true, data: {
+    activeSellerCount: 18,
+    newThisMonth: 2,
+    trendType: 'up',
+  }})
+})
+
 // 7. GET /wms/warehouses/status — 창고 운영 현황 (wms-service)
 server.get('/wms/warehouses/status', (req, res) => {
   res.status(200).json({
