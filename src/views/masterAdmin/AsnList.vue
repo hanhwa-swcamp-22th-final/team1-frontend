@@ -33,12 +33,12 @@ const COLUMNS = [
   { key: 'status',         label: '상태',        width: '120px' },
 ]
 
-// ── 탭 정의 (ASN_STATUS 상수 참조) ────────────────────────────────────────────
+// ── 탭 정의 — color는 활성 시 StatusBadge 색상과 동일하게 적용 ──────────────
 const TABS = [
-  { key: 'ALL',                label: '전체'   },
-  { key: ASN_STATUS.SUBMITTED, label: '제출됨'  },
-  { key: ASN_STATUS.RECEIVED,  label: '입고완료' },
-  { key: ASN_STATUS.CANCELLED, label: '취소'   },
+  { key: 'ALL',                label: '전체',    color: null                                                        },
+  { key: ASN_STATUS.SUBMITTED, label: '제출됨',  color: { bg: 'var(--blue-pale)',  border: 'var(--blue)',  text: 'var(--blue)'  } },
+  { key: ASN_STATUS.RECEIVED,  label: '입고완료', color: { bg: 'var(--green-pale)', border: 'var(--green)', text: 'var(--green)' } },
+  { key: ASN_STATUS.CANCELLED, label: '취소',    color: { bg: 'var(--red-pale)',   border: 'var(--red)',   text: 'var(--red)'   } },
 ]
 
 // ── 상태 ─────────────────────────────────────────────────────────────────────
@@ -106,6 +106,21 @@ async function fetchAll() {
 }
 onMounted(fetchAll)
 
+// ── 활성 탭 인라인 스타일 계산 ───────────────────────────────────────────────
+function tabActiveStyle(tab) {
+  if (activeTab.value !== tab.key) return {}
+  if (!tab.color) {
+    return { background: 'rgba(245,166,35,0.12)', borderColor: 'var(--gold)', color: 'var(--gold)' }
+  }
+  return { background: tab.color.bg, borderColor: tab.color.border, color: tab.color.text }
+}
+
+function tabCountStyle(tab) {
+  if (activeTab.value !== tab.key) return {}
+  if (!tab.color) return { background: 'var(--gold)', color: '#fff' }
+  return { background: tab.color.border, color: '#fff' }
+}
+
 // ── 유틸 ─────────────────────────────────────────────────────────────────────
 /** 예정 입고일이 오늘(2026-03-17) 이후면 true → 골드 강조 */
 function isUpcoming(date) { return date >= '2026-03-17' }
@@ -162,11 +177,13 @@ function kpiValueClass(key) {
         <button
           v-for="tab in TABS"
           :key="tab.key"
-          :class="['filter-tab', { active: activeTab === tab.key }]"
+          class="filter-tab"
+          :class="{ active: activeTab === tab.key }"
+          :style="tabActiveStyle(tab)"
           @click="activeTab = tab.key"
         >
           {{ tab.label }}
-          <span class="filter-count">{{ TAB_COUNT[tab.key] ?? 0 }}</span>
+          <span class="filter-count" :style="tabCountStyle(tab)">{{ TAB_COUNT[tab.key] ?? 0 }}</span>
         </button>
       </div>
 
@@ -329,15 +346,7 @@ function kpiValueClass(key) {
 }
 
 .filter-tab.active {
-  background: rgba(245, 166, 35, 0.12);
-  border-color: var(--gold);
-  color: var(--gold);
   font-weight: 700;
-}
-
-.filter-tab.active .filter-count {
-  background: var(--gold);
-  color: #fff;
 }
 
 /* ── 툴바 오른쪽 ──────────────────────────────────────────────────── */
