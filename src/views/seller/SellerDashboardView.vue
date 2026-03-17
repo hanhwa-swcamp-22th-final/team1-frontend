@@ -117,7 +117,26 @@ const dashboardData = {
 
       <!-- 하단 테이블 2개 영역 -->
       <div class="table-grid">
-        <div class="dashboard-card">최근 활동</div>
+        <div class="dashboard-card">
+          <div class="section-head">
+            <h2 class="section-title">최근 활동</h2>
+            <span class="section-count">{{ dashboardData.recentActivities.length }}건</span>
+          </div>
+
+          <ul class="activity-list">
+            <li
+                v-for="activity in dashboardData.recentActivities"
+                :key="activity.id"
+                class="activity-item"
+            >
+              <div class="activity-main">
+                <strong class="activity-type">{{ activity.type }}</strong>
+                <p class="activity-message">{{ activity.message }}</p>
+              </div>
+              <span class="activity-time">{{ activity.time }}</span>
+            </li>
+          </ul>
+        </div>
         <div class="dashboard-card">기간별 입고 재고 목록</div>
       </div>
     </section>
@@ -125,6 +144,7 @@ const dashboardData = {
 </template>
 
 <style scoped>
+/* 대시보드 레이아웃 골격 Style */
 .seller-dashboard {
   display: flex;
   flex-direction: column;
@@ -184,5 +204,66 @@ const dashboardData = {
   font-weight: 600;
   color: var(--t1);
   line-height: 1.5;
+}
+
+/* 최근 활등 Style */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.section-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--t1);
+}
+
+.section-count {
+  font-size: var(--font-size-sm);
+  color: var(--t3);
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.activity-item:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.activity-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.activity-type {
+  font-size: var(--font-size-xs);
+  color: var(--blue);
+}
+
+.activity-message {
+  font-size: var(--font-size-md);
+  color: var(--t2);
+}
+
+.activity-time {
+  font-size: var(--font-size-sm);
+  color: var(--t3);
+  white-space: nowrap;
 }
 </style>
