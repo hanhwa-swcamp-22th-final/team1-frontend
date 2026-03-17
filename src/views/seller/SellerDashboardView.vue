@@ -1,19 +1,17 @@
 <script setup>
 /**
- * SellerDashboardView — Seller 메인 운영 현황 Dashboard 화면
- *
- * 현재 단계:
- *   - Dashboard 레이아웃 골격 구성
- *   - 상단 CTA 버튼 연결
- *   - 이후 mock 데이터와 섹션별 컴포넌트 확장 예정
+ * 셀러 대시보드 화면.
+ * 실제 API 연동 전까지 로컬 mock 데이터를 사용해 운영 현황을 렌더링한다.
  */
 import { ROUTE_NAMES } from '@/constants'
 import AppLayout from '@/components/layout/AppLayout.vue'
 
 /** Header 브레드크럼 표시용 */
 const breadcrumb = [{ label: 'Seller' }, { label: 'Dashboard' }]
-/** Dashboard mock 데이터 */
+
+// 셀러 대시보드 API 가 준비되기 전까지 화면에서 사용하는 로컬 mock 데이터.
 const dashboardData = {
+  // 상단 KPI 카드에 표시할 요약 수치.
   summary: {
     availableStockQty: 12840,
     availableSkuCount: 236,
@@ -25,11 +23,13 @@ const dashboardData = {
     },
     lowStockSkuCount: 9,
   },
+  // 운영 메모나 임시 공지를 보여주는 배너 데이터.
   memoBanner: {
     title: '운영 메모',
     message: '금주 입고 예정 물량이 증가하여 ASN 등록 일정 확인 필요',
     updatedAt: '2026-03-17 09:00',
   },
+  // 최근 7일 주문/출고 추이를 직접 그리기 위한 데이터.
   weeklyTrend: [
     { label: '03/11', orders: 42, shipped: 35 },
     { label: '03/12', orders: 51, shipped: 39 },
@@ -39,16 +39,19 @@ const dashboardData = {
     { label: '03/16', orders: 58, shipped: 46 },
     { label: '03/17', orders: 87, shipped: 44 },
   ],
+  // 재고 상태 비율 영역에 사용하는 데이터.
   ratioChart: [
     { label: '정상 재고', value: 78 },
     { label: '할당 재고', value: 15 },
     { label: '부족 재고', value: 7 },
   ],
+  // 하단 최근 활동 패널에 사용하는 피드 데이터.
   recentActivities: [
     { id: 1, type: 'ORDER', message: '주문 12건이 신규 등록됨', time: '10분 전' },
     { id: 2, type: 'ASN', message: 'ASN-20260317-001 입고 완료', time: '32분 전' },
     { id: 3, type: 'ALERT', message: 'SKU-203 재고 부족 알림 발생', time: '1시간 전' },
   ],
+  // 하단 입고 예정 재고 목록 패널에 사용하는 데이터.
   inboundInventory: [
     { id: 1, asnNo: 'ASN-20260317-001', warehouse: 'NJ Warehouse', qty: 1200, eta: '2026-03-19', status: '입고예정' },
     { id: 2, asnNo: 'ASN-20260316-004', warehouse: 'LA Warehouse', qty: 860, eta: '2026-03-18', status: '입고중' },
@@ -60,6 +63,7 @@ const dashboardData = {
 <template>
   <AppLayout title="Seller Dashboard" :breadcrumb="breadcrumb">
     <template #header-action>
+      <!-- 현재 연결된 두 개의 셀러 작업 화면으로 바로 이동하는 CTA -->
       <RouterLink :to="{ name: ROUTE_NAMES.SELLER_ASN_CREATE }" class="ui-btn ui-btn--ghost">ASN 등록</RouterLink>
       <RouterLink :to="{ name: ROUTE_NAMES.SELLER_ORDER_REGISTER }" class="ui-btn ui-btn--primary">주문 등록</RouterLink>
     </template>

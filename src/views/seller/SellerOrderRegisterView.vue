@@ -1,11 +1,7 @@
 <script setup>
 /**
- * SellerOrderRegisterView — Seller 주문 등록 화면 골격
- *
- * 현재 단계:
- *   - 수동 단건 등록 영역 배치
- *   - 엑셀 업로드 가이드 및 포맷 미리보기 배치
- *   - 실제 제출/API 연동은 후속 단계에서 연결 예정
+ * 셀러 주문 등록 화면.
+ * 현재는 수동 등록, 엑셀 업로드 안내, 포맷 미리보기 레이아웃을 렌더링한다.
  */
 import { reactive, ref } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
@@ -22,9 +18,12 @@ import {
 /** Header 브레드크럼 표시용 */
 const breadcrumb = [{ label: 'Seller' }, { label: '주문 등록' }]
 
+// 업로드 영역에서 선택한 파일 이름을 즉시 보여주기 위한 상태값.
 const selectedFileName = ref('')
+// 실제 제출 API 연결 전까지 임시 완료 메시지를 보여준다.
 const submitMessage = ref('')
 
+// 초기화 시 동일한 기본값을 재사용하기 위한 폼 생성 함수.
 function createInitialForm() {
   return {
     orderNo: '',
@@ -41,7 +40,9 @@ function createInitialForm() {
   }
 }
 
+// 수동 단건 등록에 사용하는 메인 폼 상태.
 const manualForm = ref(createInitialForm())
+// BaseForm 에 바로 연결되는 필드별 검증 에러 상태.
 const formErrors = reactive({
   orderNo: '',
   orderDate: '',
@@ -52,18 +53,21 @@ const formErrors = reactive({
   quantity: '',
 })
 
+// 제출 전이나 초기화 시 기존 검증 결과를 비운다.
 function clearFormErrors() {
   Object.keys(formErrors).forEach((key) => {
     formErrors[key] = ''
   })
 }
 
+// 폼 값, 에러, 완료 메시지를 한 번에 초기 상태로 되돌린다.
 function handleReset() {
   manualForm.value = createInitialForm()
   submitMessage.value = ''
   clearFormErrors()
 }
 
+// 로컬 검증을 수행하고 모든 항목이 통과한 경우에만 완료 메시지를 보여준다.
 function handleManualSubmit() {
   submitMessage.value = ''
   clearFormErrors()
@@ -85,6 +89,7 @@ function handleManualSubmit() {
 <template>
   <AppLayout title="주문 등록" :breadcrumb="breadcrumb">
     <section class="order-register-page">
+      <!-- 현재 주문 등록 화면에서 다루는 범위를 먼저 안내하는 소개 카드 -->
       <div class="intro-card">
         <div>
           <p class="intro-eyebrow">Seller Order Intake</p>
@@ -103,6 +108,7 @@ function handleManualSubmit() {
       </div>
 
       <div class="register-grid">
+        <!-- 단건 주문을 직접 입력하는 수동 등록 폼 -->
         <form class="form-card" @submit.prevent="handleManualSubmit">
           <div class="section-head">
             <div>
@@ -172,9 +178,11 @@ function handleManualSubmit() {
             <button class="ui-btn ui-btn--primary" type="submit">주문 등록</button>
           </div>
 
+          <!-- 실제 주문 등록 API 연결 전까지 임시 완료 상태를 보여주는 안내 문구 -->
           <p v-if="submitMessage" class="submit-message">{{ submitMessage }}</p>
         </form>
 
+        <!-- 이후 엑셀 업로드 기능 확장을 위한 안내 영역 -->
         <div class="upload-card">
           <div class="section-head">
             <div>
@@ -214,6 +222,7 @@ function handleManualSubmit() {
         </div>
       </div>
 
+      <!-- 셀러가 확인할 업로드 포맷 예시를 보여주는 미리보기 테이블 -->
       <div class="preview-card">
         <div class="section-head">
           <div>
