@@ -36,7 +36,7 @@ const ROLES = [
     value: 'WH_MANAGER',
     label: 'WH_MANAGER',
     icon: 'WM',
-    desc: '창고 총괄 관리자\n(작업 지시 및 관리)',
+    desc: '창고 관리자 계정\n(작업 지시 및 관리)',
     route: 'master-account-manager',
   },
   {
