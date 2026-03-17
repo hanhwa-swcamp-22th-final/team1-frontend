@@ -340,7 +340,7 @@ async function handleBulkSubmit() {
             <button
               class="ui-btn ui-btn--primary"
               type="button"
-              :disabled="isPreviewSample || isSubmittingBulk"
+              :disabled="isSubmittingBulk"
               @click="handleBulkSubmit"
             >
               {{ isSubmittingBulk ? '저장 중...' : '업로드 주문 저장' }}
