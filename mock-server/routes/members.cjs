@@ -4,7 +4,7 @@ const { Router } = require('express')
 const axios = require('axios')
 
 module.exports = function (BASE_URL) {
-  const http = axios.create({ baseURL: BASE_URL, headers: { 'x-internal': 'true' } })
+  const http = axios.create({ baseURL: BASE_URL })
   const router = Router()
 
   // GET /members/sellers/stats — 대시보드용 활성 셀러 수
