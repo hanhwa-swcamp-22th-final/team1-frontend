@@ -33,13 +33,22 @@
  *   (Header.vue의 알림 패널은 @click.stop + document listener 패턴 사용)
  */
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ROLES, ROUTE_NAMES } from '@/constants'
 import { MENU_BY_ROLE } from '@/components/layout/menus'
 
 const auth = useAuthStore()
 const route = useRoute()
+const router = useRouter()
+
+function routeExists(name) {
+  try {
+    return !!router.resolve({ name }).name
+  } catch {
+    return false
+  }
+}
 const DEV_COMPONENTS_ROUTE_NAME = 'dev-components'
 const DEV_MENU_GROUPS = [
   {
