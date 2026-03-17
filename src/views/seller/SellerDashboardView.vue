@@ -103,8 +103,52 @@ const dashboardData = {
 
       <!-- 차트 2개 영역 -->
       <div class="chart-grid">
-        <div class="dashboard-card">주간 주문/출고 추이</div>
-        <div class="dashboard-card">비율 차트</div>
+        <div class="dashboard-card">
+          <div class="section-head">
+            <h2 class="section-title">주간 주문/출고 추이</h2>
+            <span class="section-count">최근 7일</span>
+          </div>
+
+          <div class="trend-chart">
+            <div
+                v-for="item in dashboardData.weeklyTrend"
+                :key="item.label"
+                class="trend-item"
+            >
+              <div class="trend-bars">
+                <span class="trend-bar trend-bar--orders" :style="{ height: `${item.orders}px` }" />
+                <span class="trend-bar trend-bar--shipped" :style="{ height: `${item.shipped}px` }" />
+              </div>
+              <span class="trend-label">{{ item.label }}</span>
+            </div>
+          </div>
+
+          <p class="chart-note">주문 / 출고</p>
+        </div>
+
+        <div class="dashboard-card">
+          <div class="section-head">
+            <h2 class="section-title">비율 차트</h2>
+            <span class="section-count">재고 상태</span>
+          </div>
+
+          <ul class="ratio-list">
+            <li
+                v-for="(item, index) in dashboardData.ratioChart"
+                :key="item.label"
+                class="ratio-item"
+            >
+              <div class="ratio-meta">
+                <span :class="`ratio-dot ratio-dot--${index}`" />
+                <span class="ratio-label">{{ item.label }}</span>
+                <strong class="ratio-value">{{ item.value }}%</strong>
+              </div>
+              <div class="ratio-track">
+                <span :class="`ratio-fill ratio-fill--${index}`" :style="{ width: `${item.value}%` }" />
+              </div>
+            </li>
+          </ul>
+        </div>
       </div>
 
       <!-- 하단 테이블 2개 영역 - 최근 활동, 기간별 입고 재고 목록 -->
@@ -339,5 +383,122 @@ const dashboardData = {
   font-size: var(--font-size-sm);
   color: var(--blue);
 }
+
+/* 차트 부분 Style */
+.trend-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 180px;
+}
+
+.trend-item {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.trend-bars {
+  width: 100%;
+  min-height: 140px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+}
+
+.trend-bar {
+  width: 14px;
+  border-radius: var(--radius-full);
+}
+
+.trend-bar--orders {
+  background: var(--blue);
+}
+
+.trend-bar--shipped {
+  background: var(--gold);
+}
+
+.trend-label {
+  font-size: var(--font-size-xs);
+  color: var(--t3);
+}
+
+.chart-note {
+  margin-top: var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--t3);
+}
+
+.ratio-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ratio-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ratio-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ratio-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+}
+
+.ratio-dot--0,
+.ratio-fill--0 {
+  background: var(--green);
+}
+
+.ratio-dot--1,
+.ratio-fill--1 {
+  background: var(--blue);
+}
+
+.ratio-dot--2,
+.ratio-fill--2 {
+  background: var(--red);
+}
+
+.ratio-label {
+  flex: 1;
+  font-size: var(--font-size-md);
+  color: var(--t2);
+}
+
+.ratio-value {
+  font-family: var(--font-condensed);
+  font-size: var(--font-size-lg);
+  color: var(--t1);
+}
+
+.ratio-track {
+  width: 100%;
+  height: 10px;
+  background: var(--surface-2);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.ratio-fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+}
+
 
 </style>
