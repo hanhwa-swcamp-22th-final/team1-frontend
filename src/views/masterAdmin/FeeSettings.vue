@@ -619,6 +619,7 @@ onMounted(fetchFee)
   align-items: center;
   gap: 6px;
   flex: 1;
+  min-width: 0;
 }
 
 .sc-input {
@@ -635,7 +636,7 @@ onMounted(fetchFee)
   outline: none;
   transition: all 0.2s;
 }
-.sc-input--sm { flex: 0 0 60px; }
+.sc-input--sm { flex: 1 1 50px; min-width: 40px; }
 .sc-sep { font-size: 13px; color: var(--t4); }
 .sc-input:focus { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-pale); }
 
