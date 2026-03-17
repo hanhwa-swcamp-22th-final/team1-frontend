@@ -84,7 +84,7 @@ export function getWarehouseLocations(id) {
  * @returns {Promise<AxiosResponse>} { success, data: ASN[] }
  */
 export function getAsnList(params = {}) {
-  return instance.get('/asns', { params })
+  return instance.get('/wms/asns', { params })
 }
 
 /**
@@ -92,5 +92,5 @@ export function getAsnList(params = {}) {
  * @returns {Promise<AxiosResponse>} { success, data: { total, submitted, received, cancelled } }
  */
 export function getAsnKpi() {
-  return instance.get('/asns/kpi')
+  return instance.get('/wms/asns/kpi')
 }

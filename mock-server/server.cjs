@@ -2,8 +2,7 @@
 //
 // 라우터 담당 분리
 //   routes/auth.cjs    — POST /auth/*        (공통)
-//   routes/asn.cjs     — GET  /asns/*        (masterAdmin)
-//   routes/wms.cjs     — GET  /wms/*         (masterAdmin + 대시보드 공용)
+//   routes/wms.cjs     — GET  /wms/*         (masterAdmin + 대시보드 공용) ← /wms/asns/* 포함
 //   routes/orders.cjs  — GET  /orders/*      (whManager)
 //   routes/members.cjs — GET  /members/*     (systemAdmin)
 const jsonServer = require('json-server')
@@ -23,7 +22,6 @@ server.use((req, res, next) => {
 
 // ── 커스텀 라우터 마운트 ──────────────────────────────────────────────────────
 server.use('/auth',    require('./routes/auth.cjs'))
-server.use('/asns',    require('./routes/asn.cjs'))
 server.use('/wms',     require('./routes/wms.cjs'))
 server.use('/orders',  require('./routes/orders.cjs'))
 server.use('/members', require('./routes/members.cjs'))

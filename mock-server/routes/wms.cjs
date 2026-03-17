@@ -1,5 +1,8 @@
 // routes/wms.cjs — GET /wms/*
-// 담당: masterAdmin (창고 목록/상세) + 대시보드 공용 통계
+// 담당: masterAdmin (창고 목록/상세 + ASN) + 대시보드 공용 통계
+//   /wms/asns/*       — ASN 조회 (routes/asn.cjs 위임)
+//   /wms/warehouses/* — 창고 목록/상세
+//   /wms/asn/stats    — 대시보드용 통계
 const { Router } = require('express')
 const {
   WMS_ASN_STATS,
@@ -14,6 +17,9 @@ const {
 } = require('../mock-data/wms.cjs')
 
 const router = Router()
+
+// ── ASN (/wms/asns/*) ─────────────────────────────────────────────────────────
+router.use('/asns', require('./asn.cjs'))
 
 // ── 대시보드용 통계 ────────────────────────────────────────────────────────────
 
