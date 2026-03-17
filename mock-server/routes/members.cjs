@@ -19,6 +19,22 @@ module.exports = function (BASE_URL) {
     res.json({ success: true, data })
   })
 
+  // POST /members/sellers — 셀러 등록 (SellerRegister.vue)
+  router.post('/sellers', async (req, res) => {
+    try {
+      const { data: list } = await http.get('/sellers')
+      const newSeller = {
+        id: list.length + 1,
+        ...req.body,
+        customerCode: `CUST-${String(list.length + 1).padStart(3, '0')}`,
+      }
+      await http.post('/sellers', newSeller)
+      res.status(201).json({ success: true, message: '셀러가 등록되었습니다.', data: newSeller })
+    } catch {
+      res.status(500).json({ success: false, message: '셀러 등록 중 오류가 발생했습니다.' })
+    }
+  })
+
   // GET /members/users — 소속 사용자 목록 (UserList.vue)
   router.get('/users', async (req, res) => {
     const { data } = await http.get('/users')

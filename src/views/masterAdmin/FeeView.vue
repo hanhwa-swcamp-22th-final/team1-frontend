@@ -39,7 +39,7 @@ const DEFAULT_FEE = {
 
 const fee = ref({ ...DEFAULT_FEE })
 
-const WEIGHT_BANDS = ['0 – 1 lb', '1 – 2 lb', '2 – 5 lb', '5 – 10 lb']
+const WEIGHT_BANDS = ['0–1 lb', '1–2 lb', '2–3 lb', '3–5 lb', '5–10 lb', '10 lb+']
 const CARRIERS = [
   { key: 'USPS',  color: '#005EA6' },
   { key: 'UPS',   color: '#7A4A0A' },

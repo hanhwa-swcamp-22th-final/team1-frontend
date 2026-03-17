@@ -134,7 +134,6 @@ function resetForm() {
   form.email          = ''
   Object.keys(errors).forEach(k => (errors[k] = ''))
   submitError.value   = ''
-  submitSuccess.value = false
 }
 
 // ── 제출 ─────────────────────────────────────────────────────────────────────

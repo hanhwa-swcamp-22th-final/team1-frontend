@@ -11,7 +11,7 @@
  */
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { getUserList, resetUserPassword, deactivateUser, reactivateUser } from '@/api/member'
+import { getUserList, resetUserPassword, deactivateUser, reactivateUser, inviteAccount } from '@/api/member'
 import { ROUTE_NAMES, ACCOUNT_STATUS } from '@/constants'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
@@ -137,6 +137,19 @@ async function handleResetPassword(userId) {
     await fetchAll()
   } catch (e) {
     console.error('[UserList] resetPassword error:', e)
+  }
+}
+
+async function handleResendInvite(row) {
+  try {
+    await inviteAccount({
+      role:           row.role,
+      organizationId: row.warehouseId ?? row.sellerId,
+      name:           row.name,
+      email:          row.email,
+    })
+  } catch (e) {
+    console.error('[UserList] resendInvite error:', e)
   }
 }
 
@@ -310,7 +323,7 @@ function isInactive(user) { return user.accountStatus === ACCOUNT_STATUS.INACTIV
             <!-- 작업자: PW 초기화 / 그 외: 초대 재발송 -->
             <button
               class="action-btn action-btn--ghost"
-              @click="isWorker(row) ? handleResetPassword(row.id) : handleResetPassword(row.id)"
+              @click="isWorker(row) ? handleResetPassword(row.id) : handleResendInvite(row)"
             >
               {{ isWorker(row) ? 'PW 초기화' : '초대 재발송' }}
             </button>
