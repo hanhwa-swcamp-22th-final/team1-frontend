@@ -15,11 +15,23 @@
 import { ROUTE_NAMES } from '@/constants'
 
 export const SELLER_MENU_GROUPS = [
-  // TODO: 아래 주석을 참고하여 메뉴 그룹을 작성하세요
-  // {
-  //   label: '그룹명',
-  //   items: [
-  //     { name: ROUTE_NAMES.SELLER_DASHBOARD, label: '대시보드', icon: '⊞' },
-  //   ],
-  // },
+    // Seller 메인 진입 메뉴
+    {
+        label: 'Overview',
+        items: [
+            { name: ROUTE_NAMES.SELLER_DASHBOARD, label: '대시보드', icon: '⊞' },
+        ],
+    },
+
+    // Seller 등록 기능 메뉴
+    {
+        label: '등록',
+        items: [
+            { name: ROUTE_NAMES.SELLER_ORDER_REGISTER, label: '주문 등록', icon: '+' },
+            { name: ROUTE_NAMES.SELLER_ASN_CREATE, label: 'ASN 등록', icon: '↓' },
+        ],
+    },
 ]
+
+// TODO(frontend): Seller 추가 화면 구현 시 메뉴 그룹 확장
+
