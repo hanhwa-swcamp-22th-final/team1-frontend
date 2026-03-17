@@ -20,4 +20,51 @@ export const WH_WORKER_MENU_GROUPS = [
   //     { name: ROUTE_NAMES.WH_WORKER_TASK_LIST, label: '작업 목록', icon: '≡' },
   //   ],
   // },
+  {
+    label: 'Overview',
+    items: [{ name: ROUTE_NAMES.WH_WORKER_TASK_LIST, label: '통합 대시보드', icon: '⊞' }],
+  },
+  {
+    label: '창고 관리',
+    items: [
+      { name: ROUTE_NAMES.MASTER_WAREHOUSE_LIST, label: '창고 목록', icon: '⌂' },
+      { name: ROUTE_NAMES.MASTER_WAREHOUSE_REGISTER, label: '창고 등록', icon: '+' },
+    ],
+  },
+  {
+    label: '입출고',
+    items: [
+      { name: 'master-asn-list', label: 'ASN 목록', icon: '↓' }, // TODO: ROUTE_NAMES 추가 및 라우트 등록 필요
+      { name: 'master-order-list', label: '주문 목록', icon: '≡' }, // TODO: ROUTE_NAMES 추가 및 라우트 등록 필요
+    ],
+  },
+  {
+    label: '요금 설정',
+    items: [
+      { name: ROUTE_NAMES.MASTER_FEE_SETTING, label: '현재 설정 요금 조회', icon: '$' },
+      { name: 'master-fee-settings', label: '3PL 사용료 설정', icon: '⚙' }, // TODO: ROUTE_NAMES 추가 및 라우트 등록 필요
+    ],
+  },
+  {
+    label: '셀러 관리',
+    items: [
+      { name: ROUTE_NAMES.MASTER_SELLER_COMPANY_LIST, label: '셀러 목록', icon: '◉' },
+      { name: ROUTE_NAMES.MASTER_SELLER_COMPANY_REGISTER, label: '셀러 등록', icon: '+' },
+    ],
+  },
+  {
+    label: '계정 발급',
+    items: [
+      { name: ROUTE_NAMES.MASTER_ACCOUNT_INVITE, label: '셀러 담당자 계정 발급', icon: '↗' },
+      { name: 'master-account-manager', label: '창고 관리자 계정 발급', icon: '✓' }, // TODO: ROUTE_NAMES 추가 및 라우트 등록 필요
+      { name: 'master-account-worker', label: '창고 작업자 계정 발급', icon: '≡' }, // TODO: ROUTE_NAMES 추가 및 라우트 등록 필요
+    ],
+  },
+  {
+    label: '사용자 관리',
+    items: [
+      { name: ROUTE_NAMES.MASTER_ACCOUNT_LIST, label: '소속 사용자 목록', icon: '◎' },
+      { name: ROUTE_NAMES.MASTER_RBAC_SETTING, label: '권한 설정 (RBAC)', icon: '⊟' },
+    ],
+  },
 ]
