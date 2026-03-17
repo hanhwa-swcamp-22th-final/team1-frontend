@@ -43,6 +43,8 @@
  *     </template>
  *   </BaseTable>
  */
+import { computed } from 'vue'
+
 const props = defineProps({
   columns: { type: Array, required: true },
   rows: { type: Array, default: () => [] },
@@ -53,7 +55,6 @@ const props = defineProps({
 
 const emit = defineEmits(['sort', 'page-change'])
 
-import { computed } from 'vue'
 
 /** 전체 페이지 수 계산. pagination이 없으면 0 */
 const totalPages = computed(() => {
