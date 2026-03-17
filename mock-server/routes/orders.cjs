@@ -13,5 +13,17 @@ module.exports = function (BASE_URL) {
     res.json({ success: true, data })
   })
 
+  // GET /orders/list — 주문 목록 조회 (masterAdmin)
+  router.get('/list', async (req, res) => {
+    const { data } = await http.get('/orders')
+    res.json({ success: true, data })
+  })
+
+  // GET /orders/kpi — 주문 KPI 집계 (masterAdmin)
+  router.get('/kpi', async (req, res) => {
+    const { data } = await http.get('/orders_kpi')
+    res.json({ success: true, data })
+  })
+
   return router
 }

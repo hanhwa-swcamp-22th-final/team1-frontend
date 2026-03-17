@@ -51,7 +51,7 @@ export default [
   {
     path: '/master/orders',
     name: 'master-order-list',
-    component: () => import('@/views/masterAdmin/Dashboard.vue'),
+    component: () => import('@/views/masterAdmin/OrderList.vue'),
     meta: { role: ROLES.MASTER_ADMIN },
   },
 

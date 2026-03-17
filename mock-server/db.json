@@ -455,5 +455,27 @@
     "trend": "+15",
     "trendLabel": "전주 대비",
     "trendType": "up"
+  },
+
+  "orders": [
+    { "id": "ORD-2026-03819", "channel": "AMAZON", "company": "K뷰티글로벌",  "warehouse": "LA West Coast Hub",     "skuCount": 2, "qty": 3, "destState": "CA", "orderedAt": "2026-03-12 10:14", "status": "PREPARING_ITEM" },
+    { "id": "ORD-2026-03818", "channel": "AMAZON", "company": "아모레US",       "warehouse": "LA West Coast Hub",     "skuCount": 1, "qty": 2, "destState": "TX", "orderedAt": "2026-03-12 09:55", "status": "CONFIRMED"      },
+    { "id": "ORD-2026-03817", "channel": "MANUAL", "company": "코스맥스",       "warehouse": "Central Dallas Center", "skuCount": 3, "qty": 6, "destState": "NY", "orderedAt": "2026-03-12 08:30", "status": "CONFIRMED"      },
+    { "id": "ORD-2026-03816", "channel": "EXCEL",  "company": "K뷰티글로벌",   "warehouse": "LA West Coast Hub",     "skuCount": 1, "qty": 1, "destState": "FL", "orderedAt": "2026-03-12 07:12", "status": "SHIPPED"        },
+    { "id": "ORD-2026-03815", "channel": "AMAZON", "company": "아모레US",       "warehouse": "East NY Hub",           "skuCount": 2, "qty": 4, "destState": "NJ", "orderedAt": "2026-03-12 06:50", "status": "SHIPPED"        },
+    { "id": "ORD-2026-03814", "channel": "AMAZON", "company": "서울식품코리아", "warehouse": "LA West Coast Hub",     "skuCount": 1, "qty": 2, "destState": "WA", "orderedAt": "2026-03-12 06:30", "status": "PENDING"        },
+    { "id": "ORD-2026-03813", "channel": "MANUAL", "company": "한국미용상사",   "warehouse": "Central Dallas Center", "skuCount": 2, "qty": 3, "destState": "TX", "orderedAt": "2026-03-12 05:55", "status": "CONFIRMED"      },
+    { "id": "ORD-2026-03812", "channel": "AMAZON", "company": "K뷰티글로벌",   "warehouse": "LA West Coast Hub",     "skuCount": 3, "qty": 5, "destState": "CA", "orderedAt": "2026-03-12 05:20", "status": "PREPARING_ITEM" },
+    { "id": "ORD-2026-03811", "channel": "EXCEL",  "company": "서울식품코리아", "warehouse": "East NY Hub",           "skuCount": 2, "qty": 4, "destState": "NY", "orderedAt": "2026-03-12 04:45", "status": "PREPARING_ITEM" },
+    { "id": "ORD-2026-03810", "channel": "AMAZON", "company": "한국미용상사",   "warehouse": "LA West Coast Hub",     "skuCount": 1, "qty": 2, "destState": "CA", "orderedAt": "2026-03-12 04:00", "status": "SHIPPED"        },
+    { "id": "ORD-2026-03809", "channel": "AMAZON", "company": "아모레US",       "warehouse": "Central Dallas Center", "skuCount": 4, "qty": 7, "destState": "TX", "orderedAt": "2026-03-12 03:10", "status": "SHIPPED"        },
+    { "id": "ORD-2026-03808", "channel": "MANUAL", "company": "코스맥스",       "warehouse": "East NY Hub",           "skuCount": 2, "qty": 3, "destState": "NJ", "orderedAt": "2026-03-12 02:30", "status": "PENDING"        }
+  ],
+
+  "orders_kpi": {
+    "todayTotal": 127,
+    "pendingCount": 23,
+    "pickingCount": 38,
+    "shippedCount": 66
   }
 }
