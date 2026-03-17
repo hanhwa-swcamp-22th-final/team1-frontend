@@ -103,7 +103,11 @@ const dashboardData = {
 
 
       <!-- 운영 메모 배너 -->
-      <div class="dashboard-card dashboard-banner">운영 메모 배너</div>
+      <div class="dashboard-card dashboard-banner">
+        <p class="card-label">{{ dashboardData.memoBanner.title }}</p>
+        <strong class="banner-message">{{ dashboardData.memoBanner.message }}</strong>
+        <span class="card-sub">업데이트: {{ dashboardData.memoBanner.updatedAt }}</span>
+      </div>
 
       <!-- 차트 2개 영역 -->
       <div class="chart-grid">
@@ -173,5 +177,12 @@ const dashboardData = {
   font-size: var(--font-size-sm);
   color: var(--t3);
 }
-
+.banner-message {
+  display: block;
+  margin-top: var(--space-3);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--t1);
+  line-height: 1.5;
+}
 </style>
