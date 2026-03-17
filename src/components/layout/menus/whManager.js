@@ -23,4 +23,10 @@ export const WH_MANAGER_MENU_GROUPS = [
       { name: ROUTE_NAMES.WH_MANAGER_ASN_LIST, label: 'ASN 목록', icon: '📥' },
     ],
   },
+  {
+    label: '재고 관리',
+    items: [
+      { name: ROUTE_NAMES.WH_MANAGER_INVENTORY, label: '재고 현황', icon: '📦' },
+    ],
+  },
 ]
