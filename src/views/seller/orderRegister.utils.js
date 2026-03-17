@@ -68,6 +68,37 @@ export function mapOrderUploadRows(rows = []) {
   }))
 }
 
+// 수동 등록 폼 값을 주문 등록 API 요청 형식으로 정리한다.
+export function buildManualOrderPayload(form = {}) {
+  return {
+    orderNo: String(form.orderNo ?? '').trim(),
+    orderDate: String(form.orderDate ?? '').trim(),
+    salesChannel: String(form.salesChannel ?? '').trim(),
+    recipient: String(form.recipient ?? '').trim(),
+    contact: String(form.contact ?? '').trim(),
+    postalCode: String(form.postalCode ?? '').trim(),
+    address1: String(form.address1 ?? '').trim(),
+    address2: String(form.address2 ?? '').trim(),
+    sku: String(form.sku ?? '').trim(),
+    quantity: Number(form.quantity ?? 0),
+    memo: String(form.memo ?? '').trim(),
+  }
+}
+
+// 업로드 미리보기 행을 일괄 등록 API 요청 형식으로 변환한다.
+export function buildBulkOrderPayload(rows = []) {
+  return rows.map((row) => ({
+    orderNo: String(row.orderNo ?? '').trim(),
+    orderDate: String(row.orderDate ?? '').trim(),
+    recipient: String(row.recipient ?? '').trim(),
+    contact: String(row.contact ?? '').trim(),
+    address: String(row.address ?? '').trim(),
+    sku: String(row.sku ?? '').trim(),
+    quantity: Number(row.quantity ?? 0),
+    requestNote: String(row.requestNote ?? '').trim(),
+  }))
+}
+
 // 현재 수동 주문 등록 폼을 검증하고 필드별 에러 메시지를 반환한다.
 export function validateOrderForm(form = {}) {
   const errors = {

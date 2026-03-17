@@ -1,17 +1,23 @@
 <script setup>
 /**
  * 셀러 주문 등록 화면.
- * 현재는 수동 등록, 엑셀 업로드 안내, 포맷 미리보기 레이아웃을 렌더링한다.
+ * 수동 등록과 엑셀 업로드 주문 등록 흐름을 한 화면에서 처리한다.
  */
 import { reactive, ref } from 'vue'
+import { createSellerBulkOrders, createSellerOrder } from '@/api/order'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import FileUpload from '@/components/common/FileUpload.vue'
+import { parseExcel } from '@/utils/excel'
 import {
+  buildBulkOrderPayload,
+  buildManualOrderPayload,
   ORDER_PREVIEW_COLUMNS,
   ORDER_TEMPLATE_PREVIEW_ROWS,
   ORDER_UPLOAD_REQUIRED_COLUMNS,
+  getMissingOrderUploadColumns,
+  mapOrderUploadRows,
   validateOrderForm,
 } from './orderRegister.utils'
 
@@ -20,8 +26,19 @@ const breadcrumb = [{ label: 'Seller' }, { label: '주문 등록' }]
 
 // 업로드 영역에서 선택한 파일 이름을 즉시 보여주기 위한 상태값.
 const selectedFileName = ref('')
-// 실제 제출 API 연결 전까지 임시 완료 메시지를 보여준다.
+// 수동 등록 저장 결과를 사용자에게 보여주기 위한 상태값.
 const submitMessage = ref('')
+const submitErrorMessage = ref('')
+const isSubmittingManual = ref(false)
+// 업로드 파싱 결과와 저장 결과를 구분해서 표시한다.
+const uploadErrorMessage = ref('')
+const uploadSuccessMessage = ref('')
+const bulkSubmitMessage = ref('')
+const bulkSubmitErrorMessage = ref('')
+const isSubmittingBulk = ref(false)
+// 업로드 전에는 샘플 행을 보여주고, 업로드 후에는 실제 행으로 교체한다.
+const previewRows = ref(ORDER_TEMPLATE_PREVIEW_ROWS)
+const isPreviewSample = ref(true)
 
 // 초기화 시 동일한 기본값을 재사용하기 위한 폼 생성 함수.
 function createInitialForm() {
@@ -64,12 +81,69 @@ function clearFormErrors() {
 function handleReset() {
   manualForm.value = createInitialForm()
   submitMessage.value = ''
+  submitErrorMessage.value = ''
   clearFormErrors()
 }
 
-// 로컬 검증을 수행하고 모든 항목이 통과한 경우에만 완료 메시지를 보여준다.
-function handleManualSubmit() {
+// 업로드 관련 상태를 샘플 미리보기 기준으로 초기화한다.
+function resetUploadState() {
+  selectedFileName.value = ''
+  uploadErrorMessage.value = ''
+  uploadSuccessMessage.value = ''
+  bulkSubmitMessage.value = ''
+  bulkSubmitErrorMessage.value = ''
+  previewRows.value = ORDER_TEMPLATE_PREVIEW_ROWS
+  isPreviewSample.value = true
+}
+
+// 선택한 엑셀 파일을 파싱하고 필수 헤더 검증 후 미리보기 표에 반영한다.
+async function handleFileSelected(file) {
+  const targetFile = Array.isArray(file) ? file[0] : file
+
+  uploadErrorMessage.value = ''
+  uploadSuccessMessage.value = ''
+  bulkSubmitMessage.value = ''
+  bulkSubmitErrorMessage.value = ''
+
+  if (!targetFile) {
+    resetUploadState()
+    return
+  }
+
+  selectedFileName.value = targetFile.name
+
+  try {
+    const rows = await parseExcel(targetFile)
+
+    if (!rows.length) {
+      previewRows.value = ORDER_TEMPLATE_PREVIEW_ROWS
+      isPreviewSample.value = true
+      uploadErrorMessage.value = '업로드한 파일에 주문 데이터가 없습니다.'
+      return
+    }
+
+    const missingColumns = getMissingOrderUploadColumns(Object.keys(rows[0] ?? {}))
+    if (missingColumns.length) {
+      previewRows.value = ORDER_TEMPLATE_PREVIEW_ROWS
+      isPreviewSample.value = true
+      uploadErrorMessage.value = `필수 컬럼이 누락되었습니다: ${missingColumns.join(', ')}`
+      return
+    }
+
+    previewRows.value = mapOrderUploadRows(rows)
+    isPreviewSample.value = false
+    uploadSuccessMessage.value = `${targetFile.name} 파일에서 ${previewRows.value.length}건을 불러왔습니다.`
+  } catch (error) {
+    previewRows.value = ORDER_TEMPLATE_PREVIEW_ROWS
+    isPreviewSample.value = true
+    uploadErrorMessage.value = '엑셀 파일을 읽지 못했습니다. 파일 형식을 확인하세요.'
+  }
+}
+
+// 수동 주문 등록은 검증을 통과한 뒤 API 저장까지 완료한다.
+async function handleManualSubmit() {
   submitMessage.value = ''
+  submitErrorMessage.value = ''
   clearFormErrors()
 
   const errors = validateOrderForm(manualForm.value)
@@ -79,11 +153,44 @@ function handleManualSubmit() {
 
   if (Object.values(errors).some(Boolean)) return
 
-  // TODO(frontend): 수동 등록 제출 API와 성공 응답 후처리를 연결한다.
-  submitMessage.value = '주문 등록 준비가 완료되었습니다.'
+  try {
+    isSubmittingManual.value = true
+    const payload = buildManualOrderPayload(manualForm.value)
+    const response = await createSellerOrder(payload)
+
+    manualForm.value = createInitialForm()
+    submitMessage.value = response.data?.message ?? '주문이 등록되었습니다.'
+  } catch (error) {
+    submitErrorMessage.value = error.response?.data?.message ?? '주문 등록 중 오류가 발생했습니다.'
+  } finally {
+    isSubmittingManual.value = false
+  }
 }
 
-// TODO(frontend): 업로드 파일 파싱 결과를 BaseTable 미리보기에 연결한다.
+// 업로드 미리보기 데이터를 일괄 주문 등록 API로 저장한다.
+async function handleBulkSubmit() {
+  bulkSubmitMessage.value = ''
+  bulkSubmitErrorMessage.value = ''
+
+  if (isPreviewSample.value || !previewRows.value.length) {
+    bulkSubmitErrorMessage.value = '저장할 업로드 주문이 없습니다.'
+    return
+  }
+
+  try {
+    isSubmittingBulk.value = true
+    const payload = buildBulkOrderPayload(previewRows.value)
+    const response = await createSellerBulkOrders(payload)
+    const savedCount = response.data?.data?.savedCount ?? payload.length
+
+    resetUploadState()
+    bulkSubmitMessage.value = `${response.data?.message ?? '업로드 주문이 등록되었습니다.'} (${savedCount}건)`
+  } catch (error) {
+    bulkSubmitErrorMessage.value = error.response?.data?.message ?? '업로드 주문 저장 중 오류가 발생했습니다.'
+  } finally {
+    isSubmittingBulk.value = false
+  }
+}
 </script>
 
 <template>
@@ -95,8 +202,7 @@ function handleManualSubmit() {
           <p class="intro-eyebrow">Seller Order Intake</p>
           <h2 class="intro-title">단건 주문 등록과 엑셀 업로드를 한 화면에서 준비합니다.</h2>
           <p class="intro-description">
-            이번 단계에서는 입력 화면 골격과 업로드 포맷을 먼저 정리합니다.
-            실제 저장, 업로드 파싱, 검증 메시지는 다음 단계에서 연결합니다.
+            단건 주문은 바로 저장할 수 있고, 엑셀 업로드 주문도 미리보기 확인 후 일괄 등록할 수 있습니다.
           </p>
         </div>
 
@@ -175,10 +281,13 @@ function handleManualSubmit() {
 
           <div class="form-actions">
             <button class="ui-btn ui-btn--ghost" type="button" @click="handleReset">초기화</button>
-            <button class="ui-btn ui-btn--primary" type="submit">주문 등록</button>
+            <button class="ui-btn ui-btn--primary" type="submit" :disabled="isSubmittingManual">
+              {{ isSubmittingManual ? '등록 중...' : '주문 등록' }}
+            </button>
           </div>
 
-          <!-- 실제 주문 등록 API 연결 전까지 임시 완료 상태를 보여주는 안내 문구 -->
+          <!-- 수동 주문 저장 결과를 성공/실패로 구분해 보여준다. -->
+          <p v-if="submitErrorMessage" class="submit-message submit-message--error">{{ submitErrorMessage }}</p>
           <p v-if="submitMessage" class="submit-message">{{ submitMessage }}</p>
         </form>
 
@@ -193,12 +302,10 @@ function handleManualSubmit() {
           </div>
 
           <p class="upload-description">
-            업로드 전에 필수 컬럼 구성을 맞춰두면 다음 단계에서 바로 미리보기와 검증을 연결할 수 있습니다.
+            필수 컬럼을 맞춘 파일을 선택하면 즉시 미리보기로 확인하고, 검토 후 일괄 저장할 수 있습니다.
           </p>
 
-          <FileUpload
-            @file-selected="selectedFileName = Array.isArray($event) ? $event.map((file) => file.name).join(', ') : $event?.name ?? ''"
-          />
+          <FileUpload @file-selected="handleFileSelected" />
 
           <div class="upload-status">
             <span class="upload-status-label">선택 파일</span>
@@ -206,6 +313,14 @@ function handleManualSubmit() {
               {{ selectedFileName || '아직 선택된 파일이 없습니다' }}
             </strong>
           </div>
+
+          <!-- 업로드 파일 파싱 결과를 먼저 보여주고, 저장 결과는 별도로 표시한다. -->
+          <p v-if="uploadErrorMessage" class="upload-feedback upload-feedback--error">
+            {{ uploadErrorMessage }}
+          </p>
+          <p v-else-if="uploadSuccessMessage" class="upload-feedback upload-feedback--success">
+            {{ uploadSuccessMessage }}
+          </p>
 
           <div class="guide-card">
             <p class="guide-title">필수 컬럼</p>
@@ -219,6 +334,25 @@ function handleManualSubmit() {
               `요청사항`, `판매채널` 같은 보조 컬럼은 다음 단계에서 선택 확장 가능합니다.
             </p>
           </div>
+
+          <div class="upload-actions">
+            <button class="ui-btn ui-btn--ghost" type="button" @click="resetUploadState">업로드 초기화</button>
+            <button
+              class="ui-btn ui-btn--primary"
+              type="button"
+              :disabled="isPreviewSample || isSubmittingBulk"
+              @click="handleBulkSubmit"
+            >
+              {{ isSubmittingBulk ? '저장 중...' : '업로드 주문 저장' }}
+            </button>
+          </div>
+
+          <p v-if="bulkSubmitErrorMessage" class="submit-message submit-message--error">
+            {{ bulkSubmitErrorMessage }}
+          </p>
+          <p v-if="bulkSubmitMessage" class="submit-message">
+            {{ bulkSubmitMessage }}
+          </p>
         </div>
       </div>
 
@@ -229,15 +363,16 @@ function handleManualSubmit() {
             <p class="section-eyebrow">Preview Format</p>
             <h3 class="section-title">엑셀 포맷 미리보기</h3>
           </div>
-          <span class="section-caption">샘플 1행</span>
+          <span class="section-caption">{{ isPreviewSample ? '샘플 1행' : `업로드 ${previewRows.length}건` }}</span>
         </div>
 
         <p class="preview-description">
-          실제 업로드 파싱 전 단계라 샘플 포맷만 먼저 노출합니다.
-          다음 단계에서는 업로드 결과를 이 표에 그대로 연결합니다.
+          {{ isPreviewSample
+            ? '업로드 전에는 샘플 포맷을 먼저 보여줍니다.'
+            : '현재 표에는 업로드한 엑셀 데이터를 그대로 표시하고 있습니다.' }}
         </p>
 
-        <BaseTable :columns="ORDER_PREVIEW_COLUMNS" :rows="ORDER_TEMPLATE_PREVIEW_ROWS" row-key="id" />
+        <BaseTable :columns="ORDER_PREVIEW_COLUMNS" :rows="previewRows" row-key="id" />
       </div>
     </section>
   </AppLayout>
@@ -372,6 +507,12 @@ function handleManualSubmit() {
   color: #0f6b4b;
 }
 
+.submit-message--error {
+  border-color: rgba(209, 67, 67, 0.24);
+  background: rgba(209, 67, 67, 0.08);
+  color: #a12e2e;
+}
+
 .upload-card {
   display: flex;
   flex-direction: column;
@@ -398,6 +539,20 @@ function handleManualSubmit() {
   font-size: var(--font-size-sm);
   color: var(--t2);
   word-break: break-word;
+}
+
+.upload-feedback {
+  margin-top: calc(var(--space-4) * -0.5);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.upload-feedback--error {
+  color: #a12e2e;
+}
+
+.upload-feedback--success {
+  color: #0f6b4b;
 }
 
 .guide-card {
@@ -442,6 +597,12 @@ function handleManualSubmit() {
   color: var(--t3);
 }
 
+.upload-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
 .preview-card {
   display: flex;
   flex-direction: column;
@@ -472,6 +633,10 @@ function handleManualSubmit() {
   }
 
   .form-actions {
+    flex-direction: column;
+  }
+
+  .upload-actions {
     flex-direction: column;
   }
 }
