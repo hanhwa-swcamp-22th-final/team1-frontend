@@ -68,6 +68,24 @@ export const ACCOUNT_STATUS = {
   TEMP_PASSWORD: 'TEMP_PASSWORD', // 임시 비밀번호 (첫 로그인 강제 변경)
   INACTIVE: 'INACTIVE', // 비활성
 }
+/**
+ * SELLER_STATUS — 셀러 상태 3단계
+ *
+ * 상태 전이 흐름:
+ *
+ *   (신규 셀러 등록) → PENDING → ACTIVE
+ *                                ↓
+ *                             SUSPENDED (관리자 비활성화)
+ *
+ * PENDING: 셀러 초대 대기중
+ * SUSPENDED: 정지됨
+ *
+ */
+export const SELLER_STATUS ={
+  ACTIVE: 'ACTIVE',
+  PENDING: 'PENDING',
+  SUSPENDED: 'SUSPENDED',
+}
 
 /**
  * ITEM_STATUS — 물품 상태 7단계 (REQ-074)

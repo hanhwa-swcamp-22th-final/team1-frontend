@@ -16,6 +16,7 @@ import { ROUTE_NAMES } from '@/constants'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 
 const breadcrumb = [{ label: '셀러 관리' }, { label: '셀러 목록' }]
 const router = useRouter()
@@ -37,12 +38,6 @@ const TABS = [
   { key: 'PENDING',   label: '초대 대기', color: { bg: 'var(--amber-pale)', border: 'var(--amber)', text: '#b45309' } },
   { key: 'SUSPENDED', label: '정지',   color: { bg: 'var(--red-pale)',   border: 'var(--red)',   text: 'var(--red)'  } },
 ]
-
-const STATUS_LABEL = {
-  ACTIVE:    '정상 운영중',
-  PENDING:   '초대 대기중',
-  SUSPENDED: '정지',
-}
 
 // ── 상태 ─────────────────────────────────────────────────────────────────────
 const allSellers = ref([])
@@ -127,13 +122,6 @@ function sellerInitials(seller) {
 }
 
 // ── 상태 배지 스타일 ─────────────────────────────────────────────────────────
-function statusBadgeStyle(status) {
-  if (status === 'ACTIVE')    return { background: 'var(--green-pale)', color: 'var(--green)', border: '1px solid var(--green)' }
-  if (status === 'PENDING')   return { background: 'var(--amber-pale)', color: '#b45309',      border: '1px solid var(--amber)' }
-  if (status === 'SUSPENDED') return { background: 'var(--red-pale)',   color: 'var(--red)',   border: '1px solid var(--red)' }
-  return {}
-}
-
 // ── 셀러 상세 모달 ────────────────────────────────────────────────────────────
 const showSellerDetail  = ref(false)
 const selectedSeller    = ref(null)
@@ -243,10 +231,7 @@ function closeSellerDetail() {
 
       <!-- 상태 배지 -->
       <template #cell-status="{ value }">
-        <span class="status-badge" :style="statusBadgeStyle(value)">
-          <span class="status-dot"></span>
-          {{ STATUS_LABEL[value] ?? value }}
-        </span>
+        <StatusBadge :status="value" type="seller" />
       </template>
     </BaseTable>
     <!-- ── 셀러 상세 모달 ── -->
@@ -267,10 +252,7 @@ function closeSellerDetail() {
               {{ selectedSeller.brandNameEn }}
             </span>
           </div>
-          <span class="status-badge" :style="statusBadgeStyle(selectedSeller.status)">
-            <span class="status-dot"></span>
-            {{ STATUS_LABEL[selectedSeller.status] ?? selectedSeller.status }}
-          </span>
+          <StatusBadge :status="selectedSeller.status" type="seller" />
         </div>
 
         <!-- 정보 그리드 -->

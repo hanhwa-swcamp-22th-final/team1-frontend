@@ -16,6 +16,7 @@ import { ROUTE_NAMES, ACCOUNT_STATUS } from '@/constants'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 
 const breadcrumb = [{ label: '사용자 관리' }, { label: '소속 사용자 목록' }]
 const router = useRouter()
@@ -225,20 +226,6 @@ function roleBadgeClass(role) {
   return ''
 }
 
-function statusBadgeClass(status) {
-  if (status === ACCOUNT_STATUS.ACTIVE)        return 'status-active'
-  if (status === ACCOUNT_STATUS.TEMP_PASSWORD) return 'status-temp'
-  if (status === ACCOUNT_STATUS.INACTIVE)      return 'status-inactive'
-  return ''
-}
-
-function statusLabel(status) {
-  if (status === ACCOUNT_STATUS.ACTIVE)        return '활성'
-  if (status === ACCOUNT_STATUS.TEMP_PASSWORD) return '임시비밀번호'
-  if (status === ACCOUNT_STATUS.INACTIVE)      return '비활성'
-  return status
-}
-
 function isWorker(user) { return user.role === 'WH_WORKER' }
 function isInactive(user) { return user.accountStatus === ACCOUNT_STATUS.INACTIVE }
 </script>
@@ -352,10 +339,7 @@ function isInactive(user) { return user.accountStatus === ACCOUNT_STATUS.INACTIV
 
       <!-- 상태 -->
       <template #cell-status="{ row }">
-        <span class="status-badge" :class="statusBadgeClass(row.accountStatus)">
-          <span class="status-dot"></span>
-          {{ statusLabel(row.accountStatus) }}
-        </span>
+        <StatusBadge :status="row.accountStatus" type="account" />
       </template>
 
       <!-- 액션 버튼 -->
