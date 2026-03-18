@@ -44,3 +44,4 @@ describe('wms API', () => {
     expect(instance.get).toHaveBeenCalledWith('/asns/kpi')
   })
 })
+
