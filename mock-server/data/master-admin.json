@@ -571,5 +571,73 @@
     "pendingCount": 2,
     "pickingCount": 7,
     "shippedCount": 4
+  },
+
+  "sellers": [
+    { "id": 1,  "brandNameKo": "한국미용상사",   "brandNameEn": "Korea Beauty Co.",   "customerCode": "CUST-001", "warehouses": ["LA West Coast Hub"],                           "contactName": "김미영", "contactEmail": "kim.my@kbeauty.com",     "category": "뷰티/화장품", "status": "ACTIVE",    "createdAt": "2026-01-10" },
+    { "id": 2,  "brandNameKo": "서울식품코리아", "brandNameEn": "Seoul Food Korea",    "customerCode": "CUST-002", "warehouses": ["LA West Coast Hub"],                           "contactName": "이준혁", "contactEmail": "lee.jh@seoulfood.com",   "category": "식품",       "status": "ACTIVE",    "createdAt": "2026-01-15" },
+    { "id": 3,  "brandNameKo": "K뷰티글로벌",   "brandNameEn": "K-Beauty Global",     "customerCode": "CUST-003", "warehouses": ["LA West Coast Hub"],                           "contactName": "박서연", "contactEmail": "park.sy@kbg.com",        "category": "뷰티/화장품", "status": "ACTIVE",    "createdAt": "2026-01-20" },
+    { "id": 4,  "brandNameKo": "한국스포츠",     "brandNameEn": "Korea Sports",        "customerCode": "CUST-004", "warehouses": ["LA West Coast Hub"],                           "contactName": "최동훈", "contactEmail": "choi.dh@ksports.com",    "category": "스포츠",     "status": "ACTIVE",    "createdAt": "2026-02-01" },
+    { "id": 5,  "brandNameKo": "드림푸드",       "brandNameEn": "Dream Food",          "customerCode": "CUST-005", "warehouses": ["Central Dallas Center"],                       "contactName": "정수진", "contactEmail": "jung.sj@dreamfood.com",  "category": "식품",       "status": "ACTIVE",    "createdAt": "2026-02-05" },
+    { "id": 6,  "brandNameKo": "텍사스K마트",    "brandNameEn": "Texas K-Mart",        "customerCode": "CUST-006", "warehouses": ["Central Dallas Center"],                       "contactName": "오병철", "contactEmail": "oh.bc@txkmart.com",      "category": "유통",       "status": "ACTIVE",    "createdAt": "2026-02-10" },
+    { "id": 7,  "brandNameKo": "한국홈리빙",     "brandNameEn": "Korea HomeLiving",    "customerCode": "CUST-007", "warehouses": ["Central Dallas Center"],                       "contactName": "신예지", "contactEmail": "shin.yj@khomeliving.com","category": "홈리빙",     "status": "PENDING",   "createdAt": "2026-02-20" },
+    { "id": 8,  "brandNameKo": "NY코리아몰",     "brandNameEn": "NY Korea Mall",       "customerCode": "CUST-008", "warehouses": ["East NY Hub"],                                 "contactName": "강민준", "contactEmail": "kang.mj@nykm.com",       "category": "유통",       "status": "ACTIVE",    "createdAt": "2026-02-25" },
+    { "id": 9,  "brandNameKo": "이스트K뷰티",    "brandNameEn": "East K-Beauty",       "customerCode": "CUST-009", "warehouses": ["East NY Hub"],                                 "contactName": "임하늘", "contactEmail": "lim.hn@eastkb.com",      "category": "뷰티/화장품", "status": "ACTIVE",    "createdAt": "2026-03-01" },
+    { "id": 10, "brandNameKo": "뉴저지한국마트", "brandNameEn": "NJ Korea Mart",       "customerCode": "CUST-010", "warehouses": ["East NY Hub"],                                 "contactName": "윤지훈", "contactEmail": "yoon.jh@njkm.com",       "category": "유통",       "status": "SUSPENDED", "createdAt": "2026-03-05" },
+    { "id": 11, "brandNameKo": "Glow Beauty",    "brandNameEn": "Glow Beauty",         "customerCode": "CUST-011", "warehouses": ["LA West Coast Hub", "East NY Hub"],            "contactName": "이수빈", "contactEmail": "lee.sb@glowbeauty.com",  "category": "뷰티/화장품", "status": "ACTIVE",    "createdAt": "2025-11-01" },
+    { "id": 12, "brandNameKo": "아모레US",       "brandNameEn": "Amore US",            "customerCode": "CUST-012", "warehouses": ["LA West Coast Hub", "East NY Hub"],            "contactName": "박정호", "contactEmail": "park.jh@amoreus.com",    "category": "뷰티/화장품", "status": "ACTIVE",    "createdAt": "2025-11-15" },
+    { "id": 13, "brandNameKo": "코스맥스",       "brandNameEn": "Cosmax",              "customerCode": "CUST-013", "warehouses": ["Central Dallas Center"],                       "contactName": "최민수", "contactEmail": "choi.ms@cosmax.com",     "category": "뷰티/화장품", "status": "PENDING",   "createdAt": "2026-03-10" }
+  ],
+
+  "users": [
+    { "id": 1,  "name": "김창고",   "email": "wh.manager@conk.com",        "role": "WH_MANAGER", "accountStatus": "ACTIVE",        "warehouse": "LA West Coast Hub",     "warehouseId": 1, "seller": null, "sellerId": null, "workerCode": null,       "createdAt": "2025-12-01", "lastLogin": "2026-03-18 09:12" },
+    { "id": 2,  "name": "이달라스", "email": "wh.manager.dal@conk.com",    "role": "WH_MANAGER", "accountStatus": "ACTIVE",        "warehouse": "Central Dallas Center", "warehouseId": 2, "seller": null, "sellerId": null, "workerCode": null,       "createdAt": "2025-12-01", "lastLogin": "2026-03-18 08:55" },
+    { "id": 3,  "name": "박뉴욕",   "email": "wh.manager.ny@conk.com",     "role": "WH_MANAGER", "accountStatus": "TEMP_PASSWORD", "warehouse": "East NY Hub",           "warehouseId": 3, "seller": null, "sellerId": null, "workerCode": null,       "createdAt": "2026-01-15", "lastLogin": "2026-03-10 14:30" },
+    { "id": 4,  "name": "최작업자", "email": null,                         "role": "WH_WORKER",  "accountStatus": "ACTIVE",        "warehouse": "LA West Coast Hub",     "warehouseId": 1, "seller": null, "sellerId": null, "workerCode": "WORKER-001", "createdAt": "2025-12-05", "lastLogin": "2026-03-18 07:45" },
+    { "id": 5,  "name": "정작업자", "email": null,                         "role": "WH_WORKER",  "accountStatus": "ACTIVE",        "warehouse": "LA West Coast Hub",     "warehouseId": 1, "seller": null, "sellerId": null, "workerCode": "WORKER-002", "createdAt": "2025-12-05", "lastLogin": "2026-03-17 16:20" },
+    { "id": 6,  "name": "오달라스", "email": null,                         "role": "WH_WORKER",  "accountStatus": "ACTIVE",        "warehouse": "Central Dallas Center", "warehouseId": 2, "seller": null, "sellerId": null, "workerCode": "WORKER-003", "createdAt": "2025-12-10", "lastLogin": "2026-03-18 08:00" },
+    { "id": 7,  "name": "신달라스", "email": null,                         "role": "WH_WORKER",  "accountStatus": "INACTIVE",      "warehouse": "Central Dallas Center", "warehouseId": 2, "seller": null, "sellerId": null, "workerCode": "WORKER-004", "createdAt": "2025-12-10", "lastLogin": "2026-02-20 10:00" },
+    { "id": 8,  "name": "강뉴욕",   "email": null,                         "role": "WH_WORKER",  "accountStatus": "ACTIVE",        "warehouse": "East NY Hub",           "warehouseId": 3, "seller": null, "sellerId": null, "workerCode": "WORKER-005", "createdAt": "2026-01-20", "lastLogin": "2026-03-18 09:00" },
+    { "id": 9,  "name": "임뉴욕",   "email": null,                         "role": "WH_WORKER",  "accountStatus": "ACTIVE",        "warehouse": "East NY Hub",           "warehouseId": 3, "seller": null, "sellerId": null, "workerCode": "WORKER-006", "createdAt": "2026-01-20", "lastLogin": "2026-03-17 17:30" },
+    { "id": 10, "name": "김미영",   "email": "kim.my@kbeauty.com",         "role": "SELLER",     "accountStatus": "ACTIVE",        "warehouse": null, "warehouseId": null, "seller": "한국미용상사",   "sellerId": 1,  "workerCode": null,       "createdAt": "2026-01-10", "lastLogin": "2026-03-18 10:05" },
+    { "id": 11, "name": "이준혁",   "email": "lee.jh@seoulfood.com",       "role": "SELLER",     "accountStatus": "ACTIVE",        "warehouse": null, "warehouseId": null, "seller": "서울식품코리아", "sellerId": 2,  "workerCode": null,       "createdAt": "2026-01-15", "lastLogin": "2026-03-17 14:22" },
+    { "id": 12, "name": "박서연",   "email": "park.sy@kbg.com",            "role": "SELLER",     "accountStatus": "ACTIVE",        "warehouse": null, "warehouseId": null, "seller": "K뷰티글로벌",   "sellerId": 3,  "workerCode": null,       "createdAt": "2026-01-20", "lastLogin": "2026-03-16 11:10" },
+    { "id": 13, "name": "정수진",   "email": "jung.sj@dreamfood.com",      "role": "SELLER",     "accountStatus": "ACTIVE",        "warehouse": null, "warehouseId": null, "seller": "드림푸드",       "sellerId": 5,  "workerCode": null,       "createdAt": "2026-02-05", "lastLogin": "2026-03-15 09:33" },
+    { "id": 14, "name": "신예지",   "email": "shin.yj@khomeliving.com",    "role": "SELLER",     "accountStatus": "TEMP_PASSWORD", "warehouse": null, "warehouseId": null, "seller": "한국홈리빙",     "sellerId": 7,  "workerCode": null,       "createdAt": "2026-02-20", "lastLogin": "-" },
+    { "id": 15, "name": "윤지훈",   "email": "yoon.jh@njkm.com",           "role": "SELLER",     "accountStatus": "INACTIVE",      "warehouse": null, "warehouseId": null, "seller": "뉴저지한국마트", "sellerId": 10, "workerCode": null,       "createdAt": "2026-03-05", "lastLogin": "2026-03-10 13:44" }
+  ],
+
+  "fee_settings": {
+    "storage": {
+      "palletRate": "28.50",
+      "minBillingUnit": "1",
+      "proRataRule": "입고일 포함 일할 청구"
+    },
+    "pickPack": {
+      "basePickRate": "2.50",
+      "additionalSkuRate": "0.75",
+      "packingMaterialRate": "0.30",
+      "specialPackagingSurcharge": "1.20"
+    },
+    "lastMile": {
+      "USPS":  ["4.20", "5.10", "6.40", "7.80",  "9.50",  "12.30"],
+      "UPS":   ["5.50", "6.80", "8.20", "10.40", "14.60", "19.90"],
+      "FedEx": ["5.90", "7.30", "8.80", "11.20", "15.80", "21.50"]
+    },
+    "seaSurcharge": {
+      "mpfRate": "0.3464",
+      "mpfMin": "32.71",
+      "mpfMax": "634.62",
+      "hmfRate": "0.125",
+      "isfFee": "35.00",
+      "drayage": "320.00"
+    },
+    "airSurcharge": {
+      "securityFee": "0.18",
+      "airportTransport": "180.00",
+      "documentFee": "45.00",
+      "hazmatSurcharge": "60.00",
+      "temperatureSurcharge": "120.00"
+    }
   }
 }

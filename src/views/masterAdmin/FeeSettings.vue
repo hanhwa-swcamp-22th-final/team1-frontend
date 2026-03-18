@@ -400,6 +400,7 @@ onMounted(fetchFee)
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-width: 0; /* grid 자식이 콘텐츠 너비 아래로 축소될 수 있도록 */
 }
 
 /* ── 카드 ── */
@@ -476,6 +477,7 @@ onMounted(fetchFee)
   align-items: center;
   gap: 8px;
   flex: 1;
+  min-width: 0; /* flex 자식이 input + unit 텍스트를 카드 밖으로 밀지 않도록 */
 }
 
 .field-input {
@@ -490,6 +492,7 @@ onMounted(fetchFee)
   outline: none;
   text-align: right;
   width: 120px;
+  min-width: 0; /* input 기본 min-width:auto가 flex 레이아웃을 깨는 것 방지 */
   transition: border-color 0.2s;
 }
 
@@ -524,8 +527,10 @@ onMounted(fetchFee)
 /* ── 라스트마일 테이블 ── */
 .rate-table-wrap {
   overflow-x: auto;
+  overflow-y: hidden;
   border: 1px solid var(--border);
   border-radius: 6px;
+  max-width: 100%; /* 부모 카드 너비를 초과하지 않도록 */
 }
 
 .rate-table {
@@ -593,7 +598,7 @@ onMounted(fetchFee)
 /* ── 서차지 그리드 ── */
 .surcharge-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* 카드가 grid 셀을 초과하지 않도록 */
   gap: 24px;
 }
 
@@ -624,6 +629,7 @@ onMounted(fetchFee)
 
 .sc-input {
   flex: 1;
+  min-width: 0; /* input 기본 min-width:auto가 flex 레이아웃을 깨는 것 방지 */
   padding: 6px 10px;
   text-align: right;
   font-family: 'Inter', sans-serif;
@@ -644,6 +650,7 @@ onMounted(fetchFee)
   font-family: 'Barlow', sans-serif;
   font-size: 11px;
   color: var(--t3);
-  white-space: nowrap;
+  flex-shrink: 0; /* 단위 텍스트가 찌그러지지 않도록 */
+  word-break: keep-all; /* 줄바꿈 허용하되 단어 단위로 */
 }
 </style>
