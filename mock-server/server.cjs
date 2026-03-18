@@ -23,7 +23,6 @@ server.use((req, res, next) => {
 
 // ── 커스텀 라우터 마운트 ──────────────────────────────────────────────────────
 server.use('/auth',    require('./routes/auth'))
-server.use('/asns',    require('./routes/asn'))
 server.use('/wms',     require('./routes/wms'))
 server.use('/orders',  require('./routes/orders'))
 server.use('/members', require('./routes/members'))
