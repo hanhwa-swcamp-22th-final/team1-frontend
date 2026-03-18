@@ -111,7 +111,7 @@ const breadcrumb = [
 </script>
 
 <template>
-  <AppLayout title="피킹 리스트" :breadcrumb="breadcrumb">
+  <AppLayout title="피킹 리스트" :breadcrumb="breadcrumb" :loading="loading">
 
     <!-- ── KPI 카드 ──────────────────────────────── -->
     <div class="kpi-grid">
@@ -167,16 +167,13 @@ const breadcrumb = [
       <span class="result-count">{{ filtered.length }}건</span>
     </div>
 
-    <!-- ── 로딩 / 빈 상태 ─────────────────────────── -->
-    <div v-if="loading" class="state-box">
-      <span class="text-muted">불러오는 중...</span>
-    </div>
-    <div v-else-if="filtered.length === 0" class="state-box">
+    <!-- ── 빈 상태 ───────────────────────────────── -->
+    <div v-if="!loading && filtered.length === 0" class="state-box">
       <span class="text-muted">해당하는 피킹 리스트가 없습니다.</span>
     </div>
 
     <!-- ── 피킹 리스트 카드 목록 ─────────────────── -->
-    <div v-else class="card-list">
+    <div v-else-if="!loading" class="card-list">
       <div
         v-for="pl in filtered"
         :key="pl.id"
