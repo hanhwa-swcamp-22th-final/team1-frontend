@@ -25,7 +25,13 @@ export default [
     component: () => import('@/views/seller/SellerOrderRegisterView.vue'),
     meta: { role: ROLES.SELLER },
   },
-  // TODO(frontend): 주문 목록 라우트 추가
+  // Seller 주문 목록 화면
+  {
+    path: '/seller/orders/list',
+    name: ROUTE_NAMES.SELLER_ORDER_LIST,
+    component: () => import('@/views/seller/SellerOrderListView.vue'),
+    meta: { role: ROLES.SELLER },
+  },
   // TODO(frontend): 주문 상세 라우트 추가
 
   // 상품 관리
@@ -42,7 +48,13 @@ export default [
     component: () => import('@/views/seller/SellerAsnCreateView.vue'),
     meta: { role: ROLES.SELLER },
   },
-  // TODO(frontend): ASN 목록 라우트 추가
+    // Seller ASN 목록 화면
+  {
+    path: '/seller/asn/list',
+    name: ROUTE_NAMES.SELLER_ASN_LIST,
+    component: () => import('@/views/seller/SellerAsnListView.vue'),
+    meta: { role: ROLES.SELLER },
+  },
   // TODO(frontend): ASN 상세 라우트 추가
 
   // 부가 기능

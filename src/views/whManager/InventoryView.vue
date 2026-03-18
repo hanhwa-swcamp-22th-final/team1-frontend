@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
-import InventoryDetailModal from './components/InventoryDetailModal.vue'
+import InventoryDetailModal from '@/components/whManager/InventoryDetailModal.vue'
 import { getInventories } from '@/api/inventory'
 
 // ── 필터 상태

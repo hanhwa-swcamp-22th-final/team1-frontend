@@ -7,6 +7,19 @@ module.exports = function (BASE_URL) {
   const http = axios.create({ baseURL: BASE_URL })
   const router = Router()
 
+  // POST /auth/invite — 계정 초대 (이메일 발송 시뮬레이션)
+  router.post('/invite', (req, res) => {
+    const { role, organizationId, name, email } = req.body
+    if (!role || !organizationId || !name || !email) {
+      return res.status(400).json({ success: false, message: '필수 항목이 누락되었습니다.' })
+    }
+    return res.status(201).json({
+      success: true,
+      message: `${name}(${email}) 에게 초대 메일이 발송되었습니다.`,
+      data: { role, organizationId, name, email },
+    })
+  })
+
   // POST /auth/login
   router.post('/login', async (req, res) => {
     const { email, password } = req.body

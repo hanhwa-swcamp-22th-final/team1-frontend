@@ -57,6 +57,9 @@
   "warehouses": [
     {
       "id": 1, "code": "WH-US-LA-001", "name": "LA West Coast Hub", "location": "Los Angeles, CA",
+      "address": "7800 S Santa Fe Ave, Los Angeles, CA 90058",
+      "city": "Los Angeles", "state": "CA", "sqft": 45000,
+      "timezone": "PST", "openTime": "07:00", "closeTime": "19:00",
       "status": "ACTIVE",
       "stats": { "inventory": 8240, "todayOutbound": 89, "pendingAsn": 3, "sellerCount": 6 },
       "locationUtil": 72,
@@ -64,6 +67,9 @@
     },
     {
       "id": 2, "code": "WH-US-TX-002", "name": "Central Dallas Center", "location": "Dallas, TX",
+      "address": "2400 Commerce St, Dallas, TX 75201",
+      "city": "Dallas", "state": "TX", "sqft": 38000,
+      "timezone": "CST", "openTime": "08:00", "closeTime": "18:00",
       "status": "ACTIVE",
       "stats": { "inventory": 5180, "todayOutbound": 54, "pendingAsn": 1, "sellerCount": 4 },
       "locationUtil": 48,
@@ -71,6 +77,9 @@
     },
     {
       "id": 3, "code": "WH-US-NY-003", "name": "East NY Hub", "location": "Newark, NJ",
+      "address": "55 Distribution Blvd, Newark, NJ 07114",
+      "city": "Newark", "state": "NY", "sqft": 32000,
+      "timezone": "EST", "openTime": "06:00", "closeTime": "22:00",
       "status": "CAUTION",
       "stats": { "inventory": 5000, "todayOutbound": 60, "pendingAsn": 2, "sellerCount": 5 },
       "locationUtil": 88,
@@ -78,6 +87,9 @@
     },
     {
       "id": 4, "code": "WH-US-IL-004", "name": "Chicago Midwest Depot", "location": "Chicago, IL",
+      "address": "4800 W 43rd St, Chicago, IL 60632",
+      "city": "Chicago", "state": "IL", "sqft": 28000,
+      "timezone": "CST", "openTime": "08:00", "closeTime": "17:00",
       "status": "INACTIVE",
       "stats": { "inventory": 0, "todayOutbound": 0, "pendingAsn": 0, "sellerCount": 0 },
       "locationUtil": 0,
@@ -368,7 +380,7 @@
         { "name": "RACK B-02", "bins": [{"id":"B-02-01","state":"used"},{"id":"B-02-02","state":"used"},{"id":"B-02-03","state":"used"},{"id":"B-02-04","state":"avail"},{"id":"B-02-05","state":"avail"},{"id":"B-02-06","state":"off"}] },
         { "name": "RACK B-03", "bins": [{"id":"B-03-01","state":"used"},{"id":"B-03-02","state":"used"},{"id":"B-03-03","state":"used"},{"id":"B-03-04","state":"used"},{"id":"B-03-05","state":"avail"},{"id":"B-03-06","state":"off"}] },
         { "name": "RACK B-04", "bins": [{"id":"B-04-01","state":"used"},{"id":"B-04-02","state":"used"},{"id":"B-04-03","state":"used"},{"id":"B-04-04","state":"avail"},{"id":"B-04-05","state":"avail"},{"id":"B-04-06","state":"off"}] },
-        { "name": "RACK B-05", "bins": [{"id":"B-05-01","state":"used"},{"id":"B-05-02","state":"avail"},{"id":"B-05-03","state":"avail"},{"id":"B-05-04","state":"avail"},{"id":"B-05-05","state":"avail"},{"id":"B-05-06","state":"off"}] }
+        { "name": "RACK B-05", "bins": [{"id":"B-05-01","state":"used"},{"id":"B-05-02","state":"used"},{"id":"B-05-03","state":"avail"},{"id":"B-05-04","state":"avail"},{"id":"B-05-05","state":"avail"},{"id":"B-05-06","state":"off"}] }
       ]
     },
     { "id": 6, "warehouseId": 2, "zone": "C", "label": "Zone C — 대형물류 구역", "utilPct": 48, "available": 13, "total": 25,
@@ -420,5 +432,212 @@
     "trend": "+15",
     "trendLabel": "전주 대비",
     "trendType": "up"
+  },
+
+  "asns": [
+    { "id": "ASN-2026-0312-001", "seller": "이수빈",  "company": "Glow Beauty",         "warehouse": "LA West Coast Hub",     "skuCount": 3, "sku": "앰플 세럼 30ml 외 2종",   "plannedQty": 1000, "actualQty": null, "expectedDate": "2026-03-19", "registeredDate": "2026-03-12", "status": "SUBMITTED" },
+    { "id": "ASN-2026-0311-007", "seller": "박정호",  "company": "아모레US",              "warehouse": "LA West Coast Hub",     "skuCount": 5, "sku": "에센스 50ml 외 4종",     "plannedQty": 1200, "actualQty": null, "expectedDate": "2026-03-20", "registeredDate": "2026-03-11", "status": "SUBMITTED" },
+    { "id": "ASN-2026-0310-003", "seller": "최민수",  "company": "코스맥스",              "warehouse": "Central Dallas Center", "skuCount": 2, "sku": "텀블러 350ml 외 1종",    "plannedQty": 360,  "actualQty": null, "expectedDate": "2026-03-18", "registeredDate": "2026-03-10", "status": "SUBMITTED" },
+    { "id": "ASN-2026-0308-012", "seller": "이수빈",  "company": "K뷰티샵",              "warehouse": "LA West Coast Hub",     "skuCount": 4, "sku": "마스크팩 10매 외 3종",   "plannedQty": 720,  "actualQty": 720,  "expectedDate": "2026-03-09", "registeredDate": "2026-03-08", "status": "RECEIVED" },
+    { "id": "ASN-2026-0307-005", "seller": "박정호",  "company": "아모레US",              "warehouse": "East NY Hub",           "skuCount": 6, "sku": "선크림 30g 외 5종",      "plannedQty": 2400, "actualQty": 2400, "expectedDate": "2026-03-08", "registeredDate": "2026-03-07", "status": "RECEIVED" },
+    { "id": "ASN-2026-0312-002", "seller": "강은채",  "company": "서울스낵",              "warehouse": "LA West Coast Hub",     "skuCount": 1, "sku": "한과 선물세트",           "plannedQty": 200,  "actualQty": null, "expectedDate": "2026-03-22", "registeredDate": "2026-03-12", "status": "SUBMITTED" },
+    { "id": "ASN-2026-0306-009", "seller": "김지훈",  "company": "Beauty Lab",           "warehouse": "Central Dallas Center", "skuCount": 3, "sku": "BB크림 외 2종",           "plannedQty": 400,  "actualQty": 398,  "expectedDate": "2026-03-07", "registeredDate": "2026-03-06", "status": "RECEIVED" },
+    { "id": "ASN-2026-0305-004", "seller": "최민수",  "company": "Eco Pure",             "warehouse": "East NY Hub",           "skuCount": 2, "sku": "친환경 텀블러 외 1종",   "plannedQty": 600,  "actualQty": null, "expectedDate": "2026-03-17", "registeredDate": "2026-03-05", "status": "CANCELLED" },
+    { "id": "ASN-2026-0304-011", "seller": "이수빈",  "company": "Glow Beauty",         "warehouse": "East NY Hub",           "skuCount": 4, "sku": "수분크림 50ml 외 3종",   "plannedQty": 800,  "actualQty": 800,  "expectedDate": "2026-03-05", "registeredDate": "2026-03-04", "status": "RECEIVED" },
+    { "id": "ASN-2026-0303-006", "seller": "강은채",  "company": "K-Farm",               "warehouse": "LA West Coast Hub",     "skuCount": 2, "sku": "특산 진액 30팩 외 1종",  "plannedQty": 300,  "actualQty": 298,  "expectedDate": "2026-03-04", "registeredDate": "2026-03-03", "status": "RECEIVED" },
+    { "id": "ASN-2026-0302-008", "seller": "박정호",  "company": "K-Style",              "warehouse": "Central Dallas Center", "skuCount": 3, "sku": "티셔츠 L 외 2종",         "plannedQty": 500,  "actualQty": 500,  "expectedDate": "2026-03-03", "registeredDate": "2026-03-02", "status": "RECEIVED" },
+    { "id": "ASN-2026-0301-010", "seller": "김지훈",  "company": "아모레US",              "warehouse": "East NY Hub",           "skuCount": 5, "sku": "립스틱 외 4종",           "plannedQty": 1500, "actualQty": null, "expectedDate": "2026-03-02", "registeredDate": "2026-03-01", "status": "CANCELLED" }
+  ],
+
+  "accounts": [
+    { "id": 1, "loginId": "sys.admin@conk.com",    "token": "mock-token-sys",    "user": { "id": 1, "email": "sys.admin@conk.com",    "name": "시스템 관리자", "role": "SYSTEM_ADMIN", "status": "ACTIVE", "organization": "CONK 본사"       } },
+    { "id": 2, "loginId": "master.admin@conk.com", "token": "mock-token-master", "user": { "id": 2, "email": "master.admin@conk.com", "name": "총괄 관리자",   "role": "MASTER_ADMIN", "status": "ACTIVE", "organization": "GLS Mega Hub"    } },
+    { "id": 3, "loginId": "wh.manager@conk.com",   "token": "mock-token-whm",    "user": { "id": 3, "email": "wh.manager@conk.com",   "name": "창고 관리자",   "role": "WH_MANAGER",   "status": "ACTIVE", "organization": "GLS Mega Hub"    } },
+    { "id": 4, "loginId": "WORKER-001",             "token": "mock-token-worker", "user": { "id": 4, "email": null,                    "name": "창고 작업자",   "role": "WH_WORKER",    "status": "ACTIVE", "organization": "GLS Mega Hub"    } },
+    { "id": 5, "loginId": "seller@conk.com",        "token": "mock-token-seller", "user": { "id": 5, "email": "seller@conk.com",        "name": "셀러 담당자",   "role": "SELLER",       "status": "ACTIVE", "organization": "BrandCo Korea"   } }
+  ],
+
+  "inventories": [
+    {
+      "id": 1, "sku": "SKU-GB-001", "name": "앰플 세럼 30ml", "seller": "(주)글로우뷰티",
+      "availableQty": 23, "allocatedQty": 5, "damagedQty": 0, "totalQty": 28,
+      "locations": [{ "bin": "A-3-2", "qty": 28, "asnId": "ASN-2024-0309-002", "receivedDate": "2026-03-09" }],
+      "threshold": 100, "status": "shortage",
+      "history": [
+        { "date": "2026-03-12 10:10", "type": "주문 할당", "qty": -5,  "docId": "ORD-20240312-085" },
+        { "date": "2026-03-09 16:45", "type": "입고 확정", "qty": 28,  "docId": "ASN-2024-0309-002" }
+      ]
+    },
+    {
+      "id": 2, "sku": "SKU-GB-002", "name": "마스크팩 10매입", "seller": "(주)글로우뷰티",
+      "availableQty": 710, "allocatedQty": 90, "damagedQty": 2, "totalQty": 802,
+      "locations": [
+        { "bin": "A-3-3", "qty": 500, "asnId": "ASN-2024-0307-001", "receivedDate": "2026-03-07" },
+        { "bin": "B-1-2", "qty": 302, "asnId": "ASN-2024-0310-004", "receivedDate": "2026-03-10" }
+      ],
+      "threshold": 200, "status": "normal",
+      "history": [
+        { "date": "2026-03-13 09:00", "type": "주문 할당", "qty": -30, "docId": "ORD-20240313-012" },
+        { "date": "2026-03-10 14:20", "type": "입고 확정", "qty": 302, "docId": "ASN-2024-0310-004" },
+        { "date": "2026-03-07 11:00", "type": "입고 확정", "qty": 500, "docId": "ASN-2024-0307-001" }
+      ]
+    },
+    {
+      "id": 3, "sku": "SKU-GB-003", "name": "토너 100ml", "seller": "(주)글로우뷰티",
+      "availableQty": 195, "allocatedQty": 5, "damagedQty": 0, "totalQty": 200,
+      "locations": [{ "bin": "B-2-1", "qty": 200, "asnId": "ASN-2024-0308-003", "receivedDate": "2026-03-08" }],
+      "threshold": 50, "status": "normal",
+      "history": [
+        { "date": "2026-03-14 08:30", "type": "주문 할당", "qty": -5,  "docId": "ORD-20240314-007" },
+        { "date": "2026-03-08 13:15", "type": "입고 확정", "qty": 200, "docId": "ASN-2024-0308-003" }
+      ]
+    },
+    {
+      "id": 4, "sku": "SKU-KS-001", "name": "티셔츠 L사이즈", "seller": "K-Style",
+      "availableQty": 32, "allocatedQty": 10, "damagedQty": 1, "totalQty": 43,
+      "locations": [{ "bin": "C-1-4", "qty": 43, "asnId": "ASN-2024-0306-002", "receivedDate": "2026-03-06" }],
+      "threshold": 30, "status": "caution",
+      "history": [
+        { "date": "2026-03-15 10:00", "type": "주문 할당", "qty": -10, "docId": "ORD-20240315-003" },
+        { "date": "2026-03-06 15:30", "type": "입고 확정", "qty": 43,  "docId": "ASN-2024-0306-002" }
+      ]
+    },
+    {
+      "id": 5, "sku": "SKU-EP-001", "name": "텀블러 350ml", "seller": "에코팩",
+      "availableQty": 55, "allocatedQty": 20, "damagedQty": 0, "totalQty": 75,
+      "locations": [{ "bin": "D-2-1", "qty": 75, "asnId": "ASN-2024-0310-003", "receivedDate": "2026-03-10" }],
+      "threshold": 50, "status": "caution",
+      "history": [
+        { "date": "2026-03-16 09:45", "type": "주문 할당", "qty": -20, "docId": "ORD-20240316-011" },
+        { "date": "2026-03-10 16:00", "type": "입고 확정", "qty": 75,  "docId": "ASN-2024-0310-003" }
+      ]
+    },
+    {
+      "id": 6, "sku": "SKU-KF-001", "name": "홍삼 진액 30포", "seller": "K-Farm",
+      "availableQty": 12, "allocatedQty": 0, "damagedQty": 0, "totalQty": 12,
+      "locations": [{ "bin": "A-1-1", "qty": 12, "asnId": "ASN-2024-0308-001", "receivedDate": "2026-03-08" }],
+      "threshold": 100, "status": "shortage",
+      "history": [
+        { "date": "2026-03-08 12:00", "type": "입고 확정", "qty": 12,  "docId": "ASN-2024-0308-001" }
+      ]
+    },
+    {
+      "id": 7, "sku": "SKU-BL-001", "name": "BB크림 30ml", "seller": "뷰티랩",
+      "availableQty": 380, "allocatedQty": 20, "damagedQty": 3, "totalQty": 403,
+      "locations": [{ "bin": "B-3-2", "qty": 403, "asnId": "ASN-2024-0309-005", "receivedDate": "2026-03-09" }],
+      "threshold": 80, "status": "normal",
+      "history": [
+        { "date": "2026-03-13 11:30", "type": "주문 할당", "qty": -20, "docId": "ORD-20240313-020" },
+        { "date": "2026-03-09 10:00", "type": "입고 확정", "qty": 403, "docId": "ASN-2024-0309-005" }
+      ]
+    }
+  ],
+
+  "orders": [
+    { "id": "ORD-2026-03810", "channel": "AMAZON", "company": "한국미용상사",   "warehouse": "LA West Coast Hub",     "skuCount": 1, "qty":  50, "destState": "CA", "orderedAt": "2026-03-18", "status": "SHIPPED"         },
+    { "id": "ORD-2026-03811", "channel": "MANUAL", "company": "서울식품코리아", "warehouse": "LA West Coast Hub",     "skuCount": 1, "qty":  30, "destState": "CA", "orderedAt": "2026-03-18", "status": "PREPARING_ITEM"  },
+    { "id": "ORD-2026-03812", "channel": "AMAZON", "company": "K뷰티글로벌",   "warehouse": "LA West Coast Hub",     "skuCount": 1, "qty":  10, "destState": "CA", "orderedAt": "2026-03-18", "status": "PREPARING_ITEM"  },
+    { "id": "ORD-2026-03813", "channel": "MANUAL", "company": "한국미용상사",   "warehouse": "LA West Coast Hub",     "skuCount": 1, "qty":  80, "destState": "AZ", "orderedAt": "2026-03-17", "status": "CONFIRMED"       },
+    { "id": "ORD-2026-03814", "channel": "EXCEL",  "company": "서울식품코리아", "warehouse": "LA West Coast Hub",     "skuCount": 1, "qty":  20, "destState": "NV", "orderedAt": "2026-03-17", "status": "SHIPPED"         },
+    { "id": "ORD-2026-03815", "channel": "AMAZON", "company": "K뷰티글로벌",   "warehouse": "LA West Coast Hub",     "skuCount": 1, "qty":   5, "destState": "OR", "orderedAt": "2026-03-17", "status": "PREPARING_ITEM"  },
+    { "id": "ORD-2026-03816", "channel": "MANUAL", "company": "한국스포츠",     "warehouse": "LA West Coast Hub",     "skuCount": 1, "qty":  40, "destState": "WA", "orderedAt": "2026-03-16", "status": "SHIPPED"         },
+    { "id": "ORD-2026-03817", "channel": "EXCEL",  "company": "한국미용상사",   "warehouse": "LA West Coast Hub",     "skuCount": 1, "qty":  70, "destState": "CO", "orderedAt": "2026-03-16", "status": "PREPARING_ITEM"  },
+    { "id": "ORD-2026-03818", "channel": "AMAZON", "company": "서울식품코리아", "warehouse": "LA West Coast Hub",     "skuCount": 1, "qty":  25, "destState": "UT", "orderedAt": "2026-03-16", "status": "CONFIRMED"       },
+    { "id": "ORD-2026-03819", "channel": "MANUAL", "company": "K뷰티글로벌",   "warehouse": "LA West Coast Hub",     "skuCount": 1, "qty":  48, "destState": "AZ", "orderedAt": "2026-03-15", "status": "SHIPPED"         },
+    { "id": "ORD-2026-04201", "channel": "AMAZON", "company": "드림푸드",       "warehouse": "Central Dallas Center", "skuCount": 2, "qty": 100, "destState": "TX", "orderedAt": "2026-03-18", "status": "SHIPPED"         },
+    { "id": "ORD-2026-04202", "channel": "MANUAL", "company": "텍사스K마트",    "warehouse": "Central Dallas Center", "skuCount": 1, "qty":  60, "destState": "TX", "orderedAt": "2026-03-18", "status": "PREPARING_ITEM"  },
+    { "id": "ORD-2026-04203", "channel": "EXCEL",  "company": "드림푸드",       "warehouse": "Central Dallas Center", "skuCount": 1, "qty":  20, "destState": "TX", "orderedAt": "2026-03-17", "status": "CONFIRMED"       },
+    { "id": "ORD-2026-04204", "channel": "AMAZON", "company": "한국홈리빙",     "warehouse": "Central Dallas Center", "skuCount": 1, "qty":  35, "destState": "TX", "orderedAt": "2026-03-17", "status": "PREPARING_ITEM"  },
+    { "id": "ORD-2026-04205", "channel": "MANUAL", "company": "텍사스K마트",    "warehouse": "Central Dallas Center", "skuCount": 2, "qty":  55, "destState": "TX", "orderedAt": "2026-03-16", "status": "SHIPPED"         },
+    { "id": "ORD-2026-04206", "channel": "AMAZON", "company": "드림푸드",       "warehouse": "Central Dallas Center", "skuCount": 1, "qty":  40, "destState": "OK", "orderedAt": "2026-03-16", "status": "SHIPPED"         },
+    { "id": "ORD-2026-04207", "channel": "EXCEL",  "company": "한국홈리빙",     "warehouse": "Central Dallas Center", "skuCount": 1, "qty":  30, "destState": "LA", "orderedAt": "2026-03-15", "status": "CONFIRMED"       },
+    { "id": "ORD-2026-05101", "channel": "MANUAL", "company": "NY코리아몰",     "warehouse": "East NY Hub",           "skuCount": 1, "qty":   6, "destState": "NY", "orderedAt": "2026-03-18", "status": "PENDING"         },
+    { "id": "ORD-2026-05102", "channel": "AMAZON", "company": "이스트K뷰티",    "warehouse": "East NY Hub",           "skuCount": 1, "qty":   3, "destState": "NJ", "orderedAt": "2026-03-18", "status": "CONFIRMED"       },
+    { "id": "ORD-2026-05103", "channel": "EXCEL",  "company": "NY코리아몰",     "warehouse": "East NY Hub",           "skuCount": 1, "qty":   9, "destState": "NJ", "orderedAt": "2026-03-18", "status": "PREPARING_ITEM"  },
+    { "id": "ORD-2026-05104", "channel": "MANUAL", "company": "뉴저지한국마트", "warehouse": "East NY Hub",           "skuCount": 2, "qty":  90, "destState": "NY", "orderedAt": "2026-03-17", "status": "PENDING"         },
+    { "id": "ORD-2026-05105", "channel": "AMAZON", "company": "이스트K뷰티",    "warehouse": "East NY Hub",           "skuCount": 1, "qty":  50, "destState": "NY", "orderedAt": "2026-03-17", "status": "PREPARING_ITEM"  },
+    { "id": "ORD-2026-05106", "channel": "EXCEL",  "company": "NY코리아몰",     "warehouse": "East NY Hub",           "skuCount": 2, "qty": 120, "destState": "NY", "orderedAt": "2026-03-16", "status": "SHIPPED"         },
+    { "id": "ORD-2026-05107", "channel": "MANUAL", "company": "뉴저지한국마트", "warehouse": "East NY Hub",           "skuCount": 1, "qty":  25, "destState": "NY", "orderedAt": "2026-03-16", "status": "CONFIRMED"       },
+    { "id": "ORD-2026-05108", "channel": "AMAZON", "company": "이스트K뷰티",    "warehouse": "East NY Hub",           "skuCount": 1, "qty":  40, "destState": "NY", "orderedAt": "2026-03-15", "status": "PREPARING_ITEM"  },
+    { "id": "ORD-2026-03800", "channel": "EXCEL",  "company": "한국미용상사",   "warehouse": "LA West Coast Hub",     "skuCount": 2, "qty":  65, "destState": "CA", "orderedAt": "2026-03-14", "status": "SHIPPED"         },
+    { "id": "ORD-2026-03801", "channel": "AMAZON", "company": "K뷰티글로벌",   "warehouse": "LA West Coast Hub",     "skuCount": 1, "qty":  38, "destState": "CA", "orderedAt": "2026-03-14", "status": "SHIPPED"         },
+    { "id": "ORD-2026-04190", "channel": "MANUAL", "company": "드림푸드",       "warehouse": "Central Dallas Center", "skuCount": 2, "qty":  75, "destState": "TX", "orderedAt": "2026-03-13", "status": "SHIPPED"         },
+    { "id": "ORD-2026-05088", "channel": "AMAZON", "company": "NY코리아몰",     "warehouse": "East NY Hub",           "skuCount": 1, "qty":  45, "destState": "NY", "orderedAt": "2026-03-13", "status": "SHIPPED"         },
+    { "id": "ORD-2026-03802", "channel": "EXCEL",  "company": "서울식품코리아", "warehouse": "LA West Coast Hub",     "skuCount": 1, "qty":  22, "destState": "CA", "orderedAt": "2026-03-12", "status": "CANCELLED"       }
+  ],
+
+  "orders_kpi": {
+    "todayTotal": 13,
+    "pendingCount": 2,
+    "pickingCount": 7,
+    "shippedCount": 4
+  },
+
+  "sellers": [
+    { "id": 1,  "brandNameKo": "한국미용상사",   "brandNameEn": "Korea Beauty Co.",   "customerCode": "CUST-001", "warehouses": ["LA West Coast Hub"],                           "contactName": "김미영", "contactEmail": "kim.my@kbeauty.com",     "category": "뷰티/화장품", "status": "ACTIVE",    "createdAt": "2026-01-10" },
+    { "id": 2,  "brandNameKo": "서울식품코리아", "brandNameEn": "Seoul Food Korea",    "customerCode": "CUST-002", "warehouses": ["LA West Coast Hub"],                           "contactName": "이준혁", "contactEmail": "lee.jh@seoulfood.com",   "category": "식품",       "status": "ACTIVE",    "createdAt": "2026-01-15" },
+    { "id": 3,  "brandNameKo": "K뷰티글로벌",   "brandNameEn": "K-Beauty Global",     "customerCode": "CUST-003", "warehouses": ["LA West Coast Hub"],                           "contactName": "박서연", "contactEmail": "park.sy@kbg.com",        "category": "뷰티/화장품", "status": "ACTIVE",    "createdAt": "2026-01-20" },
+    { "id": 4,  "brandNameKo": "한국스포츠",     "brandNameEn": "Korea Sports",        "customerCode": "CUST-004", "warehouses": ["LA West Coast Hub"],                           "contactName": "최동훈", "contactEmail": "choi.dh@ksports.com",    "category": "스포츠",     "status": "ACTIVE",    "createdAt": "2026-02-01" },
+    { "id": 5,  "brandNameKo": "드림푸드",       "brandNameEn": "Dream Food",          "customerCode": "CUST-005", "warehouses": ["Central Dallas Center"],                       "contactName": "정수진", "contactEmail": "jung.sj@dreamfood.com",  "category": "식품",       "status": "ACTIVE",    "createdAt": "2026-02-05" },
+    { "id": 6,  "brandNameKo": "텍사스K마트",    "brandNameEn": "Texas K-Mart",        "customerCode": "CUST-006", "warehouses": ["Central Dallas Center"],                       "contactName": "오병철", "contactEmail": "oh.bc@txkmart.com",      "category": "유통",       "status": "ACTIVE",    "createdAt": "2026-02-10" },
+    { "id": 7,  "brandNameKo": "한국홈리빙",     "brandNameEn": "Korea HomeLiving",    "customerCode": "CUST-007", "warehouses": ["Central Dallas Center"],                       "contactName": "신예지", "contactEmail": "shin.yj@khomeliving.com","category": "홈리빙",     "status": "PENDING",   "createdAt": "2026-02-20" },
+    { "id": 8,  "brandNameKo": "NY코리아몰",     "brandNameEn": "NY Korea Mall",       "customerCode": "CUST-008", "warehouses": ["East NY Hub"],                                 "contactName": "강민준", "contactEmail": "kang.mj@nykm.com",       "category": "유통",       "status": "ACTIVE",    "createdAt": "2026-02-25" },
+    { "id": 9,  "brandNameKo": "이스트K뷰티",    "brandNameEn": "East K-Beauty",       "customerCode": "CUST-009", "warehouses": ["East NY Hub"],                                 "contactName": "임하늘", "contactEmail": "lim.hn@eastkb.com",      "category": "뷰티/화장품", "status": "ACTIVE",    "createdAt": "2026-03-01" },
+    { "id": 10, "brandNameKo": "뉴저지한국마트", "brandNameEn": "NJ Korea Mart",       "customerCode": "CUST-010", "warehouses": ["East NY Hub"],                                 "contactName": "윤지훈", "contactEmail": "yoon.jh@njkm.com",       "category": "유통",       "status": "SUSPENDED", "createdAt": "2026-03-05" },
+    { "id": 11, "brandNameKo": "Glow Beauty",    "brandNameEn": "Glow Beauty",         "customerCode": "CUST-011", "warehouses": ["LA West Coast Hub", "East NY Hub"],            "contactName": "이수빈", "contactEmail": "lee.sb@glowbeauty.com",  "category": "뷰티/화장품", "status": "ACTIVE",    "createdAt": "2025-11-01" },
+    { "id": 12, "brandNameKo": "아모레US",       "brandNameEn": "Amore US",            "customerCode": "CUST-012", "warehouses": ["LA West Coast Hub", "East NY Hub"],            "contactName": "박정호", "contactEmail": "park.jh@amoreus.com",    "category": "뷰티/화장품", "status": "ACTIVE",    "createdAt": "2025-11-15" },
+    { "id": 13, "brandNameKo": "코스맥스",       "brandNameEn": "Cosmax",              "customerCode": "CUST-013", "warehouses": ["Central Dallas Center"],                       "contactName": "최민수", "contactEmail": "choi.ms@cosmax.com",     "category": "뷰티/화장품", "status": "PENDING",   "createdAt": "2026-03-10" }
+  ],
+
+  "users": [
+    { "id": 1,  "name": "김창고",   "email": "wh.manager@conk.com",        "role": "WH_MANAGER", "accountStatus": "ACTIVE",        "warehouse": "LA West Coast Hub",     "warehouseId": 1, "seller": null, "sellerId": null, "workerCode": null,       "createdAt": "2025-12-01", "lastLogin": "2026-03-18 09:12" },
+    { "id": 2,  "name": "이달라스", "email": "wh.manager.dal@conk.com",    "role": "WH_MANAGER", "accountStatus": "ACTIVE",        "warehouse": "Central Dallas Center", "warehouseId": 2, "seller": null, "sellerId": null, "workerCode": null,       "createdAt": "2025-12-01", "lastLogin": "2026-03-18 08:55" },
+    { "id": 3,  "name": "박뉴욕",   "email": "wh.manager.ny@conk.com",     "role": "WH_MANAGER", "accountStatus": "TEMP_PASSWORD", "warehouse": "East NY Hub",           "warehouseId": 3, "seller": null, "sellerId": null, "workerCode": null,       "createdAt": "2026-01-15", "lastLogin": "2026-03-10 14:30" },
+    { "id": 4,  "name": "최작업자", "email": null,                         "role": "WH_WORKER",  "accountStatus": "ACTIVE",        "warehouse": "LA West Coast Hub",     "warehouseId": 1, "seller": null, "sellerId": null, "workerCode": "WORKER-001", "createdAt": "2025-12-05", "lastLogin": "2026-03-18 07:45" },
+    { "id": 5,  "name": "정작업자", "email": null,                         "role": "WH_WORKER",  "accountStatus": "ACTIVE",        "warehouse": "LA West Coast Hub",     "warehouseId": 1, "seller": null, "sellerId": null, "workerCode": "WORKER-002", "createdAt": "2025-12-05", "lastLogin": "2026-03-17 16:20" },
+    { "id": 6,  "name": "오달라스", "email": null,                         "role": "WH_WORKER",  "accountStatus": "ACTIVE",        "warehouse": "Central Dallas Center", "warehouseId": 2, "seller": null, "sellerId": null, "workerCode": "WORKER-003", "createdAt": "2025-12-10", "lastLogin": "2026-03-18 08:00" },
+    { "id": 7,  "name": "신달라스", "email": null,                         "role": "WH_WORKER",  "accountStatus": "INACTIVE",      "warehouse": "Central Dallas Center", "warehouseId": 2, "seller": null, "sellerId": null, "workerCode": "WORKER-004", "createdAt": "2025-12-10", "lastLogin": "2026-02-20 10:00" },
+    { "id": 8,  "name": "강뉴욕",   "email": null,                         "role": "WH_WORKER",  "accountStatus": "ACTIVE",        "warehouse": "East NY Hub",           "warehouseId": 3, "seller": null, "sellerId": null, "workerCode": "WORKER-005", "createdAt": "2026-01-20", "lastLogin": "2026-03-18 09:00" },
+    { "id": 9,  "name": "임뉴욕",   "email": null,                         "role": "WH_WORKER",  "accountStatus": "ACTIVE",        "warehouse": "East NY Hub",           "warehouseId": 3, "seller": null, "sellerId": null, "workerCode": "WORKER-006", "createdAt": "2026-01-20", "lastLogin": "2026-03-17 17:30" },
+    { "id": 10, "name": "김미영",   "email": "kim.my@kbeauty.com",         "role": "SELLER",     "accountStatus": "ACTIVE",        "warehouse": null, "warehouseId": null, "seller": "한국미용상사",   "sellerId": 1,  "workerCode": null,       "createdAt": "2026-01-10", "lastLogin": "2026-03-18 10:05" },
+    { "id": 11, "name": "이준혁",   "email": "lee.jh@seoulfood.com",       "role": "SELLER",     "accountStatus": "ACTIVE",        "warehouse": null, "warehouseId": null, "seller": "서울식품코리아", "sellerId": 2,  "workerCode": null,       "createdAt": "2026-01-15", "lastLogin": "2026-03-17 14:22" },
+    { "id": 12, "name": "박서연",   "email": "park.sy@kbg.com",            "role": "SELLER",     "accountStatus": "ACTIVE",        "warehouse": null, "warehouseId": null, "seller": "K뷰티글로벌",   "sellerId": 3,  "workerCode": null,       "createdAt": "2026-01-20", "lastLogin": "2026-03-16 11:10" },
+    { "id": 13, "name": "정수진",   "email": "jung.sj@dreamfood.com",      "role": "SELLER",     "accountStatus": "ACTIVE",        "warehouse": null, "warehouseId": null, "seller": "드림푸드",       "sellerId": 5,  "workerCode": null,       "createdAt": "2026-02-05", "lastLogin": "2026-03-15 09:33" },
+    { "id": 14, "name": "신예지",   "email": "shin.yj@khomeliving.com",    "role": "SELLER",     "accountStatus": "TEMP_PASSWORD", "warehouse": null, "warehouseId": null, "seller": "한국홈리빙",     "sellerId": 7,  "workerCode": null,       "createdAt": "2026-02-20", "lastLogin": "-" },
+    { "id": 15, "name": "윤지훈",   "email": "yoon.jh@njkm.com",           "role": "SELLER",     "accountStatus": "INACTIVE",      "warehouse": null, "warehouseId": null, "seller": "뉴저지한국마트", "sellerId": 10, "workerCode": null,       "createdAt": "2026-03-05", "lastLogin": "2026-03-10 13:44" }
+  ],
+
+  "fee_settings": {
+    "storage": {
+      "palletRate": "28.50",
+      "minBillingUnit": "1",
+      "proRataRule": "입고일 포함 일할 청구"
+    },
+    "pickPack": {
+      "basePickRate": "2.50",
+      "additionalSkuRate": "0.75",
+      "packingMaterialRate": "0.30",
+      "specialPackagingSurcharge": "1.20"
+    },
+    "lastMile": {
+      "USPS":  ["4.20", "5.10", "6.40", "7.80",  "9.50",  "12.30"],
+      "UPS":   ["5.50", "6.80", "8.20", "10.40", "14.60", "19.90"],
+      "FedEx": ["5.90", "7.30", "8.80", "11.20", "15.80", "21.50"]
+    },
+    "seaSurcharge": {
+      "mpfRate": "0.3464",
+      "mpfMin": "32.71",
+      "mpfMax": "634.62",
+      "hmfRate": "0.125",
+      "isfFee": "35.00",
+      "drayage": "320.00"
+    },
+    "airSurcharge": {
+      "securityFee": "0.18",
+      "airportTransport": "180.00",
+      "documentFee": "45.00",
+      "hazmatSurcharge": "60.00",
+      "temperatureSurcharge": "120.00"
+    }
   }
 }

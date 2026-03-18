@@ -108,3 +108,20 @@ export function getAsnKpi() {
 export function registerWarehouse(payload) {
   return instance.post('/wms/warehouses', payload)
 }
+
+/**
+ * 요금 설정 조회
+ * @returns {Promise<AxiosResponse>} { success, data: FeeSettings }
+ */
+export function getFeeSettings() {
+  return instance.get('/wms/fee-settings')
+}
+
+/**
+ * 요금 설정 저장
+ * @param {object} payload — 요금 설정 전체 객체
+ * @returns {Promise<AxiosResponse>}
+ */
+export function saveFeeSettings(payload) {
+  return instance.put('/wms/fee-settings', payload)
+}

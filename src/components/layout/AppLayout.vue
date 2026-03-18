@@ -42,10 +42,12 @@
 import Sidebar from './Sidebar.vue'
 import Header from './Header.vue'
 import Footer from './Footer.vue'
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 
 defineProps({
   title: { type: String, default: '' },
   breadcrumb: { type: Array, default: () => [] },
+  loading: { type: Boolean, default: false },
 })
 </script>
 
@@ -64,8 +66,9 @@ defineProps({
       </Header>
 
       <!-- 콘텐츠 영역 (헤더 높이만큼 margin-top, 푸터 높이만큼 padding-bottom) -->
-      <main class="app-content">
-        <slot />
+      <main class="app-content" :class="{ 'app-content--loading': loading }">
+        <LoadingSpinner v-if="loading" size="lg" />
+        <slot v-else />
       </main>
     </div>
 
@@ -97,5 +100,12 @@ defineProps({
   padding-bottom: calc(var(--content-py) + var(--footer-height)); /* 푸터에 가려지지 않도록 */
   background: var(--bg);
   min-height: calc(100vh - var(--header-height));
+}
+
+/* 로딩 중: flex 중앙 정렬로 스피너 배치 (absolute 없이 자연스럽게 채움) */
+.app-content--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
