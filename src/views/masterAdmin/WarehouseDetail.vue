@@ -22,11 +22,10 @@ import {
   getWarehouseOutbound,
   getWarehouseOrders,
   getWarehouseLocations,
-  getSkuDetail,
-  getOrderDetail,
 } from '@/api/wms'
 import AppLayout from '@/components/layout/AppLayout.vue'
-import BaseModal from '@/components/common/BaseModal.vue'
+import SkuDetailModal   from '@/components/masterAdmin/SkuDetailModal.vue'
+import OrderDetailModal from '@/components/masterAdmin/OrderDetailModal.vue'
 
 const route  = useRoute()
 const router = useRouter()
@@ -48,74 +47,22 @@ const errorMsg        = ref('')
 // 드로어 열림 상태
 const drawerOpen = ref(false)
 
-// ── SKU 상세 모달 ─────────────────────────────────────────────────────────────
-const showSkuModal    = ref(false)
-const skuModalLoading = ref(false)
-const skuDetail       = ref(null)
+// ── SKU 상세 모달 (SkuDetailModal 컴포넌트 위임) ────────────────────────────
+const showSkuModal = ref(false)
+const selectedSku  = ref('')
 
-async function openSkuDetail(item) {
-  showSkuModal.value    = true
-  skuModalLoading.value = true
-  skuDetail.value       = null
-  try {
-    const res = await getSkuDetail(warehouseId.value, item.sku)
-    skuDetail.value = res.data.data
-  } catch (e) {
-    console.error('[WarehouseDetail] SKU detail error:', e)
-  } finally {
-    skuModalLoading.value = false
-  }
+function openSkuDetail(item) {
+  selectedSku.value  = item.sku
+  showSkuModal.value = true
 }
 
-function closeSkuDetail() {
-  showSkuModal.value = false
-}
+// ── 주문 상세 모달 (OrderDetailModal 컴포넌트 위임) ─────────────────────────
+const showOrderModal  = ref(false)
+const selectedOrderId = ref('')
 
-// ── 주문 상세 모달 ────────────────────────────────────────────────────────────
-const showOrderModal    = ref(false)
-const orderModalLoading = ref(false)
-const orderDetail       = ref(null)
-
-async function openOrderDetail(orderId) {
-  showOrderModal.value    = true
-  orderModalLoading.value = true
-  orderDetail.value       = null
-  try {
-    const res = await getOrderDetail(warehouseId.value, orderId)
-    orderDetail.value = res.data.data
-  } catch (e) {
-    console.error('[WarehouseDetail] Order detail error:', e)
-  } finally {
-    orderModalLoading.value = false
-  }
-}
-
-function closeOrderDetail() {
-  showOrderModal.value = false
-}
-
-/** workStatus → 한글 레이블 + CSS 클래스 */
-function workStatusLabel(ws) {
-  const MAP = {
-    WAITING: '대기',
-    PICKING: '피킹 중',
-    PICKED:  '피킹 완료',
-    PACKING: '패킹 중',
-    PACKED:  '패킹 완료',
-    SHIPPED: '출고 완료',
-  }
-  return MAP[ws] ?? ws
-}
-function workStatusClass(ws) {
-  const MAP = {
-    WAITING: 'ws-waiting',
-    PICKING: 'ws-picking',
-    PICKED:  'ws-picked',
-    PACKING: 'ws-packing',
-    PACKED:  'ws-packed',
-    SHIPPED: 'ws-shipped',
-  }
-  return MAP[ws] ?? ''
+function openOrderDetail(orderId) {
+  selectedOrderId.value = orderId
+  showOrderModal.value  = true
 }
 
 // ── computed ─────────────────────────────────────────────────────────────────
@@ -648,277 +595,24 @@ function goToWarehouse(evt) {
     </Teleport>
 
     <!-- ══════════════════════════════════════════════════════════════════════
-         SKU 상세 모달
+         SKU 상세 모달 (SkuDetailModal 컴포넌트)
     ═══════════════════════════════════════════════════════════════════════ -->
-    <BaseModal
+    <SkuDetailModal
+      :warehouse-id="warehouseId"
+      :sku="selectedSku"
       :is-open="showSkuModal"
-      :title="skuDetail ? skuDetail.productName : 'SKU 상세'"
-      width="700px"
-      @cancel="closeSkuDetail"
-    >
-      <!-- 로딩 -->
-      <div v-if="skuModalLoading" class="sku-modal-loading">
-        <svg class="spin-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-        </svg>
-        데이터를 불러오는 중…
-      </div>
-
-      <!-- 상세 내용 -->
-      <div v-else-if="skuDetail" class="sku-detail">
-
-        <!-- ── 기본 정보 카드 ── -->
-        <div class="sku-info-card">
-          <div class="sku-info-row">
-            <div class="sku-info-item">
-              <span class="sku-info-label">SKU 코드</span>
-              <span class="sku-code">{{ skuDetail.sku }}</span>
-            </div>
-            <div class="sku-info-item">
-              <span class="sku-info-label">카테고리</span>
-              <span class="sku-category-tag">{{ skuDetail.category }}</span>
-            </div>
-            <div class="sku-info-item sku-info-item--locations">
-              <span class="sku-info-label">저장 위치</span>
-              <template v-if="skuDetail.locations && skuDetail.locations.length">
-                <span
-                  v-for="loc in skuDetail.locations"
-                  :key="loc.bin"
-                  class="location-tag"
-                >
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-                       stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                    <circle cx="12" cy="10" r="3"/>
-                  </svg>
-                  {{ loc.bin }}
-                  <span class="location-qty">({{ loc.qty }}개)</span>
-                </span>
-              </template>
-              <span v-else class="sku-no-location">위치 미지정</span>
-            </div>
-          </div>
-          <!-- 재고 수치 칩 -->
-          <div class="sku-stock-row" v-if="skuDetail.stock">
-            <div class="sku-stock-chip sku-stock-avail">
-              <span class="chip-label">가용</span>
-              <strong>{{ skuDetail.stock.available }}</strong>
-            </div>
-            <div class="sku-stock-chip sku-stock-alloc">
-              <span class="chip-label">할당</span>
-              <strong>{{ skuDetail.stock.allocated }}</strong>
-            </div>
-            <div class="sku-stock-chip sku-stock-total">
-              <span class="chip-label">합계</span>
-              <strong>{{ skuDetail.stock.total }}</strong>
-            </div>
-          </div>
-        </div>
-
-        <!-- ── 재고 변동 이력 ── -->
-        <div class="sku-section">
-          <div class="sku-section-title">재고 변동 이력</div>
-          <table class="detail-tbl">
-            <thead>
-              <tr>
-                <th>일자</th>
-                <th>구분</th>
-                <th class="col-num">수량</th>
-                <th>사유</th>
-                <th>담당자</th>
-                <th class="col-num">잔여</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="h in skuDetail.changeHistory" :key="h.date + h.reason">
-                <td class="date-cell">{{ h.date }}</td>
-                <td>
-                  <span :class="['hist-type', 'hist-' + h.type.toLowerCase()]">
-                    {{ h.type === 'IN' ? '입고' : h.type === 'OUT' ? '출고' : '조정' }}
-                  </span>
-                </td>
-                <td class="col-num" :class="h.qty > 0 ? 'qty-in' : 'qty-out'">
-                  {{ h.qty > 0 ? '+' + h.qty : h.qty }}
-                </td>
-                <td class="reason-cell">{{ h.reason }}</td>
-                <td>{{ h.worker }}</td>
-                <td class="col-num num-total">{{ h.balanceAfter }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- ── ASN 입고 이력 ── -->
-        <div class="sku-section">
-          <div class="sku-section-title">입고 이력 (ASN)</div>
-          <table class="detail-tbl">
-            <thead>
-              <tr>
-                <th>ASN ID</th>
-                <th>입고일</th>
-                <th class="col-num">예정 수량</th>
-                <th class="col-num">실입고</th>
-                <th>상태</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="a in skuDetail.asnHistory" :key="a.asnId">
-                <td class="order-id">{{ a.asnId }}</td>
-                <td class="date-cell">{{ a.date }}</td>
-                <td class="col-num">{{ a.plannedQty }}</td>
-                <td class="col-num" :class="a.actualQty < a.plannedQty ? 'qty-out' : 'num-ok'">
-                  {{ a.actualQty }}
-                </td>
-                <td><StatusBadge :status="a.status" type="asn" /></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- ── 주문 출고 이력 ── -->
-        <div class="sku-section">
-          <div class="sku-section-title">주문 출고 이력</div>
-          <table class="detail-tbl">
-            <thead>
-              <tr>
-                <th>주문번호</th>
-                <th class="col-num">수량</th>
-                <th>배송지</th>
-                <th>상태</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="o in skuDetail.orderHistory" :key="o.orderId">
-                <td class="order-id">{{ o.orderId }}</td>
-                <td class="col-num">{{ o.qty }}</td>
-                <td class="dest-cell">{{ o.dest }}</td>
-                <td><StatusBadge :status="o.status" type="order" /></td>
-              </tr>
-              <tr v-if="!skuDetail.orderHistory.length">
-                <td colspan="4" class="empty-cell">주문 이력 없음</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-      </div><!-- /.sku-detail -->
-
-      <template #footer>
-        <button class="ui-btn ui-btn--secondary" @click="closeSkuDetail">닫기</button>
-      </template>
-    </BaseModal>
+      @close="showSkuModal = false"
+    />
 
     <!-- ══════════════════════════════════════════════════════════════════════
-         주문 상세 모달 (1주문 N SKU)
+         주문 상세 모달 (OrderDetailModal 컴포넌트)
     ═══════════════════════════════════════════════════════════════════════ -->
-    <BaseModal
+    <OrderDetailModal
+      :warehouse-id="warehouseId"
+      :order-id="selectedOrderId"
       :is-open="showOrderModal"
-      :title="orderDetail ? orderDetail.orderId : '주문 상세'"
-      width="740px"
-      @cancel="closeOrderDetail"
-    >
-      <!-- 로딩 -->
-      <div v-if="orderModalLoading" class="sku-modal-loading">
-        <svg class="spin-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-        </svg>
-        데이터를 불러오는 중…
-      </div>
-
-      <!-- 주문 상세 내용 -->
-      <div v-else-if="orderDetail" class="sku-detail">
-
-        <!-- ── 주문 헤더 카드 ── -->
-        <div class="sku-info-card">
-          <div class="sku-info-row">
-            <div class="sku-info-item">
-              <span class="sku-info-label">주문 상태</span>
-              <StatusBadge :status="orderDetail.status" type="order" />
-            </div>
-            <div class="sku-info-item">
-              <span class="sku-info-label">채널</span>
-              <span class="sku-category-tag">{{ orderDetail.channel }}</span>
-            </div>
-            <div class="sku-info-item">
-              <span class="sku-info-label">주문일</span>
-              <span class="date-cell">{{ orderDetail.orderedAt }}</span>
-            </div>
-            <div class="sku-info-item">
-              <span class="sku-info-label">배송지</span>
-              <span class="dest-cell">{{ orderDetail.dest }}</span>
-            </div>
-          </div>
-
-          <!-- 셀러 정보 -->
-          <div class="order-seller-row">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-            <span class="order-seller-name">{{ orderDetail.seller }}</span>
-            <span class="order-seller-code">{{ orderDetail.sellerCode }}</span>
-          </div>
-
-          <!-- SKU 총 수량 요약 -->
-          <div class="sku-stock-row">
-            <div class="sku-stock-chip sku-stock-avail">
-              <span class="chip-label">총 SKU</span>
-              <strong>{{ orderDetail.skuItems.length }}</strong>
-            </div>
-            <div class="sku-stock-chip sku-stock-total">
-              <span class="chip-label">총 수량</span>
-              <strong>{{ orderDetail.skuItems.reduce((s, i) => s + i.qty, 0) }}</strong>
-            </div>
-          </div>
-        </div>
-
-        <!-- ── SKU별 출고 작업 내역 ── -->
-        <div class="sku-section">
-          <div class="sku-section-title">SKU별 출고 작업 현황</div>
-          <table class="detail-tbl">
-            <thead>
-              <tr>
-                <th>상품명</th>
-                <th>SKU 코드</th>
-                <th class="col-num">수량</th>
-                <th>로케이션</th>
-                <th>담당 작업자</th>
-                <th>작업 상태</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in orderDetail.skuItems" :key="item.sku">
-                <td>
-                  <span class="product-name-cell">{{ item.productName }}</span>
-                </td>
-                <td><span class="sku-code">{{ item.sku }}</span></td>
-                <td class="col-num num-total">{{ item.qty }}</td>
-                <td>
-                  <span v-if="item.location" class="location-tag location-tag--sm">
-                    {{ item.location }}
-                  </span>
-                  <span v-else class="sku-no-location">-</span>
-                </td>
-                <td>{{ item.worker }}</td>
-                <td>
-                  <span :class="['work-status-badge', workStatusClass(item.workStatus)]">
-                    {{ workStatusLabel(item.workStatus) }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-      </div><!-- /.sku-detail -->
-
-      <template #footer>
-        <button class="ui-btn ui-btn--secondary" @click="closeOrderDetail">닫기</button>
-      </template>
-    </BaseModal>
+      @close="showOrderModal = false"
+    />
 
     <!-- ── 출고 처리 확인 다이얼로그 ── -->
     <ConfirmDialog

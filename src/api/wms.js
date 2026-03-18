@@ -88,6 +88,15 @@ export function getAsnList(params = {}) {
 }
 
 /**
+ * ASN 단건 상세 조회
+ * @param {string} asnId — ASN 번호 (예: 'ASN-2026-0312-001')
+ * @returns {Promise<AxiosResponse>} { success, data: ASN }
+ */
+export function getAsnDetail(asnId) {
+  return instance.get(`/wms/asns/${encodeURIComponent(asnId)}`)
+}
+
+/**
  * ASN KPI 집계 — 상태별 건수
  * @returns {Promise<AxiosResponse>} { success, data: { total, submitted, received, cancelled } }
  */
