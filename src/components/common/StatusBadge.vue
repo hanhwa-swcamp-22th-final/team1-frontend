@@ -48,7 +48,7 @@
  *   <StatusBadge :status="item.status" type="item" />
  */
 import { computed } from 'vue'
-import { ACCOUNT_STATUS, ASN_STATUS, ITEM_STATUS, ORDER_STATUS, WORKER_STATUS } from '@/constants'
+import { ACCOUNT_STATUS, ASN_STATUS, ITEM_STATUS, ORDER_STATUS, PICKING_LIST_STATUS, WORKER_STATUS } from '@/constants'
 
 const props = defineProps({
   status: { type: String, required: true },
@@ -86,6 +86,11 @@ const MAP = {
   worker: {
     [WORKER_STATUS.INSPECTION_LOADING]: { label: '검수&적재', color: 'purple' },
     [WORKER_STATUS.PICKING_PACKING]: { label: '피킹&패킹', color: 'amber' },
+  },
+  pickingList: {
+    [PICKING_LIST_STATUS.WAITING]:     { label: '대기',    color: 'default' },
+    [PICKING_LIST_STATUS.IN_PROGRESS]: { label: '진행 중', color: 'amber'   },
+    [PICKING_LIST_STATUS.COMPLETED]:   { label: '완료',    color: 'green'   },
   },
 }
 

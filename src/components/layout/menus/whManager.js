@@ -38,7 +38,8 @@ export const WH_MANAGER_MENU_GROUPS = [
   {
     label: '출고 관리',
     items: [
-      { name: ROUTE_NAMES.WH_MANAGER_OUTBOUND_DISPATCH, label: '출고 지시', icon: '🚚' },
+      { name: ROUTE_NAMES.WH_MANAGER_OUTBOUND_DISPATCH, label: '출고 지시',   icon: '🚚' },
+      { name: ROUTE_NAMES.WH_MANAGER_PICKING_LIST,      label: '피킹 리스트', icon: '📋' },
     ],
   },
 ]
