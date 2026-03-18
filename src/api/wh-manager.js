@@ -6,3 +6,23 @@ import instance from './instance'
 export function getWhmDashboard() {
   return instance.get('/whm_dashboard')
 }
+
+/** 출고 지시 대기 주문 목록 조회 */
+export function getWhmPendingOrders(params) {
+  return instance.get('/wh_pending_orders', { params })
+}
+
+/** 개별 출고 지시 */
+export function dispatchSingleOrder(id, data) {
+  return instance.patch(`/wh_pending_orders/${id}`, data)
+}
+
+/** 일괄 출고 지시 발행 */
+export function bulkDispatchOrders(data) {
+  return instance.post('/wh_pending_orders/bulk', data)
+}
+
+/** 작업자 목록 조회 */
+export function getWhmWorkers() {
+  return instance.get('/wh_workers')
+}

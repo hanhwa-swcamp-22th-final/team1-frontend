@@ -41,3 +41,11 @@ export function getOrderList() {
 export function getOrderKpi() {
   return instance.get('/orders/kpi')
 }
+
+/**
+ * 창고 관리자 주문 목록 조회
+ * @returns {Promise<AxiosResponse>}
+ */
+export async function getWhmOrders() {
+  return instance.get('/orders/whm')
+}

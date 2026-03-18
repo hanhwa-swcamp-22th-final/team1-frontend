@@ -407,7 +407,7 @@ function goToInventory() {
           </div>
 
           <div class="table-footer-actions">
-            <button class="text-link-btn" @click="goToTasks">내 작업 전체 보기</button>
+            <button class="ui-btn ui-btn--primary" @click="goToTasks">내 작업 전체 보기</button>
           </div>
         </article>
 
@@ -418,7 +418,7 @@ function goToInventory() {
                 <h2 class="section-title">입고 작업 진행 현황</h2>
                 <p class="section-subtitle">검수 완료와 적재 완료를 분리해 보여주고, 적재 완료 Bin만 재고에 반영합니다.</p>
               </div>
-              <button class="text-link-btn" @click="router.push({ name: ROUTE_NAMES.WH_WORKER_INBOUND })">
+              <button class="ui-btn ui-btn--primary" @click="router.push({ name: ROUTE_NAMES.WH_WORKER_INBOUND })">
                 입고 관리로 이동
               </button>
             </div>
@@ -462,7 +462,7 @@ function goToInventory() {
                 <h2 class="section-title">출고 작업 진행 현황</h2>
                 <p class="section-subtitle">피킹 완료 후 패킹 검수로 이동하며, 최종 완료 시 출고 대기 구역으로 넘깁니다.</p>
               </div>
-              <button class="text-link-btn" @click="router.push({ name: ROUTE_NAMES.WH_WORKER_OUTBOUND })">
+              <button class="ui-btn ui-btn--primary" @click="router.push({ name: ROUTE_NAMES.WH_WORKER_OUTBOUND })">
                 출고 관리로 이동
               </button>
             </div>
@@ -506,7 +506,7 @@ function goToInventory() {
                 <h2 class="section-title">최근 예외 알림</h2>
                 <p class="section-subtitle">수량 불일치, 패킹 검수 대기, 신규 배정 등 확인이 필요한 항목만 모았습니다.</p>
               </div>
-              <button class="text-link-btn" @click="goToTasks">내 작업에서 자세히 보기</button>
+              <button class="ui-btn ui-btn--primary" @click="goToTasks">내 작업에서 자세히 보기</button>
             </div>
 
             <div class="alert-list">
