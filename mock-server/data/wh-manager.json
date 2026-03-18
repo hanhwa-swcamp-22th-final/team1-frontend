@@ -775,6 +775,64 @@
     { "id": "WORKER-003", "name": "최현우" }
   ],
 
+  "wh_worker_accounts": [
+    {
+      "id": "WK-A-001",
+      "name": "박민준",
+      "zones": ["A", "B"],
+      "presenceStatus": "PICKING",
+      "accountStatus": "ACTIVE",
+      "lastWorkAt": "2026-03-12T10:28:00",
+      "registeredAt": "2025-06-01",
+      "email": "worker01@glsm.com",
+      "memo": ""
+    },
+    {
+      "id": "WK-A-002",
+      "name": "이서윤",
+      "zones": ["C", "D"],
+      "presenceStatus": "IDLE",
+      "accountStatus": "ACTIVE",
+      "lastWorkAt": "2026-03-12T09:58:00",
+      "registeredAt": "2025-07-15",
+      "email": "worker02@glsm.com",
+      "memo": ""
+    },
+    {
+      "id": "WK-A-003",
+      "name": "최현우",
+      "zones": ["A", "C"],
+      "presenceStatus": "PUTAWAY",
+      "accountStatus": "ACTIVE",
+      "lastWorkAt": "2026-03-11T16:45:00",
+      "registeredAt": "2025-08-20",
+      "email": "worker03@glsm.com",
+      "memo": ""
+    },
+    {
+      "id": "WK-A-004",
+      "name": "김비활",
+      "zones": ["B"],
+      "presenceStatus": "OFFLINE",
+      "accountStatus": "INACTIVE",
+      "lastWorkAt": "2026-02-28T18:00:00",
+      "registeredAt": "2025-05-10",
+      "email": "worker04@glsm.com",
+      "memo": "퇴사"
+    },
+    {
+      "id": "WK-A-005",
+      "name": "정임시",
+      "zones": ["D"],
+      "presenceStatus": "IDLE",
+      "accountStatus": "TEMP_PASSWORD",
+      "lastWorkAt": null,
+      "registeredAt": "2026-03-10",
+      "email": "",
+      "memo": "신규 채용"
+    }
+  ],
+
   "wh_orders": [
     {
       "id": "ORD-20260313-101",

@@ -44,4 +44,10 @@ export const WH_MANAGER_MENU_GROUPS = [
       { name: ROUTE_NAMES.WH_MANAGER_OUTBOUND_CONFIRM,  label: '출고 확정',   icon: '✅' },
     ],
   },
+  {
+    label: '사용자 관리',
+    items: [
+      { name: ROUTE_NAMES.WH_MANAGER_WORKER_ACCOUNT, label: '작업자 계정', icon: '👤' },
+    ],
+  },
 ]
