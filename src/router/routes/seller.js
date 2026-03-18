@@ -41,7 +41,12 @@ export default [
     component: () => import('@/views/seller/SellerProductRegisterView.vue'),
     meta: { role: ROLES.SELLER },
   },
-  // TODO(frontend): 상품 목록 라우트 추가
+  {
+    path: '/seller/products/list',
+    name: ROUTE_NAMES.SELLER_PRODUCT_LIST,
+    component: () => import('@/views/seller/SellerProductListView.vue'),
+    meta: { role: ROLES.SELLER },
+  },
 
   // 재고 관리
   // TODO(frontend): 재고 목록 라우트 추가

@@ -38,6 +38,7 @@ export const SELLER_MENU_GROUPS = [
     label: '조회',
     items: [
       { name: ROUTE_NAMES.SELLER_ORDER_LIST, label: '주문 목록', icon: '≣' },
+      { name: ROUTE_NAMES.SELLER_PRODUCT_LIST, label: '상품 목록', icon: '▤' },
       { name: ROUTE_NAMES.SELLER_ASN_LIST, label: 'ASN 목록', icon: '⋯' },
     ],
   },
