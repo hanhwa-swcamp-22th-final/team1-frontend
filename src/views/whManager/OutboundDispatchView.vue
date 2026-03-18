@@ -3,8 +3,8 @@ import { ref, computed, watch, onMounted } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import ToastMessage from '@/components/common/ToastMessage.vue'
-import SingleDispatchModal from './components/SingleDispatchModal.vue'
-import BulkDispatchModal from './components/BulkDispatchModal.vue'
+import SingleDispatchModal from '@/components/whManager/SingleDispatchModal.vue'
+import BulkDispatchModal from '@/components/whManager/BulkDispatchModal.vue'
 import { getWhmPendingOrders, dispatchSingleOrder, bulkDispatchOrders, getWhmWorkers } from '@/api/wh-manager'
 
 // ── 데이터
