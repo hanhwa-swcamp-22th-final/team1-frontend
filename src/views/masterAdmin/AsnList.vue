@@ -3,16 +3,15 @@
  * AsnList — 총괄관리자 ASN(입고 예정 통보서) 목록 페이지
  *
  * 레이아웃:
- *   KPI 요약 카드 4개 (전체 / 제출됨 / 입고완료 / 취소)
  *   상태 필터 탭 + 검색 + 창고/셀러사 셀렉트
  *   BaseTable (클라이언트 사이드 필터링 + 페이지네이션)
  *
  * 데이터 흐름:
- *   onMounted → Promise.all([getAsnList, getAsnKpi]) → allAsns / kpi
+ *   onMounted → getAsnList() → allAsns
  *   탭/검색/셀렉트 변경 → filteredAsns(computed) → paginatedAsns(computed) → BaseTable
  */
 import { ref, computed, onMounted, watch } from 'vue'
-import { getAsnList, getAsnKpi } from '@/api/wms'
+import { getAsnList } from '@/api/wms'
 import { ASN_STATUS } from '@/constants'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
@@ -42,7 +41,6 @@ const TABS = [
 ]
 
 // ── 상태 ─────────────────────────────────────────────────────────────────────
-const kpi       = ref({ total: 0, submitted: 0, received: 0, cancelled: 0 })
 const allAsns   = ref([])
 const isLoading = ref(false)
 const activeTab = ref('ALL')
@@ -57,12 +55,15 @@ const warehouseOptions = computed(() => [...new Set(allAsns.value.map(a => a.war
 const companyOptions   = computed(() => [...new Set(allAsns.value.map(a => a.company))])
 
 // ── 탭 카운트 배지 ────────────────────────────────────────────────────────────
-const TAB_COUNT = computed(() => ({
-  ALL:                     allAsns.value.length,
-  [ASN_STATUS.SUBMITTED]:  kpi.value.submitted,
-  [ASN_STATUS.RECEIVED]:   kpi.value.received,
-  [ASN_STATUS.CANCELLED]:  kpi.value.cancelled,
-}))
+const TAB_COUNT = computed(() => {
+  const base = { ALL: allAsns.value.length }
+  for (const tab of TABS) {
+    if (tab.key !== 'ALL') {
+      base[tab.key] = allAsns.value.filter(a => a.status === tab.key).length
+    }
+  }
+  return base
+})
 
 // ── 클라이언트 사이드 필터링 ─────────────────────────────────────────────────
 const filteredAsns = computed(() => {
@@ -95,9 +96,8 @@ watch([activeTab, searchQ, filterWh, filterCo], () => { page.value = 1 })
 async function fetchAll() {
   isLoading.value = true
   try {
-    const [listRes, kpiRes] = await Promise.all([getAsnList(), getAsnKpi()])
-    allAsns.value = listRes.data.data
-    kpi.value     = kpiRes.data.data
+    const res = await getAsnList()
+    allAsns.value = res.data.data
   } catch (e) {
     console.error('[AsnList] fetch error:', e)
   } finally {
@@ -124,14 +124,6 @@ function tabCountStyle(tab) {
 // ── 유틸 ─────────────────────────────────────────────────────────────────────
 /** 예정 입고일이 오늘(2026-03-17) 이후면 true → 골드 강조 */
 function isUpcoming(date) { return date >= '2026-03-17' }
-
-/** KPI 카드 value 색상 클래스 */
-function kpiValueClass(key) {
-  if (key === 'submitted')  return 'kpi-value--blue'
-  if (key === 'cancelled')  return 'kpi-value--red'
-  if (key === 'received')   return 'kpi-value--green'
-  return ''
-}
 </script>
 
 <template>
@@ -145,30 +137,6 @@ function kpiValueClass(key) {
         새로고침
       </button>
     </template>
-
-    <!-- ── KPI 요약 카드 ── -->
-    <div class="kpi-row">
-      <div class="kpi-card">
-        <span class="kpi-label">전체 ASN</span>
-        <span class="kpi-value">{{ kpi.total }}</span>
-        <span class="kpi-sub">이번 달 누적</span>
-      </div>
-      <div class="kpi-card">
-        <span class="kpi-label">제출됨</span>
-        <span class="kpi-value kpi-value--blue">{{ kpi.submitted }}</span>
-        <span class="kpi-sub">창고 접수 대기 중</span>
-      </div>
-      <div class="kpi-card">
-        <span class="kpi-label">입고완료</span>
-        <span class="kpi-value kpi-value--green">{{ kpi.received }}</span>
-        <span class="kpi-sub">재고로 전환됨</span>
-      </div>
-      <div class="kpi-card">
-        <span class="kpi-label">취소</span>
-        <span class="kpi-value kpi-value--red">{{ kpi.cancelled }}</span>
-        <span class="kpi-sub">처리 취소된 ASN</span>
-      </div>
-    </div>
 
     <!-- ── 툴바 ── -->
     <div class="toolbar">
@@ -255,51 +223,6 @@ function kpiValueClass(key) {
 </template>
 
 <style scoped>
-/* ── KPI 카드 ────────────────────────────────────────────────────── */
-.kpi-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 28px;
-}
-
-.kpi-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 20px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.kpi-label {
-  font-family: 'Barlow', sans-serif;
-  font-weight: 600;
-  font-size: 11px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--t3);
-}
-
-.kpi-value {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 700;
-  font-size: 38px;
-  color: var(--t1);
-  line-height: 1;
-}
-
-.kpi-value--blue  { color: var(--blue); }
-.kpi-value--green { color: var(--green); }
-.kpi-value--red   { color: var(--red); }
-
-.kpi-sub {
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  color: var(--t3);
-}
-
 /* ── 툴바 ─────────────────────────────────────────────────────────── */
 .toolbar {
   display: flex;
