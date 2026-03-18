@@ -3,7 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
-import BulkOutboundModal from './components/BulkOutboundModal.vue'
+import BulkOutboundModal from '@/components/whManager/BulkOutboundModal.vue'
 import { getWhmOrders } from '@/api/order'
 import { ORDER_STATUS } from '@/constants'
 
