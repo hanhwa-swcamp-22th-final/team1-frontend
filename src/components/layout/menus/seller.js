@@ -29,9 +29,9 @@ export const SELLER_MENU_GROUPS = [
         items: [
             { name: ROUTE_NAMES.SELLER_ORDER_REGISTER, label: '주문 등록', icon: '+' },
             { name: ROUTE_NAMES.SELLER_ASN_CREATE, label: 'ASN 등록', icon: '↓' },
+            { name: ROUTE_NAMES.SELLER_ASN_LIST, label: 'ASN 목록', icon: '≣' },
         ],
     },
 ]
 
 // TODO(frontend): Seller 추가 화면 구현 시 메뉴 그룹 확장
-

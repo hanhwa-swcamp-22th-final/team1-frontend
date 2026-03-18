@@ -42,7 +42,12 @@ export default [
         component: () => import('@/views/seller/SellerAsnCreateView.vue'),
         meta: { role: ROLES.SELLER },
     },
-    // TODO(frontend): ASN 목록 라우트 추가
+    {
+        path: '/seller/asn/list',
+        name: ROUTE_NAMES.SELLER_ASN_LIST,
+        component: () => import('@/views/seller/SellerAsnListView.vue'),
+        meta: { role: ROLES.SELLER },
+    },
     // TODO(frontend): ASN 상세 라우트 추가
 
     // 부가 기능
