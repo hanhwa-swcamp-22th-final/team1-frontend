@@ -10,15 +10,14 @@
  * 저장 성공 시: 상단 green 배너 4초 표시
  */
 import { reactive, ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { getFeeSettings, saveFeeSettings } from '@/api/wms'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import ToastMessage from '@/components/common/ToastMessage.vue'
 
 const breadcrumb = [{ label: '요금 설정' }, { label: '3PL 사용료 설정' }]
-const router = useRouter()
 const isLoading = ref(false)
+// 저장 완료 시 공통 ToastMessage 를 노출한다.
 const showSaveNotice = ref(false)
-let saveTimer = null
 
 // ── 폼 상태 ───────────────────────────────────────────────────────────────────
 const form = reactive({
@@ -78,9 +77,8 @@ async function saveSettings() {
   isLoading.value = true
   try {
     await saveFeeSettings({ ...form })
+    // 토스트 표시 상태를 갱신한다.
     showSaveNotice.value = true
-    clearTimeout(saveTimer)
-    saveTimer = setTimeout(() => { showSaveNotice.value = false }, 4000)
   } catch (e) {
     console.error('[FeeSettings] save error:', e)
   } finally {
@@ -93,6 +91,12 @@ onMounted(fetchFee)
 
 <template>
   <AppLayout :breadcrumb="breadcrumb" title="3PL 사용료 설정" :loading="isLoading">
+    <!-- 저장 성공 알림은 공통 토스트 컴포넌트로 통일 -->
+    <ToastMessage
+      v-model:visible="showSaveNotice"
+      message="새로운 요금 설정이 시스템에 저장되었습니다.변경된 단가는 익일부터 신규 청구서에 반영됩니다."
+      type="success"
+    />
     <template #header-action>
       <button class="ui-btn ui-btn--ghost btn-export">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -108,16 +112,6 @@ onMounted(fetchFee)
         설정 저장하기
       </button>
     </template>
-
-    <!-- 저장 완료 배너 -->
-    <Transition name="notice-fade">
-      <div v-if="showSaveNotice" class="save-notice">
-        <svg width="18" height="18" viewBox="0 0 14 14" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M1.5 7l3.5 3.5L12.5 3"/>
-        </svg>
-        새로운 요금 설정이 시스템에 저장되었습니다. 변경된 단가는 익일부터 신규 청구서에 반영됩니다.
-      </div>
-    </Transition>
 
     <div class="rate-grid">
       <!-- ── 왼쪽 컬럼 ── -->
@@ -369,24 +363,6 @@ onMounted(fetchFee)
   box-shadow: 0 2px 8px rgba(245,166,35,0.3);
 }
 
-/* ── 저장 배너 ── */
-.save-notice {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 20px;
-  background: var(--green-pale);
-  border: 1px solid var(--green);
-  border-radius: 6px;
-  margin-bottom: 24px;
-  font-family: 'Barlow', sans-serif;
-  font-weight: 500;
-  font-size: 14px;
-  color: #14532D;
-}
-
-.notice-fade-enter-active, .notice-fade-leave-active { transition: opacity 0.3s; }
-.notice-fade-enter-from, .notice-fade-leave-to { opacity: 0; }
 
 /* ── 그리드 ── */
 .rate-grid {

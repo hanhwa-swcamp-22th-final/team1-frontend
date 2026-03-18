@@ -16,6 +16,7 @@ import { inviteAccount, getSellerList } from '@/api/member'
 import { getWarehouseList } from '@/api/wms'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
+import ToastMessage from '@/components/common/ToastMessage.vue'
 
 const ui = useUiStore()
 
@@ -57,6 +58,7 @@ const errors = reactive({
 })
 
 const submitError = ref('')
+// 저장 완료 배너 대신 공통 ToastMessage 표시 상태를 사용한다.
 const submitSuccess = ref(false)
 
 // ── 조직 목록 ─────────────────────────────────────────────────────────────────
@@ -145,6 +147,12 @@ onMounted(loadOrganizations)
 
 <template>
   <AppLayout :breadcrumb="breadcrumb" :title="pageTitle" :loading="ui.isLoading">
+    <!-- 공통 성공 토스트: 초대 메일 발송 성공 시 자동으로 닫힌다. -->
+    <ToastMessage
+      v-model:visible="submitSuccess"
+      message="초대 메일이 성공적으로 발송되었습니다."
+      type="success"
+    />
 
     <div class="ai-page">
 
@@ -152,14 +160,6 @@ onMounted(loadOrganizations)
       <div class="form-card">
         <div class="form-card-header">
           <span class="form-card-title">신규 사용자 초대</span>
-        </div>
-
-        <!-- 발송 성공 알림 -->
-        <div v-if="submitSuccess" class="success-banner">
-          <svg width="18" height="18" viewBox="0 0 14 14" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M1.5 7l3.5 3.5L12.5 3"/>
-          </svg>
-          초대 메일이 성공적으로 발송되었습니다.
         </div>
 
         <div class="form-body">
@@ -305,20 +305,6 @@ onMounted(loadOrganizations)
 }
 
 .form-card-title { font-size: var(--font-size-lg); font-weight: 700; color: var(--t1); }
-
-/* ── 성공 배너 ── */
-.success-banner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 24px;
-  background: var(--green-pale);
-  border-bottom: 1px solid var(--green);
-  font-family: 'Barlow', sans-serif;
-  font-weight: 500;
-  font-size: 14px;
-  color: #14532D;
-}
 
 /* ── 폼 본문 ── */
 .form-body {
