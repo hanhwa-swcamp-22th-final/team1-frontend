@@ -44,7 +44,12 @@ export default [
   // TODO(frontend): 상품 목록 라우트 추가
 
   // 재고 관리
-  // TODO(frontend): 재고 목록 라우트 추가
+  {
+    path: '/seller/inventory',
+    name: ROUTE_NAMES.SELLER_INVENTORY,
+    component: () => import('@/views/seller/SellerInventoryListView.vue'),
+    meta: { role: ROLES.SELLER },
+  },
 
   // Seller ASN 등록 화면
   {
