@@ -2,7 +2,7 @@
  * 셀러 ASN 목록 화면용 로컬 mock 데이터와 가공 유틸.
  * API 연동 전 단계라 KPI, 필터, 테이블 렌더링을 화면에서 바로 확인할 수 있게 한다.
  */
-import { ASN_STATUS } from '@/constants'
+import { ASN_STATUS } from '@/constants/index.js'
 
 // ASN 목록 화면에서 사용하는 mock 원본 데이터.
 export const SELLER_ASN_LIST_ROWS = [

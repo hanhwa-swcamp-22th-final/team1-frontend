@@ -16,7 +16,7 @@ import {
   SELLER_ASN_PRODUCT_OPTIONS,
   SELLER_ASN_WAREHOUSE_OPTIONS,
   validateAsnForm,
-} from './asnCreate.utils'
+} from '../../utils/asnCreate.utils.js'
 
 /** Header 브레드크럼 표시용 */
 const breadcrumb = [{ label: 'Seller' }, { label: 'ASN 등록' }]

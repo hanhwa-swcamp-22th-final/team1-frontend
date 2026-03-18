@@ -14,7 +14,7 @@ import {
   getSellerAsnKpi,
   SELLER_ASN_LIST_COLUMNS,
   SELLER_ASN_LIST_ROWS,
-} from './asnList.utils'
+} from '../../utils/asnList.utils.js'
 
 /** Header 브레드크럼 표시용 */
 const breadcrumb = [{ label: 'Seller' }, { label: 'ASN 목록' }]

@@ -4,7 +4,7 @@ import {
   filterSellerAsnRows,
   getSellerAsnKpi,
   SELLER_ASN_LIST_ROWS,
-} from '@/views/seller/asnList.utils'
+} from '@/utils/asnList.utils.js'
 import { ASN_STATUS } from '@/constants'
 
 describe('asnList utils', () => {
