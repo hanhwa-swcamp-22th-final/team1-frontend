@@ -32,6 +32,7 @@ package-lock.json
 # Cypress
 /cypress/videos/
 /cypress/screenshots/
+package-lock.json
 
 # Vitest
 __screenshots__/

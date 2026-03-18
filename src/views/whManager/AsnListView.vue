@@ -282,7 +282,7 @@ const zoneColumns = [
 </script>
 
 <template>
-  <AppLayout title="ASN 목록" :breadcrumb="breadcrumb">
+  <AppLayout title="ASN 목록" :breadcrumb="breadcrumb" :loading="ui.isLoading">
 
     <!-- ── KPI 카드 4개 ─────────────────────────── -->
     <div class="kpi-grid">

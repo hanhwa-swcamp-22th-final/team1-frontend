@@ -27,6 +27,19 @@ export async function createSellerBulkOrders(orders) {
 }
 
 /**
+ * 주문 목록 조회 (masterAdmin)
+ * @returns {Promise<AxiosResponse>} { success, data: Order[] }
+ */
+export function getOrderList() {
+  return instance.get('/orders/list')
+}
+
+/**
+ * 주문 KPI 집계 (masterAdmin)
+ * @returns {Promise<AxiosResponse>} { success, data: { todayTotal, pendingCount, pickingCount, shippedCount } }
+ */
+export function getOrderKpi() {
+  return instance.get('/orders/kpi')
  * 창고 관리자 주문 목록 조회
  * @returns {Promise<AxiosResponse>}
  */
