@@ -1,7 +1,11 @@
 <script setup>
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import TimelineStepper from '@/components/common/TimelineStepper.vue'
+import { ROUTE_NAMES } from '@/constants'
+
+const router = useRouter()
 
 // 헤더 breadcrumb
 const breadcrumb = [{ label: 'WH Worker' }, { label: '내 작업' }]
@@ -22,6 +26,7 @@ const TASKS_SEED = Object.freeze([
     steps: [
       { key: '검수', label: '검수' },
       { key: '적재', label: '적재' },
+      { key: '작업 완료', label: '작업 완료' },
     ],
     referenceStatus: '입고예정',
     note: '오늘 오전 신규 입고 건으로, 지정된 Bin 기준으로 검수부터 시작합니다.',
@@ -38,6 +43,7 @@ const TASKS_SEED = Object.freeze([
     steps: [
       { key: '검수', label: '검수' },
       { key: '적재', label: '적재' },
+      { key: '작업 완료', label: '작업 완료' },
     ],
     referenceStatus: '검수완료',
     note: '검수는 마감되었고 적재 마무리만 남아 있습니다.',
@@ -67,10 +73,11 @@ const TASKS_SEED = Object.freeze([
     assignedBinCount: 1,
     totalQty: 35,
     status: '완료',
-    currentStep: '적재',
+    currentStep: '작업 완료',
     steps: [
       { key: '검수', label: '검수' },
       { key: '적재', label: '적재' },
+      { key: '작업 완료', label: '작업 완료' },
     ],
     referenceStatus: '보관중',
     note: '오늘 14:00 전 시작 권장',
@@ -93,6 +100,24 @@ const selectedTask = computed(() => {
 
 function selectTask(taskId) {
   selectedTaskId.value = taskId
+}
+
+function openSelectedTask() {
+  const task = selectedTask.value
+  if (!task) return
+
+  if (task.type === '검수&적재') {
+    router.push({
+      name: ROUTE_NAMES.WH_WORKER_INBOUND,
+      query: { taskId: task.id },
+    })
+    return
+  }
+
+  router.push({
+    name: ROUTE_NAMES.WH_WORKER_OUTBOUND,
+    query: { taskId: task.id },
+  })
 }
 
 function statusClass(status) {
@@ -179,7 +204,9 @@ const summaryInfo = computed(() => {
       <section v-if="selectedTask" class="section-card summary-card">
         <div class="section-card__header summary-card__header">
           <h2 class="section-title">선택 작업 요약</h2>
-          <a class="summary-link" href="#">입고 관리에서 열기</a>
+          <button type="button" class="summary-link" @click="openSelectedTask">
+            {{ selectedTask.type === '검수&적재' ? '입고 관리에서 열기' : '출고 관리에서 열기' }}
+          </button>
         </div>
 
         <div class="summary-card__body">
