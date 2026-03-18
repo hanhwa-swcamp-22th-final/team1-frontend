@@ -12,11 +12,15 @@
 import { ROUTE_NAMES } from '@/constants'
 
 export const SYSTEM_ADMIN_MENU_GROUPS = [
-  // TODO: 아래 주석을 참고하여 메뉴 그룹을 작성하세요
-  // {
-  //   label: '그룹명',
-  //   items: [
-  //     { name: ROUTE_NAMES.SYS_COMPANY_LIST, label: '회사 목록', icon: '◎' },
-  //   ],
-  // },
+  {
+    label: '플랫폼 관리',
+    items: [
+      { name: ROUTE_NAMES.SYS_COMPANY_LIST, label: '업체 목록', icon: '🏢' },
+      { name: ROUTE_NAMES.SYS_COMPANY_REGISTER, label: '업체 등록', icon: '✚' },
+    ],
+  },
+  {
+    label: '단가 관리',
+    items: [{ name: ROUTE_NAMES.SYS_FEE_SETTING, label: '채널 수수료율', icon: '💲' }],
+  },
 ]
