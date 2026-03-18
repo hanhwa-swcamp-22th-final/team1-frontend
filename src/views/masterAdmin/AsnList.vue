@@ -17,6 +17,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import AsnDetailModal from '@/components/masterAdmin/AsnDetailModal.vue'
+import MasterStatusTabs from '@/components/masterAdmin/MasterStatusTabs.vue'
 
 // ── 브레드크럼 ────────────────────────────────────────────────────────────────
 const breadcrumb = [{ label: '입출고' }, { label: 'ASN 목록' }]
@@ -155,19 +156,13 @@ function isUpcoming(date) { return date >= '2026-03-17' }
     <!-- ── 툴바 ── -->
     <div class="toolbar">
       <!-- 상태 필터 탭 -->
-      <div class="filter-tabs">
-        <button
-          v-for="tab in TABS"
-          :key="tab.key"
-          class="filter-tab"
-          :class="{ active: activeTab === tab.key }"
-          :style="tabActiveStyle(tab)"
-          @click="activeTab = tab.key"
-        >
-          {{ tab.label }}
-          <span class="filter-count" :style="tabCountStyle(tab)">{{ TAB_COUNT[tab.key] ?? 0 }}</span>
-        </button>
-      </div>
+      <!-- 공통 상태 탭: ASN 탭 정의와 카운트만 주입한다. -->
+      <MasterStatusTabs
+        :tabs="TABS"
+        :active-key="activeTab"
+        :counts="TAB_COUNT"
+        @change="activeTab = $event"
+      />
 
       <!-- 검색 + 셀렉트 필터 -->
       <div class="toolbar-right">
