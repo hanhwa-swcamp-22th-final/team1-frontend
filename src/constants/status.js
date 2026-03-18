@@ -112,6 +112,40 @@ export const WORKER_STATUS = {
 }
 
 /**
+ * OUTBOUND_CONFIRM_STATUS — 출고 확정 상태 2단계
+ *
+ * 상태 전이 흐름:
+ *
+ *   PENDING_CONFIRM → CONFIRMED
+ *
+ * PENDING_CONFIRM: 인계 완료 (택배사 인계 후 출고 확정 대기)
+ * CONFIRMED:       출고 확정 완료 (최종 재고 차감 완료)
+ *
+ * StatusBadge.vue의 MAP.outboundConfirm와 연동됨.
+ */
+export const OUTBOUND_CONFIRM_STATUS = {
+  PENDING_CONFIRM: 'PENDING_CONFIRM', // 인계 완료
+  CONFIRMED:       'CONFIRMED',       // 출고 확정 완료
+}
+
+/**
+ * LABEL_STATUS — 배송 라벨 발행 상태 2단계
+ *
+ * 상태 전이 흐름:
+ *
+ *   NOT_ISSUED → ISSUED
+ *
+ * NOT_ISSUED: 라벨 미발행 (포장 완료 후 초기 상태)
+ * ISSUED:     라벨 발행 완료
+ *
+ * StatusBadge.vue의 MAP.labelStatus와 연동됨.
+ */
+export const LABEL_STATUS = {
+  NOT_ISSUED: 'NOT_ISSUED', // 라벨 미발행
+  ISSUED:     'ISSUED',     // 라벨 발행 완료
+}
+
+/**
  * PICKING_LIST_STATUS — 피킹 리스트 상태 3단계
  *
  * 상태 전이 흐름:

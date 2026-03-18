@@ -963,5 +963,160 @@
         { "sequence": 3, "bin": "D-1-3", "sku": "SKU-BB-001", "productName": "BB크림",        "qty": 1, "status": "WAITING" }
       ]
     }
+  ],
+  "wh_outbound_confirm_orders": [
+    {
+      "id": "ORD-20240312-071",
+      "sellerName": "(주)글로우뷰티",
+      "itemSummary": "앰플 세럼 30ml × 2",
+      "carrier": "USPS",
+      "service": "Priority Mail",
+      "trackingNumber": "9400111899223374693900",
+      "shipState": "CA",
+      "shipCountry": "USA",
+      "labelIssuedAt": "2026-03-12",
+      "status": "PENDING_CONFIRM",
+      "skuDeductions": [
+        { "sku": "SKU-GB-001", "productName": "앰플 세럼 30ml", "qty": 2 }
+      ]
+    },
+    {
+      "id": "ORD-20240312-070",
+      "sellerName": "K-Style",
+      "itemSummary": "티셔츠 L × 3",
+      "carrier": "UPS",
+      "service": "Ground",
+      "trackingNumber": "1Z999AA10123456784",
+      "shipState": "TX",
+      "shipCountry": "USA",
+      "labelIssuedAt": "2026-03-12",
+      "status": "PENDING_CONFIRM",
+      "skuDeductions": [
+        { "sku": "SKU-KS-001", "productName": "티셔츠 L사이즈", "qty": 3 }
+      ]
+    },
+    {
+      "id": "ORD-20240311-065",
+      "sellerName": "에코팩",
+      "itemSummary": "텀블러 × 2",
+      "carrier": "FedEx",
+      "service": "Home Delivery",
+      "trackingNumber": "274899940814173",
+      "shipState": "NY",
+      "shipCountry": "USA",
+      "labelIssuedAt": "2026-03-11",
+      "status": "PENDING_CONFIRM",
+      "skuDeductions": [
+        { "sku": "SKU-EP-001", "productName": "텀블러 350ml", "qty": 2 }
+      ]
+    },
+    {
+      "id": "ORD-20240311-062",
+      "sellerName": "K-Farm",
+      "itemSummary": "홍삼 진액 × 1",
+      "carrier": "USPS",
+      "service": "Priority Mail",
+      "trackingNumber": "9400111899223374693920",
+      "shipState": "WA",
+      "shipCountry": "USA",
+      "labelIssuedAt": "2026-03-11",
+      "status": "CONFIRMED",
+      "skuDeductions": [
+        { "sku": "SKU-KF-001", "productName": "홍삼 진액 30포", "qty": 1 }
+      ]
+    }
+  ],
+  "wh_invoice_orders": [
+    {
+      "id": "ORD-20240312-071",
+      "sellerName": "(주)글로우뷰티",
+      "itemSummary": "앰플 세럼 30ml × 2",
+      "weightLbs": 0.8,
+      "shipState": "CA",
+      "shipCountry": "USA",
+      "recommendedCarrier": "USPS",
+      "recommendedService": "Priority Mail",
+      "estimatedRate": 6.42,
+      "labelStatus": "NOT_ISSUED",
+      "labelIssuedAt": null,
+      "rates": [
+        { "carrier": "USPS", "service": "Priority Mail",   "rate": 6.42  },
+        { "carrier": "UPS",  "service": "Ground",          "rate": 8.10  },
+        { "carrier": "FedEx","service": "Home Delivery",   "rate": 9.35  }
+      ]
+    },
+    {
+      "id": "ORD-20240312-070",
+      "sellerName": "K-Style",
+      "itemSummary": "티셔츠 L × 3",
+      "weightLbs": 1.5,
+      "shipState": "TX",
+      "shipCountry": "USA",
+      "recommendedCarrier": "UPS",
+      "recommendedService": "Ground",
+      "estimatedRate": 8.95,
+      "labelStatus": "NOT_ISSUED",
+      "labelIssuedAt": null,
+      "rates": [
+        { "carrier": "USPS", "service": "Priority Mail",   "rate": 9.80  },
+        { "carrier": "UPS",  "service": "Ground",          "rate": 8.95  },
+        { "carrier": "FedEx","service": "Home Delivery",   "rate": 10.20 }
+      ]
+    },
+    {
+      "id": "ORD-20240311-068",
+      "sellerName": "K-Farm",
+      "itemSummary": "홍삼 진액 × 1",
+      "weightLbs": 0.5,
+      "shipState": "WA",
+      "shipCountry": "USA",
+      "recommendedCarrier": "USPS",
+      "recommendedService": "First Class",
+      "estimatedRate": 5.15,
+      "labelStatus": "ISSUED",
+      "labelIssuedAt": "2026-03-11",
+      "trackingNumber": "9400111899223374693900",
+      "rates": [
+        { "carrier": "USPS", "service": "First Class",     "rate": 5.15  },
+        { "carrier": "UPS",  "service": "Ground",          "rate": 7.40  },
+        { "carrier": "FedEx","service": "Home Delivery",   "rate": 8.60  }
+      ]
+    },
+    {
+      "id": "ORD-20240311-065",
+      "sellerName": "에코팩",
+      "itemSummary": "텀블러 × 2",
+      "weightLbs": 2.0,
+      "shipState": "NY",
+      "shipCountry": "USA",
+      "recommendedCarrier": "FedEx",
+      "recommendedService": "Home Delivery",
+      "estimatedRate": 12.30,
+      "labelStatus": "NOT_ISSUED",
+      "labelIssuedAt": null,
+      "rates": [
+        { "carrier": "USPS", "service": "Priority Mail",   "rate": 14.50 },
+        { "carrier": "UPS",  "service": "Ground",          "rate": 13.80 },
+        { "carrier": "FedEx","service": "Home Delivery",   "rate": 12.30 }
+      ]
+    },
+    {
+      "id": "ORD-20240311-063",
+      "sellerName": "(주)글로우뷰티",
+      "itemSummary": "마스크팩 10매 × 3",
+      "weightLbs": 1.2,
+      "shipState": "FL",
+      "shipCountry": "USA",
+      "recommendedCarrier": "USPS",
+      "recommendedService": "Priority Mail",
+      "estimatedRate": 7.80,
+      "labelStatus": "NOT_ISSUED",
+      "labelIssuedAt": null,
+      "rates": [
+        { "carrier": "USPS", "service": "Priority Mail",   "rate": 7.80  },
+        { "carrier": "UPS",  "service": "Ground",          "rate": 9.20  },
+        { "carrier": "FedEx","service": "Home Delivery",   "rate": 10.05 }
+      ]
+    }
   ]
 }

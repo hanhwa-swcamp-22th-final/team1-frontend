@@ -37,4 +37,16 @@ export default [
     component: () => import('@/views/whManager/PickingListView.vue'),
     meta: { role: ROLES.WH_MANAGER },
   },
+  {
+    path: '/whm/label-print',
+    name: ROUTE_NAMES.WH_MANAGER_LABEL_PRINT,
+    component: () => import('@/views/whManager/InvoiceView.vue'),
+    meta: { role: ROLES.WH_MANAGER },
+  },
+  {
+    path: '/whm/outbound/confirm',
+    name: ROUTE_NAMES.WH_MANAGER_OUTBOUND_CONFIRM,
+    component: () => import('@/views/whManager/OutboundConfirmView.vue'),
+    meta: { role: ROLES.WH_MANAGER },
+  },
 ]
