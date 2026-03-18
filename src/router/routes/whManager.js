@@ -31,4 +31,10 @@ export default [
     component: () => import('@/views/whManager/OutboundDispatchView.vue'),
     meta: { role: ROLES.WH_MANAGER },
   },
+  {
+    path: '/whm/picking-list',
+    name: ROUTE_NAMES.WH_MANAGER_PICKING_LIST,
+    component: () => import('@/views/whManager/PickingListView.vue'),
+    meta: { role: ROLES.WH_MANAGER },
+  },
 ]

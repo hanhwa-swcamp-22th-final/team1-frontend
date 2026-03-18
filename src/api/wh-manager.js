@@ -26,3 +26,13 @@ export function bulkDispatchOrders(data) {
 export function getWhmWorkers() {
   return instance.get('/wh_workers')
 }
+
+/** 피킹 리스트 목록 조회 */
+export function getWhmPickingLists(params) {
+  return instance.get('/wh_picking_lists', { params })
+}
+
+/** 피킹 리스트 단건 상세 조회 */
+export function getWhmPickingListDetail(id) {
+  return instance.get(`/wh_picking_lists/${id}`)
+}

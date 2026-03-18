@@ -110,3 +110,18 @@ export const WORKER_STATUS = {
   INSPECTION_LOADING: 'INSPECTION_LOADING', // 검수&적재 작업 중
   PICKING_PACKING: 'PICKING_PACKING', // 피킹&패킹 작업 중
 }
+
+/**
+ * PICKING_LIST_STATUS — 피킹 리스트 상태 3단계
+ *
+ * 상태 전이 흐름:
+ *
+ *   WAITING → IN_PROGRESS → COMPLETED
+ *
+ * StatusBadge.vue의 MAP.pickingList와 연동됨.
+ */
+export const PICKING_LIST_STATUS = {
+  WAITING:     'WAITING',     // 피킹 대기
+  IN_PROGRESS: 'IN_PROGRESS', // 피킹 진행 중
+  COMPLETED:   'COMPLETED',   // 피킹 완료
+}
