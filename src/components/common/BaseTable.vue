@@ -46,14 +46,15 @@
 import { computed } from 'vue'
 
 const props = defineProps({
-  columns: { type: Array, required: true },
-  rows: { type: Array, default: () => [] },
-  loading: { type: Boolean, default: false },
-  pagination: { type: Object, default: null },
-  rowKey: { type: String, default: 'id' },
+  columns:   { type: Array,   required: true },
+  rows:      { type: Array,   default: () => [] },
+  loading:   { type: Boolean, default: false },
+  pagination:{ type: Object,  default: null },
+  rowKey:    { type: String,  default: 'id' },
+  clickable: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['sort', 'page-change'])
+const emit = defineEmits(['sort', 'page-change', 'row-click'])
 
 
 /** 전체 페이지 수 계산. pagination이 없으면 0 */
@@ -127,7 +128,13 @@ function pageNumbers() {
           </tr>
 
           <!-- 데이터 행 -->
-          <tr v-for="row in rows" v-else :key="row[rowKey]" class="data-row">
+          <tr
+            v-for="row in rows"
+            v-else
+            :key="row[rowKey]"
+            :class="['data-row', { 'data-row--clickable': clickable }]"
+            @click="clickable && emit('row-click', row)"
+          >
             <td v-for="col in columns" :key="col.key" :style="{ textAlign: col.align ?? 'left' }">
               <!--
                 cell-{key} 슬롯이 없으면 기본값(row[col.key] ?? '-') 표시.
@@ -248,6 +255,9 @@ tbody tr:last-child {
 }
 .data-row:hover {
   background: var(--blue-pale);
+}
+.data-row--clickable {
+  cursor: pointer;
 }
 
 td {

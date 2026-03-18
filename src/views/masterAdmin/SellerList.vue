@@ -15,6 +15,7 @@ import { getSellerList } from '@/api/member'
 import { ROUTE_NAMES } from '@/constants'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
+import BaseModal from '@/components/common/BaseModal.vue'
 
 const breadcrumb = [{ label: '셀러 관리' }, { label: '셀러 목록' }]
 const router = useRouter()
@@ -132,6 +133,19 @@ function statusBadgeStyle(status) {
   if (status === 'SUSPENDED') return { background: 'var(--red-pale)',   color: 'var(--red)',   border: '1px solid var(--red)' }
   return {}
 }
+
+// ── 셀러 상세 모달 ────────────────────────────────────────────────────────────
+const showSellerDetail  = ref(false)
+const selectedSeller    = ref(null)
+
+function openSellerDetail(row) {
+  selectedSeller.value   = row
+  showSellerDetail.value = true
+}
+
+function closeSellerDetail() {
+  showSellerDetail.value = false
+}
 </script>
 
 <template>
@@ -185,7 +199,9 @@ function statusBadgeStyle(status) {
       :loading="isLoading"
       :pagination="pagination"
       row-key="id"
+      clickable
       @page-change="page = $event"
+      @row-click="openSellerDetail"
     >
       <!-- 셀러 정보: 로고 이니셜 + 브랜드명 -->
       <template #cell-brand="{ row }">
@@ -233,6 +249,71 @@ function statusBadgeStyle(status) {
         </span>
       </template>
     </BaseTable>
+    <!-- ── 셀러 상세 모달 ── -->
+    <BaseModal
+      title="셀러 상세 정보"
+      :is-open="showSellerDetail"
+      width="600px"
+      :hide-footer="true"
+      @cancel="closeSellerDetail"
+    >
+      <template v-if="selectedSeller">
+        <!-- 헤더: 로고 이니셜 + 브랜드명 + 상태 배지 -->
+        <div class="detail-header">
+          <div class="detail-logo">{{ sellerInitials(selectedSeller) }}</div>
+          <div class="detail-brand-wrap">
+            <span class="detail-brand-ko">{{ selectedSeller.brandNameKo || selectedSeller.brandNameEn }}</span>
+            <span v-if="selectedSeller.brandNameKo && selectedSeller.brandNameEn" class="detail-brand-en">
+              {{ selectedSeller.brandNameEn }}
+            </span>
+          </div>
+          <span class="status-badge" :style="statusBadgeStyle(selectedSeller.status)">
+            <span class="status-dot"></span>
+            {{ STATUS_LABEL[selectedSeller.status] ?? selectedSeller.status }}
+          </span>
+        </div>
+
+        <!-- 정보 그리드 -->
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">customer_code</span>
+            <span class="detail-value detail-code">{{ selectedSeller.customerCode }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">카테고리</span>
+            <span class="detail-value">{{ selectedSeller.category || '-' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">담당자</span>
+            <span class="detail-value">{{ selectedSeller.contactName }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">담당자 이메일</span>
+            <span class="detail-value detail-email">{{ selectedSeller.contactEmail }}</span>
+          </div>
+          <div class="detail-item" style="grid-column: 1 / -1">
+            <span class="detail-label">이용 중인 창고</span>
+            <div class="detail-wh-tags">
+              <span
+                v-for="wh in (selectedSeller.warehouses || [])"
+                :key="wh"
+                class="wh-tag"
+              >{{ wh }}</span>
+              <span v-if="!selectedSeller.warehouses?.length" class="detail-value" style="color: var(--t4)">-</span>
+            </div>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">계약일</span>
+            <span class="detail-value">{{ selectedSeller.createdAt }}</span>
+          </div>
+        </div>
+      </template>
+
+      <template #footer>
+        <button class="ui-btn ui-btn--ghost" @click="closeSellerDetail">닫기</button>
+      </template>
+    </BaseModal>
+
   </AppLayout>
 </template>
 
@@ -438,5 +519,97 @@ function statusBadgeStyle(status) {
   height: 6px;
   border-radius: 50%;
   background: currentColor;
+}
+
+/* ── 셀러 상세 모달 ─────────────────────────────────────────────── */
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.detail-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--t3);
+  flex-shrink: 0;
+}
+
+.detail-brand-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.detail-brand-ko {
+  font-family: 'Barlow', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--t1);
+}
+
+.detail-brand-en {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: var(--t3);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 24px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-label {
+  font-family: 'Barlow', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.detail-value {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: var(--t1);
+}
+
+.detail-code {
+  font-family: 'IBM Plex Sans', monospace;
+  color: var(--blue);
+}
+
+.detail-email {
+  font-family: 'IBM Plex Sans', monospace;
+  font-size: 12px;
+  color: var(--t2);
+}
+
+.detail-wh-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
 }
 </style>

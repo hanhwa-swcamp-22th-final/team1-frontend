@@ -10,19 +10,23 @@
  * 데이터:   onMounted + watch(warehouseId) → fetchDetail (Promise.all 5개 병렬)
  * 창고전환: 헤더 wh-select 드롭다운 → router.push → warehouseId watch 트리거 → 재조회
  */
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
 import { ROUTE_NAMES, ORDER_STATUS } from '@/constants'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import {
   getWarehouseList,
   getWarehouseInventory,
   getWarehouseOutbound,
   getWarehouseOrders,
   getWarehouseLocations,
+  getSkuDetail,
+  getOrderDetail,
 } from '@/api/wms'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import BaseModal from '@/components/common/BaseModal.vue'
 
 const route  = useRoute()
 const router = useRouter()
@@ -43,6 +47,76 @@ const errorMsg        = ref('')
 
 // 드로어 열림 상태
 const drawerOpen = ref(false)
+
+// ── SKU 상세 모달 ─────────────────────────────────────────────────────────────
+const showSkuModal    = ref(false)
+const skuModalLoading = ref(false)
+const skuDetail       = ref(null)
+
+async function openSkuDetail(item) {
+  showSkuModal.value    = true
+  skuModalLoading.value = true
+  skuDetail.value       = null
+  try {
+    const res = await getSkuDetail(warehouseId.value, item.sku)
+    skuDetail.value = res.data.data
+  } catch (e) {
+    console.error('[WarehouseDetail] SKU detail error:', e)
+  } finally {
+    skuModalLoading.value = false
+  }
+}
+
+function closeSkuDetail() {
+  showSkuModal.value = false
+}
+
+// ── 주문 상세 모달 ────────────────────────────────────────────────────────────
+const showOrderModal    = ref(false)
+const orderModalLoading = ref(false)
+const orderDetail       = ref(null)
+
+async function openOrderDetail(orderId) {
+  showOrderModal.value    = true
+  orderModalLoading.value = true
+  orderDetail.value       = null
+  try {
+    const res = await getOrderDetail(warehouseId.value, orderId)
+    orderDetail.value = res.data.data
+  } catch (e) {
+    console.error('[WarehouseDetail] Order detail error:', e)
+  } finally {
+    orderModalLoading.value = false
+  }
+}
+
+function closeOrderDetail() {
+  showOrderModal.value = false
+}
+
+/** workStatus → 한글 레이블 + CSS 클래스 */
+function workStatusLabel(ws) {
+  const MAP = {
+    WAITING: '대기',
+    PICKING: '피킹 중',
+    PICKED:  '피킹 완료',
+    PACKING: '패킹 중',
+    PACKED:  '패킹 완료',
+    SHIPPED: '출고 완료',
+  }
+  return MAP[ws] ?? ws
+}
+function workStatusClass(ws) {
+  const MAP = {
+    WAITING: 'ws-waiting',
+    PICKING: 'ws-picking',
+    PICKED:  'ws-picked',
+    PACKING: 'ws-packing',
+    PACKED:  'ws-packed',
+    SHIPPED: 'ws-shipped',
+  }
+  return MAP[ws] ?? ''
+}
 
 // ── computed ─────────────────────────────────────────────────────────────────
 const currentOutbound = computed(() => outboundData.value[outboundTab.value] ?? [])
@@ -100,6 +174,38 @@ async function fetchDetail() {
 
 onMounted(fetchDetail)
 watch(warehouseId, fetchDetail)
+
+// ── 출고 처리 확인 다이얼로그 ─────────────────────────────────────────────────
+const confirmDialog = reactive({
+  open: false, title: '', message: '', danger: false, action: null,
+})
+
+function openConfirm(title, message, danger, action) {
+  Object.assign(confirmDialog, { open: true, title, message, danger, action })
+}
+
+async function onConfirmAction() {
+  if (confirmDialog.action) await confirmDialog.action()
+  confirmDialog.open = false
+}
+
+function onCancelConfirm() {
+  confirmDialog.open = false
+}
+
+function handleProcessOutbound(row) {
+  openConfirm(
+    '출고 처리',
+    `주문 ${row.orderId}을(를) 출고 완료로 처리하시겠습니까?`,
+    false,
+    () => {
+      // 로컬 상태 업데이트 (API stub)
+      const tabData = outboundData.value[outboundTab.value]
+      const target = tabData.find(r => r.orderId === row.orderId)
+      if (target) target.status = ORDER_STATUS.SHIPPED
+    },
+  )
+}
 
 // ── 헬퍼 ─────────────────────────────────────────────────────────────────────
 function binClass(state) {
@@ -285,7 +391,7 @@ function goToWarehouse(evt) {
             <table class="data-tbl">
               <thead>
                 <tr>
-                  <th>SKU 코드</th>
+                  <th>상품명</th>
                   <th class="col-num">가용</th>
                   <th class="col-num">할당</th>
                   <th class="col-num">총합</th>
@@ -293,7 +399,12 @@ function goToWarehouse(evt) {
               </thead>
               <tbody>
                 <tr v-for="item in inventory" :key="item.sku">
-                  <td><span class="sku-code">{{ item.sku }}</span></td>
+                  <td>
+                    <button class="product-name-btn" @click="openSkuDetail(item)">
+                      {{ item.productName }}
+                    </button>
+                    <div class="sku-code-sub">{{ item.sku }}</div>
+                  </td>
                   <td class="col-num">
                     <span :class="item.available < 15 ? 'num-low' : 'num-ok'">
                       {{ item.available }}
@@ -340,7 +451,11 @@ function goToWarehouse(evt) {
               </thead>
               <tbody>
                 <tr v-for="row in currentOutbound" :key="row.orderId">
-                  <td class="order-id">{{ row.orderId }}</td>
+                  <td>
+                    <button class="order-id-btn" @click="openOrderDetail(row.orderId)">
+                      {{ row.orderId }}
+                    </button>
+                  </td>
                   <td>{{ row.seller }}</td>
                   <td>
                     <StatusBadge :status="row.status" type="order" />
@@ -349,7 +464,7 @@ function goToWarehouse(evt) {
                     <button
                       v-if="row.status !== ORDER_STATUS.SHIPPED"
                       class="btn-action-sm"
-                      @click="() => {}"
+                      @click="handleProcessOutbound(row)"
                     >
                       처리
                     </button>
@@ -399,8 +514,15 @@ function goToWarehouse(evt) {
               </thead>
               <tbody>
                 <tr v-for="ord in orders" :key="ord.orderId">
-                  <td class="order-id">{{ ord.orderId }}</td>
-                  <td><span class="sku-code">{{ ord.sku }}</span></td>
+                  <td>
+                    <button class="order-id-btn" @click="openOrderDetail(ord.orderId)">
+                      {{ ord.orderId }}
+                    </button>
+                  </td>
+                  <td>
+                    <span class="product-name-cell">{{ ord.productName }}</span>
+                    <div class="sku-code-sub">{{ ord.sku }}</div>
+                  </td>
                   <td class="col-num">{{ ord.qty }}</td>
                   <td class="dest-cell">{{ ord.dest }}</td>
                   <td>
@@ -524,6 +646,290 @@ function goToWarehouse(evt) {
         </div><!-- /.location-drawer -->
       </Transition>
     </Teleport>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         SKU 상세 모달
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <BaseModal
+      :is-open="showSkuModal"
+      :title="skuDetail ? skuDetail.productName : 'SKU 상세'"
+      width="700px"
+      @cancel="closeSkuDetail"
+    >
+      <!-- 로딩 -->
+      <div v-if="skuModalLoading" class="sku-modal-loading">
+        <svg class="spin-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+        </svg>
+        데이터를 불러오는 중…
+      </div>
+
+      <!-- 상세 내용 -->
+      <div v-else-if="skuDetail" class="sku-detail">
+
+        <!-- ── 기본 정보 카드 ── -->
+        <div class="sku-info-card">
+          <div class="sku-info-row">
+            <div class="sku-info-item">
+              <span class="sku-info-label">SKU 코드</span>
+              <span class="sku-code">{{ skuDetail.sku }}</span>
+            </div>
+            <div class="sku-info-item">
+              <span class="sku-info-label">카테고리</span>
+              <span class="sku-category-tag">{{ skuDetail.category }}</span>
+            </div>
+            <div class="sku-info-item sku-info-item--locations">
+              <span class="sku-info-label">저장 위치</span>
+              <template v-if="skuDetail.locations && skuDetail.locations.length">
+                <span
+                  v-for="loc in skuDetail.locations"
+                  :key="loc.bin"
+                  class="location-tag"
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                  </svg>
+                  {{ loc.bin }}
+                  <span class="location-qty">({{ loc.qty }}개)</span>
+                </span>
+              </template>
+              <span v-else class="sku-no-location">위치 미지정</span>
+            </div>
+          </div>
+          <!-- 재고 수치 칩 -->
+          <div class="sku-stock-row" v-if="skuDetail.stock">
+            <div class="sku-stock-chip sku-stock-avail">
+              <span class="chip-label">가용</span>
+              <strong>{{ skuDetail.stock.available }}</strong>
+            </div>
+            <div class="sku-stock-chip sku-stock-alloc">
+              <span class="chip-label">할당</span>
+              <strong>{{ skuDetail.stock.allocated }}</strong>
+            </div>
+            <div class="sku-stock-chip sku-stock-total">
+              <span class="chip-label">합계</span>
+              <strong>{{ skuDetail.stock.total }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 재고 변동 이력 ── -->
+        <div class="sku-section">
+          <div class="sku-section-title">재고 변동 이력</div>
+          <table class="detail-tbl">
+            <thead>
+              <tr>
+                <th>일자</th>
+                <th>구분</th>
+                <th class="col-num">수량</th>
+                <th>사유</th>
+                <th>담당자</th>
+                <th class="col-num">잔여</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="h in skuDetail.changeHistory" :key="h.date + h.reason">
+                <td class="date-cell">{{ h.date }}</td>
+                <td>
+                  <span :class="['hist-type', 'hist-' + h.type.toLowerCase()]">
+                    {{ h.type === 'IN' ? '입고' : h.type === 'OUT' ? '출고' : '조정' }}
+                  </span>
+                </td>
+                <td class="col-num" :class="h.qty > 0 ? 'qty-in' : 'qty-out'">
+                  {{ h.qty > 0 ? '+' + h.qty : h.qty }}
+                </td>
+                <td class="reason-cell">{{ h.reason }}</td>
+                <td>{{ h.worker }}</td>
+                <td class="col-num num-total">{{ h.balanceAfter }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ── ASN 입고 이력 ── -->
+        <div class="sku-section">
+          <div class="sku-section-title">입고 이력 (ASN)</div>
+          <table class="detail-tbl">
+            <thead>
+              <tr>
+                <th>ASN ID</th>
+                <th>입고일</th>
+                <th class="col-num">예정 수량</th>
+                <th class="col-num">실입고</th>
+                <th>상태</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="a in skuDetail.asnHistory" :key="a.asnId">
+                <td class="order-id">{{ a.asnId }}</td>
+                <td class="date-cell">{{ a.date }}</td>
+                <td class="col-num">{{ a.plannedQty }}</td>
+                <td class="col-num" :class="a.actualQty < a.plannedQty ? 'qty-out' : 'num-ok'">
+                  {{ a.actualQty }}
+                </td>
+                <td><StatusBadge :status="a.status" type="asn" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ── 주문 출고 이력 ── -->
+        <div class="sku-section">
+          <div class="sku-section-title">주문 출고 이력</div>
+          <table class="detail-tbl">
+            <thead>
+              <tr>
+                <th>주문번호</th>
+                <th class="col-num">수량</th>
+                <th>배송지</th>
+                <th>상태</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="o in skuDetail.orderHistory" :key="o.orderId">
+                <td class="order-id">{{ o.orderId }}</td>
+                <td class="col-num">{{ o.qty }}</td>
+                <td class="dest-cell">{{ o.dest }}</td>
+                <td><StatusBadge :status="o.status" type="order" /></td>
+              </tr>
+              <tr v-if="!skuDetail.orderHistory.length">
+                <td colspan="4" class="empty-cell">주문 이력 없음</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div><!-- /.sku-detail -->
+
+      <template #footer>
+        <button class="ui-btn ui-btn--secondary" @click="closeSkuDetail">닫기</button>
+      </template>
+    </BaseModal>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         주문 상세 모달 (1주문 N SKU)
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <BaseModal
+      :is-open="showOrderModal"
+      :title="orderDetail ? orderDetail.orderId : '주문 상세'"
+      width="740px"
+      @cancel="closeOrderDetail"
+    >
+      <!-- 로딩 -->
+      <div v-if="orderModalLoading" class="sku-modal-loading">
+        <svg class="spin-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+        </svg>
+        데이터를 불러오는 중…
+      </div>
+
+      <!-- 주문 상세 내용 -->
+      <div v-else-if="orderDetail" class="sku-detail">
+
+        <!-- ── 주문 헤더 카드 ── -->
+        <div class="sku-info-card">
+          <div class="sku-info-row">
+            <div class="sku-info-item">
+              <span class="sku-info-label">주문 상태</span>
+              <StatusBadge :status="orderDetail.status" type="order" />
+            </div>
+            <div class="sku-info-item">
+              <span class="sku-info-label">채널</span>
+              <span class="sku-category-tag">{{ orderDetail.channel }}</span>
+            </div>
+            <div class="sku-info-item">
+              <span class="sku-info-label">주문일</span>
+              <span class="date-cell">{{ orderDetail.orderedAt }}</span>
+            </div>
+            <div class="sku-info-item">
+              <span class="sku-info-label">배송지</span>
+              <span class="dest-cell">{{ orderDetail.dest }}</span>
+            </div>
+          </div>
+
+          <!-- 셀러 정보 -->
+          <div class="order-seller-row">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span class="order-seller-name">{{ orderDetail.seller }}</span>
+            <span class="order-seller-code">{{ orderDetail.sellerCode }}</span>
+          </div>
+
+          <!-- SKU 총 수량 요약 -->
+          <div class="sku-stock-row">
+            <div class="sku-stock-chip sku-stock-avail">
+              <span class="chip-label">총 SKU</span>
+              <strong>{{ orderDetail.skuItems.length }}</strong>
+            </div>
+            <div class="sku-stock-chip sku-stock-total">
+              <span class="chip-label">총 수량</span>
+              <strong>{{ orderDetail.skuItems.reduce((s, i) => s + i.qty, 0) }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SKU별 출고 작업 내역 ── -->
+        <div class="sku-section">
+          <div class="sku-section-title">SKU별 출고 작업 현황</div>
+          <table class="detail-tbl">
+            <thead>
+              <tr>
+                <th>상품명</th>
+                <th>SKU 코드</th>
+                <th class="col-num">수량</th>
+                <th>로케이션</th>
+                <th>담당 작업자</th>
+                <th>작업 상태</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in orderDetail.skuItems" :key="item.sku">
+                <td>
+                  <span class="product-name-cell">{{ item.productName }}</span>
+                </td>
+                <td><span class="sku-code">{{ item.sku }}</span></td>
+                <td class="col-num num-total">{{ item.qty }}</td>
+                <td>
+                  <span v-if="item.location" class="location-tag location-tag--sm">
+                    {{ item.location }}
+                  </span>
+                  <span v-else class="sku-no-location">-</span>
+                </td>
+                <td>{{ item.worker }}</td>
+                <td>
+                  <span :class="['work-status-badge', workStatusClass(item.workStatus)]">
+                    {{ workStatusLabel(item.workStatus) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div><!-- /.sku-detail -->
+
+      <template #footer>
+        <button class="ui-btn ui-btn--secondary" @click="closeOrderDetail">닫기</button>
+      </template>
+    </BaseModal>
+
+    <!-- ── 출고 처리 확인 다이얼로그 ── -->
+    <ConfirmDialog
+      :is-open="confirmDialog.open"
+      :title="confirmDialog.title"
+      :message="confirmDialog.message"
+      :danger="confirmDialog.danger"
+      confirm-label="처리 완료"
+      @confirm="onConfirmAction"
+      @cancel="onCancelConfirm"
+    />
 
   </AppLayout>
 </template>
@@ -1138,6 +1544,298 @@ function goToWarehouse(evt) {
   border-color: var(--border);
   border-style: dashed;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   상품명 클릭 버튼 (재고 현황 패널)
+══════════════════════════════════════════════════════════════════════════ */
+.product-name-btn {
+  display: block;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue);
+  cursor: pointer;
+  transition: color .15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+.product-name-btn:hover {
+  color: color-mix(in srgb, var(--blue) 70%, #000);
+  text-decoration: underline;
+}
+.product-name-cell {
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--t1);
+}
+.sku-code-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--t4);
+  margin-top: 2px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SKU 상세 모달 내부 스타일
+══════════════════════════════════════════════════════════════════════════ */
+.sku-modal-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 0;
+  color: var(--t3);
+  font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+}
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.sku-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 기본 정보 카드 */
+.sku-info-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sku-info-row {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.sku-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.sku-info-label {
+  font-family: 'Barlow', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.sku-category-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(76, 116, 255, .1);
+  color: var(--blue);
+  font-family: 'Barlow', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+}
+.location-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  background: rgba(46, 204, 135, .1);
+  border: 1px solid rgba(46, 204, 135, .25);
+  color: var(--green);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+}
+.sku-no-location {
+  font-family: 'Barlow', sans-serif;
+  font-size: 12px;
+  color: var(--t4);
+  font-style: italic;
+}
+.sku-info-item--locations {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+.location-qty {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--green);
+  opacity: 0.75;
+}
+
+/* 재고 수치 칩 */
+.sku-stock-row {
+  display: flex;
+  gap: 10px;
+}
+.sku-stock-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+}
+.sku-stock-chip .chip-label {
+  font-size: 11px;
+  color: var(--t3);
+  font-weight: 500;
+}
+.sku-stock-chip strong {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+}
+.sku-stock-avail strong { color: var(--green); }
+.sku-stock-alloc strong { color: var(--amber); }
+.sku-stock-total strong { color: var(--t1); }
+
+/* 섹션 */
+.sku-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sku-section-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: .3px;
+  color: var(--t2);
+  text-transform: uppercase;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* 상세 테이블 (모달 내부) */
+.detail-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.detail-tbl th {
+  padding: 6px 10px;
+  background: var(--surface-2);
+  font-family: 'Barlow', sans-serif;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--t3);
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+.detail-tbl td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--t1);
+  vertical-align: middle;
+}
+.detail-tbl tr:last-child td { border-bottom: none; }
+.detail-tbl tr:hover td      { background: var(--surface-2); }
+
+/* 이력 구분 뱃지 */
+.hist-type {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  font-family: 'Barlow', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+}
+.hist-in     { background: rgba(46, 204, 135, .12); color: var(--green); }
+.hist-out    { background: rgba(239,  68,  68, .1);  color: var(--red); }
+.hist-adjust { background: rgba(245, 166,  35, .12); color: #B45309; }
+
+.qty-in   { color: var(--green); font-weight: 600; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; }
+.qty-out  { color: var(--red);   font-weight: 600; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; }
+
+.date-cell   { color: var(--t3); white-space: nowrap; font-size: 12px; }
+.reason-cell { color: var(--t2); max-width: 200px; }
+
+/* ── 주문번호 버튼 ──────────────────────────────────────────────────────────── */
+.order-id-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: #3B82F6;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color .15s;
+  white-space: nowrap;
+}
+.order-id-btn:hover {
+  color: color-mix(in srgb, #3B82F6 70%, #000);
+  text-decoration: underline;
+}
+
+/* ── 주문 상세 모달 — 셀러 행 ────────────────────────────────────────────── */
+.order-seller-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 0 4px;
+  border-top: 1px solid var(--border);
+  color: var(--t2);
+}
+.order-seller-name {
+  font-family: 'Barlow', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--t1);
+}
+.order-seller-code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--t4);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+/* ── 작은 location 태그 (모달 내부 테이블용) ─────────────────────────────── */
+.location-tag--sm {
+  font-size: 11px;
+  padding: 2px 7px;
+}
+
+/* ── workStatus 뱃지 ────────────────────────────────────────────────────── */
+.work-status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-family: 'Barlow', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ws-waiting { background: rgba(156, 163, 175, .15); color: var(--t3); }
+.ws-picking { background: rgba(59, 130, 246, .12);  color: #3B82F6; }
+.ws-picked  { background: rgba(99, 102, 241, .12);  color: #6366F1; }
+.ws-packing { background: rgba(245, 166, 35, .15);  color: #B45309; }
+.ws-packed  { background: rgba(245, 166, 35, .2);   color: #92400E; }
+.ws-shipped { background: rgba(46, 204, 135, .12);  color: var(--green); }
 
 /* ══════════════════════════════════════════════════════════════════════════
    드로어 전환 애니메이션

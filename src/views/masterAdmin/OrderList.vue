@@ -16,6 +16,7 @@ import { ORDER_STATUS } from '@/constants'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import BaseModal from '@/components/common/BaseModal.vue'
 
 // ── 브레드크럼 ────────────────────────────────────────────────────────────────
 const breadcrumb = [{ label: '입출고' }, { label: '주문 목록' }]
@@ -137,6 +138,19 @@ onMounted(fetchAll)
 function channelInfo(channel) {
   return CHANNEL_MAP[channel] ?? { label: channel, cls: 'ch-manual' }
 }
+
+// ── 주문 상세 모달 ────────────────────────────────────────────────────────────
+const showOrderDetail  = ref(false)
+const selectedOrder    = ref(null)
+
+function openOrderDetail(row) {
+  selectedOrder.value   = row
+  showOrderDetail.value = true
+}
+
+function closeOrderDetail() {
+  showOrderDetail.value = false
+}
 </script>
 
 <template>
@@ -206,7 +220,9 @@ function channelInfo(channel) {
       :loading="isLoading"
       :pagination="pagination"
       row-key="id"
+      clickable
       @page-change="page = $event"
+      @row-click="openOrderDetail"
     >
       <!-- 주문번호: 파란색 모노 스타일 -->
       <template #cell-id="{ value }">
@@ -238,6 +254,56 @@ function channelInfo(channel) {
         <StatusBadge :status="value" type="order" />
       </template>
     </BaseTable>
+    <!-- ── 주문 상세 모달 ── -->
+    <BaseModal
+      title="주문 상세 정보"
+      :is-open="showOrderDetail"
+      width="580px"
+      :hide-footer="true"
+      @cancel="closeOrderDetail"
+    >
+      <template v-if="selectedOrder">
+        <div class="detail-header">
+          <span class="detail-order-id">{{ selectedOrder.id }}</span>
+          <span :class="['channel-badge', channelInfo(selectedOrder.channel).cls]">
+            {{ channelInfo(selectedOrder.channel).label }}
+          </span>
+          <StatusBadge :status="selectedOrder.status" type="order" />
+        </div>
+
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">셀러사</span>
+            <span class="detail-value">{{ selectedOrder.company }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">배송 창고</span>
+            <span class="detail-value">{{ selectedOrder.warehouse }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">배송지(주)</span>
+            <span class="detail-value">{{ selectedOrder.destState }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">SKU 수</span>
+            <span class="detail-value">{{ selectedOrder.skuCount }} SKU</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">총 수량</span>
+            <span class="detail-value">{{ selectedOrder.qty?.toLocaleString() }} EA</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">주문일</span>
+            <span class="detail-value">{{ selectedOrder.orderedAt }}</span>
+          </div>
+        </div>
+      </template>
+
+      <template #footer>
+        <button class="ui-btn ui-btn--ghost" @click="closeOrderDetail">닫기</button>
+      </template>
+    </BaseModal>
+
   </AppLayout>
 </template>
 
@@ -398,5 +464,50 @@ function channelInfo(channel) {
   font-size: 12px;
   color: var(--t3);
   white-space: nowrap;
+}
+
+/* ── 주문 상세 모달 ─────────────────────────────────────────────── */
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.detail-order-id {
+  font-family: 'IBM Plex Sans', monospace;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--blue);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 24px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-label {
+  font-family: 'Barlow', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.detail-value {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: var(--t1);
 }
 </style>

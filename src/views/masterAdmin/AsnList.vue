@@ -16,6 +16,7 @@ import { ASN_STATUS } from '@/constants'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import BaseModal from '@/components/common/BaseModal.vue'
 
 // ── 브레드크럼 ────────────────────────────────────────────────────────────────
 const breadcrumb = [{ label: '입출고' }, { label: 'ASN 목록' }]
@@ -121,6 +122,19 @@ function tabCountStyle(tab) {
   return { background: tab.color.border, color: '#fff' }
 }
 
+// ── ASN 상세 모달 ─────────────────────────────────────────────────────────────
+const showAsnDetail = ref(false)
+const selectedAsn   = ref(null)
+
+function openAsnDetail(row) {
+  selectedAsn.value  = row
+  showAsnDetail.value = true
+}
+
+function closeAsnDetail() {
+  showAsnDetail.value = false
+}
+
 // ── 유틸 ─────────────────────────────────────────────────────────────────────
 /** 예정 입고일이 오늘(2026-03-17) 이후면 true → 골드 강조 */
 function isUpcoming(date) { return date >= '2026-03-17' }
@@ -187,7 +201,9 @@ function isUpcoming(date) { return date >= '2026-03-17' }
       :loading="isLoading"
       :pagination="pagination"
       row-key="id"
+      clickable
       @page-change="page = $event"
+      @row-click="openAsnDetail"
     >
       <!-- ASN 번호: 파란색 모노 스타일 -->
       <template #cell-id="{ value }">
@@ -219,6 +235,71 @@ function isUpcoming(date) { return date >= '2026-03-17' }
         <StatusBadge :status="value" type="asn" />
       </template>
     </BaseTable>
+    <!-- ── ASN 상세 모달 ── -->
+    <BaseModal
+      title="ASN 상세 정보"
+      :is-open="showAsnDetail"
+      width="640px"
+      :hide-footer="true"
+      @cancel="closeAsnDetail"
+    >
+      <template v-if="selectedAsn">
+        <!-- 헤더 정보 -->
+        <div class="detail-header">
+          <span class="detail-asn-id">{{ selectedAsn.id }}</span>
+          <StatusBadge :status="selectedAsn.status" type="asn" />
+        </div>
+
+        <!-- 기본 정보 그리드 -->
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">셀러사</span>
+            <span class="detail-value">{{ selectedAsn.company }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">담당자</span>
+            <span class="detail-value">{{ selectedAsn.seller }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">입고 창고</span>
+            <span class="detail-value">{{ selectedAsn.warehouse }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">SKU 수</span>
+            <span class="detail-value">{{ selectedAsn.skuCount }} SKU</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">예정 수량</span>
+            <span class="detail-value">{{ selectedAsn.plannedQty?.toLocaleString() }} EA</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">실수령 수량</span>
+            <span class="detail-value" :class="{ 'detail-null': !selectedAsn.actualQty }">
+              {{ selectedAsn.actualQty != null ? selectedAsn.actualQty.toLocaleString() + ' EA' : '미입고' }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">SKU 내용</span>
+            <span class="detail-value">{{ selectedAsn.sku }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">예정 입고일</span>
+            <span class="detail-value" :class="{ 'detail-upcoming': isUpcoming(selectedAsn.expectedDate) }">
+              {{ selectedAsn.expectedDate }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">등록일</span>
+            <span class="detail-value">{{ selectedAsn.registeredDate }}</span>
+          </div>
+        </div>
+      </template>
+
+      <template #footer>
+        <button class="ui-btn ui-btn--ghost" @click="closeAsnDetail">닫기</button>
+      </template>
+    </BaseModal>
+
   </AppLayout>
 </template>
 
@@ -365,4 +446,51 @@ function isUpcoming(date) { return date >= '2026-03-17' }
   color: var(--t3);
   white-space: nowrap;
 }
+
+/* ── ASN 상세 모달 ──────────────────────────────────────────────── */
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-asn-id {
+  font-family: 'IBM Plex Sans', monospace;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--blue);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 24px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-label {
+  font-family: 'Barlow', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.detail-value {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: var(--t1);
+}
+
+.detail-null   { color: var(--t4); font-style: italic; }
+.detail-upcoming { color: var(--gold); font-weight: 600; }
 </style>

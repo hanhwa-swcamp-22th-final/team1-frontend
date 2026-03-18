@@ -337,6 +337,218 @@
     { "id": 26, "warehouseId": 3, "orderId": "ORD-2026-05109", "sku": "KR-PETS-003", "qty":  60, "dest": "Buffalo, NY",        "status": "SHIPPED",        "worker": "작업자 G" }
   ],
 
+  "warehouse_order_detail": [
+    {
+      "orderId": "ORD-2026-03810", "warehouseId": 1, "seller": "한국미용상사",   "sellerCode": "CUS-0001",
+      "dest": "Los Angeles, CA",    "channel": "Amazon", "status": "SHIPPED",        "orderedAt": "2026-03-15",
+      "skuItems": [
+        { "sku": "KR-MASK-001", "qty": 50, "location": "A-01-01", "worker": "작업자 A", "workStatus": "SHIPPED" },
+        { "sku": "KR-BEAU-089", "qty": 20, "location": "A-03-01", "worker": "작업자 D", "workStatus": "SHIPPED" },
+        { "sku": "KR-HOME-056", "qty": 15, "location": "C-01-01", "worker": "작업자 B", "workStatus": "SHIPPED" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-03811", "warehouseId": 1, "seller": "서울식품코리아", "sellerCode": "CUS-0002",
+      "dest": "San Francisco, CA",  "channel": "Amazon", "status": "PREPARING_ITEM", "orderedAt": "2026-03-17",
+      "skuItems": [
+        { "sku": "KR-SNCK-012", "qty": 30, "location": "A-01-02", "worker": "작업자 B", "workStatus": "PICKING" },
+        { "sku": "KR-FOOD-007", "qty": 20, "location": "B-01-01", "worker": "작업자 B", "workStatus": "WAITING" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-03812", "warehouseId": 1, "seller": "K뷰티글로벌",   "sellerCode": "CUS-0003",
+      "dest": "San Diego, CA",      "channel": "Shopify","status": "PREPARING_ITEM", "orderedAt": "2026-03-17",
+      "skuItems": [
+        { "sku": "KR-COSM-034", "qty": 10, "location": "A-02-01", "worker": "작업자 C", "workStatus": "PICKING" },
+        { "sku": "KR-MASK-001", "qty": 20, "location": "A-01-01", "worker": "작업자 C", "workStatus": "WAITING" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-03813", "warehouseId": 1, "seller": "한국미용상사",   "sellerCode": "CUS-0001",
+      "dest": "Phoenix, AZ",        "channel": "Amazon", "status": "CONFIRMED",      "orderedAt": "2026-03-18",
+      "skuItems": [
+        { "sku": "KR-FOOD-007", "qty": 80, "location": "B-01-01", "worker": "-", "workStatus": "WAITING" },
+        { "sku": "KR-SNCK-012", "qty": 40, "location": "A-01-02", "worker": "-", "workStatus": "WAITING" },
+        { "sku": "KR-KIDS-044", "qty": 10, "location": "A-01-03", "worker": "-", "workStatus": "WAITING" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-03814", "warehouseId": 1, "seller": "서울식품코리아", "sellerCode": "CUS-0002",
+      "dest": "Las Vegas, NV",      "channel": "Amazon", "status": "SHIPPED",        "orderedAt": "2026-03-14",
+      "skuItems": [
+        { "sku": "KR-BEAU-089", "qty": 20, "location": "A-03-01", "worker": "작업자 D", "workStatus": "SHIPPED" },
+        { "sku": "KR-HOME-056", "qty": 15, "location": "C-01-01", "worker": "작업자 D", "workStatus": "SHIPPED" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-03815", "warehouseId": 1, "seller": "K뷰티글로벌",   "sellerCode": "CUS-0003",
+      "dest": "Portland, OR",       "channel": "Coupang","status": "PREPARING_ITEM", "orderedAt": "2026-03-17",
+      "skuItems": [
+        { "sku": "KR-ELEC-021", "qty":  5, "location": "A-04-01", "worker": "작업자 A", "workStatus": "PICKING" },
+        { "sku": "KR-BEAU-089", "qty": 10, "location": "A-03-01", "worker": "작업자 A", "workStatus": "WAITING" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-03816", "warehouseId": 1, "seller": "한국스포츠",     "sellerCode": "CUS-0004",
+      "dest": "Seattle, WA",        "channel": "Amazon", "status": "SHIPPED",        "orderedAt": "2026-03-13",
+      "skuItems": [
+        { "sku": "KR-HOME-056", "qty": 40, "location": "C-01-01", "worker": "작업자 B", "workStatus": "SHIPPED" },
+        { "sku": "KR-SPRT-018", "qty": 30, "location": "A-02-02", "worker": "작업자 B", "workStatus": "SHIPPED" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-03817", "warehouseId": 1, "seller": "한국미용상사",   "sellerCode": "CUS-0001",
+      "dest": "Denver, CO",         "channel": "Shopify","status": "PREPARING_ITEM", "orderedAt": "2026-03-17",
+      "skuItems": [
+        { "sku": "KR-PETS-003", "qty": 70, "location": "A-05-01", "worker": "작업자 C", "workStatus": "PICKING" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-03818", "warehouseId": 1, "seller": "서울식품코리아", "sellerCode": "CUS-0002",
+      "dest": "Salt Lake City, UT", "channel": "Amazon", "status": "CONFIRMED",      "orderedAt": "2026-03-18",
+      "skuItems": [
+        { "sku": "KR-KIDS-044", "qty": 25, "location": "A-01-03", "worker": "-", "workStatus": "WAITING" },
+        { "sku": "KR-FOOD-007", "qty": 30, "location": "B-01-01", "worker": "-", "workStatus": "WAITING" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-03819", "warehouseId": 1, "seller": "K뷰티글로벌",   "sellerCode": "CUS-0003",
+      "dest": "Tucson, AZ",         "channel": "Amazon", "status": "SHIPPED",        "orderedAt": "2026-03-16",
+      "skuItems": [
+        { "sku": "KR-SPRT-018", "qty": 48, "location": "A-02-02", "worker": "작업자 D", "workStatus": "SHIPPED" },
+        { "sku": "KR-MASK-001", "qty": 20, "location": "A-01-01", "worker": "작업자 D", "workStatus": "SHIPPED" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-04201", "warehouseId": 2, "seller": "드림푸드",       "sellerCode": "CUS-0005",
+      "dest": "Dallas, TX",         "channel": "Amazon", "status": "SHIPPED",        "orderedAt": "2026-03-14",
+      "skuItems": [
+        { "sku": "KR-FOOD-007", "qty": 100, "location": "A-01-01", "worker": "작업자 E", "workStatus": "SHIPPED" },
+        { "sku": "KR-SNCK-012", "qty":  30, "location": "A-01-02", "worker": "작업자 E", "workStatus": "SHIPPED" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-04202", "warehouseId": 2, "seller": "텍사스K마트",    "sellerCode": "CUS-0006",
+      "dest": "Houston, TX",        "channel": "Shopify","status": "PREPARING_ITEM", "orderedAt": "2026-03-17",
+      "skuItems": [
+        { "sku": "KR-SNCK-012", "qty": 60, "location": "A-01-02", "worker": "작업자 F", "workStatus": "PICKING" },
+        { "sku": "KR-BEAU-089", "qty": 15, "location": "A-02-01", "worker": "작업자 F", "workStatus": "WAITING" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-04203", "warehouseId": 2, "seller": "드림푸드",       "sellerCode": "CUS-0005",
+      "dest": "Austin, TX",         "channel": "Amazon", "status": "CONFIRMED",      "orderedAt": "2026-03-18",
+      "skuItems": [
+        { "sku": "KR-BEAU-089", "qty": 20, "location": "A-02-01", "worker": "-", "workStatus": "WAITING" },
+        { "sku": "KR-HOME-056", "qty": 25, "location": "A-02-02", "worker": "-", "workStatus": "WAITING" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-04204", "warehouseId": 2, "seller": "한국홈리빙",     "sellerCode": "CUS-0007",
+      "dest": "San Antonio, TX",    "channel": "Amazon", "status": "PREPARING_ITEM", "orderedAt": "2026-03-17",
+      "skuItems": [
+        { "sku": "KR-HOME-056", "qty": 35, "location": "A-02-02", "worker": "작업자 E", "workStatus": "PICKING" },
+        { "sku": "KR-PETS-003", "qty": 20, "location": "A-03-01", "worker": "작업자 E", "workStatus": "WAITING" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-04205", "warehouseId": 2, "seller": "텍사스K마트",    "sellerCode": "CUS-0006",
+      "dest": "Fort Worth, TX",     "channel": "Amazon", "status": "SHIPPED",        "orderedAt": "2026-03-13",
+      "skuItems": [
+        { "sku": "KR-PETS-003", "qty": 55, "location": "A-03-01", "worker": "작업자 F", "workStatus": "SHIPPED" },
+        { "sku": "KR-KIDS-044", "qty": 15, "location": "A-04-01", "worker": "작업자 F", "workStatus": "SHIPPED" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-04206", "warehouseId": 2, "seller": "드림푸드",       "sellerCode": "CUS-0005",
+      "dest": "Oklahoma City, OK",  "channel": "Coupang","status": "SHIPPED",        "orderedAt": "2026-03-15",
+      "skuItems": [
+        { "sku": "KR-SPRT-018", "qty": 40, "location": "B-01-01", "worker": "작업자 E", "workStatus": "SHIPPED" },
+        { "sku": "KR-MASK-001", "qty": 15, "location": "B-02-01", "worker": "작업자 E", "workStatus": "SHIPPED" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-04207", "warehouseId": 2, "seller": "한국홈리빙",     "sellerCode": "CUS-0007",
+      "dest": "New Orleans, LA",    "channel": "Amazon", "status": "CONFIRMED",      "orderedAt": "2026-03-18",
+      "skuItems": [
+        { "sku": "KR-MASK-001", "qty": 30, "location": "B-02-01", "worker": "-", "workStatus": "WAITING" },
+        { "sku": "KR-HOME-056", "qty": 20, "location": "A-02-02", "worker": "-", "workStatus": "WAITING" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-05101", "warehouseId": 3, "seller": "NY코리아몰",     "sellerCode": "CUS-0008",
+      "dest": "New York, NY",       "channel": "Amazon", "status": "PENDING",        "orderedAt": "2026-03-18",
+      "skuItems": [
+        { "sku": "KR-COSM-034", "qty": 6, "location": "A-01-01", "worker": "작업자 G", "workStatus": "WAITING" },
+        { "sku": "KR-ELEC-021", "qty": 4, "location": "A-01-02", "worker": "작업자 G", "workStatus": "WAITING" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-05102", "warehouseId": 3, "seller": "이스트K뷰티",   "sellerCode": "CUS-0009",
+      "dest": "Newark, NJ",         "channel": "Shopify","status": "CONFIRMED",      "orderedAt": "2026-03-18",
+      "skuItems": [
+        { "sku": "KR-ELEC-021", "qty": 3, "location": "A-01-02", "worker": "-", "workStatus": "WAITING" },
+        { "sku": "KR-COSM-034", "qty": 5, "location": "A-01-01", "worker": "-", "workStatus": "WAITING" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-05103", "warehouseId": 3, "seller": "NY코리아몰",     "sellerCode": "CUS-0008",
+      "dest": "Jersey City, NJ",    "channel": "Amazon", "status": "PREPARING_ITEM", "orderedAt": "2026-03-17",
+      "skuItems": [
+        { "sku": "KR-HBAL-062", "qty":  9, "location": "A-02-01", "worker": "작업자 H", "workStatus": "PICKING" },
+        { "sku": "KR-MASK-001", "qty": 20, "location": "A-02-02", "worker": "작업자 H", "workStatus": "WAITING" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-05104", "warehouseId": 3, "seller": "뉴저지한국마트", "sellerCode": "CUS-0010",
+      "dest": "Brooklyn, NY",       "channel": "Amazon", "status": "PENDING",        "orderedAt": "2026-03-18",
+      "skuItems": [
+        { "sku": "KR-MASK-001", "qty": 90, "location": "A-02-02", "worker": "작업자 G", "workStatus": "WAITING" },
+        { "sku": "KR-SNCK-012", "qty": 30, "location": "B-01-01", "worker": "작업자 G", "workStatus": "WAITING" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-05105", "warehouseId": 3, "seller": "NY코리아몰",     "sellerCode": "CUS-0008",
+      "dest": "Queens, NY",         "channel": "Coupang","status": "PREPARING_ITEM", "orderedAt": "2026-03-17",
+      "skuItems": [
+        { "sku": "KR-SNCK-012", "qty": 50, "location": "B-01-01", "worker": "작업자 H", "workStatus": "PICKING" },
+        { "sku": "KR-FOOD-007", "qty": 40, "location": "B-02-01", "worker": "작업자 H", "workStatus": "WAITING" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-05106", "warehouseId": 3, "seller": "이스트K뷰티",   "sellerCode": "CUS-0009",
+      "dest": "Bronx, NY",          "channel": "Amazon", "status": "SHIPPED",        "orderedAt": "2026-03-14",
+      "skuItems": [
+        { "sku": "KR-FOOD-007", "qty": 120, "location": "B-02-01", "worker": "작업자 G", "workStatus": "SHIPPED" },
+        { "sku": "KR-HBAL-062", "qty":  20, "location": "A-02-01", "worker": "작업자 G", "workStatus": "SHIPPED" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-05107", "warehouseId": 3, "seller": "NY코리아몰",     "sellerCode": "CUS-0008",
+      "dest": "Staten Island, NY",  "channel": "Shopify","status": "CONFIRMED",      "orderedAt": "2026-03-18",
+      "skuItems": [
+        { "sku": "KR-BEAU-089", "qty": 25, "location": "A-03-01", "worker": "-", "workStatus": "WAITING" },
+        { "sku": "KR-HOME-056", "qty": 15, "location": "A-03-02", "worker": "-", "workStatus": "WAITING" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-05108", "warehouseId": 3, "seller": "뉴저지한국마트", "sellerCode": "CUS-0010",
+      "dest": "Yonkers, NY",        "channel": "Amazon", "status": "PREPARING_ITEM", "orderedAt": "2026-03-17",
+      "skuItems": [
+        { "sku": "KR-HOME-056", "qty": 40, "location": "A-03-02", "worker": "작업자 H", "workStatus": "PICKING" },
+        { "sku": "KR-PETS-003", "qty": 25, "location": "A-04-01", "worker": "작업자 H", "workStatus": "WAITING" }
+      ]
+    },
+    {
+      "orderId": "ORD-2026-05109", "warehouseId": 3, "seller": "NY코리아몰",     "sellerCode": "CUS-0008",
+      "dest": "Buffalo, NY",        "channel": "Amazon", "status": "SHIPPED",        "orderedAt": "2026-03-15",
+      "skuItems": [
+        { "sku": "KR-PETS-003", "qty": 60, "location": "A-04-01", "worker": "작업자 G", "workStatus": "SHIPPED" },
+        { "sku": "KR-BOOK-091", "qty": 15, "location": "A-04-02", "worker": "작업자 G", "workStatus": "SHIPPED" }
+      ]
+    }
+  ],
+
   "warehouse_zones": [
     { "id": 1, "warehouseId": 1, "zone": "A", "label": "Zone A — 일반보관 구역", "utilPct": 60, "available": 12, "total": 30,
       "racks": [
@@ -605,6 +817,151 @@
     { "id": 13, "name": "정수진",   "email": "jung.sj@dreamfood.com",      "role": "SELLER",     "accountStatus": "ACTIVE",        "warehouse": null, "warehouseId": null, "seller": "드림푸드",       "sellerId": 5,  "workerCode": null,       "createdAt": "2026-02-05", "lastLogin": "2026-03-15 09:33" },
     { "id": 14, "name": "신예지",   "email": "shin.yj@khomeliving.com",    "role": "SELLER",     "accountStatus": "TEMP_PASSWORD", "warehouse": null, "warehouseId": null, "seller": "한국홈리빙",     "sellerId": 7,  "workerCode": null,       "createdAt": "2026-02-20", "lastLogin": "-" },
     { "id": 15, "name": "윤지훈",   "email": "yoon.jh@njkm.com",           "role": "SELLER",     "accountStatus": "INACTIVE",      "warehouse": null, "warehouseId": null, "seller": "뉴저지한국마트", "sellerId": 10, "workerCode": null,       "createdAt": "2026-03-05", "lastLogin": "2026-03-10 13:44" }
+  ],
+
+  "sku_catalog": [
+    { "id": 1,  "sku": "KR-MASK-001", "productName": "한국 마스크팩 SET",       "category": "뷰티"    },
+    { "id": 2,  "sku": "KR-SNCK-012", "productName": "한국 스낵 세트",           "category": "식품"    },
+    { "id": 3,  "sku": "KR-COSM-034", "productName": "K뷰티 코스메틱 키트",     "category": "뷰티"    },
+    { "id": 4,  "sku": "KR-FOOD-007", "productName": "한국 간편식품 세트",       "category": "식품"    },
+    { "id": 5,  "sku": "KR-BEAU-089", "productName": "K뷰티 기초화장품 세트",   "category": "뷰티"    },
+    { "id": 6,  "sku": "KR-ELEC-021", "productName": "한국 소형가전 패키지",     "category": "전자"    },
+    { "id": 7,  "sku": "KR-HOME-056", "productName": "한국 홈리빙 소품 세트",   "category": "홈"      },
+    { "id": 8,  "sku": "KR-PETS-003", "productName": "K펫 반려동물 용품",        "category": "반려동물" },
+    { "id": 9,  "sku": "KR-KIDS-044", "productName": "K키즈 아동용품 세트",      "category": "유아"    },
+    { "id": 10, "sku": "KR-SPRT-018", "productName": "한국 스포츠웨어 패키지",   "category": "스포츠"  },
+    { "id": 11, "sku": "KR-HBAL-062", "productName": "한국 건강기능식품",         "category": "건강"    },
+    { "id": 12, "sku": "KR-BOOK-091", "productName": "K컬처 도서/굿즈",          "category": "문화"    }
+  ],
+
+  "sku_locations": [
+    { "id": 1,  "warehouseId": 1, "sku": "KR-MASK-001", "bins": [
+        { "zone": "A", "rack": "A-01", "bin": "A-01-01", "qty": 200 },
+        { "zone": "A", "rack": "A-01", "bin": "A-01-04", "qty": 150 }
+      ]
+    },
+    { "id": 2,  "warehouseId": 1, "sku": "KR-SNCK-012", "bins": [
+        { "zone": "A", "rack": "A-01", "bin": "A-01-02", "qty": 185 }
+      ]
+    },
+    { "id": 3,  "warehouseId": 1, "sku": "KR-COSM-034", "bins": [
+        { "zone": "A", "rack": "A-02", "bin": "A-02-01", "qty": 12 }
+      ]
+    },
+    { "id": 4,  "warehouseId": 1, "sku": "KR-FOOD-007", "bins": [
+        { "zone": "B", "rack": "B-01", "bin": "B-01-01", "qty": 400 },
+        { "zone": "B", "rack": "B-01", "bin": "B-01-03", "qty": 300 }
+      ]
+    },
+    { "id": 5,  "warehouseId": 1, "sku": "KR-BEAU-089", "bins": [
+        { "zone": "A", "rack": "A-03", "bin": "A-03-01", "qty": 100 }
+      ]
+    },
+    { "id": 6,  "warehouseId": 1, "sku": "KR-ELEC-021", "bins": [
+        { "zone": "A", "rack": "A-04", "bin": "A-04-01", "qty": 7 }
+      ]
+    },
+    { "id": 7,  "warehouseId": 1, "sku": "KR-HOME-056", "bins": [
+        { "zone": "C", "rack": "C-01", "bin": "C-01-01", "qty": 150 },
+        { "zone": "C", "rack": "C-01", "bin": "C-01-02", "qty": 100 }
+      ]
+    },
+    { "id": 8,  "warehouseId": 1, "sku": "KR-PETS-003", "bins": [
+        { "zone": "A", "rack": "A-05", "bin": "A-05-01", "qty": 300 },
+        { "zone": "A", "rack": "A-05", "bin": "A-05-02", "qty": 200 }
+      ]
+    },
+    { "id": 9,  "warehouseId": 1, "sku": "KR-KIDS-044", "bins": [
+        { "zone": "A", "rack": "A-01", "bin": "A-01-03", "qty": 100 }
+      ]
+    },
+    { "id": 10, "warehouseId": 1, "sku": "KR-SPRT-018", "bins": [
+        { "zone": "A", "rack": "A-02", "bin": "A-02-02", "qty": 200 },
+        { "zone": "A", "rack": "A-02", "bin": "A-02-03", "qty": 150 }
+      ]
+    },
+    { "id": 11, "warehouseId": 1, "sku": "KR-HBAL-062", "bins": [
+        { "zone": "B", "rack": "B-02", "bin": "B-02-01", "qty": 180 }
+      ]
+    },
+    { "id": 12, "warehouseId": 1, "sku": "KR-BOOK-091", "bins": [
+        { "zone": "A", "rack": "A-03", "bin": "A-03-02", "qty": 80 }
+      ]
+    },
+    { "id": 13, "warehouseId": 2, "sku": "KR-FOOD-007", "bins": [
+        { "zone": "A", "rack": "A-01", "bin": "A-01-01", "qty": 400 }
+      ]
+    },
+    { "id": 14, "warehouseId": 2, "sku": "KR-SNCK-012", "bins": [
+        { "zone": "A", "rack": "A-01", "bin": "A-01-02", "qty": 200 }
+      ]
+    },
+    { "id": 15, "warehouseId": 2, "sku": "KR-BEAU-089", "bins": [
+        { "zone": "A", "rack": "A-02", "bin": "A-02-01", "qty": 100 }
+      ]
+    },
+    { "id": 16, "warehouseId": 2, "sku": "KR-HOME-056", "bins": [
+        { "zone": "A", "rack": "A-02", "bin": "A-02-02", "qty": 200 }
+      ]
+    },
+    { "id": 17, "warehouseId": 2, "sku": "KR-PETS-003", "bins": [
+        { "zone": "A", "rack": "A-03", "bin": "A-03-01", "qty": 250 }
+      ]
+    },
+    { "id": 18, "warehouseId": 2, "sku": "KR-KIDS-044", "bins": [
+        { "zone": "A", "rack": "A-04", "bin": "A-04-01", "qty": 20 }
+      ]
+    },
+    { "id": 19, "warehouseId": 2, "sku": "KR-SPRT-018", "bins": [
+        { "zone": "B", "rack": "B-01", "bin": "B-01-01", "qty": 150 }
+      ]
+    },
+    { "id": 20, "warehouseId": 2, "sku": "KR-MASK-001", "bins": [
+        { "zone": "B", "rack": "B-02", "bin": "B-02-01", "qty": 200 },
+        { "zone": "B", "rack": "B-02", "bin": "B-02-02", "qty": 100 }
+      ]
+    },
+    { "id": 21, "warehouseId": 3, "sku": "KR-COSM-034", "bins": [
+        { "zone": "A", "rack": "A-01", "bin": "A-01-01", "qty": 10 }
+      ]
+    },
+    { "id": 22, "warehouseId": 3, "sku": "KR-ELEC-021", "bins": [
+        { "zone": "A", "rack": "A-01", "bin": "A-01-02", "qty": 5 }
+      ]
+    },
+    { "id": 23, "warehouseId": 3, "sku": "KR-HBAL-062", "bins": [
+        { "zone": "A", "rack": "A-02", "bin": "A-02-01", "qty": 15 }
+      ]
+    },
+    { "id": 24, "warehouseId": 3, "sku": "KR-MASK-001", "bins": [
+        { "zone": "A", "rack": "A-02", "bin": "A-02-02", "qty": 300 },
+        { "zone": "A", "rack": "A-02", "bin": "A-02-03", "qty": 200 }
+      ]
+    },
+    { "id": 25, "warehouseId": 3, "sku": "KR-SNCK-012", "bins": [
+        { "zone": "B", "rack": "B-01", "bin": "B-01-01", "qty": 300 }
+      ]
+    },
+    { "id": 26, "warehouseId": 3, "sku": "KR-FOOD-007", "bins": [
+        { "zone": "B", "rack": "B-02", "bin": "B-02-01", "qty": 500 }
+      ]
+    },
+    { "id": 27, "warehouseId": 3, "sku": "KR-BEAU-089", "bins": [
+        { "zone": "A", "rack": "A-03", "bin": "A-03-01", "qty": 100 }
+      ]
+    },
+    { "id": 28, "warehouseId": 3, "sku": "KR-HOME-056", "bins": [
+        { "zone": "A", "rack": "A-03", "bin": "A-03-02", "qty": 150 }
+      ]
+    },
+    { "id": 29, "warehouseId": 3, "sku": "KR-PETS-003", "bins": [
+        { "zone": "A", "rack": "A-04", "bin": "A-04-01", "qty": 400 }
+      ]
+    },
+    { "id": 30, "warehouseId": 3, "sku": "KR-BOOK-091", "bins": [
+        { "zone": "A", "rack": "A-04", "bin": "A-04-02", "qty": 15 }
+      ]
+    }
   ],
 
   "fee_settings": {

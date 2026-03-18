@@ -9,12 +9,13 @@
  * 탭 색상:
  *   탭 클릭 시 상태에 맞는 색상으로 변경 (AsnList.vue 패턴 동일)
  */
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getUserList, resetUserPassword, deactivateUser, reactivateUser, inviteAccount } from '@/api/member'
 import { ROUTE_NAMES, ACCOUNT_STATUS } from '@/constants'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 
 const breadcrumb = [{ label: '사용자 관리' }, { label: '소속 사용자 목록' }]
 const router = useRouter()
@@ -131,13 +132,20 @@ async function fetchAll() {
 }
 
 // ── 액션 ─────────────────────────────────────────────────────────────────────
-async function handleResetPassword(userId) {
-  try {
-    await resetUserPassword(userId)
-    await fetchAll()
-  } catch (e) {
-    console.error('[UserList] resetPassword error:', e)
-  }
+function handleResetPassword(user) {
+  openConfirm(
+    'PW 초기화',
+    `${user.name}의 비밀번호를 초기화하시겠습니까?`,
+    true,
+    async () => {
+      try {
+        await resetUserPassword(user.id)
+        await fetchAll()
+      } catch (e) {
+        console.error('[UserList] resetPassword error:', e)
+      }
+    },
+  )
 }
 
 async function handleResendInvite(row) {
@@ -153,25 +161,57 @@ async function handleResendInvite(row) {
   }
 }
 
-async function handleDeactivate(userId) {
-  try {
-    await deactivateUser(userId)
-    await fetchAll()
-  } catch (e) {
-    console.error('[UserList] deactivate error:', e)
-  }
+function handleDeactivate(user) {
+  openConfirm(
+    '계정 비활성화',
+    `${user.name} 계정을 비활성화하시겠습니까?`,
+    true,
+    async () => {
+      try {
+        await deactivateUser(user.id)
+        await fetchAll()
+      } catch (e) {
+        console.error('[UserList] deactivate error:', e)
+      }
+    },
+  )
 }
 
-async function handleReactivate(userId) {
-  try {
-    await reactivateUser(userId)
-    await fetchAll()
-  } catch (e) {
-    console.error('[UserList] reactivate error:', e)
-  }
+function handleReactivate(user) {
+  openConfirm(
+    '계정 재활성화',
+    `${user.name} 계정을 다시 활성화하시겠습니까?`,
+    false,
+    async () => {
+      try {
+        await reactivateUser(user.id)
+        await fetchAll()
+      } catch (e) {
+        console.error('[UserList] reactivate error:', e)
+      }
+    },
+  )
 }
 
 onMounted(fetchAll)
+
+// ── 확인 다이얼로그 ───────────────────────────────────────────────────────────
+const confirmDialog = reactive({
+  open: false, title: '', message: '', danger: false, action: null,
+})
+
+function openConfirm(title, message, danger, action) {
+  Object.assign(confirmDialog, { open: true, title, message, danger, action })
+}
+
+async function onConfirmAction() {
+  if (confirmDialog.action) await confirmDialog.action()
+  confirmDialog.open = false
+}
+
+function onCancelConfirm() {
+  confirmDialog.open = false
+}
 
 // ── 헬퍼 ─────────────────────────────────────────────────────────────────────
 function userInitials(name) {
@@ -252,6 +292,16 @@ function isInactive(user) { return user.accountStatus === ACCOUNT_STATUS.INACTIV
       </div>
     </div>
 
+    <!-- ── 확인 다이얼로그 ── -->
+    <ConfirmDialog
+      :is-open="confirmDialog.open"
+      :title="confirmDialog.title"
+      :message="confirmDialog.message"
+      :danger="confirmDialog.danger"
+      @confirm="onConfirmAction"
+      @cancel="onCancelConfirm"
+    />
+
     <!-- ── 데이터 테이블 ── -->
     <BaseTable
       :columns="COLUMNS"
@@ -313,7 +363,7 @@ function isInactive(user) { return user.accountStatus === ACCOUNT_STATUS.INACTIV
         <div class="action-btn-group">
           <!-- 비활성 상태: 재활성화만 -->
           <template v-if="isInactive(row)">
-            <button class="action-btn action-btn--ghost" @click="handleReactivate(row.id)">
+            <button class="action-btn action-btn--ghost" @click="handleReactivate(row)">
               재활성화
             </button>
           </template>
@@ -323,11 +373,11 @@ function isInactive(user) { return user.accountStatus === ACCOUNT_STATUS.INACTIV
             <!-- 작업자: PW 초기화 / 그 외: 초대 재발송 -->
             <button
               class="action-btn action-btn--ghost"
-              @click="isWorker(row) ? handleResetPassword(row.id) : handleResendInvite(row)"
+              @click="isWorker(row) ? handleResetPassword(row) : handleResendInvite(row)"
             >
               {{ isWorker(row) ? 'PW 초기화' : '초대 재발송' }}
             </button>
-            <button class="action-btn action-btn--danger" @click="handleDeactivate(row.id)">
+            <button class="action-btn action-btn--danger" @click="handleDeactivate(row)">
               비활성화
             </button>
           </template>
