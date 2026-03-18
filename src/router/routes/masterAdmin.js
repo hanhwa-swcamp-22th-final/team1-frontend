@@ -46,7 +46,7 @@ export default [
     path: '/master/warehouses/detail/:id',
     name: ROUTE_NAMES.MASTER_WAREHOUSE_DETAIL,
     component: () => import('@/views/masterAdmin/WarehouseDetail.vue'),
-    meta: { role: ROLES.MASTER_ADMIN },
+    meta: { role: ROLES.MASTER_ADMIN, activeMenu: ROUTE_NAMES.MASTER_WAREHOUSE_LIST },
   },
 
   // ── 입출고 ────────────────────────────────────────────────────────────────
