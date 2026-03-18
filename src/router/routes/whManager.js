@@ -49,4 +49,10 @@ export default [
     component: () => import('@/views/whManager/OutboundConfirmView.vue'),
     meta: { role: ROLES.WH_MANAGER },
   },
+  {
+    path: '/whm/worker-account',
+    name: ROUTE_NAMES.WH_MANAGER_WORKER_ACCOUNT,
+    component: () => import('@/views/whManager/WorkerAccountView.vue'),
+    meta: { role: ROLES.WH_MANAGER },
+  },
 ]
