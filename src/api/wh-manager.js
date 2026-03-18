@@ -36,3 +36,33 @@ export function getWhmPickingLists(params) {
 export function getWhmPickingListDetail(id) {
   return instance.get(`/wh_picking_lists/${id}`)
 }
+
+/** 송장 발행 대기 주문 목록 조회 */
+export function getWhmInvoiceOrders(params) {
+  return instance.get('/wh_invoice_orders', { params })
+}
+
+/** 개별 라벨 발행 */
+export function issueLabel(id, data) {
+  return instance.patch(`/wh_invoice_orders/${id}`, data)
+}
+
+/** 일괄 라벨 출력 */
+export function bulkIssueLabels(data) {
+  return instance.post('/wh_invoice_orders/bulk_label', data)
+}
+
+/** 출고 확정 대기 주문 목록 조회 */
+export function getWhmOutboundConfirmOrders(params) {
+  return instance.get('/wh_outbound_confirm_orders', { params })
+}
+
+/** 개별 출고 확정 */
+export function confirmSingleOutbound(id, data) {
+  return instance.patch(`/wh_outbound_confirm_orders/${id}`, data)
+}
+
+/** 일괄 출고 확정 */
+export function bulkConfirmOutbound(data) {
+  return instance.post('/wh_outbound_confirm_orders/bulk_confirm', data)
+}
