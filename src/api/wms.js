@@ -94,3 +94,17 @@ export function getAsnList(params = {}) {
 export function getAsnKpi() {
   return instance.get('/wms/asns/kpi')
 }
+
+/**
+ * 창고 등록
+ * @param {{
+ *   name: string, sqft: number,
+ *   address: string, city: string, state: string,
+ *   openTime: string, closeTime: string, timezone: string,
+ *   managerName?: string, managerEmail?: string
+ * }} payload
+ * @returns {Promise<AxiosResponse>} { success, message, data: Warehouse }
+ */
+export function registerWarehouse(payload) {
+  return instance.post('/wms/warehouses', payload)
+}

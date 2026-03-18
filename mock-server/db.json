@@ -71,28 +71,40 @@
 
   "warehouses": [
     {
-      "id": 1, "code": "WH-US-LA-001", "name": "LA West Coast Hub", "location": "Los Angeles, CA",
+      "id": 1, "code": "WH-US-LA-001", "name": "LA West Coast Hub",
+      "location": "Los Angeles, CA", "address": "7800 S Santa Fe Ave, Los Angeles, CA 90058",
+      "city": "Los Angeles", "state": "CA", "sqft": 45000,
+      "timezone": "PST", "openTime": "07:00", "closeTime": "19:00",
       "status": "ACTIVE",
       "stats": { "inventory": 8240, "todayOutbound": 89, "pendingAsn": 3, "sellerCount": 6 },
       "locationUtil": 72,
       "manager": { "name": "김태영", "email": "t.kim@glsm-la.com", "phone": "+1-213-555-0182", "lastLogin": "오늘 14:22", "status": "ACTIVE" }
     },
     {
-      "id": 2, "code": "WH-US-TX-002", "name": "Central Dallas Center", "location": "Dallas, TX",
+      "id": 2, "code": "WH-US-TX-002", "name": "Central Dallas Center",
+      "location": "Dallas, TX", "address": "2400 Commerce St, Dallas, TX 75201",
+      "city": "Dallas", "state": "TX", "sqft": 38000,
+      "timezone": "CST", "openTime": "08:00", "closeTime": "18:00",
       "status": "ACTIVE",
       "stats": { "inventory": 5180, "todayOutbound": 54, "pendingAsn": 1, "sellerCount": 4 },
       "locationUtil": 48,
       "manager": { "name": "박지훈", "email": "j.park@glsm-tx.com", "phone": "+1-214-555-0391", "lastLogin": "2시간 전", "status": "ACTIVE" }
     },
     {
-      "id": 3, "code": "WH-US-NY-003", "name": "East NY Hub", "location": "Newark, NJ",
+      "id": 3, "code": "WH-US-NY-003", "name": "East NY Hub",
+      "location": "Newark, NJ", "address": "55 Distribution Blvd, Newark, NJ 07114",
+      "city": "Newark", "state": "NY", "sqft": 32000,
+      "timezone": "EST", "openTime": "06:00", "closeTime": "22:00",
       "status": "CAUTION",
       "stats": { "inventory": 5000, "todayOutbound": 60, "pendingAsn": 2, "sellerCount": 5 },
       "locationUtil": 88,
       "manager": { "name": "이소윤", "email": "s.lee@glsm-ny.com", "phone": "+1-201-555-0844", "lastLogin": "오늘 09:11", "status": "CAUTION" }
     },
     {
-      "id": 4, "code": "WH-US-IL-004", "name": "Chicago Midwest Depot", "location": "Chicago, IL",
+      "id": 4, "code": "WH-US-IL-004", "name": "Chicago Midwest Depot",
+      "location": "Chicago, IL", "address": "4800 W 43rd St, Chicago, IL 60632",
+      "city": "Chicago", "state": "IL", "sqft": 28000,
+      "timezone": "CST", "openTime": "08:00", "closeTime": "17:00",
       "status": "INACTIVE",
       "stats": { "inventory": 0, "todayOutbound": 0, "pendingAsn": 0, "sellerCount": 0 },
       "locationUtil": 0,
