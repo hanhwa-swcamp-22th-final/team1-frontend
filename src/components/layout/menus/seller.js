@@ -28,6 +28,7 @@ export const SELLER_MENU_GROUPS = [
     label: '등록',
     items: [
       { name: ROUTE_NAMES.SELLER_ORDER_REGISTER, label: '주문 등록', icon: '+' },
+      { name: ROUTE_NAMES.SELLER_PRODUCT_REGISTER, label: '상품 등록', icon: '□' },
       { name: ROUTE_NAMES.SELLER_ASN_CREATE, label: 'ASN 등록', icon: '↓' },
     ],
   },
