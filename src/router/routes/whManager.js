@@ -20,6 +20,9 @@ export default [
     meta: { role: ROLES.WH_MANAGER },
   },
   {
+    path: '/whm/outbound/dispatch',
+    name: ROUTE_NAMES.WH_MANAGER_OUTBOUND_DISPATCH,
+    component: () => import('@/views/whManager/OutboundDispatchView.vue'),
     path: '/whm/order-list',
     name: ROUTE_NAMES.WH_MANAGER_ORDER_LIST,
     component: () => import('@/views/whManager/OrderListView.vue'),

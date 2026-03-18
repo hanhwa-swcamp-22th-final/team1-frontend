@@ -685,6 +685,94 @@
       ]
     }
   ],
+
+  "wh_pending_orders": [
+    {
+      "id": "ORD-20240312-085",
+      "channel": "AMAZON",
+      "sellerName": "(주)글로우뷰티",
+      "itemSummary": "앰플 세럼 30ml × 2",
+      "shipDestination": "CA, USA",
+      "orderDate": "2026-03-12",
+      "stockStatus": "SUFFICIENT",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "ORD-20240312-084",
+      "channel": "AMAZON",
+      "sellerName": "(주)글로우뷰티",
+      "itemSummary": "마스크팩 × 5",
+      "shipDestination": "NY, USA",
+      "orderDate": "2026-03-12",
+      "stockStatus": "SUFFICIENT",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "ORD-20240312-083",
+      "channel": "MANUAL",
+      "sellerName": "K-Style",
+      "itemSummary": "티셔츠 L × 3",
+      "shipDestination": "TX, USA",
+      "orderDate": "2026-03-12",
+      "stockStatus": "SUFFICIENT",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "ORD-20240312-080",
+      "channel": "AMAZON",
+      "sellerName": "K-Farm",
+      "itemSummary": "홍삼 진액 30포 × 2",
+      "shipDestination": "WA, USA",
+      "orderDate": "2026-03-11",
+      "stockStatus": "INSUFFICIENT",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "ORD-20240311-075",
+      "channel": "AMAZON",
+      "sellerName": "에코팩",
+      "itemSummary": "텀블러 350ml × 1",
+      "shipDestination": "OR, USA",
+      "orderDate": "2026-03-11",
+      "stockStatus": "SUFFICIENT",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "ORD-20240311-070",
+      "channel": "MANUAL",
+      "sellerName": "K-Style",
+      "itemSummary": "후드티 M × 2",
+      "shipDestination": "FL, USA",
+      "orderDate": "2026-03-11",
+      "stockStatus": "SUFFICIENT",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "ORD-20240310-068",
+      "channel": "AMAZON",
+      "sellerName": "(주)글로우뷰티",
+      "itemSummary": "선크림 30g × 4",
+      "shipDestination": "IL, USA",
+      "orderDate": "2026-03-10",
+      "stockStatus": "INSUFFICIENT",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "ORD-20240310-066",
+      "channel": "AMAZON",
+      "sellerName": "에코팩",
+      "itemSummary": "에코백 × 10",
+      "shipDestination": "GA, USA",
+      "orderDate": "2026-03-10",
+      "stockStatus": "SUFFICIENT",
+      "status": "CONFIRMED"
+    }
+  ],
+
+  "wh_workers": [
+    { "id": "WORKER-001", "name": "박민준" },
+    { "id": "WORKER-002", "name": "이서윤" },
+    { "id": "WORKER-003", "name": "최현우" }
   "wh_orders": [
     {
       "id": "ORD-20260313-101",
