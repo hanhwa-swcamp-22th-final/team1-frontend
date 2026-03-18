@@ -15,23 +15,31 @@
 import { ROUTE_NAMES } from '@/constants'
 
 export const SELLER_MENU_GROUPS = [
-    // Seller 메인 진입 메뉴
-    {
-        label: 'Overview',
-        items: [
-            { name: ROUTE_NAMES.SELLER_DASHBOARD, label: '대시보드', icon: '⊞' },
-        ],
-    },
+  // Seller 메인 진입 메뉴
+  {
+    label: 'Overview',
+    items: [
+      { name: ROUTE_NAMES.SELLER_DASHBOARD, label: '대시보드', icon: '⊞' },
+    ],
+  },
 
-    // Seller 등록 기능 메뉴
-    {
-        label: '등록',
-        items: [
-            { name: ROUTE_NAMES.SELLER_ORDER_REGISTER, label: '주문 등록', icon: '+' },
-            { name: ROUTE_NAMES.SELLER_ASN_CREATE, label: 'ASN 등록', icon: '↓' },
-            { name: ROUTE_NAMES.SELLER_ASN_LIST, label: 'ASN 목록', icon: '≣' },
-        ],
-    },
+  // Seller 등록 기능 메뉴
+  {
+    label: '등록',
+    items: [
+      { name: ROUTE_NAMES.SELLER_ORDER_REGISTER, label: '주문 등록', icon: '+' },
+      { name: ROUTE_NAMES.SELLER_ASN_CREATE, label: 'ASN 등록', icon: '↓' },
+    ],
+  },
+
+  // Seller 조회 기능 메뉴
+  {
+    label: '조회',
+    items: [
+      { name: ROUTE_NAMES.SELLER_ORDER_LIST, label: '주문 목록', icon: '≣' },
+      { name: ROUTE_NAMES.SELLER_ASN_LIST, label: 'ASN 목록', icon: '⋯' },
+    ],
+  },
 ]
 
 // TODO(frontend): Seller 추가 화면 구현 시 메뉴 그룹 확장
