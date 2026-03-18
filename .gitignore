@@ -38,6 +38,9 @@ __screenshots__/
 # Vite
 *.timestamp-*-*.mjs
 .env
+
+# Mock server — 역할별 data/*.json 병합 결과물 (자동생성)
+mock-server/db.json
 /AGENTS.md
 /CLAUDE.md
 /GEMINI.md

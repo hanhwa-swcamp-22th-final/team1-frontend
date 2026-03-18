@@ -25,5 +25,48 @@ module.exports = function (BASE_URL) {
     res.json({ success: true, data })
   })
 
+  // POST /orders/seller/manual — 셀러 단건 주문 등록
+  router.post('/seller/manual', async (req, res) => {
+    const payload = req.body || {}
+
+    if (!payload.orderNo || !payload.sku || !payload.quantity) {
+      return res.status(400).json({
+        success: false,
+        message: '필수 주문 정보가 누락되었습니다.',
+      })
+    }
+
+    return res.status(201).json({
+      success: true,
+      data: {
+        orderNo: payload.orderNo,
+        savedCount: 1,
+        receivedAt: new Date().toISOString(),
+      },
+      message: '주문이 등록되었습니다.',
+    })
+  })
+
+  // POST /orders/seller/bulk — 셀러 엑셀 주문 일괄 등록
+  router.post('/seller/bulk', async (req, res) => {
+    const orders = Array.isArray(req.body?.orders) ? req.body.orders : []
+
+    if (!orders.length) {
+      return res.status(400).json({
+        success: false,
+        message: '등록할 주문이 없습니다.',
+      })
+    }
+
+    return res.status(201).json({
+      success: true,
+      data: {
+        savedCount: orders.length,
+        receivedAt: new Date().toISOString(),
+      },
+      message: '업로드 주문이 등록되었습니다.',
+    })
+  })
+
   return router
 }

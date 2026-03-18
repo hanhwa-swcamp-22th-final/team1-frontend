@@ -9,6 +9,24 @@ export async function getOutboundStats() {
 }
 
 /**
+ * 셀러 단건 주문 등록
+ * @param {object} payload
+ * @returns {Promise<AxiosResponse>}
+ */
+export async function createSellerOrder(payload) {
+  return instance.post('/orders/seller/manual', payload)
+}
+
+/**
+ * 셀러 엑셀 업로드 주문 일괄 등록
+ * @param {Array<object>} orders
+ * @returns {Promise<AxiosResponse>}
+ */
+export async function createSellerBulkOrders(orders) {
+  return instance.post('/orders/seller/bulk', { orders })
+}
+
+/**
  * 주문 목록 조회 (masterAdmin)
  * @returns {Promise<AxiosResponse>} { success, data: Order[] }
  */
