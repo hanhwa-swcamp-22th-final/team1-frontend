@@ -35,7 +35,12 @@ export default [
   // TODO(frontend): 주문 상세 라우트 추가
 
   // 상품 관리
-  // TODO(frontend): 상품 등록 라우트 추가
+  {
+    path: '/seller/products/register',
+    name: ROUTE_NAMES.SELLER_PRODUCT_REGISTER,
+    component: () => import('@/views/seller/SellerProductRegisterView.vue'),
+    meta: { role: ROLES.SELLER },
+  },
   // TODO(frontend): 상품 목록 라우트 추가
 
   // 재고 관리
@@ -48,7 +53,7 @@ export default [
     component: () => import('@/views/seller/SellerAsnCreateView.vue'),
     meta: { role: ROLES.SELLER },
   },
-    // Seller ASN 목록 화면
+  // Seller ASN 목록 화면
   {
     path: '/seller/asn/list',
     name: ROUTE_NAMES.SELLER_ASN_LIST,
