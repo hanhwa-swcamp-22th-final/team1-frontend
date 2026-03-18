@@ -106,7 +106,7 @@ const MAP = {
     [OUTBOUND_CONFIRM_STATUS.CONFIRMED]:       { label: '출고 확정 완료', color: 'green' },
   },
   workerPresence: {
-    [WORKER_PRESENCE_STATUS.PICKING]:  { label: '작업 중 (피킹)',    color: 'amber'   },
+    [WORKER_PRESENCE_STATUS.PICKING]:  { label: '작업 중 (피킹&패킹)', color: 'amber'   },
     [WORKER_PRESENCE_STATUS.PUTAWAY]:  { label: '작업 중 (Put-away)', color: 'purple'  },
     [WORKER_PRESENCE_STATUS.IDLE]:     { label: '대기 중',            color: 'green'   },
     [WORKER_PRESENCE_STATUS.OFFLINE]:  { label: '오프라인',           color: 'default' },
