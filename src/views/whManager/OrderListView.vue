@@ -2,37 +2,30 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 import BulkOutboundModal from './components/BulkOutboundModal.vue'
 import { getWhmOrders } from '@/api/order'
+import { ORDER_STATUS } from '@/constants'
 
 // ── 탭
 const TABS = [
-  { key: 'all',      label: '전체',    badgeColor: 'gray'  },
-  { key: 'received', label: '접수',    badgeColor: 'blue'  },
-  { key: 'picking',  label: '피킹 중', badgeColor: 'amber' },
-  { key: 'packed',   label: '포장완료', badgeColor: 'amber' },
-  { key: 'shipped',  label: '출고완료', badgeColor: 'green' },
-  { key: 'transit',  label: '배송중',  badgeColor: 'blue'  },
+  { key: 'all',                        label: '전체',    badgeColor: 'gray'   },
+  { key: ORDER_STATUS.PENDING,         label: '접수',    badgeColor: 'amber'  },
+  { key: ORDER_STATUS.CONFIRMED,       label: '확인',    badgeColor: 'blue'   },
+  { key: ORDER_STATUS.PREPARING_ITEM,  label: '물품준비중', badgeColor: 'purple' },
+  { key: ORDER_STATUS.SHIPPED,         label: '출고완료', badgeColor: 'green'  },
+  { key: ORDER_STATUS.CANCELLED,       label: '취소',    badgeColor: 'red'    },
 ]
 const activeTab = ref('all')
 
 // ── 상태 개요 텍스트
 const STATUS_OVERVIEW = {
-  all:      { heading: '전체 주문',      copy: '주문 접수부터 배송중까지 전체 흐름을 한 화면에서 확인하고, 출고 우선순위와 지연 가능성을 빠르게 점검합니다.' },
-  received: { heading: '접수 주문',      copy: '방금 유입된 주문을 확인하고 피킹 전 검토가 필요한 주문을 우선 배치합니다.' },
-  picking:  { heading: '피킹 진행 주문', copy: '작업자가 현재 피킹 중인 주문을 추적하고, 지연 가능성이 있는 주문을 빠르게 조정합니다.' },
-  packed:   { heading: '포장완료 주문',  copy: '포장은 끝났지만 출고 확정 전인 주문입니다. 송장, 박스, 출고대기 시간을 함께 확인합니다.' },
-  shipped:  { heading: '출고완료 주문',  copy: '창고에서 출고가 완료된 주문입니다. 인수 완료 여부와 다음 배송 단계 진입 시간을 확인합니다.' },
-  transit:  { heading: '배송중 주문',    copy: '운송장 기준 배송중인 주문입니다. ETA 지연과 고객 문의 가능성이 높은 건을 우선 모니터링합니다.' },
-}
-
-// ── 상태 배지 매핑
-const STATUS_MAP = {
-  received: { label: '접수',    color: 'blue'  },
-  picking:  { label: '피킹 중', color: 'amber' },
-  packed:   { label: '포장완료', color: 'amber' },
-  shipped:  { label: '출고완료', color: 'green' },
-  transit:  { label: '배송중',  color: 'blue'  },
+  all:                         { heading: '전체 주문',      copy: '주문 접수부터 출고완료까지 전체 흐름을 한 화면에서 확인하고, 출고 우선순위와 지연 가능성을 빠르게 점검합니다.' },
+  [ORDER_STATUS.PENDING]:      { heading: '접수 주문',      copy: '방금 유입된 주문을 확인하고 피킹 전 검토가 필요한 주문을 우선 배치합니다.' },
+  [ORDER_STATUS.CONFIRMED]:    { heading: '확인 주문',      copy: '재고 할당이 완료된 주문입니다. 출고 지시 전 최종 검토가 필요한 건을 확인합니다.' },
+  [ORDER_STATUS.PREPARING_ITEM]: { heading: '물품준비중 주문', copy: '작업자가 현재 피킹 중인 주문을 추적하고, 지연 가능성이 있는 주문을 빠르게 조정합니다.' },
+  [ORDER_STATUS.SHIPPED]:      { heading: '출고완료 주문',  copy: '창고에서 출고가 완료된 주문입니다. 인수 완료 여부와 다음 배송 단계 진입 시간을 확인합니다.' },
+  [ORDER_STATUS.CANCELLED]:    { heading: '취소 주문',      copy: '취소 처리된 주문 목록입니다. 취소 사유와 재고 환원 여부를 확인합니다.' },
 }
 
 // ── 채널 배지 매핑
@@ -118,7 +111,7 @@ const overviewKpi = computed(() => {
   const list = filtered.value
   return {
     count:     list.length,
-    priority:  list.filter(o => o.status === 'received').length,
+    priority:  list.filter(o => o.status === ORDER_STATUS.PENDING).length,
     highlight: TABS.find(t => t.key === activeTab.value)?.label ?? '전체',
   }
 })
@@ -318,9 +311,7 @@ const breadcrumb = [
 
           <!-- 상태 배지 -->
           <template #cell-status="{ row }">
-            <span class="badge" :class="`badge--${STATUS_MAP[row.status]?.color ?? 'gray'}`">
-              {{ STATUS_MAP[row.status]?.label ?? row.status }}
-            </span>
+            <StatusBadge :status="row.status" type="order" />
           </template>
 
           <!-- 작업 버튼 -->
@@ -382,10 +373,12 @@ const breadcrumb = [
   font-size: 10px;
   font-weight: 700;
 }
-.tab-badge--gray  { background: var(--surface-2); color: var(--t3); }
-.tab-badge--blue  { background: var(--blue-pale);  color: var(--blue); }
-.tab-badge--amber { background: var(--amber-pale); color: #b45309; }
-.tab-badge--green { background: var(--green-pale); color: var(--green); }
+.tab-badge--gray   { background: var(--surface-2);   color: var(--t3);    }
+.tab-badge--blue   { background: var(--blue-pale);   color: var(--blue);  }
+.tab-badge--amber  { background: var(--amber-pale);  color: #b45309;      }
+.tab-badge--green  { background: var(--green-pale);  color: var(--green); }
+.tab-badge--purple { background: var(--purple-pale); color: var(--purple);}
+.tab-badge--red    { background: var(--red-pale);    color: var(--red);   }
 
 /* ── 카드 ───────────────────────────────────── */
 .card {
@@ -499,7 +492,7 @@ const breadcrumb = [
 .order-id { color: var(--blue); }
 .text-muted { color: var(--t3); font-size: 12px; }
 
-/* ── 배지 ───────────────────────────────────── */
+/* ── 채널 배지 (channel 전용, status는 StatusBadge 컴포넌트 사용) ── */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -509,10 +502,8 @@ const breadcrumb = [
   font-weight: 600;
   white-space: nowrap;
 }
-.badge--blue  { background: var(--blue-pale);  color: var(--blue);  }
-.badge--amber { background: var(--amber-pale); color: #b45309;      }
-.badge--green { background: var(--green-pale); color: var(--green); }
-.badge--gray  { background: var(--surface-2);  color: var(--t3);    }
+.badge--blue { background: var(--blue-pale); color: var(--blue); }
+.badge--gray { background: var(--surface-2); color: var(--t3);   }
 
 /* ── 버튼 ───────────────────────────────────── */
 .ui-btn {
