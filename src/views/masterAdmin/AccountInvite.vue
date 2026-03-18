@@ -11,17 +11,13 @@
  * 역할에 따라 소속 조직 셀렉트 목록을 셀러사/창고로 전환.
  */
 import { ref, reactive, computed, watch, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
-import { ROUTE_NAMES } from '@/constants'
 import { inviteAccount, getSellerList } from '@/api/member'
 import { getWarehouseList } from '@/api/wms'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 
-const route  = useRoute()
-const router = useRouter()
-const ui     = useUiStore()
+const ui = useUiStore()
 
 // ── 역할 정의 ─────────────────────────────────────────────────────────────────
 const ROLES = [
@@ -30,38 +26,22 @@ const ROLES = [
     label: 'SELLER',
     icon: 'SE',
     desc: '셀러사 전용 계정\n(주문/재고 관리)',
-    route: ROUTE_NAMES.MASTER_ACCOUNT_INVITE,
   },
   {
     value: 'WH_MANAGER',
     label: 'WH_MANAGER',
     icon: 'WM',
     desc: '창고 관리자 계정\n(작업 지시 및 관리)',
-    route: 'master-account-manager',
   },
   {
     value: 'WH_WORKER',
     label: 'WH_WORKER',
     icon: 'WW',
     desc: '현장 작업자 계정\n(하역/검수/적재)',
-    route: 'master-account-worker',
   },
 ]
 
-// ── 라우트명으로 초기 역할 결정 ────────────────────────────────────────────────
-function routeToRole(name) {
-  if (name === 'master-account-manager') return 'WH_MANAGER'
-  if (name === 'master-account-worker')  return 'WH_WORKER'
-  return 'SELLER'
-}
-
-const selectedRole = ref(routeToRole(route.name))
-
-// 라우트 변경 시 역할 자동 동기화 (사이드바 메뉴 전환)
-watch(() => route.name, (name) => {
-  selectedRole.value = routeToRole(name)
-  form.organizationId = ''
-})
+const selectedRole = ref('SELLER')
 
 // ── 폼 ───────────────────────────────────────────────────────────────────────
 const form = reactive({

@@ -98,18 +98,6 @@ export default [
     component: () => import('@/views/masterAdmin/AccountInvite.vue'),
     meta: { role: ROLES.MASTER_ADMIN },
   },
-  {
-    path: '/master/accounts/manager',
-    name: ROUTE_NAMES.MASTER_ACCOUNT_MANAGER,
-    component: () => import('@/views/masterAdmin/AccountInvite.vue'),
-    meta: { role: ROLES.MASTER_ADMIN },
-  },
-  {
-    path: '/master/accounts/worker',
-    name: ROUTE_NAMES.MASTER_ACCOUNT_WORKER,
-    component: () => import('@/views/masterAdmin/AccountInvite.vue'),
-    meta: { role: ROLES.MASTER_ADMIN },
-  },
 
   // ── 사용자 관리 ───────────────────────────────────────────────────────────
   {

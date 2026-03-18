@@ -52,8 +52,6 @@ export const ROUTE_NAMES = {
   MASTER_SELLER_COMPANY_REGISTER: 'master-seller-company-register',
   MASTER_ACCOUNT_LIST: 'master-account-list',
   MASTER_ACCOUNT_INVITE: 'master-account-invite',
-  MASTER_ACCOUNT_MANAGER: 'master-account-manager',
-  MASTER_ACCOUNT_WORKER: 'master-account-worker',
   MASTER_RBAC_SETTING: 'master-rbac-setting',
 
   // ── WH Manager — 창고 운영 (views/whManager/)

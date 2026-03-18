@@ -49,9 +49,7 @@ export const MASTER_ADMIN_MENU_GROUPS = [
   {
     label: '계정 발급',
     items: [
-      { name: ROUTE_NAMES.MASTER_ACCOUNT_INVITE, label: '셀러 담당자 계정 발급', icon: '↗' },
-      { name: ROUTE_NAMES.MASTER_ACCOUNT_MANAGER, label: '창고 관리자 계정 발급', icon: '✓' },
-      { name: ROUTE_NAMES.MASTER_ACCOUNT_WORKER, label: '창고 작업자 계정 발급', icon: '≡' },
+      { name: ROUTE_NAMES.MASTER_ACCOUNT_INVITE, label: '계정 발급', icon: '↗' },
     ],
   },
   {
