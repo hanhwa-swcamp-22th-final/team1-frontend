@@ -105,7 +105,7 @@ function pageNumbers() {
               :style="{ width: col.width, textAlign: col.align ?? 'left' }"
               @click="col.sortable && emit('sort', col.key)"
             >
-              {{ col.label }}
+              <slot :name="`header-${col.key}`">{{ col.label }}</slot>
               <span v-if="col.sortable" class="sort-icon">⇅</span>
             </th>
           </tr>
