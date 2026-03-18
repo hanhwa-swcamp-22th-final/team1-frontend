@@ -53,7 +53,7 @@
  *   <StatusBadge :status="item.status" type="item" />
  */
 import { computed } from 'vue'
-import { ACCOUNT_STATUS, ASN_STATUS, ITEM_STATUS, ORDER_STATUS, WORKER_STATUS,SELLER_STATUS } from '@/constants'
+import { ACCOUNT_STATUS, ASN_STATUS, ITEM_STATUS, LABEL_STATUS, ORDER_STATUS, OUTBOUND_CONFIRM_STATUS, PICKING_LIST_STATUS, WORKER_PRESENCE_STATUS, WORKER_STATUS, SELLER_STATUS } from '@/constants'
 
 const props = defineProps({
   status: { type: String, required: true },
