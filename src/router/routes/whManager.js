@@ -13,4 +13,10 @@ export default [
     component: () => import('@/views/whManager/DashboardView.vue'),
     meta: { role: ROLES.WH_MANAGER },
   },
+  {
+    path: '/whm/inventory',
+    name: ROUTE_NAMES.WH_MANAGER_INVENTORY,
+    component: () => import('@/views/whManager/InventoryView.vue'),
+    meta: { role: ROLES.WH_MANAGER },
+  },
 ]

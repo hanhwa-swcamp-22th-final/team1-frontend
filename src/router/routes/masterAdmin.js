@@ -31,7 +31,7 @@ export default [
   {
     path: '/master/warehouses/register',
     name: ROUTE_NAMES.MASTER_WAREHOUSE_REGISTER,
-    component: () => import('@/views/masterAdmin/Dashboard.vue'),
+    component: () => import('@/views/masterAdmin/WarehouseRegister.vue'),
     meta: { role: ROLES.MASTER_ADMIN },
   },
   {

@@ -1,8 +1,9 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { ROUTE_NAMES } from '@/constants'
+import { getWhmDashboard } from '@/api/wh-manager'
 
 const router = useRouter()
 
@@ -12,36 +13,24 @@ const today = computed(() =>
   })
 )
 
-const todoItems = [
-  { color: 'red',   text: 'ASN-2024-0312-003 입고 검수 완료 처리 필요', badge: '미처리', time: '10:30' },
-  { color: 'gold',  text: '출고 지시 대기 주문 34건 — 피킹 리스트 발행 필요',            time: '11:00' },
-  { color: 'blue',  text: '작업자 박민준 피킹 배정 확인 필요',                            time: '13:00' },
-  { color: 'green', text: '출고 확정 대기 — ORD-20240312-028 택배사 인계 완료 처리',       time: '15:00' },
-  { color: 'gold',  text: '재고 부족 경고 5종 — 셀러 알림 발송 확인',                     time: '17:00' },
-]
+const kpi            = ref({ todayAsn: 0, pendingAsn: 0, availableSku: 0, shortageCount: 0, pendingOrders: 0, picking: 0, todayShipped: 0, shippedDiff: '0' })
+const todoItems      = ref([])
+const outboundLegend = ref([])
+const recentAsns     = ref([])
+const lowStockAlerts = ref([])
 
-const outboundLegend = [
-  { color: '#4C74FF', label: '출고 지시 대기', count: 34 },
-  { color: '#F5A623', label: '피킹 진행 중',   count: 12 },
-  { color: '#2ECC87', label: '포장/라벨 완료', count: 8  },
-  { color: '#E4E8F0', label: '출고 완료',      count: 28, border: true },
-]
-
-const recentAsns = [
-  { id: 'ASN-2024-0312-001', seller: '이수빈 대표 / (주)글로우뷰티', sku: '앰플 세럼',     qty: '1,000개', date: '2026-03-14', status: '입고 대기',   color: 'amber' },
-  { id: 'ASN-2024-0311-005', seller: '박정훈 / K-Style',             sku: '티셔츠 외 3종', qty: '500개',   date: '2026-03-13', status: '운송 중',     color: 'blue'  },
-  { id: 'ASN-2024-0310-003', seller: '최소연 / 에코팩',              sku: '텀블러',         qty: '200개',   date: '2026-03-12', status: '수량 불일치', color: 'red'   },
-  { id: 'ASN-2024-0309-002', seller: '이수빈 대표 / (주)글로우뷰티', sku: '마스크팩',       qty: '800개',   date: '2026-03-12', status: '입고 완료',   color: 'green' },
-  { id: 'ASN-2024-0308-001', seller: '강민철 / K-Farm',              sku: '홍삼 진액',      qty: '300개',   date: '2026-03-11', status: '입고 완료',   color: 'green' },
-]
-
-const lowStockAlerts = [
-  { sku: '앰플 세럼 30ml',   threshold: 100, remaining: 23, color: 'red'  },
-  { sku: '마스크팩 (10매입)', threshold: 200, remaining: 78, color: 'red'  },
-  { sku: '텀블러 350ml',     threshold: 50,  remaining: 55, color: 'gold' },
-  { sku: '홍삼 진액 30포',    threshold: 100, remaining: 12, color: 'red'  },
-  { sku: '티셔츠 L사이즈',    threshold: 30,  remaining: 32, color: 'gold' },
-]
+onMounted(async () => {
+  try {
+    const { data } = await getWhmDashboard()
+    kpi.value            = data.kpi
+    todoItems.value      = data.todoItems
+    outboundLegend.value = data.outboundSummary
+    recentAsns.value     = data.recentAsns
+    lowStockAlerts.value = data.lowStockAlerts
+  } catch (e) {
+    console.error('대시보드 데이터 로드 실패:', e)
+  }
+})
 
 const breadcrumb = [{ label: 'CONK' }, { label: '대시보드' }]
 
@@ -66,8 +55,8 @@ function go(name) {
           </svg>
         </div>
         <div class="kpi-label">오늘 입고 예정</div>
-        <div class="kpi-value">8<span class="kpi-unit">건</span></div>
-        <div class="kpi-sub">ASN 처리 대기: <span class="acc acc--gold">3건</span></div>
+        <div class="kpi-value">{{ kpi.todayAsn }}<span class="kpi-unit">건</span></div>
+        <div class="kpi-sub">ASN 처리 대기: <span class="acc acc--gold">{{ kpi.pendingAsn }}건</span></div>
       </div>
 
       <!-- 가용 재고 SKU -->
@@ -80,8 +69,8 @@ function go(name) {
           </svg>
         </div>
         <div class="kpi-label">가용 재고 SKU</div>
-        <div class="kpi-value">142<span class="kpi-unit">종</span></div>
-        <div class="kpi-sub">재고 부족 경고: <span class="acc acc--red">5종</span></div>
+        <div class="kpi-value">{{ kpi.availableSku }}<span class="kpi-unit">종</span></div>
+        <div class="kpi-sub">재고 부족 경고: <span class="acc acc--red">{{ kpi.shortageCount }}종</span></div>
       </div>
 
       <!-- 출고 대기 주문 -->
@@ -93,8 +82,8 @@ function go(name) {
           </svg>
         </div>
         <div class="kpi-label">출고 대기 주문</div>
-        <div class="kpi-value">34<span class="kpi-unit">건</span></div>
-        <div class="kpi-sub">피킹 진행 중: <span class="acc acc--blue">12건</span></div>
+        <div class="kpi-value">{{ kpi.pendingOrders }}<span class="kpi-unit">건</span></div>
+        <div class="kpi-sub">피킹 진행 중: <span class="acc acc--blue">{{ kpi.picking }}건</span></div>
       </div>
 
       <!-- 오늘 출고 완료 -->
@@ -105,8 +94,8 @@ function go(name) {
           </svg>
         </div>
         <div class="kpi-label">오늘 출고 완료</div>
-        <div class="kpi-value">28<span class="kpi-unit">건</span></div>
-        <div class="kpi-sub">전일 대비: <span class="acc acc--green">+4건↑</span></div>
+        <div class="kpi-value">{{ kpi.todayShipped }}<span class="kpi-unit">건</span></div>
+        <div class="kpi-sub">전일 대비: <span class="acc acc--green">{{ kpi.shippedDiff }}건↑</span></div>
       </div>
 
     </div>

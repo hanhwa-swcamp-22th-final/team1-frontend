@@ -67,11 +67,11 @@ async function fetchWarehouseList() {
     const todayStr  = formatDate(today, 'date').replace(/-/g, '.')
 
     summaryCards.value = [
-      { label: '등록 창고',           value: s.totalCount,                   unit: '',   sub: '전체 운영 창고 수',      color: '' },
-      { label: '활성 창고',           value: s.activeCount,                  unit: '',   sub: '정상 운영 중',           color: 'var(--green)' },
-      { label: '총 재고',             value: formatNumber(s.totalInventory), unit: 'EA', sub: '전 창고 합산 보관 수량',  color: '' },
-      { label: '금일 출고 건',         value: s.todayOutbound,                unit: '건', sub: todayStr + ' 기준',      color: 'var(--blue)' },
-      { label: '평균 로케이션 가동률',  value: s.avgLocationUtil + '%',        unit: '',   sub: '창고 공간 효율',         color: 'var(--gold)', small: true },
+      { id: 1, label: '등록 창고',           value: s.totalCount,                   unit: '',   sub: '전체 운영 창고 수',      color: '' },
+      { id: 2, label: '활성 창고',           value: s.activeCount,                  unit: '',   sub: '정상 운영 중',           color: 'var(--green)' },
+      { id: 3, label: '총 재고',             value: formatNumber(s.totalInventory), unit: 'EA', sub: '전 창고 합산 보관 수량',  color: '' },
+      { id: 4, label: '금일 출고 건',         value: s.todayOutbound,                unit: '건', sub: todayStr + ' 기준',      color: 'var(--blue)' },
+      { id: 5, label: '평균 로케이션 가동률',  value: s.avgLocationUtil + '%',        unit: '',   sub: '창고 공간 효율',         color: 'var(--gold)', small: true },
     ]
     warehouses.value = listRes.data.data
   } catch (err) {
@@ -114,7 +114,7 @@ onMounted(fetchWarehouseList)
 
     <!-- 상단 요약 카드 5개 -->
     <div class="summary-row">
-      <div v-for="(card, i) in summaryCards" :key="i" class="summary-card">
+      <div v-for="(card, id) in summaryCards" :key="id" class="summary-card">
         <span class="summary-label">{{ card.label }}</span>
         <span
           class="summary-value"
