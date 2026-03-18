@@ -49,7 +49,6 @@ export const ROUTE_NAMES = {
   MASTER_SELLER_COMPANY_REGISTER: 'master-seller-company-register',
   MASTER_RBAC_SETTING: 'master-rbac-setting',
   MASTER_WAREHOUSE_DETAIL: 'master-warehouse-detail',
-  MASTER_ASN_LIST: 'master-asn-list',
   MASTER_FEE_SETTING: 'master-fee-setting',
 
   // ── WH Manager — 창고 운영 (views/whManager/)
@@ -63,6 +62,7 @@ export const ROUTE_NAMES = {
   WH_MANAGER_ORDER_LIST: 'whm-order-list',
   WH_MANAGER_ORDER_DETAIL: 'whm-order-detail',
   WH_MANAGER_OUTBOUND: 'whm-outbound',
+  WH_MANAGER_OUTBOUND_DISPATCH: 'whm-outbound-dispatch',
   WH_MANAGER_PICKING_LIST: 'whm-picking-list',
   WH_MANAGER_LABEL_PRINT: 'whm-label-print',
   WH_MANAGER_OUTBOUND_CONFIRM: 'whm-outbound-confirm',
@@ -72,10 +72,16 @@ export const ROUTE_NAMES = {
   // ── WH Worker — 태블릿 작업 화면 (views/whWorker/)
   // 접두어: 'whw-' (WH Worker 약자)
   // ⚠️  이 라우트들은 태블릿 터치 UI 기준으로 개발할 것
-  WH_WORKER_TASK_LIST: 'whw-task-list',
-  WH_WORKER_INSPECTION: 'whw-inspection',
-  WH_WORKER_PICKING: 'whw-picking',
-  WH_WORKER_PACKING: 'whw-packing',
+  // WH_WORKER_TASK_LIST: 'whw-task-list',
+  // WH_WORKER_INSPECTION: 'whw-inspection',
+  // WH_WORKER_PICKING: 'whw-picking',
+  // WH_WORKER_PACKING: 'whw-packing',
+  // WH_WORKER_DASHBOARD: 'whw-dashboard',
+  WH_WORKER_DASHBOARD: 'whw-dashboard',
+  WH_WORKER_TASKS: 'whw-tasks',
+  WH_WORKER_INBOUND: 'whw-inbound',
+  WH_WORKER_OUTBOUND: 'whw-outbound',
+  WH_WORKER_INVENTORY: 'whw-inventory',
 
   // ── System Admin — 플랫폼 최상위 관리 (views/systemAdmin/)
   // 접두어: 'sys-'

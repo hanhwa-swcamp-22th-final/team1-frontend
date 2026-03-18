@@ -143,3 +143,49 @@ Seller 로그인 직후 404 페이지로 이동함
 
 **Related**  
 - `feature/seller-orders`
+
+### [mock 서버 데이터 소스 오해]
+
+**Problem**  
+`npm run mock` 실행 시 `mock-server/db.json`이 실제 런타임 데이터 소스라고 오해할 수 있었음
+
+**Cause**  
+현재 서버는 `mock-server/data/*.json`을 시작 시 메모리에서 병합해 `jsonServer.router(merged)`로 사용함
+
+**Fix**  
+- 런타임 데이터 소스는 `mock-server/data/*.json` 기준으로 이해함
+- `mock-server/db.json`은 현재 구조에서 기준 소스가 아님
+
+**Related**  
+- `mock-server/server.cjs`
+- `mock-server/data/*.json`
+
+### [Figma MCP ASN 화면 조회 실패]
+
+**Problem**  
+Figma 링크의 Seller ASN 화면을 직접 조회하려 했지만 MCP 도구로 노드 정보를 가져오지 못했음
+
+**Cause**  
+현재 계정의 Figma MCP tool call limit가 초과된 상태였음
+
+**Fix**  
+- 로컬 코드 기준으로 ASN placeholder 상태를 먼저 확인함
+- Figma 스크린샷이나 export 없이 진행할 때는 기존 Seller 화면 패턴과 mock 데이터 기준으로 UI를 먼저 구현함
+
+**Related**  
+- `src/views/seller/SellerAsnCreateView.vue`
+
+### [Seller ASN 화면 스타일 어긋남]
+
+**Problem**  
+ASN 등록 화면이 기존 Seller 화면 톤과 다르게 보였음
+
+**Cause**  
+공통 디자인 토큰 대신 하드코딩된 색상, 간격, 입력 스타일을 별도로 사용하고 있었음
+
+**Fix**  
+- `var(--border)`, `var(--surface)`, `var(--space-*)`, `var(--font-size-*)` 기준으로 ASN 화면 스타일을 다시 정리함
+- 테이블 입력, 요약 카드, 첨부 영역 버튼 크기를 공통 버튼/폼 톤에 맞춤
+
+**Related**  
+- `src/views/seller/SellerAsnCreateView.vue`

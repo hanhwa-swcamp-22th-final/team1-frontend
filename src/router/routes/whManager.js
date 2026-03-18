@@ -19,4 +19,16 @@ export default [
     component: () => import('@/views/whManager/InventoryView.vue'),
     meta: { role: ROLES.WH_MANAGER },
   },
+  {
+    path: '/whm/order-list',
+    name: ROUTE_NAMES.WH_MANAGER_ORDER_LIST,
+    component: () => import('@/views/whManager/OrderListView.vue'),
+    meta: { role: ROLES.WH_MANAGER },
+  },
+  {
+    path: '/whm/outbound/dispatch',
+    name: ROUTE_NAMES.WH_MANAGER_OUTBOUND_DISPATCH,
+    component: () => import('@/views/whManager/OutboundDispatchView.vue'),
+    meta: { role: ROLES.WH_MANAGER },
+  },
 ]

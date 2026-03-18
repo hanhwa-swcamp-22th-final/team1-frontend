@@ -116,5 +116,17 @@ module.exports = function (BASE_URL) {
     res.status(201).json({ success: true, message: '창고가 등록되었습니다.', data: created })
   })
 
+  // GET /wms/fee-settings — 요금 설정 조회
+  router.get('/fee-settings', async (req, res) => {
+    const { data } = await http.get('/fee_settings')
+    res.json({ success: true, data })
+  })
+
+  // PUT /wms/fee-settings — 요금 설정 저장
+  router.put('/fee-settings', async (req, res) => {
+    await http.put('/fee_settings', req.body)
+    res.json({ success: true, message: '요금 설정이 저장되었습니다.' })
+  })
+
   return router
 }

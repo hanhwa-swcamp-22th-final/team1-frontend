@@ -13,11 +13,34 @@
 import { ROUTE_NAMES } from '@/constants'
 
 export const WH_WORKER_MENU_GROUPS = [
-  // TODO: 아래 주석을 참고하여 메뉴 그룹을 작성하세요
-  // {
-  //   label: '그룹명',
-  //   items: [
-  //     { name: ROUTE_NAMES.WH_WORKER_TASK_LIST, label: '작업 목록', icon: '≡' },
-  //   ],
-  // },
+  {
+    label: '통합 대시보드',
+    items: [
+      {
+        name: ROUTE_NAMES.WH_WORKER_DASHBOARD,
+        label: '대시보드',
+        icon: '⊞',
+      },
+      {
+        name: ROUTE_NAMES.WH_WORKER_TASKS,
+        label: '내 작업',
+        icon: '☰',
+      },
+      {
+        name: ROUTE_NAMES.WH_WORKER_INBOUND,
+        label: '입고 관리',
+        icon: '▣',
+      },
+      {
+        name: ROUTE_NAMES.WH_WORKER_OUTBOUND,
+        label: '출고 관리',
+        icon: '▷',
+      },
+      {
+        name: ROUTE_NAMES.WH_WORKER_INVENTORY,
+        label: '재고 관리',
+        icon: '◈',
+      },
+    ],
+  },
 ]

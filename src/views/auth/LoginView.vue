@@ -2,25 +2,24 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useUiStore } from '@/stores/ui'
 import { login } from '@/api/member'
 import { ROLES, ROUTE_NAMES } from '@/constants'
 
 const router = useRouter()
 const route  = useRoute()
 const auth   = useAuthStore()
-const ui     = useUiStore()
 
-const loginId  = ref('')
-const password = ref('')
-const errorMsg = ref('')
-const infoMsg  = ref('')
+const loginId   = ref('')
+const password  = ref('')
+const errorMsg  = ref('')
+const infoMsg   = ref('')
+const isLoading = ref(false)
 
 const DASHBOARD_BY_ROLE = {
   [ROLES.SELLER]:       ROUTE_NAMES.SELLER_DASHBOARD,
   [ROLES.MASTER_ADMIN]: ROUTE_NAMES.MASTER_DASHBOARD,
   [ROLES.WH_MANAGER]:   ROUTE_NAMES.WH_MANAGER_DASHBOARD,
-  [ROLES.WH_WORKER]:    ROUTE_NAMES.WH_WORKER_TASK_LIST,
+  [ROLES.WH_WORKER]:    ROUTE_NAMES.WH_WORKER_DASHBOARD,
   [ROLES.SYSTEM_ADMIN]: ROUTE_NAMES.SYS_COMPANY_LIST,
 }
 
@@ -48,7 +47,7 @@ function fillCredentials(role) {
 async function handleSubmit() {
   errorMsg.value = ''
   infoMsg.value  = ''
-  ui.setLoading(true)
+  isLoading.value = true
   try {
     const res  = await login({ email: loginId.value, password: password.value })
     const data = res.data.data
@@ -78,7 +77,7 @@ async function handleSubmit() {
       errorMsg.value = '서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.'
     }
   } finally {
-    ui.setLoading(false)
+    isLoading.value = false
   }
 }
 </script>
@@ -137,7 +136,9 @@ async function handleSubmit() {
               <div v-if="infoMsg"  class="alert alert--info">{{ infoMsg }}</div>
 
               <div class="button-area">
-                <button type="submit" class="btn-login">로그인</button>
+                <button type="submit" class="btn-login" :disabled="isLoading">
+                  {{ isLoading ? '로그인 중...' : '로그인' }}
+                </button>
               </div>
             </form>
 
