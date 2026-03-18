@@ -6,8 +6,10 @@ import BaseTable from '@/components/common/BaseTable.vue'
 import { ROUTE_NAMES } from '@/constants'
 import AsnDetailModal from './components/AsnDetailModal.vue'
 import AsnMismatchModal from './components/AsnMismatchModal.vue'
+import { useUiStore } from '@/stores/ui'
 
 const router = useRouter()
+const ui = useUiStore()
 
 // ── 탭 상태 ('asn' | 'tasks' | 'bin')
 const activeTab = ref('asn')
