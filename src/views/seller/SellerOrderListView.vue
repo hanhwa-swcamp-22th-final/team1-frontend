@@ -121,7 +121,7 @@ function showToolbarMessage(message) {
             </label>
 
             <button
-              class="ui-btn ui-btn--ghost toolbar-btn"
+              class="ui-btn ui-btn--ghost toolbar-btn toolbar-btn--compact"
               type="button"
               @click="showToolbarMessage('세부 필터 UI는 다음 단계에서 연결합니다.')"
             >
@@ -259,12 +259,18 @@ function showToolbarMessage(message) {
 
 .toolbar-right {
   display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: flex-start;
   gap: var(--space-2);
+  min-width: 0;
 }
 
 .search-box {
-  min-width: min(100%, 280px);
+  flex: 1 1 240px;
+  min-width: 220px;
+  max-width: 280px;
 }
 
 .search-box input {
@@ -288,8 +294,15 @@ function showToolbarMessage(message) {
 }
 
 .toolbar-btn {
+  flex-shrink: 0;
   min-height: 38px;
+  min-width: 112px;
+  padding-inline: 16px;
   white-space: nowrap;
+}
+
+.toolbar-btn--compact {
+  min-width: 64px;
 }
 
 .toolbar-message {
