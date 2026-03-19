@@ -1084,6 +1084,139 @@
       ]
     }
   ],
+  "wh_tasks": [
+    {
+      "id": "TASK-20260312-015",
+      "type": "INSPECTION_LOADING",
+      "sellerCompany": "K-Style",
+      "refDoc": "ASN-20240312-009",
+      "bins": ["C-1-4"],
+      "workerName": "이서윤",
+      "workerId": "WK-A-002",
+      "status": "IN_PROGRESS",
+      "assignType": "AUTO"
+    },
+    {
+      "id": "TASK-20260312-014",
+      "type": "PICKING_PACKING",
+      "sellerCompany": "Glow Beauty",
+      "refDoc": "PICK-20240312-003",
+      "bins": ["A-3-2", "B-1-2"],
+      "workerName": "박민준",
+      "workerId": "WK-A-001",
+      "status": "PARTIAL_DONE",
+      "assignType": "AUTO"
+    },
+    {
+      "id": "TASK-20260312-013",
+      "type": "PICKING_PACKING",
+      "sellerCompany": "K-Farm",
+      "refDoc": "PICK-20240312-007",
+      "bins": ["D-2-1"],
+      "workerName": "최현우",
+      "workerId": "WK-A-003",
+      "status": "WAITING",
+      "assignType": "AUTO"
+    },
+    {
+      "id": "TASK-20260312-012",
+      "type": "INSPECTION_LOADING",
+      "sellerCompany": "Eco Pure",
+      "refDoc": "ASN-20240312-011",
+      "bins": [],
+      "workerName": null,
+      "workerId": null,
+      "status": "REVIEW_NEEDED",
+      "assignType": "MANUAL"
+    }
+  ],
+
+  "wh_inbound_asns": [
+    {
+      "id": "ASN-2024-0312-001",
+      "sellerCompany": "Glow Beauty",
+      "plannedQty": 1000,
+      "recommendedBin": "A-3-2",
+      "assignedWorkerName": "박민준",
+      "assignedWorkerId": "WK-A-001",
+      "eta": "2026-03-14 09:30",
+      "inboundStatus": "pending"
+    },
+    {
+      "id": "ASN-2024-0307-004",
+      "sellerCompany": "Beauty Lab",
+      "plannedQty": 400,
+      "recommendedBin": "B-1-2",
+      "assignedWorkerName": "최현우",
+      "assignedWorkerId": "WK-A-003",
+      "eta": "2026-03-16 11:00",
+      "inboundStatus": "pending"
+    },
+    {
+      "id": "ASN-2024-0311-005",
+      "sellerCompany": "K-Style",
+      "plannedQty": 300,
+      "recommendedBin": "C-1-4",
+      "assignedWorkerName": "이서윤",
+      "assignedWorkerId": "WK-A-002",
+      "eta": "2026-03-13 14:20",
+      "inboundStatus": "transit"
+    },
+    {
+      "id": "ASN-2024-0309-002",
+      "sellerCompany": "Glow Beauty",
+      "actualQty": 800,
+      "storedBin": "A-3-3",
+      "completedWorkerName": "이서윤",
+      "completedAt": "2026-03-12 10:25",
+      "inboundStatus": "received"
+    },
+    {
+      "id": "ASN-2024-0310-003",
+      "sellerCompany": "Eco Pure",
+      "sku": "SKU-EP-001",
+      "plannedQty": 200,
+      "actualQty": 185,
+      "diff": -15,
+      "mismatchReason": "파손 / 누락",
+      "checkedWorkerName": "이서윤",
+      "inboundStatus": "mismatch"
+    }
+  ],
+
+  "wh_bin_fixed_assignments": [
+    {
+      "id": "A-3-2",
+      "bin": "A-3-2",
+      "workerName": "박민준",
+      "workerId": "WK-A-001",
+      "taskType": "PICKING_PACKING",
+      "latestRefDoc": "PICK-20240312-003",
+      "fallbackWorkerName": "최현우",
+      "memo": "고회전 SKU 존"
+    },
+    {
+      "id": "C-1-4",
+      "bin": "C-1-4",
+      "workerName": "이서윤",
+      "workerId": "WK-A-002",
+      "taskType": "INSPECTION_LOADING",
+      "latestRefDoc": "ASN-20240312-009",
+      "fallbackWorkerName": "박민준",
+      "memo": "신규 입고 우선 존"
+    },
+    {
+      "id": "D-2-1",
+      "bin": "D-2-1",
+      "workerName": "최현우",
+      "workerId": "WK-A-003",
+      "taskType": "PICKING_PACKING",
+      "latestRefDoc": "PICK-20240312-007",
+      "fallbackWorkerName": "이서윤",
+      "memo": "냉장 제품 제외"
+    }
+  ],
+
   "wh_invoice_orders": [
     {
       "id": "ORD-20240312-071",

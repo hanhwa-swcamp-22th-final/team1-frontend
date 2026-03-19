@@ -53,7 +53,7 @@
  *   <StatusBadge :status="item.status" type="item" />
  */
 import { computed } from 'vue'
-import { ACCOUNT_STATUS, ASN_STATUS, ITEM_STATUS, LABEL_STATUS, ORDER_STATUS, OUTBOUND_CONFIRM_STATUS, PICKING_LIST_STATUS, WORKER_PRESENCE_STATUS, WORKER_STATUS, SELLER_STATUS } from '@/constants'
+import { ACCOUNT_STATUS, ASN_STATUS, ITEM_STATUS, LABEL_STATUS, ORDER_STATUS, OUTBOUND_CONFIRM_STATUS, PICKING_LIST_STATUS, TASK_ASSIGN_TYPE, TASK_STATUS, WORKER_PRESENCE_STATUS, WORKER_STATUS } from '@/constants'
 
 const props = defineProps({
   status: { type: String, required: true },
@@ -120,6 +120,17 @@ const MAP = {
     [WORKER_PRESENCE_STATUS.PUTAWAY]:  { label: '작업 중 (Put-away)', color: 'purple'  },
     [WORKER_PRESENCE_STATUS.IDLE]:     { label: '대기 중',            color: 'green'   },
     [WORKER_PRESENCE_STATUS.OFFLINE]:  { label: '오프라인',           color: 'default' },
+  },
+  taskStatus: {
+    [TASK_STATUS.WAITING]:       { label: '대기',      color: 'default' },
+    [TASK_STATUS.IN_PROGRESS]:   { label: '진행중',    color: 'amber'   },
+    [TASK_STATUS.PARTIAL_DONE]:  { label: '부분완료',  color: 'amber'   },
+    [TASK_STATUS.COMPLETED]:     { label: '완료',      color: 'green'   },
+    [TASK_STATUS.REVIEW_NEEDED]: { label: '검토 필요', color: 'red'     },
+  },
+  taskAssignType: {
+    [TASK_ASSIGN_TYPE.AUTO]:   { label: '자동', color: 'blue' },
+    [TASK_ASSIGN_TYPE.MANUAL]: { label: '수동', color: 'gold' },
   },
 }
 
