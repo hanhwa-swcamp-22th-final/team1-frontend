@@ -81,3 +81,33 @@ export function createWhmWorkerAccount(data) {
 export function updateWhmWorkerAccount(id, data) {
   return instance.patch(`/wh_worker_accounts/${id}`, data)
 }
+
+/** 작업 목록 조회 */
+export function getWhmTasks(params) {
+  return instance.get('/wh_tasks', { params })
+}
+
+/** 작업 배정 (생성 또는 수정) */
+export function assignTask(id, data) {
+  return instance.patch(`/wh_tasks/${id}`, data)
+}
+
+/** 인바운드 ASN 목록 조회 (inboundStatus 파라미터로 탭 필터링) */
+export function getWhmInboundAsns(params) {
+  return instance.get('/wh_inbound_asns', { params })
+}
+
+/** Bin 고정 배정 목록 조회 */
+export function getWhmBinFixedAssignments() {
+  return instance.get('/wh_bin_fixed_assignments')
+}
+
+/** Bin 고정 배정 저장 */
+export function updateBinFixedAssignment(bin, data) {
+  return instance.patch(`/wh_bin_fixed_assignments/${bin}`, data)
+}
+
+/** Worker-Zone 배정 저장 (worker_accounts의 zones 필드 업데이트) */
+export function updateWorkerZones(id, zones) {
+  return instance.patch(`/wh_worker_accounts/${id}`, { zones })
+}

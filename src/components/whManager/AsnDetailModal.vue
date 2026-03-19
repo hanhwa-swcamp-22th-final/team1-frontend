@@ -50,21 +50,24 @@ const SKU_MAP = {
 
 const skuList = computed(() => SKU_MAP[props.asn?.id] ?? [])
 
-const statusInfo = computed(() => STATUS_MAP[props.asn?.status] ?? { label: '-', badge: 'gray' })
+// inboundStatus (wh_inbound_asns 필드) 또는 status 둘 다 지원
+const asnStatus = computed(() => props.asn?.inboundStatus ?? props.asn?.status ?? '')
+
+const statusInfo = computed(() => STATUS_MAP[asnStatus.value] ?? { label: '-', badge: 'gray' })
 
 // 타임라인: ASN 상태에 따라 완료 여부 결정
 const timeline = computed(() => {
   if (!props.asn) return []
-  const s = props.asn.status
+  const s = asnStatus.value
   return [
     {
       title: '등록됨',
-      sub: `${props.asn.registeredDate} · 셀러 등록 완료`,
+      sub: '셀러 등록 완료',
       done: true,
     },
     {
       title: '입고 확인',
-      sub: s !== 'pending' ? `${props.asn.expectedDate} · 입고 확인됨` : '관리자 확인 대기',
+      sub: s !== 'pending' ? `${props.asn.eta ?? '-'} · 입고 확인됨` : '관리자 확인 대기',
       done: s !== 'pending',
     },
     {
@@ -108,22 +111,22 @@ const timeline = computed(() => {
         <div class="metric-grid">
           <div class="metric-card">
             <span class="metric-label">셀러사</span>
-            <span class="metric-value">{{ asn.company.split(' ')[0] }}</span>
-            <span class="metric-sub">{{ asn.company }}</span>
+            <span class="metric-value">{{ (asn.sellerCompany ?? asn.company ?? '-').split(' ')[0] }}</span>
+            <span class="metric-sub">{{ asn.sellerCompany ?? asn.company ?? '-' }}</span>
           </div>
           <div class="metric-card">
             <span class="metric-label">예정 수량</span>
-            <span class="metric-value">{{ asn.plannedQty?.toLocaleString() }}</span>
-            <span class="metric-sub">{{ skuList.length }} SKU</span>
+            <span class="metric-value">{{ (asn.plannedQty ?? asn.actualQty ?? 0).toLocaleString() }}</span>
+            <span class="metric-sub">{{ skuList.length > 0 ? skuList.length + ' SKU' : '상세 없음' }}</span>
           </div>
           <div class="metric-card">
             <span class="metric-label">예정 도착일</span>
-            <span class="metric-value">{{ asn.expectedDate?.slice(5).replace('-', '/') }}</span>
-            <span class="metric-sub">{{ asn.expectedDate }}</span>
+            <span class="metric-value">{{ (asn.eta ?? asn.expectedDate ?? '-').slice(0, 10) }}</span>
+            <span class="metric-sub">{{ asn.eta ?? asn.expectedDate ?? '-' }}</span>
           </div>
           <div class="metric-card">
             <span class="metric-label">현재 상태</span>
-            <span class="metric-value">{{ STATUS_STEP_LABEL[asn.status] }}</span>
+            <span class="metric-value">{{ STATUS_STEP_LABEL[asnStatus] ?? '-' }}</span>
             <span class="metric-sub">{{ statusInfo.label }}</span>
           </div>
         </div>

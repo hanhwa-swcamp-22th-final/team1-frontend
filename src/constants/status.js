@@ -181,3 +181,24 @@ export const WORKER_PRESENCE_STATUS = {
   IDLE:     'IDLE',     // 대기 중
   OFFLINE:  'OFFLINE',  // 오프라인
 }
+
+/**
+ * TASK_STATUS — 작업 처리 상태 5단계
+ * StatusBadge.vue의 MAP.taskStatus와 연동됨.
+ */
+export const TASK_STATUS = {
+  WAITING:        'WAITING',        // 대기
+  IN_PROGRESS:    'IN_PROGRESS',    // 진행중
+  PARTIAL_DONE:   'PARTIAL_DONE',   // 부분완료
+  COMPLETED:      'COMPLETED',      // 완료
+  REVIEW_NEEDED:  'REVIEW_NEEDED',  // 검토 필요
+}
+
+/**
+ * TASK_ASSIGN_TYPE — 작업 배정 방식
+ * StatusBadge.vue의 MAP.taskAssignType과 연동됨.
+ */
+export const TASK_ASSIGN_TYPE = {
+  AUTO:   'AUTO',   // 자동 배정
+  MANUAL: 'MANUAL', // 수동 배정
+}
