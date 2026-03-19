@@ -1,329 +1,50 @@
 <script setup>
-import { computed, onMounted, onBeforeUnmount, onActivated, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import {
+  addWorkerStateListeners,
+  loadWorkerState,
+  nowStamp,
+  resetWorkerState,
+  updateWorkerState,
+} from '@/utils/whWorkerState'
 
-// 입고 관리 화면 브레드크럼
 const breadcrumb = [{ label: 'WH Worker' }, { label: '입고 관리' }]
 const route = useRoute()
 const STORAGE_KEY = 'wh-worker-shared-state-v2'
 
-// 입고 관리 목업용 작업 데이터 (대기/진행중/완료 상태 풍성하게 추가)
-const INBOUND_TASKS_SEED = Object.freeze([
-  // --- 대기 (5건) ---
-  {
-    id: 'IB-2026-0312-01',
-    type: '검수&적재',
-    sellerCompany: '어반셀러코리아',
-    refNo: 'ASN-240312-A01',
-    assignedBinCount: 3,
-    totalQty: 170,
-    status: '대기',
-    notes: '오늘 아침 입고 건입니다. 작업자는 본인에게 사전 배정된 Bin 범위 내 건만 확인합니다.',
-    flow: ['검수', '적재'],
-    activeStep: '검수',
-    asnStatus: '입고예정',
-    stockActivation: false,
-    completedAt: '',
-    bins: [
-      { id: 'A-01', location: 'ZONE-A · RACK-01 · BIN-01', designatedBinCode: 'A-01-01', sku: 'SKU-UV-1001', plannedQty: 50, inspectedQty: '', inspectNote: '', statusInspect: '대기', confirmBinCode: '', putQty: '', statusPut: '대기' },
-      { id: 'A-02', location: 'ZONE-A · RACK-01 · BIN-02', designatedBinCode: 'A-01-02', sku: 'SKU-UV-1002', plannedQty: 60, inspectedQty: '', inspectNote: '', statusInspect: '대기', confirmBinCode: '', putQty: '', statusPut: '대기' },
-      { id: 'A-03', location: 'ZONE-A · RACK-02 · BIN-01', designatedBinCode: 'A-02-01', sku: 'SKU-UV-1003', plannedQty: 60, inspectedQty: '', inspectNote: '', statusInspect: '대기', confirmBinCode: '', putQty: '', statusPut: '대기' },
-    ],
-  },
-  {
-    id: 'IB-2026-0312-03',
-    type: '검수&적재',
-    sellerCompany: '메가뷰티랩',
-    refNo: 'ASN-240312-D11',
-    assignedBinCount: 4,
-    totalQty: 126,
-    status: '대기',
-    notes: '화장품 카테고리 신규 입고 건입니다. 모든 Bin이 검수 대기 상태입니다.',
-    flow: ['검수', '적재'],
-    activeStep: '검수',
-    asnStatus: '입고예정',
-    stockActivation: false,
-    completedAt: '',
-    bins: [
-      { id: 'D-01', location: 'ZONE-D · RACK-01 · BIN-01', designatedBinCode: 'D-01-01', sku: 'SKU-MB-4101', plannedQty: 30, inspectedQty: '', inspectNote: '', statusInspect: '대기', confirmBinCode: '', putQty: '', statusPut: '대기' },
-      { id: 'D-02', location: 'ZONE-D · RACK-01 · BIN-02', designatedBinCode: 'D-01-02', sku: 'SKU-MB-4102', plannedQty: 28, inspectedQty: '', inspectNote: '', statusInspect: '대기', confirmBinCode: '', putQty: '', statusPut: '대기' },
-      { id: 'D-03', location: 'ZONE-D · RACK-02 · BIN-01', designatedBinCode: 'D-02-01', sku: 'SKU-MB-4103', plannedQty: 32, inspectedQty: '', inspectNote: '', statusInspect: '대기', confirmBinCode: '', putQty: '', statusPut: '대기' },
-      { id: 'D-04', location: 'ZONE-D · RACK-02 · BIN-02', designatedBinCode: 'D-02-02', sku: 'SKU-MB-4104', plannedQty: 36, inspectedQty: '', inspectNote: '', statusInspect: '대기', confirmBinCode: '', putQty: '', statusPut: '대기' },
-    ],
-  },
-  {
-    id: 'IB-2026-0312-06',
-    type: '검수&적재',
-    sellerCompany: '펫피아',
-    refNo: 'ASN-240312-P01',
-    assignedBinCount: 2,
-    totalQty: 85,
-    status: '대기',
-    notes: '반려동물 용품 긴급 입고 건입니다. 신속한 검수가 필요합니다.',
-    flow: ['검수', '적재'],
-    activeStep: '검수',
-    asnStatus: '입고예정',
-    stockActivation: false,
-    completedAt: '',
-    bins: [
-      { id: 'P-01', location: 'ZONE-P · RACK-04 · BIN-01', designatedBinCode: 'P-04-01', sku: 'SKU-PT-8001', plannedQty: 45, inspectedQty: '', inspectNote: '', statusInspect: '대기', confirmBinCode: '', putQty: '', statusPut: '대기' },
-      { id: 'P-02', location: 'ZONE-P · RACK-04 · BIN-02', designatedBinCode: 'P-04-02', sku: 'SKU-PT-8002', plannedQty: 40, inspectedQty: '', inspectNote: '', statusInspect: '대기', confirmBinCode: '', putQty: '', statusPut: '대기' },
-    ],
-  },
-  {
-    id: 'IB-2026-0312-07',
-    type: '검수&적재',
-    sellerCompany: '스마트테크',
-    refNo: 'ASN-240312-T05',
-    assignedBinCount: 1,
-    totalQty: 15,
-    status: '대기',
-    notes: '고가 전자기기 입고. 파손 여부 꼼꼼히 확인 바랍니다.',
-    flow: ['검수', '적재'],
-    activeStep: '검수',
-    asnStatus: '입고예정',
-    stockActivation: false,
-    completedAt: '',
-    bins: [
-      { id: 'T-01', location: 'ZONE-T · RACK-01 · BIN-05', designatedBinCode: 'T-01-05', sku: 'SKU-ST-9901', plannedQty: 15, inspectedQty: '', inspectNote: '', statusInspect: '대기', confirmBinCode: '', putQty: '', statusPut: '대기' },
-    ],
-  },
-  {
-    id: 'IB-2026-0312-08',
-    type: '검수&적재',
-    sellerCompany: '베이비슈',
-    refNo: 'ASN-240312-B12',
-    assignedBinCount: 3,
-    totalQty: 150,
-    status: '대기',
-    notes: '유아용품 정기 입고 건.',
-    flow: ['검수', '적재'],
-    activeStep: '검수',
-    asnStatus: '입고예정',
-    stockActivation: false,
-    completedAt: '',
-    bins: [
-      { id: 'B-11', location: 'ZONE-B · RACK-05 · BIN-01', designatedBinCode: 'B-05-01', sku: 'SKU-BB-1101', plannedQty: 50, inspectedQty: '', inspectNote: '', statusInspect: '대기', confirmBinCode: '', putQty: '', statusPut: '대기' },
-      { id: 'B-12', location: 'ZONE-B · RACK-05 · BIN-02', designatedBinCode: 'B-05-02', sku: 'SKU-BB-1102', plannedQty: 50, inspectedQty: '', inspectNote: '', statusInspect: '대기', confirmBinCode: '', putQty: '', statusPut: '대기' },
-      { id: 'B-13', location: 'ZONE-B · RACK-05 · BIN-03', designatedBinCode: 'B-05-03', sku: 'SKU-BB-1103', plannedQty: 50, inspectedQty: '', inspectNote: '', statusInspect: '대기', confirmBinCode: '', putQty: '', statusPut: '대기' },
-    ],
-  },
-
-  // --- 진행중 (5건) ---
-  {
-    id: 'IB-2026-0312-02',
-    type: '검수&적재',
-    sellerCompany: '푸드라인컴퍼니',
-    refNo: 'ASN-240312-B04',
-    assignedBinCount: 2,
-    totalQty: 80,
-    status: '진행중',
-    notes: '검수는 일부 완료되었고 현재 적재 단계로 넘어간 작업입니다.',
-    flow: ['검수', '적재'],
-    activeStep: '적재',
-    asnStatus: '검수완료',
-    stockActivation: false,
-    completedAt: '',
-    bins: [
-      { id: 'B-01', location: 'ZONE-B · RACK-03 · BIN-02', designatedBinCode: 'B-03-02', sku: 'SKU-FD-2001', plannedQty: 40, inspectedQty: '40', inspectNote: '', statusInspect: '완료', confirmBinCode: 'B-03-02', putQty: '40', statusPut: '완료' },
-      { id: 'B-02', location: 'ZONE-B · RACK-03 · BIN-03', designatedBinCode: 'B-03-03', sku: 'SKU-FD-2002', plannedQty: 40, inspectedQty: '38', inspectNote: '박스 1개 파손 확인', statusInspect: '완료', confirmBinCode: '', putQty: '', statusPut: '대기' },
-    ],
-  },
-  {
-    id: 'IB-2026-0312-04',
-    type: '검수&적재',
-    sellerCompany: '헬시바스켓',
-    refNo: 'ASN-240312-E07',
-    assignedBinCount: 3,
-    totalQty: 92,
-    status: '진행중',
-    notes: '검수 단계에서 일부 Bin이 완료된 상태입니다.',
-    flow: ['검수', '적재'],
-    activeStep: '검수',
-    asnStatus: '검수중',
-    stockActivation: false,
-    completedAt: '',
-    bins: [
-      { id: 'E-01', location: 'ZONE-E · RACK-01 · BIN-01', designatedBinCode: 'E-01-01', sku: 'SKU-HB-5201', plannedQty: 30, inspectedQty: '30', inspectNote: '', statusInspect: '완료', confirmBinCode: '', putQty: '', statusPut: '대기' },
-      { id: 'E-02', location: 'ZONE-E · RACK-01 · BIN-02', designatedBinCode: 'E-01-02', sku: 'SKU-HB-5202', plannedQty: 32, inspectedQty: '31', inspectNote: '1개 수량 차이 확인 필요', statusInspect: '진행중', confirmBinCode: '', putQty: '', statusPut: '대기' },
-      { id: 'E-03', location: 'ZONE-E · RACK-02 · BIN-01', designatedBinCode: 'E-02-01', sku: 'SKU-HB-5203', plannedQty: 30, inspectedQty: '', inspectNote: '', statusInspect: '대기', confirmBinCode: '', putQty: '', statusPut: '대기' },
-    ],
-  },
-  {
-    id: 'IB-2026-0312-09',
-    type: '검수&적재',
-    sellerCompany: '오피스존',
-    refNo: 'ASN-240312-O02',
-    assignedBinCount: 2,
-    totalQty: 200,
-    status: '진행중',
-    notes: '사무용품 대량 입고. 검수 진행 중.',
-    flow: ['검수', '적재'],
-    activeStep: '검수',
-    asnStatus: '검수중',
-    stockActivation: false,
-    completedAt: '',
-    bins: [
-      { id: 'O-01', location: 'ZONE-O · RACK-02 · BIN-01', designatedBinCode: 'O-02-01', sku: 'SKU-OZ-7701', plannedQty: 100, inspectedQty: '100', inspectNote: '', statusInspect: '완료', confirmBinCode: '', putQty: '', statusPut: '대기' },
-      { id: 'O-02', location: 'ZONE-O · RACK-02 · BIN-02', designatedBinCode: 'O-02-02', sku: 'SKU-OZ-7702', plannedQty: 100, inspectedQty: '', inspectNote: '', statusInspect: '대기', confirmBinCode: '', putQty: '', statusPut: '대기' },
-    ],
-  },
-  {
-    id: 'IB-2026-0312-10',
-    type: '검수&적재',
-    sellerCompany: '캠핑크루',
-    refNo: 'ASN-240312-C05',
-    assignedBinCount: 3,
-    totalQty: 45,
-    status: '진행중',
-    notes: '캠핑용품 적재 진행 중.',
-    flow: ['검수', '적재'],
-    activeStep: '적재',
-    asnStatus: '검수완료',
-    stockActivation: false,
-    completedAt: '',
-    bins: [
-      { id: 'C-05', location: 'ZONE-C · RACK-04 · BIN-01', designatedBinCode: 'C-04-01', sku: 'SKU-CP-2201', plannedQty: 15, inspectedQty: '15', inspectNote: '', statusInspect: '완료', confirmBinCode: 'C-04-01', putQty: '15', statusPut: '완료' },
-      { id: 'C-06', location: 'ZONE-C · RACK-04 · BIN-02', designatedBinCode: 'C-04-02', sku: 'SKU-CP-2202', plannedQty: 15, inspectedQty: '15', inspectNote: '', statusInspect: '완료', confirmBinCode: 'C-04-02', putQty: '15', statusPut: '완료' },
-      { id: 'C-07', location: 'ZONE-C · RACK-04 · BIN-03', designatedBinCode: 'C-04-03', sku: 'SKU-CP-2203', plannedQty: 15, inspectedQty: '15', inspectNote: '', statusInspect: '완료', confirmBinCode: '', putQty: '', statusPut: '대기' },
-    ],
-  },
-  {
-    id: 'IB-2026-0312-11',
-    type: '검수&적재',
-    sellerCompany: '데일리스니커즈',
-    refNo: 'ASN-240312-S08',
-    assignedBinCount: 1,
-    totalQty: 24,
-    status: '진행중',
-    notes: '신발 단일 품목. 수량 확인 중.',
-    flow: ['검수', '적재'],
-    activeStep: '검수',
-    asnStatus: '검수중',
-    stockActivation: false,
-    completedAt: '',
-    bins: [
-      { id: 'S-01', location: 'ZONE-S · RACK-01 · BIN-08', designatedBinCode: 'S-01-08', sku: 'SKU-SN-6601', plannedQty: 24, inspectedQty: '12', inspectNote: '나머지 12개 찾는 중', statusInspect: '진행중', confirmBinCode: '', putQty: '', statusPut: '대기' },
-    ],
-  },
-
-  // --- 완료 (5건) ---
-  {
-    id: 'IB-2026-0311-05',
-    type: '검수&적재',
-    sellerCompany: '리빙하우스',
-    refNo: 'ASN-240311-C09',
-    assignedBinCount: 2,
-    totalQty: 55,
-    status: '완료',
-    notes: '적재까지 완료되어 재고 관리에서 조회 가능한 작업입니다.',
-    flow: ['검수', '적재'],
-    activeStep: '적재 완료',
-    asnStatus: '보관중',
-    stockActivation: true,
-    completedAt: '2026-03-12 09:12',
-    bins: [
-      { id: 'C-01', location: 'ZONE-C · RACK-01 · BIN-01', designatedBinCode: 'C-01-01', sku: 'SKU-LV-3301', plannedQty: 25, inspectedQty: '25', inspectNote: '', statusInspect: '완료', confirmBinCode: 'C-01-01', putQty: '25', statusPut: '완료' },
-      { id: 'C-02', location: 'ZONE-C · RACK-01 · BIN-02', designatedBinCode: 'C-01-02', sku: 'SKU-LV-3302', plannedQty: 30, inspectedQty: '30', inspectNote: '', statusInspect: '완료', confirmBinCode: 'C-01-02', putQty: '30', statusPut: '완료' },
-    ],
-  },
-  {
-    id: 'IB-2026-0311-12',
-    type: '검수&적재',
-    sellerCompany: '북앤스토리',
-    refNo: 'ASN-240311-B02',
-    assignedBinCount: 1,
-    totalQty: 40,
-    status: '완료',
-    notes: '도서 입고 완료.',
-    flow: ['검수', '적재'],
-    activeStep: '적재 완료',
-    asnStatus: '보관중',
-    stockActivation: true,
-    completedAt: '2026-03-12 10:05',
-    bins: [
-      { id: 'B-21', location: 'ZONE-B · RACK-02 · BIN-05', designatedBinCode: 'B-02-05', sku: 'SKU-BK-0001', plannedQty: 40, inspectedQty: '40', inspectNote: '', statusInspect: '완료', confirmBinCode: 'B-02-05', putQty: '40', statusPut: '완료' },
-    ],
-  },
-  {
-    id: 'IB-2026-0311-13',
-    type: '검수&적재',
-    sellerCompany: '그린가든',
-    refNo: 'ASN-240311-G01',
-    assignedBinCount: 3,
-    totalQty: 90,
-    status: '완료',
-    notes: '원예용품 입고 및 재고 반영 완료.',
-    flow: ['검수', '적재'],
-    activeStep: '적재 완료',
-    asnStatus: '보관중',
-    stockActivation: true,
-    completedAt: '2026-03-12 11:30',
-    bins: [
-      { id: 'G-01', location: 'ZONE-G · RACK-01 · BIN-01', designatedBinCode: 'G-01-01', sku: 'SKU-GR-3001', plannedQty: 30, inspectedQty: '30', inspectNote: '', statusInspect: '완료', confirmBinCode: 'G-01-01', putQty: '30', statusPut: '완료' },
-      { id: 'G-02', location: 'ZONE-G · RACK-01 · BIN-02', designatedBinCode: 'G-01-02', sku: 'SKU-GR-3002', plannedQty: 30, inspectedQty: '30', inspectNote: '', statusInspect: '완료', confirmBinCode: 'G-01-02', putQty: '30', statusPut: '완료' },
-      { id: 'G-03', location: 'ZONE-G · RACK-01 · BIN-03', designatedBinCode: 'G-01-03', sku: 'SKU-GR-3003', plannedQty: 30, inspectedQty: '30', inspectNote: '', statusInspect: '완료', confirmBinCode: 'G-01-03', putQty: '30', statusPut: '완료' },
-    ],
-  },
-  {
-    id: 'IB-2026-0311-14',
-    type: '검수&적재',
-    sellerCompany: '토이월드',
-    refNo: 'ASN-240311-W03',
-    assignedBinCount: 2,
-    totalQty: 60,
-    status: '완료',
-    notes: '장난감 입고 완료.',
-    flow: ['검수', '적재'],
-    activeStep: '적재 완료',
-    asnStatus: '보관중',
-    stockActivation: true,
-    completedAt: '2026-03-12 13:15',
-    bins: [
-      { id: 'W-01', location: 'ZONE-W · RACK-03 · BIN-01', designatedBinCode: 'W-03-01', sku: 'SKU-TW-1201', plannedQty: 30, inspectedQty: '30', inspectNote: '', statusInspect: '완료', confirmBinCode: 'W-03-01', putQty: '30', statusPut: '완료' },
-      { id: 'W-02', location: 'ZONE-W · RACK-03 · BIN-02', designatedBinCode: 'W-03-02', sku: 'SKU-TW-1202', plannedQty: 30, inspectedQty: '30', inspectNote: '', statusInspect: '완료', confirmBinCode: 'W-03-02', putQty: '30', statusPut: '완료' },
-    ],
-  },
-  {
-    id: 'IB-2026-0311-15',
-    type: '검수&적재',
-    sellerCompany: '홈피트니스',
-    refNo: 'ASN-240311-H04',
-    assignedBinCount: 1,
-    totalQty: 10,
-    status: '완료',
-    notes: '운동기구(소도구) 입고 완료.',
-    flow: ['검수', '적재'],
-    activeStep: '적재 완료',
-    asnStatus: '보관중',
-    stockActivation: true,
-    completedAt: '2026-03-12 14:00',
-    bins: [
-      { id: 'H-01', location: 'ZONE-H · RACK-02 · BIN-04', designatedBinCode: 'H-02-04', sku: 'SKU-HF-4401', plannedQty: 10, inspectedQty: '10', inspectNote: '', statusInspect: '완료', confirmBinCode: 'H-02-04', putQty: '10', statusPut: '완료' },
-    ],
-  },
-])
-
-// 입고 작업 화면 상태
-const tasks = ref(loadInboundTasks())
-const selectedTaskId = ref(String(route.query.taskId || tasks.value[0]?.id || ''))
+const tasks = ref([])
+const selectedTaskId = ref(String(route.query.taskId || ''))
 const inboundSubTab = ref('inspect')
 
-// 좌측 목록에서 선택한 입고 작업 상세 데이터
+function cloneSeed(seed) {
+  return JSON.parse(JSON.stringify(seed))
+}
+
+function resolveTaskTab(task) {
+  if (!task) return 'inspect'
+  if (task.status === '완료' || task.activeStep === '적재 완료') return 'done'
+  return task.activeStep === '적재' ? 'put' : 'inspect'
+}
+
+function syncInboundState() {
+  const state = loadWorkerState()
+  tasks.value = cloneSeed(state.inboundTasks)
+  applySelectionFromRoute()
+  ensureVisibleSelection()
+}
+
 const selectedTask = computed(() => tasks.value.find((task) => task.id === selectedTaskId.value) ?? null)
 
-watch(
-  () => route.query.taskId,
-  (taskId) => {
-    if (!taskId) return
-    const matched = tasks.value.find((task) => task.id === String(taskId))
-    if (!matched) return
-    selectedTaskId.value = matched.id
-    inboundSubTab.value = matched.status === '완료' ? 'done' : matched.activeStep === '적재' ? 'put' : 'inspect'
-  },
-  { immediate: true }
-)
+function applySelectionFromRoute() {
+  const taskId = String(route.query.taskId || '')
+  if (!taskId) return
+  const matched = tasks.value.find((task) => task.id === taskId)
+  if (!matched) return
+  selectedTaskId.value = matched.id
+  inboundSubTab.value = resolveTaskTab(matched)
+}
 
 const filteredTaskCards = computed(() => {
   const list = [...tasks.value].filter((task) => {
@@ -334,18 +55,12 @@ const filteredTaskCards = computed(() => {
   })
   return list.sort(sortTasks)
 })
+
 const totalAssignedCount = computed(() => tasks.value.length)
 const waitingTaskCount = computed(() => tasks.value.filter((task) => task.status === '대기').length)
 const progressTaskCount = computed(() => tasks.value.filter((task) => task.status === '진행중').length)
 const doneTaskCount = computed(() => tasks.value.filter((task) => task.status === '완료').length)
-const totalInspectDoneCount = computed(() => tasks.value.reduce((sum, task) => sum + inspectDone(task), 0))
-const totalPutDoneCount = computed(() => tasks.value.reduce((sum, task) => sum + putDone(task), 0))
-const stockActivationCount = computed(() =>
-  tasks.value.reduce((sum, task) => sum + task.bins.filter((bin) => bin.statusInspect === '완료' && bin.statusPut === '완료').length, 0)
-)
-const pendingInventoryCount = computed(() => totalPutDoneCount.value - stockActivationCount.value)
 
-// 상단 요약 카드는 대시보드 카드와 같은 톤/구조를 사용
 const summaryCards = computed(() => [
   {
     key: 'all',
@@ -375,16 +90,8 @@ const summaryCards = computed(() => [
     description: '오늘 완료 처리된 입고 작업',
     tone: 'green',
   },
-  {
-    key: 'inventory',
-    label: '재고 반영 Bin',
-    value: `${stockActivationCount.value} Bin`,
-    description: `적재 대기 ${pendingInventoryCount.value} Bin`,
-    tone: 'gold',
-  },
 ])
 
-// 우측 상세 패널 상단 요약 카드
 const detailSummaryCards = computed(() => {
   const task = selectedTask.value
   if (!task) return []
@@ -408,11 +115,9 @@ const detailSummaryCards = computed(() => {
   ]
 })
 
-
-
 const inboundDetailStepIndex = computed(() => {
   if (!selectedTask.value) return 1
-  return { '검수': 1, '적재': 2, '적재 완료': 3 }[selectedTask.value.activeStep] ?? 1
+  return { 검수: 1, 적재: 2, '적재 완료': 3 }[selectedTask.value.activeStep] ?? 1
 })
 
 function inboundStepNodeClass(index) {
@@ -431,104 +136,41 @@ function inboundLineClass(index) {
   return inboundDetailStepIndex.value > index ? 'flow-line--done' : ''
 }
 
-// 현재 선택된 탭에 맞는 작업이 없으면 첫 번째 작업으로 자동 보정
-watch(
-  [selectedTask, filteredTaskCards, inboundSubTab],
-  ([task, cards]) => {
-    if (!cards.length) {
-      selectedTaskId.value = ''
-      return
-    }
+function ensureVisibleSelection() {
+  if (!tasks.value.length) {
+    selectedTaskId.value = ''
+    return
+  }
 
-    if (!task || !cards.some((card) => card.id === task.id)) {
-      selectedTaskId.value = cards[0].id
-    }
+  if (!filteredTaskCards.value.length) {
+    const fallbackTask = tasks.value[0]
+    selectedTaskId.value = fallbackTask?.id ?? ''
+    if (fallbackTask) inboundSubTab.value = resolveTaskTab(fallbackTask)
+    return
+  }
+
+  if (!filteredTaskCards.value.some((card) => card.id === selectedTaskId.value)) {
+    selectedTaskId.value = filteredTaskCards.value[0].id
+  }
+}
+
+watch(
+  () => route.query.taskId,
+  () => {
+    applySelectionFromRoute()
+    ensureVisibleSelection()
   },
   { immediate: true }
 )
 
-// 초기 시드 데이터를 화면용 반응형 데이터로 복제
-function cloneSeed(seed) {
-  return JSON.parse(JSON.stringify(seed))
-}
-
-function loadInboundTasks() {
-  if (typeof window === 'undefined') return cloneSeed(INBOUND_TASKS_SEED)
-  try {
-    const saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null')
-    if (saved && Array.isArray(saved.inboundTasks)) return saved.inboundTasks
-  } catch (error) {
-    console.warn('shared inbound parse failed', error)
-  }
-  return cloneSeed(INBOUND_TASKS_SEED)
-}
-
-
-function refreshFromSharedState() {
-  const currentId = selectedTaskId.value
-  tasks.value = cloneSeed(loadInboundTasks())
-  const matched = tasks.value.find((task) => task.id === currentId)
-  if (matched) {
-    selectedTaskId.value = matched.id
-    inboundSubTab.value = matched.activeStep === '적재' || matched.activeStep === '작업 완료' ? 'put' : 'inspect'
-    return
-  }
-  const first = tasks.value.find((task) => {
-    if (inboundSubTab.value === 'inspect') return task.activeStep === '검수'
-    return task.activeStep === '적재' || task.activeStep === '작업 완료'
-  }) ?? tasks.value[0]
-  selectedTaskId.value = first?.id ?? ''
-  inboundSubTab.value = first?.activeStep === '적재' || first?.activeStep === '작업 완료' ? 'put' : 'inspect'
-}
-
-function handleSharedStateUpdate() {
-  refreshFromSharedState()
-}
+watch([filteredTaskCards, inboundSubTab], () => {
+  ensureVisibleSelection()
+})
 
 function persistTasks() {
-  if (typeof window === 'undefined') return
-  let saved = {}
-  try {
-    saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null') || {}
-  } catch (error) {
-    saved = {}
-  }
-  saved.inboundTasks = cloneSeed(tasks.value)
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved))
-  window.dispatchEvent(new CustomEvent('wh-worker-state-updated'))
+  updateWorkerState({ inboundTasks: cloneSeed(tasks.value) })
 }
 
-onMounted(() => {
-  refreshFromSharedState()
-  if (typeof window !== 'undefined') {
-    window.addEventListener('storage', handleSharedStateUpdate)
-    window.addEventListener('wh-worker-state-updated', handleSharedStateUpdate)
-  }
-})
-
-onActivated(() => {
-  refreshFromSharedState()
-})
-
-onBeforeUnmount(() => {
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('storage', handleSharedStateUpdate)
-    window.removeEventListener('wh-worker-state-updated', handleSharedStateUpdate)
-  }
-})
-
-// 완료 시점 기록용 현재 시간 문자열 생성
-function nowStamp() {
-  const now = new Date()
-  const y = now.getFullYear()
-  const m = String(now.getMonth() + 1).padStart(2, '0')
-  const d = String(now.getDate()).padStart(2, '0')
-  const hh = String(now.getHours()).padStart(2, '0')
-  const mm = String(now.getMinutes()).padStart(2, '0')
-  return `${y}-${m}-${d} ${hh}:${mm}`
-}
-
-// 작업 상태 우선순위 기준 정렬
 function sortTasks(a, b) {
   const statusRank = { 대기: 0, 진행중: 1, 완료: 2 }
   return (statusRank[a.status] ?? 9) - (statusRank[b.status] ?? 9) || a.id.localeCompare(b.id)
@@ -557,7 +199,6 @@ function stepClass(task, step) {
   return ''
 }
 
-
 function inspectMismatch(bin) {
   return String(bin.inspectedQty).trim() !== '' && Number(bin.inspectedQty) !== Number(bin.plannedQty)
 }
@@ -571,10 +212,9 @@ function putCodeMismatch(bin) {
 }
 
 function resetSamples() {
-  tasks.value = cloneSeed(INBOUND_TASKS_SEED)
+  resetWorkerState()
   inboundSubTab.value = 'inspect'
-  selectedTaskId.value = tasks.value.find((task) => task.activeStep === '검수' && task.status !== '완료')?.id ?? ''
-  persistTasks()
+  syncInboundState()
 }
 
 function openInspect() {
@@ -640,13 +280,18 @@ function recomputeTask(task) {
   persistTasks()
 }
 
+function isWholeNumberInput(value) {
+  return /^\d+$/.test(String(value).trim())
+}
+
 function saveInspect(bin) {
   const task = selectedTask.value
   if (!task) return
 
   const inspectedQty = String(bin.inspectedQty).trim()
-  if (!inspectedQty) return
+  if (!isWholeNumberInput(inspectedQty)) return
 
+  bin.inspectedQty = inspectedQty
   bin.statusInspect = '완료'
   if (Number(inspectedQty) !== Number(bin.plannedQty) && !String(bin.inspectNote).trim()) {
     bin.inspectNote = `[불일치] ${bin.id} / ${bin.sku} 수량 차이 확인 필요`
@@ -662,10 +307,13 @@ function savePut(bin) {
 
   const putQty = String(bin.putQty).trim()
   const confirmBinCode = String(bin.confirmBinCode).trim()
-  if (!putQty || !confirmBinCode) return
+  if (!isWholeNumberInput(putQty) || !confirmBinCode) return
 
+  bin.putQty = putQty
+  bin.confirmBinCode = confirmBinCode
   bin.statusPut = '완료'
   recomputeTask(task)
+  if (task.status === '완료') inboundSubTab.value = 'done'
   persistTasks()
 }
 
@@ -698,16 +346,26 @@ function completePutAll() {
     }
     if (bin.statusInspect !== '완료') {
       bin.statusInspect = '완료'
-      if (!String(bin.inspectedQty).trim()) {
-        bin.inspectedQty = String(bin.plannedQty)
-      }
+      if (!String(bin.inspectedQty).trim()) bin.inspectedQty = String(bin.plannedQty)
     }
     bin.statusPut = '완료'
   })
 
   recomputeTask(task)
+  inboundSubTab.value = 'done'
   persistTasks()
 }
+
+let removeListeners = () => {}
+
+onMounted(() => {
+  syncInboundState()
+  removeListeners = addWorkerStateListeners(syncInboundState)
+})
+
+onBeforeUnmount(() => {
+  removeListeners()
+})
 </script>
 
 <template>
@@ -723,7 +381,8 @@ function completePutAll() {
     </template>
 
     <section class="inbound-page">
-      <div class="summary-grid summary-grid--five">
+      <!-- 상단 요약 카드 영역 -->
+      <div class="summary-grid">
         <article v-for="card in summaryCards" :key="card.key" :class="`summary-card--${card.tone}`" class="summary-card">
           <p class="summary-card__label">{{ card.label }}</p>
           <strong class="summary-card__value">{{ card.value }}</strong>
@@ -972,9 +631,6 @@ function completePutAll() {
   gap: var(--space-4);
 }
 
-.summary-grid--five {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-}
 
 .summary-card,
 .panel,
@@ -1356,7 +1012,7 @@ function completePutAll() {
 .work-table td {
   padding: 12px 10px;
   border-bottom: 1px solid var(--border);
-  text-align: left;
+  text-align: center;
   vertical-align: middle;
 }
 
