@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  buildSellerConnectedChannelCard,
   filterSellerChannelOrderRows,
   getSellerChannelMeta,
   getSellerChannelOrderStatusMeta,
+  SELLER_CHANNEL_SYNC_CARDS,
   SELLER_CHANNEL_ORDER_ROWS,
 } from '@/utils/channelOrders.utils.js'
 
@@ -38,5 +40,24 @@ describe('channelOrders utils', () => {
 
     expect(result).toHaveLength(1)
     expect(result[0].channelOrderNo).toBe('AMZ-4583201')
+  })
+
+  it('채널 연결 완료 시 카드 상태를 연결됨 기준으로 갱신한다', () => {
+    const result = buildSellerConnectedChannelCard(SELLER_CHANNEL_SYNC_CARDS[2], {
+      storeAlias: 'Qoo10 KR Store',
+      connectedAt: '2026-03-19 17:30',
+    })
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        syncStatus: 'CONNECTED',
+        lastSyncedAt: '2026-03-19 17:30',
+        actions: [
+          expect.objectContaining({ key: 'sync' }),
+          expect.objectContaining({ key: 'import' }),
+        ],
+      }),
+    )
+    expect(result.description).toContain('Qoo10 KR Store')
   })
 })
