@@ -47,7 +47,8 @@ export const WH_MANAGER_MENU_GROUPS = [
   {
     label: '사용자 관리',
     items: [
-      { name: ROUTE_NAMES.WH_MANAGER_WORKER_ACCOUNT, label: '작업자 계정', icon: '👤' },
+      { name: ROUTE_NAMES.WH_MANAGER_WORKER_ACCOUNT, label: '작업자 계정 관리', icon: '👤' },
+      { name: ROUTE_NAMES.WH_MANAGER_WORKER_TASK,    label: '작업자 업무 관리', icon: '📋' },
     ],
   },
 ]
