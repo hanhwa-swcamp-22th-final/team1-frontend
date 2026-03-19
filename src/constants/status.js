@@ -128,3 +128,74 @@ export const WORKER_STATUS = {
   INSPECTION_LOADING: 'INSPECTION_LOADING', // 검수&적재 작업 중
   PICKING_PACKING: 'PICKING_PACKING', // 피킹&패킹 작업 중
 }
+
+/**
+ * OUTBOUND_CONFIRM_STATUS — 출고 확정 상태 2단계
+ *
+ * 상태 전이 흐름:
+ *
+ *   PENDING_CONFIRM → CONFIRMED
+ *
+ * PENDING_CONFIRM: 인계 완료 (택배사 인계 후 출고 확정 대기)
+ * CONFIRMED:       출고 확정 완료 (최종 재고 차감 완료)
+ *
+ * StatusBadge.vue의 MAP.outboundConfirm와 연동됨.
+ */
+export const OUTBOUND_CONFIRM_STATUS = {
+  PENDING_CONFIRM: 'PENDING_CONFIRM', // 인계 완료
+  CONFIRMED:       'CONFIRMED',       // 출고 확정 완료
+}
+
+/**
+ * LABEL_STATUS — 배송 라벨 발행 상태 2단계
+ *
+ * 상태 전이 흐름:
+ *
+ *   NOT_ISSUED → ISSUED
+ *
+ * NOT_ISSUED: 라벨 미발행 (포장 완료 후 초기 상태)
+ * ISSUED:     라벨 발행 완료
+ *
+ * StatusBadge.vue의 MAP.labelStatus와 연동됨.
+ */
+export const LABEL_STATUS = {
+  NOT_ISSUED: 'NOT_ISSUED', // 라벨 미발행
+  ISSUED:     'ISSUED',     // 라벨 발행 완료
+}
+
+/**
+ * PICKING_LIST_STATUS — 피킹 리스트 상태 3단계
+ *
+ * 상태 전이 흐름:
+ *
+ *   WAITING → IN_PROGRESS → COMPLETED
+ *
+ * StatusBadge.vue의 MAP.pickingList와 연동됨.
+ */
+export const PICKING_LIST_STATUS = {
+  WAITING:     'WAITING',     // 피킹 대기
+  IN_PROGRESS: 'IN_PROGRESS', // 피킹 진행 중
+  COMPLETED:   'COMPLETED',   // 피킹 완료
+}
+
+/**
+ * WORKER_PRESENCE_STATUS — 작업자 재실 상태 4단계
+ *
+ * 상태 전이 흐름:
+ *
+ *   IDLE ⇄ PICKING | PUTAWAY
+ *   IDLE / PICKING / PUTAWAY → OFFLINE (로그아웃/비활성화)
+ *
+ * PICKING:  피킹&패킹 작업 진행 중
+ * PUTAWAY:  검수&적재(Put-away) 작업 진행 중
+ * IDLE:     대기 중 (로그인 상태, 작업 없음)
+ * OFFLINE:  오프라인 (로그아웃 또는 비활성 계정)
+ *
+ * StatusBadge.vue의 MAP.workerPresence와 연동됨.
+ */
+export const WORKER_PRESENCE_STATUS = {
+  PICKING:  'PICKING',  // 작업 중 (피킹)
+  PUTAWAY:  'PUTAWAY',  // 작업 중 (Put-away)
+  IDLE:     'IDLE',     // 대기 중
+  OFFLINE:  'OFFLINE',  // 오프라인
+}

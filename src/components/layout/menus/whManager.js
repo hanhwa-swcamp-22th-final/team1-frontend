@@ -38,7 +38,16 @@ export const WH_MANAGER_MENU_GROUPS = [
   {
     label: '출고 관리',
     items: [
-      { name: ROUTE_NAMES.WH_MANAGER_OUTBOUND_DISPATCH, label: '출고 지시', icon: '🚚' },
+      { name: ROUTE_NAMES.WH_MANAGER_OUTBOUND_DISPATCH, label: '출고 지시',   icon: '🚚' },
+      { name: ROUTE_NAMES.WH_MANAGER_PICKING_LIST,      label: '피킹 리스트', icon: '📋' },
+      { name: ROUTE_NAMES.WH_MANAGER_LABEL_PRINT,       label: '송장 발행',   icon: '🏷️' },
+      { name: ROUTE_NAMES.WH_MANAGER_OUTBOUND_CONFIRM,  label: '출고 확정',   icon: '✅' },
+    ],
+  },
+  {
+    label: '사용자 관리',
+    items: [
+      { name: ROUTE_NAMES.WH_MANAGER_WORKER_ACCOUNT, label: '작업자 계정', icon: '👤' },
     ],
   },
 ]

@@ -97,6 +97,30 @@ const MAP = {
     [WORKER_STATUS.INSPECTION_LOADING]: { label: '검수&적재', color: 'purple' },
     [WORKER_STATUS.PICKING_PACKING]: { label: '피킹&패킹', color: 'amber' },
   },
+  pickingList: {
+    [PICKING_LIST_STATUS.WAITING]:     { label: '대기',    color: 'default' },
+    [PICKING_LIST_STATUS.IN_PROGRESS]: { label: '진행 중', color: 'amber'   },
+    [PICKING_LIST_STATUS.COMPLETED]:   { label: '완료',    color: 'green'   },
+  },
+  labelStatus: {
+    [LABEL_STATUS.NOT_ISSUED]: { label: '라벨 미발행',   color: 'amber' },
+    [LABEL_STATUS.ISSUED]:     { label: '라벨 발행 완료', color: 'green' },
+  },
+  carrier: {
+    USPS:  { label: 'USPS',  color: 'green'  },
+    UPS:   { label: 'UPS',   color: 'blue'   },
+    FedEx: { label: 'FedEx', color: 'purple' },
+  },
+  outboundConfirm: {
+    [OUTBOUND_CONFIRM_STATUS.PENDING_CONFIRM]: { label: '인계 완료',    color: 'amber' },
+    [OUTBOUND_CONFIRM_STATUS.CONFIRMED]:       { label: '출고 확정 완료', color: 'green' },
+  },
+  workerPresence: {
+    [WORKER_PRESENCE_STATUS.PICKING]:  { label: '작업 중 (피킹&패킹)', color: 'amber'   },
+    [WORKER_PRESENCE_STATUS.PUTAWAY]:  { label: '작업 중 (Put-away)', color: 'purple'  },
+    [WORKER_PRESENCE_STATUS.IDLE]:     { label: '대기 중',            color: 'green'   },
+    [WORKER_PRESENCE_STATUS.OFFLINE]:  { label: '오프라인',           color: 'default' },
+  },
 }
 
 /**
