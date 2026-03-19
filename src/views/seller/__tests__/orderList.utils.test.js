@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 
 import {
   filterSellerOrderRows,
+  getSellerOrderDetailById,
   getSellerOrderChannelMeta,
+  getSellerOrderProgressStep,
   getSellerOrderStatusMeta,
   SELLER_ORDER_LIST_ROWS,
 } from '@/utils/orderList.utils.js'
@@ -50,5 +52,27 @@ describe('orderList utils', () => {
       label: 'Amazon',
       tone: 'amazon',
     })
+  })
+
+  it('주문 상세 mock 데이터를 반환한다', () => {
+    expect(getSellerOrderDetailById('seller-order-3')).toEqual(
+      expect.objectContaining({
+        receiverPhone: '+1-713-555-0188',
+        items: [
+          expect.objectContaining({
+            sku: 'LB-CRM-100',
+            amount: 29,
+          }),
+          expect.objectContaining({
+            sku: 'LB-AMP-30',
+            amount: 34,
+          }),
+        ],
+      }),
+    )
+  })
+
+  it('취소 상태는 스텝퍼 기준 접수 단계로 처리한다', () => {
+    expect(getSellerOrderProgressStep('CANCELLED')).toBe('RECEIVED')
   })
 })

@@ -48,7 +48,14 @@ const panelClass = computed(() => `seller-panel--${props.size}`)
           >
             <div class="seller-modal-header">
               <h3 class="seller-modal-title">{{ title }}</h3>
-              <button aria-label="닫기" class="seller-close-btn" @click="emit('cancel')">✕</button>
+              <button
+                type="button"
+                aria-label="닫기"
+                class="seller-close-btn"
+                @click="emit('cancel')"
+              >
+                ✕
+              </button>
             </div>
 
             <div class="seller-modal-body">
@@ -57,8 +64,12 @@ const panelClass = computed(() => `seller-panel--${props.size}`)
 
             <div v-if="!hideFooter" class="seller-modal-footer">
               <slot name="footer">
-                <button class="ui-btn ui-btn--ghost" @click="emit('cancel')">취소</button>
-                <button class="ui-btn ui-btn--primary" @click="emit('confirm')">확인</button>
+                <button type="button" class="ui-btn ui-btn--ghost" @click="emit('cancel')">
+                  취소
+                </button>
+                <button type="button" class="ui-btn ui-btn--primary" @click="emit('confirm')">
+                  확인
+                </button>
               </slot>
             </div>
           </div>

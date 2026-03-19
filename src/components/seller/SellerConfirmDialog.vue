@@ -28,8 +28,11 @@ const emit = defineEmits(['confirm', 'cancel'])
     <p class="seller-confirm-message">{{ message }}</p>
 
     <div class="seller-confirm-actions">
-      <button class="ui-btn ui-btn--ghost" @click="emit('cancel')">{{ cancelLabel }}</button>
+      <button type="button" class="ui-btn ui-btn--ghost" @click="emit('cancel')">
+        {{ cancelLabel }}
+      </button>
       <button
+        type="button"
         :class="danger ? 'ui-btn--danger' : 'ui-btn--primary'"
         class="ui-btn"
         @click="emit('confirm')"
