@@ -28,15 +28,15 @@ export const MASTER_ADMIN_MENU_GROUPS = [
   {
     label: '입출고',
     items: [
-      { name: 'master-asn-list', label: 'ASN 목록', icon: '↓' },       // TODO: ROUTE_NAMES 추가 및 라우트 등록 필요
-      { name: 'master-order-list', label: '주문 목록', icon: '≡' },     // TODO: ROUTE_NAMES 추가 및 라우트 등록 필요
+      { name: ROUTE_NAMES.MASTER_ASN_LIST, label: 'ASN 목록', icon: '↓' },
+      { name: ROUTE_NAMES.MASTER_ORDER_LIST, label: '주문 목록', icon: '≡' },
     ],
   },
   {
     label: '요금 설정',
     items: [
       { name: ROUTE_NAMES.MASTER_FEE_SETTING, label: '현재 설정 요금 조회', icon: '$' },
-      { name: 'master-fee-settings', label: '3PL 사용료 설정', icon: '⚙' }, // TODO: ROUTE_NAMES 추가 및 라우트 등록 필요
+      { name: ROUTE_NAMES.MASTER_FEE_SETTINGS, label: '3PL 사용료 설정', icon: '⚙' },
     ],
   },
   {
@@ -49,9 +49,7 @@ export const MASTER_ADMIN_MENU_GROUPS = [
   {
     label: '계정 발급',
     items: [
-      { name: ROUTE_NAMES.MASTER_ACCOUNT_INVITE, label: '셀러 담당자 계정 발급', icon: '↗' },
-      { name: 'master-account-manager', label: '창고 관리자 계정 발급', icon: '✓' }, // TODO: ROUTE_NAMES 추가 및 라우트 등록 필요
-      { name: 'master-account-worker', label: '창고 작업자 계정 발급', icon: '≡' },  // TODO: ROUTE_NAMES 추가 및 라우트 등록 필요
+      { name: ROUTE_NAMES.MASTER_ACCOUNT_INVITE, label: '계정 발급', icon: '↗' },
     ],
   },
   {

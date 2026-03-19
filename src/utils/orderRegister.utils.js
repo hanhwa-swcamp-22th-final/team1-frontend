@@ -2,7 +2,7 @@
  * 셀러 주문 등록 관련 유틸 모음.
  * 업로드 포맷 정보와 수동 등록 검증 로직을 한 곳에서 관리한다.
  */
-import { validateSku } from '@/utils/validate'
+import { validateSku } from '@/utils/validate.js'
 
 // 엑셀 업로드 파싱 전에 반드시 있어야 하는 필수 헤더 목록.
 export const ORDER_UPLOAD_REQUIRED_COLUMNS = [

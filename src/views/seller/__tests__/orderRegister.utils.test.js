@@ -7,7 +7,7 @@ import {
   getMissingOrderUploadColumns,
   mapOrderUploadRows,
   validateOrderForm,
-} from '@/views/seller/orderRegister.utils'
+} from '@/utils/orderRegister.utils.js'
 
 describe('orderRegister utils', () => {
   it('업로드 헤더가 모두 있으면 누락 컬럼이 없다', () => {

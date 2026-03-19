@@ -1,5 +1,5 @@
-// routes/orders.cjs — GET /orders/*, POST /orders/*
-// 담당: whManager, seller
+// routes/orders.cjs — GET /orders/*
+// 담당: whManager
 const { Router } = require('express')
 const axios = require('axios')
 
@@ -10,6 +10,18 @@ module.exports = function (BASE_URL) {
   // GET /orders/outbound/stats — 대시보드용 출고 예정 통계
   router.get('/outbound/stats', async (req, res) => {
     const { data } = await http.get('/outbound_stats')
+    res.json({ success: true, data })
+  })
+
+  // GET /orders/list — 주문 목록 조회 (masterAdmin)
+  router.get('/list', async (req, res) => {
+    const { data } = await http.get('/orders')
+    res.json({ success: true, data })
+  })
+
+  // GET /orders/kpi — 주문 KPI 집계 (masterAdmin)
+  router.get('/kpi', async (req, res) => {
+    const { data } = await http.get('/orders_kpi')
     res.json({ success: true, data })
   })
 
@@ -54,6 +66,12 @@ module.exports = function (BASE_URL) {
       },
       message: '업로드 주문이 등록되었습니다.',
     })
+  })
+
+  // GET /orders/whm — 창고 관리자 주문 목록
+  router.get('/whm', async (req, res) => {
+    const { data } = await http.get('/wh_orders')
+    res.json({ success: true, data })
   })
 
   return router

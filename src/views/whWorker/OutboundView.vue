@@ -69,6 +69,7 @@ const waitingTaskCount = computed(() => tasks.value.filter((task) => task.status
 const progressTaskCount = computed(() => tasks.value.filter((task) => task.status === '진행중').length)
 const doneTaskCount = computed(() => tasks.value.filter((task) => task.status === '완료').length)
 
+// 상단 요약 카드 (출고 버전)
 const summaryCards = computed(() => [
   {
     key: 'all',
@@ -97,6 +98,13 @@ const summaryCards = computed(() => [
     value: `${doneTaskCount.value}건`,
     description: '오늘 출고 완료 처리된 작업',
     tone: 'green',
+  },
+  {
+    key: 'inventory',
+    label: '재고 차감 완료',
+    value: `${stockDeductionCount.value} 건`,
+    description: `출고 대기 ${pendingDeductionCount.value} 건`,
+    tone: 'gold',
   },
 ])
 
@@ -195,6 +203,11 @@ function resetSamples() {
   outboundSubTab.value = 'pick'
   syncOutboundState()
 }
+
+function openPick() { outboundSubTab.value = 'pick' }
+function openPack() { outboundSubTab.value = 'pack' }
+function openDone() { outboundSubTab.value = 'done' }
+function selectTask(taskId) { selectedTaskId.value = taskId }
 
 function openPick() { outboundSubTab.value = 'pick' }
 function openPack() { outboundSubTab.value = 'pack' }
