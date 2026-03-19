@@ -73,6 +73,22 @@ export default [
   // TODO(frontend): ASN 상세 라우트 추가
 
   // 부가 기능
-  // TODO(frontend): 마진 시뮬레이터 라우트 추가
-  // TODO(frontend): 주문 연동 및 조회 라우트 추가
+  {
+    path: '/seller/channels/orders',
+    name: ROUTE_NAMES.SELLER_AMAZON_CONNECT,
+    component: () => import('@/views/seller/SellerChannelOrdersView.vue'),
+    meta: { role: ROLES.SELLER },
+  },
+  {
+    path: '/seller/margin-simulator',
+    name: ROUTE_NAMES.SELLER_MARGIN_SIMULATOR,
+    component: () => import('@/views/seller/SellerMarginSimulatorView.vue'),
+    meta: { role: ROLES.SELLER },
+  },
+  {
+    path: '/seller/notifications',
+    name: ROUTE_NAMES.SELLER_NOTIFICATIONS,
+    component: () => import('@/views/seller/SellerNotificationsView.vue'),
+    meta: { role: ROLES.SELLER },
+  },
 ]
