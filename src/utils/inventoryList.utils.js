@@ -159,6 +159,49 @@ export const SELLER_INVENTORY_LIST_ROWS = [
   },
 ]
 
+const SELLER_INVENTORY_DETAIL_MAP = {
+  'seller-inventory-1': {
+    locationCode: 'ICN-A / A-03-02',
+    safetyStockDays: 24,
+    coverageDays: 31,
+    turnoverRate: '3.8/mo',
+    lastCycleCount: '2026-03-12',
+    nextInboundAsnNo: 'ASN-20260318-001',
+    salesChannel: 'Amazon US',
+    memo: '광고 집행 중인 핵심 SKU. 가용 재고 안정 구간 유지.',
+  },
+  'seller-inventory-2': {
+    locationCode: 'ICN-A / B-01-04',
+    safetyStockDays: 6,
+    coverageDays: 3,
+    turnoverRate: '6.2/mo',
+    lastCycleCount: '2026-03-11',
+    nextInboundAsnNo: 'ASN-20260318-001',
+    salesChannel: 'Amazon US',
+    memo: '재고 부족 구간. 입고 예정 100개 반영 필요.',
+  },
+  'seller-inventory-5': {
+    locationCode: 'PUS-B / HOLD-02',
+    safetyStockDays: 0,
+    coverageDays: 0,
+    turnoverRate: '0.0/mo',
+    lastCycleCount: '2026-03-01',
+    nextInboundAsnNo: 'ASN-20260320-007',
+    salesChannel: 'Seller Manual',
+    memo: '품절 상태. 신규 입고 전까지 판매 중지 검토.',
+  },
+  'seller-inventory-8': {
+    locationCode: 'PUS-B / C-02-01',
+    safetyStockDays: 4,
+    coverageDays: 2,
+    turnoverRate: '5.4/mo',
+    lastCycleCount: '2026-03-09',
+    nextInboundAsnNo: 'ASN-20260317-003',
+    salesChannel: 'Amazon US',
+    memo: '선케어 시즌 대응용 긴급 보충 대상.',
+  },
+}
+
 // 재고 목록 테이블 렌더링에 사용하는 컬럼 정의.
 export const SELLER_INVENTORY_LIST_COLUMNS = [
   { key: 'sku', label: 'SKU', width: '130px' },
@@ -176,6 +219,29 @@ export const SELLER_INVENTORY_LIST_COLUMNS = [
 // 재고 상태 라벨과 배지 색상을 반환한다.
 export function getSellerInventoryStatusMeta(status) {
   return SELLER_INVENTORY_STATUS_META[status] ?? { label: status ?? '-', tone: 'default' }
+}
+
+// 재고 상세 모달에 필요한 로컬 mock 정보를 반환한다.
+export function getSellerInventoryDetailById(inventoryId, row = {}) {
+  const detail = SELLER_INVENTORY_DETAIL_MAP[inventoryId]
+  const totalStock = Number(row.totalStock ?? 0)
+  const availableStock = Number(row.availableStock ?? 0)
+  const allocatedStock = Number(row.allocatedStock ?? 0)
+  const availableRate = totalStock > 0 ? Number(((availableStock / totalStock) * 100).toFixed(1)) : 0
+  const allocatedRate = totalStock > 0 ? Number(((allocatedStock / totalStock) * 100).toFixed(1)) : 0
+
+  return {
+    locationCode: detail?.locationCode ?? `${row.warehouseName ?? 'WH'} / 미지정`,
+    safetyStockDays: detail?.safetyStockDays ?? 14,
+    coverageDays: detail?.coverageDays ?? 14,
+    turnoverRate: detail?.turnoverRate ?? '2.0/mo',
+    lastCycleCount: detail?.lastCycleCount ?? row.lastInboundDate ?? '-',
+    nextInboundAsnNo: detail?.nextInboundAsnNo ?? '미정',
+    salesChannel: detail?.salesChannel ?? 'Seller',
+    memo: detail?.memo ?? `${row.productName ?? '상품'} 재고 상세 메모 준비중`,
+    availableRate,
+    allocatedRate,
+  }
 }
 
 /**

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   filterSellerInventoryRows,
+  getSellerInventoryDetailById,
   getSellerInventoryStatusMeta,
   SELLER_INVENTORY_LIST_ROWS,
 } from '@/utils/inventoryList.utils.js'
@@ -31,5 +32,26 @@ describe('inventoryList utils', () => {
 
     expect(result).toHaveLength(1)
     expect(result[0].sku).toBe('LB-SUN-50')
+  })
+
+  it('재고 상세 mock 데이터를 반환한다', () => {
+    expect(getSellerInventoryDetailById('seller-inventory-2', SELLER_INVENTORY_LIST_ROWS[1])).toEqual(
+      expect.objectContaining({
+        locationCode: 'ICN-A / B-01-04',
+        availableRate: 40,
+        allocatedRate: 60,
+        nextInboundAsnNo: 'ASN-20260318-001',
+      }),
+    )
+  })
+
+  it('상세 mock이 없는 재고는 fallback 정보를 반환한다', () => {
+    expect(getSellerInventoryDetailById('seller-inventory-3', SELLER_INVENTORY_LIST_ROWS[2])).toEqual(
+      expect.objectContaining({
+        locationCode: 'PUS-B / 미지정',
+        availableRate: 89.4,
+        salesChannel: 'Seller',
+      }),
+    )
   })
 })
