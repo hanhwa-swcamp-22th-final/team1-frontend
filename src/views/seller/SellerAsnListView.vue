@@ -190,7 +190,6 @@ function handleConfirmCsv() {
 
           <div class="list-tools">
             <label class="search-field">
-              <span class="search-label">검색</span>
               <input
                 v-model="searchKeyword"
                 type="text"
@@ -198,7 +197,11 @@ function handleConfirmCsv() {
               />
             </label>
 
-            <button class="ui-btn ui-btn--ghost" type="button" @click="handleOpenCsvDialog">
+            <button
+              class="ui-btn ui-btn--ghost toolbar-btn"
+              type="button"
+              @click="handleOpenCsvDialog"
+            >
               CSV 내보내기
             </button>
           </div>
@@ -375,27 +378,23 @@ function handleConfirmCsv() {
 
 .list-tools {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
+  flex-wrap: nowrap;
+  align-items: center;
   justify-content: flex-end;
   gap: var(--space-2);
 }
 
 .search-field {
-  min-width: min(100%, 320px);
   display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.search-label {
-  color: var(--t3);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
+  align-items: center;
+  flex-direction: row;
+  min-width: 0;
+  flex: 0 1 420px;
 }
 
 .search-field input {
-  width: 100%;
+  width: min(100%, 320px);
+  min-width: 240px;
   min-height: 38px;
   padding: 0 12px;
   border: 1px solid var(--border);
@@ -412,6 +411,11 @@ function handleConfirmCsv() {
 .search-field input:focus {
   border-color: var(--blue);
   box-shadow: 0 0 0 3px var(--blue-pale);
+}
+
+.toolbar-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .status-tabs {
@@ -516,6 +520,7 @@ function handleConfirmCsv() {
   }
 
   .list-tools {
+    flex-wrap: wrap;
     justify-content: flex-start;
   }
 }
