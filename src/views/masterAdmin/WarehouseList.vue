@@ -6,7 +6,6 @@ import { formatDate, formatNumber } from '@/utils/format'
 import { ROUTE_NAMES } from '@/constants'
 import { getWarehouseListSummary, getWarehouseList } from '@/api/wms'
 import AppLayout from '@/components/layout/AppLayout.vue'
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 
 const breadcrumb = [{ label: '창고 관리' }, { label: '전체 창고 현황' }]
 
@@ -86,7 +85,7 @@ onMounted(fetchWarehouseList)
 </script>
 
 <template>
-  <AppLayout :breadcrumb="breadcrumb" title="창고 목록">
+  <AppLayout :breadcrumb="breadcrumb" title="창고 목록" :loading="ui.isLoading">
     <!-- 헤더 액션 버튼 (AppLayout #header-action 슬롯) -->
     <template #header-action>
       <button class="ui-btn ui-btn--ghost btn-report">
@@ -104,8 +103,6 @@ onMounted(fetchWarehouseList)
         신규 창고 등록
       </button>
     </template>
-
-    <LoadingSpinner v-if="ui.isLoading" fullscreen />
 
   <div class="wl-page">
 

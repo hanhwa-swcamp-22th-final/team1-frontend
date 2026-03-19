@@ -13,7 +13,7 @@ import {
 } from '@/utils/whWorkerState'
 
 const router = useRouter()
-
+const STORAGE_KEY = 'wh-worker-shared-state-v2'
 const OVERVIEW_FILTERS = ['전체', '대기', '진행중', '완료']
 const breadcrumb = [{ label: 'WH Worker' }, { label: '통합 대시보드' }]
 
@@ -44,17 +44,9 @@ const filteredOverviewTasks = computed(() => {
   return ordered.filter((task) => task.status === overviewFilter.value)
 })
 
-const inboundTasks = computed(() =>
-  [...tasks.value].filter((task) => task.type === '검수&적재').sort(sortTasks).slice(0, 3)
-)
-
-const outboundTasks = computed(() =>
-  [...tasks.value].filter((task) => task.type === '피킹&패킹').sort(sortTasks).slice(0, 3)
-)
-
-const highlightedTask = computed(
-  () => tasks.value.find((task) => task.id === highlightedTaskId.value) ?? filteredOverviewTasks.value[0] ?? null
-)
+const inboundTasks = computed(() => [...tasks.value].filter((task) => task.type === '검수&적재').sort(sortTasks).slice(0, 3))
+const outboundTasks = computed(() => [...tasks.value].filter((task) => task.type === '피킹&패킹').sort(sortTasks).slice(0, 3))
+const highlightedTask = computed(() => tasks.value.find((task) => task.id === highlightedTaskId.value) ?? filteredOverviewTasks.value[0] ?? null)
 
 const summaryCards = computed(() => [
   {
@@ -90,33 +82,19 @@ const summaryCards = computed(() => [
 function sortTasks(a, b) {
   const statusRank = { 대기: 0, 진행중: 1, 완료: 2 }
   const typeRank = { '검수&적재': 0, '피킹&패킹': 1 }
-  return (
-    (statusRank[a.status] ?? 99) - (statusRank[b.status] ?? 99) ||
-    (typeRank[a.type] ?? 99) - (typeRank[b.type] ?? 99) ||
-    a.refNo.localeCompare(b.refNo)
-  )
+  return (statusRank[a.status] ?? 99) - (statusRank[b.status] ?? 99) || (typeRank[a.type] ?? 99) - (typeRank[b.type] ?? 99) || a.refNo.localeCompare(b.refNo)
 }
 
 function taskStatusClass(status) {
-  return {
-    대기: 'status-chip--amber',
-    진행중: 'status-chip--blue',
-    완료: 'status-chip--green',
-  }[status]
+  return { 대기: 'status-chip--amber', 진행중: 'status-chip--blue', 완료: 'status-chip--green' }[status]
 }
 
 function alertLevelClass(level) {
-  return {
-    안내: 'alert-badge--blue',
-    확인: 'alert-badge--purple',
-    주의: 'alert-badge--red',
-  }[level]
+  return { 안내: 'alert-badge--blue', 확인: 'alert-badge--purple', 주의: 'alert-badge--red' }[level]
 }
 
 function stepKey(task) {
-  if (!task) return ''
-  if (task.activeStep === '적재 완료') return '적재'
-  return task.activeStep
+  return task?.activeStep || ''
 }
 
 function inspectProgress(task) {
@@ -128,11 +106,11 @@ function putProgress(task) {
 }
 
 function pickProgress(task) {
-  return task.packOrders.filter((order) => order.statusPick === '완료').length
+  return task.bins.filter((bin) => bin.pickStatus === '완료').length
 }
 
 function packProgress(task) {
-  return task.packOrders.filter((order) => order.statusPack === '완료').length
+  return task.bins.filter((bin) => bin.packStatus === '완료').length
 }
 
 function highlightTask(taskId) {
@@ -340,11 +318,11 @@ onBeforeUnmount(() => {
                 <dl class="meta-grid">
                   <div>
                     <dt>피킹 진행</dt>
-                    <dd>{{ pickProgress(task) }} / {{ task.packOrders.length }} 주문</dd>
+                    <dd>{{ pickProgress(task) }} / {{ task.bins.length }} 주문</dd>
                   </div>
                   <div>
                     <dt>패킹 검수</dt>
-                    <dd>{{ packProgress(task) }} / {{ task.packOrders.length }} 주문</dd>
+                    <dd>{{ packProgress(task) }} / {{ task.bins.length }} 주문</dd>
                   </div>
                   <div>
                     <dt>주문 상태</dt>

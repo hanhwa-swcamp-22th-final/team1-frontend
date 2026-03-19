@@ -1,2 +1,23 @@
-// TODO: 팀원 담당 라우트
-export default []
+import { ROLES } from '@/constants/roles'
+import { ROUTE_NAMES } from '@/constants/routes'
+
+export default [
+  {
+    path: '/system/companies',
+    name: ROUTE_NAMES.SYS_COMPANY_LIST,
+    component: () => import('@/views/systemAdmin/CompanyListView.vue'),
+    meta: { role: ROLES.SYSTEM_ADMIN },
+  },
+  {
+    path: '/system/companies/register',
+    name: ROUTE_NAMES.SYS_COMPANY_REGISTER,
+    component: () => import('@/views/systemAdmin/CompanyRegisterView.vue'),
+    meta: { role: ROLES.SYSTEM_ADMIN },
+  },
+  {
+    path: '/system/fees',
+    name: ROUTE_NAMES.SYS_FEE_SETTING,
+    component: () => import('@/views/systemAdmin/FeeSettingView.vue'),
+    meta: { role: ROLES.SYSTEM_ADMIN },
+  },
+]

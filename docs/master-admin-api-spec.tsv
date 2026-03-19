@@ -1,0 +1,37 @@
+페이지	라우트	호출시점	Method	Endpoint	Request 형태	Response 형태	비고
+Dashboard	/master/dashboard	onMounted	GET	/orders/outbound/stats	-	{ success, data: { pendingOutboundCount, trend, trendLabel, trendType } }	요약 카드
+Dashboard	/master/dashboard	onMounted	GET	/wms/asn/stats	-	{ success, data: { unprocessedCount, trend, trendLabel, trendType } }	요약 카드
+Dashboard	/master/dashboard	onMounted	GET	/wms/inventory/stats	-	{ success, data: { lowStockSkuCount, trend, trendLabel, trendType } }	요약 카드
+Dashboard	/master/dashboard	onMounted	GET	/members/sellers/stats	-	{ success, data: { activeSellerCount, newThisMonth, trendType } }	요약 카드
+Dashboard	/master/dashboard	onMounted	GET	/wms/warehouses/status	-	{ success, message, data: WarehouseStatus[] }	창고 상태 목록
+WarehouseList	/master/warehouses	onMounted	GET	/wms/warehouses/summary	-	{ success, message, data: { totalCount, activeCount, totalInventory, todayOutbound, avgLocationUtil } }	상단 KPI
+WarehouseList	/master/warehouses	onMounted	GET	/wms/warehouses	-	{ success, message, data: Warehouse[] }	카드/테이블 공통
+WarehouseRegister	/master/warehouses/register	등록 버튼 클릭	POST	/wms/warehouses	{ name, sqft, address, city, state, openTime, closeTime, timezone, managerName?, managerEmail? }	{ success, message, data: Warehouse }	성공 시 목록 이동
+WarehouseDetail	/master/warehouses/detail/:id	onMounted, route id 변경	GET	/wms/warehouses	-	{ success, message, data: Warehouse[] }	드롭다운/현재 창고 찾기
+WarehouseDetail	/master/warehouses/detail/:id	onMounted, route id 변경	GET	/wms/warehouses/:id/inventory	-	{ data: [{ id, warehouseId, sku, available, allocated, total }] }	재고 현황
+WarehouseDetail	/master/warehouses/detail/:id	onMounted, route id 변경	GET	/wms/warehouses/:id/outbound	-	{ data: { today: [{ orderId, seller, status }], week: [...], month: [...] } }	출고 현황
+WarehouseDetail	/master/warehouses/detail/:id	onMounted, route id 변경	GET	/wms/warehouses/:id/orders	-	{ data: { stats: { waiting, inProgress, done }, list: [{ id, warehouseId, orderId, sku, qty, dest, status, worker }] } }	주문 처리 상세
+WarehouseDetail	/master/warehouses/detail/:id	onMounted, route id 변경	GET	/wms/warehouses/:id/locations	-	{ data: [{ id, warehouseId, zone, label, utilPct, available, total, racks: [{ name, bins: [{ id, state }] }] }] }	로케이션 현황
+AsnList	/master/asn	onMounted	GET	/wms/asns	-	{ success, data: ASN[] }	ASN 목록
+AsnList	/master/asn	onMounted	GET	/wms/asns/kpi	-	{ success, data: { total, submitted, received, cancelled } }	KPI
+OrderList	/master/orders	onMounted	GET	/orders/list	-	{ success, data: Order[] }	주문 목록
+FeeView	/master/fee	onMounted	GET	/wms/fee-settings	-	{ success, data: FeeSettings }	조회용
+FeeSettings	/master/fee/settings	onMounted	GET	/wms/fee-settings	-	{ success, data: FeeSettings }	초기값 로드
+FeeSettings	/master/fee/settings	저장 버튼 클릭	PUT	/wms/fee-settings	FeeSettings 전체 객체	{ success, message }	저장 성공 토스트
+SellerList	/master/sellers	onMounted	GET	/members/sellers	-	{ success, data: Seller[] }	셀러 목록
+SellerRegister	/master/sellers/register	onMounted	GET	/wms/warehouses	-	{ success, message, data: Warehouse[] }	창고 선택용
+SellerRegister	/master/sellers/register	등록 버튼 클릭	POST	/members/sellers	{ brandNameEn, brandNameKo, contactName, contactEmail, warehouseIds: number[] }	프론트 기준: 성공 응답 사용 안 함	성공 시 목록 이동
+AccountInvite	/master/accounts/invite	onMounted	GET	/members/sellers	-	{ success, data: Seller[] }	SELLER 조직 선택용
+AccountInvite	/master/accounts/invite	onMounted	GET	/wms/warehouses	-	{ success, message, data: Warehouse[] }	WH_MANAGER/WH_WORKER 조직 선택용
+AccountInvite	/master/accounts/invite	초대 버튼 클릭	POST	/auth/invite	{ role, organizationId, name, email }	{ success, message, data: { role, organizationId, name, email } }	SELLER 기본 라우트
+AccountInvite	/master/accounts/manager	onMounted	GET	/members/sellers	-	{ success, data: Seller[] }	공통 컴포넌트
+AccountInvite	/master/accounts/manager	onMounted	GET	/wms/warehouses	-	{ success, message, data: Warehouse[] }	공통 컴포넌트
+AccountInvite	/master/accounts/manager	초대 버튼 클릭	POST	/auth/invite	{ role: "WH_MANAGER", organizationId, name, email }	{ success, message, data: { role, organizationId, name, email } }	창고 관리자 초대
+AccountInvite	/master/accounts/worker	onMounted	GET	/members/sellers	-	{ success, data: Seller[] }	공통 컴포넌트
+AccountInvite	/master/accounts/worker	onMounted	GET	/wms/warehouses	-	{ success, message, data: Warehouse[] }	공통 컴포넌트
+AccountInvite	/master/accounts/worker	초대 버튼 클릭	POST	/auth/invite	{ role: "WH_WORKER", organizationId, name, email }	{ success, message, data: { role, organizationId, name, email } }	작업자 초대
+UserList	/master/accounts	onMounted	GET	/members/users	-	{ success, data: User[] }	사용자 목록
+UserList	/master/accounts	액션 버튼 클릭	POST	/members/users/:id/reset-password	-	{ success, message }	TEMP_PASSWORD로 변경
+UserList	/master/accounts	액션 버튼 클릭	POST	/members/users/:id/deactivate	-	{ success, message }	INACTIVE로 변경
+UserList	/master/accounts	액션 버튼 클릭	POST	/members/users/:id/reactivate	-	{ success, message }	ACTIVE로 변경
+RbacSettings	/master/rbac	-	-	-	-	-	현재 API 호출 없음

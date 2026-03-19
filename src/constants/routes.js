@@ -38,18 +38,22 @@ export const ROUTE_NAMES = {
   SELLER_ORDER_REGISTER: 'seller-order-register',
   SELLER_AMAZON_CONNECT: 'seller-amazon-connect',
   SELLER_MARGIN_SIMULATOR: 'seller-margin-simulator',
+  SELLER_NOTIFICATIONS: 'seller-notifications',
 
   // ── Master Admin — 창고사 관리 (views/masterAdmin/)
   MASTER_DASHBOARD: 'master-dashboard',
   MASTER_WAREHOUSE_LIST: 'master-warehouse-list',
   MASTER_WAREHOUSE_REGISTER: 'master-warehouse-register',
-  MASTER_ACCOUNT_LIST: 'master-account-list',
-  MASTER_ACCOUNT_INVITE: 'master-account-invite',
+  MASTER_WAREHOUSE_DETAIL: 'master-warehouse-detail',
+  MASTER_ASN_LIST: 'master-asn-list',
+  MASTER_ORDER_LIST: 'master-order-list',
+  MASTER_FEE_SETTING: 'master-fee-setting',
+  MASTER_FEE_SETTINGS: 'master-fee-settings',
   MASTER_SELLER_COMPANY_LIST: 'master-seller-company-list',
   MASTER_SELLER_COMPANY_REGISTER: 'master-seller-company-register',
+  MASTER_ACCOUNT_LIST: 'master-account-list',
+  MASTER_ACCOUNT_INVITE: 'master-account-invite',
   MASTER_RBAC_SETTING: 'master-rbac-setting',
-  MASTER_WAREHOUSE_DETAIL: 'master-warehouse-detail',
-  MASTER_FEE_SETTING: 'master-fee-setting',
 
   // ── WH Manager — 창고 운영 (views/whManager/)
   // 접두어: 'whm-' (WH Manager 약자)
@@ -62,10 +66,12 @@ export const ROUTE_NAMES = {
   WH_MANAGER_ORDER_LIST: 'whm-order-list',
   WH_MANAGER_ORDER_DETAIL: 'whm-order-detail',
   WH_MANAGER_OUTBOUND: 'whm-outbound',
+  WH_MANAGER_OUTBOUND_DISPATCH: 'whm-outbound-dispatch',
   WH_MANAGER_PICKING_LIST: 'whm-picking-list',
   WH_MANAGER_LABEL_PRINT: 'whm-label-print',
   WH_MANAGER_OUTBOUND_CONFIRM: 'whm-outbound-confirm',
   WH_MANAGER_WORKER_ACCOUNT: 'whm-worker-account',
+  WH_MANAGER_WORKER_TASK: 'whm-worker-task',
   WH_MANAGER_BIN_ASSIGN: 'whm-bin-assign',
 
   // ── WH Worker — 태블릿 작업 화면 (views/whWorker/)

@@ -19,7 +19,7 @@ import {
   getMissingOrderUploadColumns,
   mapOrderUploadRows,
   validateOrderForm,
-} from './orderRegister.utils'
+} from '../../utils/orderRegister.utils.js'
 
 /** Header 브레드크럼 표시용 */
 const breadcrumb = [{ label: 'Seller' }, { label: '주문 등록' }]

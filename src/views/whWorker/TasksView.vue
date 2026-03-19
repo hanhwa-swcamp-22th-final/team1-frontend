@@ -16,6 +16,7 @@ const route = useRoute()
 
 const breadcrumb = [{ label: 'WH Worker' }, { label: '내 작업' }]
 const FILTERS = ['전체', '대기', '진행중', '완료']
+const STORAGE_KEY = 'wh-worker-shared-state-v2'
 
 const tasks = ref([])
 const alerts = ref([])
@@ -31,9 +32,11 @@ function syncTasksState() {
 }
 
 const filteredTasks = computed(() => {
-  const ordered = [...tasks.value]
-  if (activeFilter.value === '전체') return ordered
-  return ordered.filter((task) => task.status === activeFilter.value)
+  const list = activeFilter.value === '전체'
+    ? [...tasks.value]
+    : tasks.value.filter((task) => task.status === activeFilter.value)
+
+  return list.sort(sortTasks)
 })
 
 const selectedTask = computed(() => {
@@ -90,17 +93,11 @@ function openSelectedTask() {
   if (!task) return
 
   if (task.type === '검수&적재') {
-    router.push({
-      name: ROUTE_NAMES.WH_WORKER_INBOUND,
-      query: { taskId: task.id },
-    })
+    router.push({ name: ROUTE_NAMES.WH_WORKER_INBOUND, query: { taskId: task.id } })
     return
   }
 
-  router.push({
-    name: ROUTE_NAMES.WH_WORKER_OUTBOUND,
-    query: { taskId: task.id },
-  })
+  router.push({ name: ROUTE_NAMES.WH_WORKER_OUTBOUND, query: { taskId: task.id } })
 }
 
 function statusClass(status) {
@@ -122,7 +119,8 @@ const summaryInfo = computed(() => {
   return [
     { label: '셀러 회사명', value: task.sellerCompany },
     { label: '참조번호', value: task.refNo },
-    { label: '기존 상태', value: task.referenceStatus },
+    { label: '현재 단계', value: task.currentStep },
+    { label: '기준 상태', value: task.referenceStatus },
     { label: '담당 Bin', value: `${task.assignedBinCount} Bin` },
     { label: '총 수량', value: `${task.totalQty}개` },
     { label: '작업 메모', value: task.note },
@@ -153,7 +151,6 @@ onBeforeUnmount(() => {
 <template>
   <AppLayout title="내 작업" :breadcrumb="breadcrumb">
     <div class="tasks-page">
-      <!-- 상단: 오늘 배정된 작업 목록 카드 -->
       <section class="section-card">
         <div class="section-card__header section-card__header--table">
           <h2 class="section-title">오늘 배정된 작업 목록</h2>
@@ -172,7 +169,6 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <!-- 작업 목록 테이블 -->
         <div class="task-table-wrap">
           <table class="task-table">
             <thead>
@@ -180,9 +176,9 @@ onBeforeUnmount(() => {
                 <th>작업 ID</th>
                 <th>작업 유형</th>
                 <th>셀러 회사명</th>
-                <th>참조번호</th>
+                <th>ASN / 피킹리스트</th>
                 <th>담당 BIN</th>
-                <th>수량</th>
+                <th>총 수량</th>
                 <th>상태</th>
               </tr>
             </thead>
@@ -279,7 +275,6 @@ onBeforeUnmount(() => {
             <TimelineStepper :steps="selectedTask.steps" :current-step="selectedTask.currentStep" />
           </div>
 
-          <!-- 요약 정보 박스는 3열 x 2행 구조 -->
           <div class="summary-grid-boxes">
             <article v-for="item in summaryInfo" :key="item.label" class="info-box">
               <p class="info-box__label">{{ item.label }}</p>
@@ -291,7 +286,6 @@ onBeforeUnmount(() => {
     </div>
   </AppLayout>
 </template>
-
 <style scoped>
 .tasks-page {
   display: grid;

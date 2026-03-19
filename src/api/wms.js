@@ -88,6 +88,15 @@ export function getAsnList(params = {}) {
 }
 
 /**
+ * ASN 단건 상세 조회
+ * @param {string} asnId — ASN 번호 (예: 'ASN-2026-0312-001')
+ * @returns {Promise<AxiosResponse>} { success, data: ASN }
+ */
+export function getAsnDetail(asnId) {
+  return instance.get(`/wms/asns/${encodeURIComponent(asnId)}`)
+}
+
+/**
  * ASN KPI 집계 — 상태별 건수
  * @returns {Promise<AxiosResponse>} { success, data: { total, submitted, received, cancelled } }
  */
@@ -107,4 +116,41 @@ export function getAsnKpi() {
  */
 export function registerWarehouse(payload) {
   return instance.post('/wms/warehouses', payload)
+}
+
+/**
+ * SKU 상세 조회 (상품명·로케이션·변동이력·ASN이력·주문이력)
+ * @param {number} warehouseId — 창고 ID
+ * @param {string} sku         — SKU 코드 (예: 'KR-MASK-001')
+ * @returns {Promise<AxiosResponse>} { data: SkuDetail }
+ */
+export function getSkuDetail(warehouseId, sku) {
+  return instance.get(`/wms/warehouses/${warehouseId}/sku/${sku}`)
+}
+
+/**
+ * 주문 상세 조회 (1주문 N SKU — SKU별 출고 작업 현황 포함)
+ * @param {number} warehouseId — 창고 ID
+ * @param {string} orderId     — 주문번호 (예: 'ORD-2026-03810')
+ * @returns {Promise<AxiosResponse>} { data: OrderDetail }
+ */
+export function getOrderDetail(warehouseId, orderId) {
+  return instance.get(`/wms/warehouses/${warehouseId}/orders/${orderId}`)
+}
+
+/**
+ * 요금 설정 조회
+ * @returns {Promise<AxiosResponse>} { success, data: FeeSettings }
+ */
+export function getFeeSettings() {
+  return instance.get('/wms/fee-settings')
+}
+
+/**
+ * 요금 설정 저장
+ * @param {object} payload — 요금 설정 전체 객체
+ * @returns {Promise<AxiosResponse>}
+ */
+export function saveFeeSettings(payload) {
+  return instance.put('/wms/fee-settings', payload)
 }

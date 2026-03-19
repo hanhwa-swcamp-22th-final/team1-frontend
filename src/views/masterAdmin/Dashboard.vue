@@ -6,7 +6,6 @@ import { getOutboundStats } from '@/api/order'
 import { getAsnStats, getInventoryStats, getWarehouseStatus } from '@/api/wms'
 import { getSellerStats } from '@/api/member'
 import AppLayout from '@/components/layout/AppLayout.vue'
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 
 const breadcrumb = [{ label: 'CONK' }, { label: '통합 대시보드' }]
 
@@ -82,7 +81,7 @@ onMounted(fetchDashboard)
 </script>
 
 <template>
-  <AppLayout :breadcrumb="breadcrumb" title="통합 대시보드">
+  <AppLayout :breadcrumb="breadcrumb" title="통합 대시보드" :loading="ui.isLoading">
     <template #header-action>
       <button class="ui-btn ui-btn--ghost btn-export">
         <svg fill="none" height="14" viewBox="0 0 14 14" width="14">
@@ -126,8 +125,6 @@ onMounted(fetchDashboard)
         신규 출고 지시
       </button>
     </template>
-
-    <LoadingSpinner v-if="ui.isLoading" fullscreen />
 
     <div v-if="errorMsg" class="fetch-error">
       {{ errorMsg }}

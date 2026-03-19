@@ -10,11 +10,12 @@
  * 데이터:   onMounted + watch(warehouseId) → fetchDetail (Promise.all 5개 병렬)
  * 창고전환: 헤더 wh-select 드롭다운 → router.push → warehouseId watch 트리거 → 재조회
  */
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
 import { ROUTE_NAMES, ORDER_STATUS } from '@/constants'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import {
   getWarehouseList,
   getWarehouseInventory,
@@ -23,7 +24,8 @@ import {
   getWarehouseLocations,
 } from '@/api/wms'
 import AppLayout from '@/components/layout/AppLayout.vue'
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import SkuDetailModal   from '@/components/masterAdmin/SkuDetailModal.vue'
+import OrderDetailModal from '@/components/masterAdmin/OrderDetailModal.vue'
 
 const route  = useRoute()
 const router = useRouter()
@@ -44,6 +46,24 @@ const errorMsg        = ref('')
 
 // 드로어 열림 상태
 const drawerOpen = ref(false)
+
+// ── SKU 상세 모달 (SkuDetailModal 컴포넌트 위임) ────────────────────────────
+const showSkuModal = ref(false)
+const selectedSku  = ref('')
+
+function openSkuDetail(item) {
+  selectedSku.value  = item.sku
+  showSkuModal.value = true
+}
+
+// ── 주문 상세 모달 (OrderDetailModal 컴포넌트 위임) ─────────────────────────
+const showOrderModal  = ref(false)
+const selectedOrderId = ref('')
+
+function openOrderDetail(orderId) {
+  selectedOrderId.value = orderId
+  showOrderModal.value  = true
+}
 
 // ── computed ─────────────────────────────────────────────────────────────────
 const currentOutbound = computed(() => outboundData.value[outboundTab.value] ?? [])
@@ -102,6 +122,38 @@ async function fetchDetail() {
 onMounted(fetchDetail)
 watch(warehouseId, fetchDetail)
 
+// ── 출고 처리 확인 다이얼로그 ─────────────────────────────────────────────────
+const confirmDialog = reactive({
+  open: false, title: '', message: '', danger: false, action: null,
+})
+
+function openConfirm(title, message, danger, action) {
+  Object.assign(confirmDialog, { open: true, title, message, danger, action })
+}
+
+async function onConfirmAction() {
+  if (confirmDialog.action) await confirmDialog.action()
+  confirmDialog.open = false
+}
+
+function onCancelConfirm() {
+  confirmDialog.open = false
+}
+
+function handleProcessOutbound(row) {
+  openConfirm(
+    '출고 처리',
+    `주문 ${row.orderId}을(를) 출고 완료로 처리하시겠습니까?`,
+    false,
+    () => {
+      // 로컬 상태 업데이트 (API stub)
+      const tabData = outboundData.value[outboundTab.value]
+      const target = tabData.find(r => r.orderId === row.orderId)
+      if (target) target.status = ORDER_STATUS.SHIPPED
+    },
+  )
+}
+
 // ── 헬퍼 ─────────────────────────────────────────────────────────────────────
 function binClass(state) {
   return { avail: 'bin-avail', used: 'bin-used', off: 'bin-off' }[state] ?? ''
@@ -131,7 +183,7 @@ function goToWarehouse(evt) {
 </script>
 
 <template>
-  <AppLayout :breadcrumb="breadcrumb" :title="warehouse?.name ?? '창고 상세'">
+  <AppLayout :breadcrumb="breadcrumb" :title="warehouse?.name ?? '창고 상세'" :loading="ui.isLoading">
 
     <!-- ── 헤더 액션 슬롯 ─────────────────────────────────────────────────── -->
     <template #header-action>
@@ -166,9 +218,6 @@ function goToWarehouse(evt) {
         리포트 다운로드
       </button>
     </template>
-
-    <!-- ── 전역 로딩 ──────────────────────────────────────────────────────── -->
-    <LoadingSpinner v-if="ui.isLoading" fullscreen />
 
     <!-- ── 에러 배너 ──────────────────────────────────────────────────────── -->
     <div v-if="errorMsg" class="fetch-error">
@@ -289,7 +338,7 @@ function goToWarehouse(evt) {
             <table class="data-tbl">
               <thead>
                 <tr>
-                  <th>SKU 코드</th>
+                  <th>상품명</th>
                   <th class="col-num">가용</th>
                   <th class="col-num">할당</th>
                   <th class="col-num">총합</th>
@@ -297,7 +346,12 @@ function goToWarehouse(evt) {
               </thead>
               <tbody>
                 <tr v-for="item in inventory" :key="item.sku">
-                  <td><span class="sku-code">{{ item.sku }}</span></td>
+                  <td>
+                    <button class="product-name-btn" @click="openSkuDetail(item)">
+                      {{ item.productName }}
+                    </button>
+                    <div class="sku-code-sub">{{ item.sku }}</div>
+                  </td>
                   <td class="col-num">
                     <span :class="item.available < 15 ? 'num-low' : 'num-ok'">
                       {{ item.available }}
@@ -344,7 +398,11 @@ function goToWarehouse(evt) {
               </thead>
               <tbody>
                 <tr v-for="row in currentOutbound" :key="row.orderId">
-                  <td class="order-id">{{ row.orderId }}</td>
+                  <td>
+                    <button class="order-id-btn" @click="openOrderDetail(row.orderId)">
+                      {{ row.orderId }}
+                    </button>
+                  </td>
                   <td>{{ row.seller }}</td>
                   <td>
                     <StatusBadge :status="row.status" type="order" />
@@ -353,7 +411,7 @@ function goToWarehouse(evt) {
                     <button
                       v-if="row.status !== ORDER_STATUS.SHIPPED"
                       class="btn-action-sm"
-                      @click="() => {}"
+                      @click="handleProcessOutbound(row)"
                     >
                       처리
                     </button>
@@ -403,8 +461,15 @@ function goToWarehouse(evt) {
               </thead>
               <tbody>
                 <tr v-for="ord in orders" :key="ord.orderId">
-                  <td class="order-id">{{ ord.orderId }}</td>
-                  <td><span class="sku-code">{{ ord.sku }}</span></td>
+                  <td>
+                    <button class="order-id-btn" @click="openOrderDetail(ord.orderId)">
+                      {{ ord.orderId }}
+                    </button>
+                  </td>
+                  <td>
+                    <span class="product-name-cell">{{ ord.productName }}</span>
+                    <div class="sku-code-sub">{{ ord.sku }}</div>
+                  </td>
                   <td class="col-num">{{ ord.qty }}</td>
                   <td class="dest-cell">{{ ord.dest }}</td>
                   <td>
@@ -528,6 +593,37 @@ function goToWarehouse(evt) {
         </div><!-- /.location-drawer -->
       </Transition>
     </Teleport>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         SKU 상세 모달 (SkuDetailModal 컴포넌트)
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <SkuDetailModal
+      :warehouse-id="warehouseId"
+      :sku="selectedSku"
+      :is-open="showSkuModal"
+      @close="showSkuModal = false"
+    />
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         주문 상세 모달 (OrderDetailModal 컴포넌트)
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <OrderDetailModal
+      :warehouse-id="warehouseId"
+      :order-id="selectedOrderId"
+      :is-open="showOrderModal"
+      @close="showOrderModal = false"
+    />
+
+    <!-- ── 출고 처리 확인 다이얼로그 ── -->
+    <ConfirmDialog
+      :is-open="confirmDialog.open"
+      :title="confirmDialog.title"
+      :message="confirmDialog.message"
+      :danger="confirmDialog.danger"
+      confirm-label="처리 완료"
+      @confirm="onConfirmAction"
+      @cancel="onCancelConfirm"
+    />
 
   </AppLayout>
 </template>
@@ -1142,6 +1238,298 @@ function goToWarehouse(evt) {
   border-color: var(--border);
   border-style: dashed;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   상품명 클릭 버튼 (재고 현황 패널)
+══════════════════════════════════════════════════════════════════════════ */
+.product-name-btn {
+  display: block;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue);
+  cursor: pointer;
+  transition: color .15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+.product-name-btn:hover {
+  color: color-mix(in srgb, var(--blue) 70%, #000);
+  text-decoration: underline;
+}
+.product-name-cell {
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--t1);
+}
+.sku-code-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--t4);
+  margin-top: 2px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SKU 상세 모달 내부 스타일
+══════════════════════════════════════════════════════════════════════════ */
+.sku-modal-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 0;
+  color: var(--t3);
+  font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+}
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.sku-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 기본 정보 카드 */
+.sku-info-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sku-info-row {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.sku-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.sku-info-label {
+  font-family: 'Barlow', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.sku-category-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(76, 116, 255, .1);
+  color: var(--blue);
+  font-family: 'Barlow', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+}
+.location-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  background: rgba(46, 204, 135, .1);
+  border: 1px solid rgba(46, 204, 135, .25);
+  color: var(--green);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+}
+.sku-no-location {
+  font-family: 'Barlow', sans-serif;
+  font-size: 12px;
+  color: var(--t4);
+  font-style: italic;
+}
+.sku-info-item--locations {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+.location-qty {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--green);
+  opacity: 0.75;
+}
+
+/* 재고 수치 칩 */
+.sku-stock-row {
+  display: flex;
+  gap: 10px;
+}
+.sku-stock-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+}
+.sku-stock-chip .chip-label {
+  font-size: 11px;
+  color: var(--t3);
+  font-weight: 500;
+}
+.sku-stock-chip strong {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+}
+.sku-stock-avail strong { color: var(--green); }
+.sku-stock-alloc strong { color: var(--amber); }
+.sku-stock-total strong { color: var(--t1); }
+
+/* 섹션 */
+.sku-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sku-section-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: .3px;
+  color: var(--t2);
+  text-transform: uppercase;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* 상세 테이블 (모달 내부) */
+.detail-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.detail-tbl th {
+  padding: 6px 10px;
+  background: var(--surface-2);
+  font-family: 'Barlow', sans-serif;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--t3);
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+.detail-tbl td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--t1);
+  vertical-align: middle;
+}
+.detail-tbl tr:last-child td { border-bottom: none; }
+.detail-tbl tr:hover td      { background: var(--surface-2); }
+
+/* 이력 구분 뱃지 */
+.hist-type {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  font-family: 'Barlow', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+}
+.hist-in     { background: rgba(46, 204, 135, .12); color: var(--green); }
+.hist-out    { background: rgba(239,  68,  68, .1);  color: var(--red); }
+.hist-adjust { background: rgba(245, 166,  35, .12); color: #B45309; }
+
+.qty-in   { color: var(--green); font-weight: 600; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; }
+.qty-out  { color: var(--red);   font-weight: 600; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; }
+
+.date-cell   { color: var(--t3); white-space: nowrap; font-size: 12px; }
+.reason-cell { color: var(--t2); max-width: 200px; }
+
+/* ── 주문번호 버튼 ──────────────────────────────────────────────────────────── */
+.order-id-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: #3B82F6;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color .15s;
+  white-space: nowrap;
+}
+.order-id-btn:hover {
+  color: color-mix(in srgb, #3B82F6 70%, #000);
+  text-decoration: underline;
+}
+
+/* ── 주문 상세 모달 — 셀러 행 ────────────────────────────────────────────── */
+.order-seller-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 0 4px;
+  border-top: 1px solid var(--border);
+  color: var(--t2);
+}
+.order-seller-name {
+  font-family: 'Barlow', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--t1);
+}
+.order-seller-code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--t4);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+/* ── 작은 location 태그 (모달 내부 테이블용) ─────────────────────────────── */
+.location-tag--sm {
+  font-size: 11px;
+  padding: 2px 7px;
+}
+
+/* ── workStatus 뱃지 ────────────────────────────────────────────────────── */
+.work-status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-family: 'Barlow', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ws-waiting { background: rgba(156, 163, 175, .15); color: var(--t3); }
+.ws-picking { background: rgba(59, 130, 246, .12);  color: #3B82F6; }
+.ws-picked  { background: rgba(99, 102, 241, .12);  color: #6366F1; }
+.ws-packing { background: rgba(245, 166, 35, .15);  color: #B45309; }
+.ws-packed  { background: rgba(245, 166, 35, .2);   color: #92400E; }
+.ws-shipped { background: rgba(46, 204, 135, .12);  color: var(--green); }
 
 /* ══════════════════════════════════════════════════════════════════════════
    드로어 전환 애니메이션

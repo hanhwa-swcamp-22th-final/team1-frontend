@@ -12,6 +12,7 @@ import {
 
 const breadcrumb = [{ label: 'WH Worker' }, { label: '입고 관리' }]
 const route = useRoute()
+const STORAGE_KEY = 'wh-worker-shared-state-v2'
 
 const tasks = ref([])
 const selectedTaskId = ref(String(route.query.taskId || ''))
@@ -246,7 +247,7 @@ function recomputeTask(task) {
 
   if (isPutDone) {
     task.status = '완료'
-    task.activeStep = '적재 완료'
+    task.activeStep = '작업 완료'
     task.asnStatus = '보관중'
     task.stockActivation = true
     if (!task.completedAt) task.completedAt = nowStamp()
@@ -276,6 +277,7 @@ function recomputeTask(task) {
   task.asnStatus = '입고예정'
   task.stockActivation = false
   task.completedAt = ''
+  persistTasks()
 }
 
 function isWholeNumberInput(value) {
@@ -378,7 +380,6 @@ onBeforeUnmount(() => {
       </button>
     </template>
 
-    <!-- 입고 관리 메인 화면 -->
     <section class="inbound-page">
       <!-- 상단 요약 카드 영역 -->
       <div class="summary-grid">
@@ -389,7 +390,6 @@ onBeforeUnmount(() => {
         </article>
       </div>
 
-      <!-- 좌측 작업 목록 / 우측 상세 작업 화면 -->
       <div class="content-grid">
         <article class="panel panel--task-list">
           <div class="panel-head panel-head--tabs">
@@ -404,7 +404,6 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
-          <!-- 입고 작업 카드 목록 -->
           <div class="task-list">
             <button
               v-for="task in filteredTaskCards"
@@ -443,7 +442,6 @@ onBeforeUnmount(() => {
           </div>
         </article>
 
-        <!-- 선택한 입고 작업 상세 패널 -->
         <article v-if="selectedTask" class="panel panel--detail">
           <div class="panel-head panel-head--detail">
             <div>
@@ -487,7 +485,6 @@ onBeforeUnmount(() => {
             검수 완료 후 적재 단계로 넘어가며, 모든 Bin 적재 완료 시 ASN 상태가 보관중으로 전환됩니다.
           </div>
 
-          <!-- 선택 작업 요약 카드 -->
           <div class="detail-summary-grid">
             <article v-for="card in detailSummaryCards" :key="card.label" class="detail-summary-card">
               <p>{{ card.label }}</p>
@@ -496,7 +493,6 @@ onBeforeUnmount(() => {
             </article>
           </div>
 
-          <!-- 검수/적재 실제 입력 테이블 영역 -->
           <section class="work-block">
             <div class="work-block__head">
               <div>
@@ -1138,9 +1134,6 @@ onBeforeUnmount(() => {
     display: none;
   }
 }
-
-
-
 
 .row-alert { background: rgba(239, 68, 68, 0.08); }
 </style>
