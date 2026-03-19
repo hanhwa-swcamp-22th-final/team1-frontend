@@ -4,7 +4,7 @@
  *
  * Props:
  *   status : string  — constants/status.js의 값 (예: ORDER_STATUS.PENDING)
- *   type   : 'order' | 'asn' | 'account' | 'item' | 'worker'  — 상태 맵 선택 (기본 'order')
+ *   type   : 'order' | 'asn' | 'account' | 'seller' | 'item' | 'worker'  — 상태 맵 선택 (기본 'order')
  *
  * 상태별 색상 매핑 테이블:
  *
@@ -24,6 +24,11 @@
  *   ACTIVE        → green (정상)
  *   TEMP_PASSWORD → amber (임시비밀번호)
  *   INACTIVE      → red   (비활성)
+ *
+ * [seller]
+ *   ACTIVE        → green (정상)
+ *   PENDING       → amber (초대대기)
+ *   SUSPENDED     → red   (정지)
  *
  * [item]
  *   INBOUND_SCHEDULED  → amber  (입고예정)
@@ -73,6 +78,11 @@ const MAP = {
     [ACCOUNT_STATUS.ACTIVE]: { label: '정상', color: 'green' },
     [ACCOUNT_STATUS.TEMP_PASSWORD]: { label: '임시비밀번호', color: 'amber' },
     [ACCOUNT_STATUS.INACTIVE]: { label: '비활성', color: 'red' },
+  },
+  seller: {
+    [SELLER_STATUS.ACTIVE]: { label: '정상', color: 'green' },
+    [SELLER_STATUS.PENDING]: { label: '초대대기', color: 'amber' },
+    [SELLER_STATUS.SUSPENDED]: { label: '비활성', color: 'red' },
   },
   item: {
     [ITEM_STATUS.INBOUND_SCHEDULED]: { label: '입고예정', color: 'amber' },

@@ -7,6 +7,7 @@
  */
 import { ref, reactive } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import ToastMessage from '@/components/common/ToastMessage.vue'
 
 const breadcrumb = [{ label: '사용자 관리' }, { label: '역할별 접근 권한 매트릭스' }]
 
@@ -115,32 +116,26 @@ function togglePerm(id, role, perm) {
 }
 
 // ── 저장 토스트 ──────────────────────────────────────────────────────────────
+// 저장 성공 알림은 공통 ToastMessage 로 표시한다.
 const saveToast = ref(false)
-let toastTimer = null
 
 function saveChanges() {
-  if (toastTimer) clearTimeout(toastTimer)
+  // 실제 저장 API 연동 전까지는 토스트 표시만 유지한다.
   saveToast.value = true
-  toastTimer = setTimeout(() => { saveToast.value = false }, 4000)
 }
 </script>
 
 <template>
   <AppLayout :breadcrumb="breadcrumb" title="권한 설정 (RBAC)">
+    <!-- RBAC 저장 완료 알림 공통화 -->
+    <ToastMessage
+      v-model:visible="saveToast"
+      message="권한이 성공적으로 저장되었습니다."
+      type="success"
+    />
     <template #header-action>
       <button class="ui-btn ui-btn--gold" @click="saveChanges">변경사항 저장</button>
     </template>
-
-    <!-- 저장 토스트 -->
-    <Transition name="toast-fade">
-      <div v-if="saveToast" class="save-toast" role="alert">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <circle cx="8" cy="8" r="7" stroke="var(--green)" stroke-width="1.5"/>
-          <path d="M4.5 8l2.5 2.5 4-4" stroke="var(--green)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        권한 설정이 저장되었습니다.
-      </div>
-    </Transition>
 
     <!-- 안내 배너 -->
     <div class="notice-banner">
@@ -255,27 +250,6 @@ function saveChanges() {
   font-weight: 700;
   box-shadow: 0 2px 8px rgba(245,166,35,0.3);
 }
-
-/* ── 저장 토스트 ── */
-.save-toast {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 18px;
-  background: var(--green-pale);
-  border: 1px solid var(--green);
-  border-radius: 6px;
-  font-family: 'Barlow', sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--green);
-  margin-bottom: 16px;
-}
-
-.toast-fade-enter-active,
-.toast-fade-leave-active { transition: opacity 0.3s, transform 0.3s; }
-.toast-fade-enter-from   { opacity: 0; transform: translateY(-6px); }
-.toast-fade-leave-to     { opacity: 0; transform: translateY(-6px); }
 
 /* ── 안내 배너 ── */
 .notice-banner {

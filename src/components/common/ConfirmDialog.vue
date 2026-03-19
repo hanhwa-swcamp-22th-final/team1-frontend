@@ -65,10 +65,12 @@ const emit = defineEmits(['confirm', 'cancel'])
     <div class="actions">
       <button class="ui-btn ui-btn--ghost" @click="emit('cancel')">{{ cancelLabel }}</button>
       <button
-        :class="danger ? 'ui-btn--danger' : 'ui-btn--primary'"
-        class="ui-btn"  <!-- danger=true면 빨간 버튼 -->
-        @click="emit('confirm')"
-      >{{ confirmLabel }}</button>
+          class="ui-btn"
+          :class="danger ? 'ui-btn--danger' : 'ui-btn--primary'"
+          @click="emit('confirm')"
+      >
+        {{ confirmLabel }}
+      </button>
     </div>
   </BaseModal>
 </template>

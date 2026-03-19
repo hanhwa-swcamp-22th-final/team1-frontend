@@ -44,13 +44,16 @@ export const ROUTE_NAMES = {
   MASTER_DASHBOARD: 'master-dashboard',
   MASTER_WAREHOUSE_LIST: 'master-warehouse-list',
   MASTER_WAREHOUSE_REGISTER: 'master-warehouse-register',
-  MASTER_ACCOUNT_LIST: 'master-account-list',
-  MASTER_ACCOUNT_INVITE: 'master-account-invite',
+  MASTER_WAREHOUSE_DETAIL: 'master-warehouse-detail',
+  MASTER_ASN_LIST: 'master-asn-list',
+  MASTER_ORDER_LIST: 'master-order-list',
+  MASTER_FEE_SETTING: 'master-fee-setting',
+  MASTER_FEE_SETTINGS: 'master-fee-settings',
   MASTER_SELLER_COMPANY_LIST: 'master-seller-company-list',
   MASTER_SELLER_COMPANY_REGISTER: 'master-seller-company-register',
+  MASTER_ACCOUNT_LIST: 'master-account-list',
+  MASTER_ACCOUNT_INVITE: 'master-account-invite',
   MASTER_RBAC_SETTING: 'master-rbac-setting',
-  MASTER_WAREHOUSE_DETAIL: 'master-warehouse-detail',
-  MASTER_FEE_SETTING: 'master-fee-setting',
 
   // ── WH Manager — 창고 운영 (views/whManager/)
   // 접두어: 'whm-' (WH Manager 약자)
