@@ -87,5 +87,7 @@ export const ROUTE_NAMES = {
   // 접두어: 'sys-'
   SYS_COMPANY_LIST: 'sys-company-list',
   SYS_COMPANY_REGISTER: 'sys-company-register',
+  SYS_COMPANY_DETAIL: 'sys-company-detail',
   SYS_FEE_SETTING: 'sys-fee-setting',
+  SYS_USER_ACCOUNT_LIST: 'sys-user-account-list',
 }

@@ -1,1 +1,201 @@
-{}
+{
+  "sys_companies": [
+    {
+      "id": 1,
+      "name": "FASTSHIP LOGISTICS",
+      "tenantCode": "TEN-FASTSHIP-001",
+      "status": "ACTIVE",
+      "createdAt": "2026-03-12T10:12:00",
+      "representative": "Sarah Park",
+      "businessNumber": "91-4820318",
+      "phone": "+1-213-555-1821",
+      "email": "ops@fastshiplogistics.com",
+      "address": "1850 Alameda St, Los Angeles, CA 90058",
+      "companyType": "K-글로벌 전문",
+      "warehouseCount": 3,
+      "sellerCount": 14,
+      "userCount": 27,
+      "lockedAccountCount": 27,
+      "warehouseList": [
+        { "id": 1, "code": "LAX-A", "name": "LA Main Hub", "status": "운영중" },
+        { "id": 2, "code": "ONT-B", "name": "Ontario Overflow", "status": "운영중" },
+        { "id": 3, "code": "LGB-C", "name": "Long Beach Returns", "status": "운영중" }
+      ],
+      "sellerCompanyList": ["Nordic House", "Rivernest", "KShelf", "Mellow Days"],
+      "activationLinkStatus": "USED"
+    },
+    {
+      "id": 2,
+      "name": "NOVA FULFILL KOREA",
+      "tenantCode": "TEN-NOVA-002",
+      "status": "SETTING",
+      "createdAt": "2026-02-03T16:30:00",
+      "representative": "Kim Minsoo",
+      "businessNumber": "220-88-10345",
+      "phone": "+82-2-555-0912",
+      "email": "contact@novafullfill.kr",
+      "address": "321 Teheran-ro, Gangnam-gu, Seoul",
+      "companyType": "범용",
+      "warehouseCount": 2,
+      "sellerCount": 6,
+      "userCount": 11,
+      "lockedAccountCount": 11,
+      "warehouseList": [
+        { "id": 4, "code": "ICN-A", "name": "Incheon Main WH", "status": "설정중" },
+        { "id": 5, "code": "GMP-B", "name": "Gimpo Annex", "status": "설정중" }
+      ],
+      "sellerCompanyList": ["Wave For", "Bergamo"],
+      "activationLinkStatus": "PENDING"
+    },
+    {
+      "id": 3,
+      "name": "WEST BRIDGE OPS",
+      "tenantCode": "TEN-WEST-003",
+      "status": "INACTIVE",
+      "createdAt": "2025-11-07T10:44:00",
+      "representative": "John Miller",
+      "businessNumber": "95-2203102",
+      "phone": "+1-206-555-0187",
+      "email": "hello@westbridgeops.com",
+      "address": "188 S Spokane St, Seattle, WA 98134",
+      "companyType": "범용",
+      "warehouseCount": 4,
+      "sellerCount": 9,
+      "userCount": 18,
+      "lockedAccountCount": 18,
+      "warehouseList": [
+        { "id": 6, "code": "SEA-A", "name": "Seattle Cross Dock", "status": "비활성" }
+      ],
+      "sellerCompanyList": ["Pacific Route", "Urban Loom"],
+      "activationLinkStatus": "DISABLED"
+    }
+  ],
+  "sys_users": [
+    {
+      "id": 101,
+      "companyId": 1,
+      "name": "Sarah Park",
+      "email": "sarah.park@fastship.us",
+      "role": "MASTER_ADMIN",
+      "organization": "FASTSHIP LOGISTICS",
+      "warehouse": "-",
+      "status": "ACTIVE",
+      "registeredAt": "2026-03-12T10:12:00",
+      "lastLoginAt": "2026-03-13T09:18:00",
+      "wasActiveBeforeCompanyInactivation": true
+    },
+    {
+      "id": 102,
+      "companyId": 1,
+      "name": "Daniel Kim",
+      "email": "daniel@fastship.us",
+      "role": "MASTER_ADMIN",
+      "organization": "FASTSHIP LOGISTICS",
+      "warehouse": "-",
+      "status": "INVITE_PENDING",
+      "registeredAt": "2026-03-13T09:21:00",
+      "lastLoginAt": null,
+      "wasActiveBeforeCompanyInactivation": false
+    },
+    {
+      "id": 103,
+      "companyId": 1,
+      "name": "Mike Choi",
+      "email": "mike.choi@fastship.us",
+      "role": "WH_MANAGER",
+      "organization": "FASTSHIP LOGISTICS",
+      "warehouse": "LA Main Hub",
+      "status": "ACTIVE",
+      "registeredAt": "2026-03-12T10:20:00",
+      "lastLoginAt": "2026-03-18T08:15:00",
+      "wasActiveBeforeCompanyInactivation": true
+    },
+    {
+      "id": 104,
+      "companyId": 1,
+      "name": "BrandCo Manager",
+      "email": "seller1@brandco.com",
+      "role": "SELLER_MANAGER",
+      "organization": "FASTSHIP LOGISTICS",
+      "warehouse": "-",
+      "status": "LOCKED",
+      "registeredAt": "2026-03-12T10:30:00",
+      "lastLoginAt": "2026-03-17T16:50:00",
+      "wasActiveBeforeCompanyInactivation": true
+    },
+    {
+      "id": 201,
+      "companyId": 2,
+      "name": "Ops Team",
+      "email": "ops@novafullfill.kr",
+      "role": "MASTER_ADMIN",
+      "organization": "NOVA FULFILL KOREA",
+      "warehouse": "-",
+      "status": "INVITE_PENDING",
+      "registeredAt": "2026-02-03T16:30:00",
+      "lastLoginAt": null,
+      "wasActiveBeforeCompanyInactivation": false
+    },
+    {
+      "id": 202,
+      "companyId": 2,
+      "name": "Jinwoo Han",
+      "email": "jinwoo.han@nova.kr",
+      "role": "WH_MANAGER",
+      "organization": "NOVA FULFILL KOREA",
+      "warehouse": "Incheon Main WH",
+      "status": "INACTIVE",
+      "registeredAt": "2026-02-04T11:00:00",
+      "lastLoginAt": null,
+      "wasActiveBeforeCompanyInactivation": false
+    },
+    {
+      "id": 301,
+      "companyId": 3,
+      "name": "John Miller",
+      "email": "john@westbridgeops.com",
+      "role": "MASTER_ADMIN",
+      "organization": "WEST BRIDGE OPS",
+      "warehouse": "-",
+      "status": "INACTIVE",
+      "registeredAt": "2025-11-07T10:44:00",
+      "lastLoginAt": "2026-03-08T13:44:00",
+      "wasActiveBeforeCompanyInactivation": true
+    }
+  ],
+  "sys_company_logs": [
+    { "id": 1, "companyId": 1, "at": "2026-03-12T10:12:00", "actor": "sys.admin@conk.com", "action": "업체 등록" },
+    { "id": 2, "companyId": 1, "at": "2026-03-13T09:21:00", "actor": "sys.admin@conk.com", "action": "총괄 관리자 추가 발급" },
+    { "id": 3, "companyId": 2, "at": "2026-02-03T16:30:00", "actor": "sys.admin@conk.com", "action": "업체 등록" },
+    { "id": 4, "companyId": 3, "at": "2026-03-10T10:44:00", "actor": "sys.admin@conk.com", "action": "계약 만료로 비활성화" }
+  ],
+  "sys_fee_profiles": [
+    {
+      "id": 1,
+      "channel": "AMAZON_FBM",
+      "name": "Amazon FBM 기본",
+      "baseRate": 15,
+      "fixedFee": 0,
+      "currency": "USD",
+      "updatedAt": "2026-03-10T09:00:00"
+    },
+    {
+      "id": 2,
+      "channel": "SHOPIFY",
+      "name": "Shopify 결제 수수료",
+      "baseRate": 2.9,
+      "fixedFee": 0.3,
+      "currency": "USD",
+      "updatedAt": "2026-03-08T12:00:00"
+    },
+    {
+      "id": 3,
+      "channel": "ETC",
+      "name": "기타 채널 기본",
+      "baseRate": 8,
+      "fixedFee": 0,
+      "currency": "USD",
+      "updatedAt": "2026-03-05T15:10:00"
+    }
+  ]
+}
