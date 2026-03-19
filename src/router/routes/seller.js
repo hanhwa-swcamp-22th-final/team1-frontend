@@ -80,6 +80,12 @@ export default [
     meta: { role: ROLES.SELLER },
   },
   {
+    path: '/seller/modal-showcase',
+    name: ROUTE_NAMES.SELLER_MODAL_SHOWCASE,
+    component: () => import('@/views/seller/SellerModalShowcaseView.vue'),
+    meta: { role: ROLES.SELLER },
+  },
+  {
     path: '/seller/margin-simulator',
     name: ROUTE_NAMES.SELLER_MARGIN_SIMULATOR,
     component: () => import('@/views/seller/SellerMarginSimulatorView.vue'),
