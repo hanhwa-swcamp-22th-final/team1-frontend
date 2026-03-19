@@ -1,275 +1,35 @@
 <script setup>
-import { computed, onMounted, onBeforeUnmount, onActivated, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import TimelineStepper from '@/components/common/TimelineStepper.vue'
 import { ROUTE_NAMES } from '@/constants'
+import {
+  addWorkerStateListeners,
+  createWorkerAlerts,
+  createWorkerTaskSummaries,
+  loadWorkerState,
+} from '@/utils/whWorkerState'
 
 const router = useRouter()
+const route = useRoute()
+
 const breadcrumb = [{ label: 'WH Worker' }, { label: '내 작업' }]
 const FILTERS = ['전체', '대기', '진행중', '완료']
 const STORAGE_KEY = 'wh-worker-shared-state-v2'
 
-const TASKS_SEED = Object.freeze([
-  {
-    id: 'IB-2026-0312-01',
-    type: '검수&적재',
-    sellerCompany: '어반셀러코리아',
-    refNo: 'ASN-240312-A01',
-    assignedBinCount: 3,
-    totalQty: 170,
-    status: '대기',
-    currentStep: '검수',
-    steps: [
-      { key: '검수', label: '검수' },
-      { key: '적재', label: '적재' },
-      { key: '작업 완료', label: '작업 완료' },
-    ],
-    referenceStatus: '입고예정',
-    note: '작업자는 본인 담당 Bin 범위의 입고 검수 작업을 확인합니다.',
-  },
-  {
-    id: 'IB-2026-0312-02',
-    type: '검수&적재',
-    sellerCompany: '푸드라인컴퍼니',
-    refNo: 'ASN-240312-B04',
-    assignedBinCount: 2,
-    totalQty: 80,
-    status: '진행중',
-    currentStep: '적재',
-    steps: [
-      { key: '검수', label: '검수' },
-      { key: '적재', label: '적재' },
-      { key: '작업 완료', label: '작업 완료' },
-    ],
-    referenceStatus: '검수완료',
-    note: '검수 일부 완료 후 적재 단계로 넘어간 작업입니다.',
-  },
-  {
-    id: 'IB-2026-0312-03',
-    type: '검수&적재',
-    sellerCompany: '메가뷰티랩',
-    refNo: 'ASN-240312-D11',
-    assignedBinCount: 4,
-    totalQty: 126,
-    status: '대기',
-    currentStep: '검수',
-    steps: [
-      { key: '검수', label: '검수' },
-      { key: '적재', label: '적재' },
-      { key: '작업 완료', label: '작업 완료' },
-    ],
-    referenceStatus: '입고예정',
-    note: '화장품 카테고리 신규 입고 건입니다.',
-  },
-  {
-    id: 'IB-2026-0311-05',
-    type: '검수&적재',
-    sellerCompany: '리빙하우스',
-    refNo: 'ASN-240311-C09',
-    assignedBinCount: 2,
-    totalQty: 55,
-    status: '완료',
-    currentStep: '작업 완료',
-    steps: [
-      { key: '검수', label: '검수' },
-      { key: '적재', label: '적재' },
-      { key: '작업 완료', label: '작업 완료' },
-    ],
-    referenceStatus: '보관중',
-    note: '적재까지 완료되어 재고 관리에서 조회 가능합니다.',
-  },
-  {
-    id: 'OB-2026-0312-01',
-    type: '피킹&패킹',
-    sellerCompany: '어반셀러코리아',
-    refNo: 'PICK-240312-701',
-    assignedBinCount: 3,
-    totalQty: 170,
-    status: '대기',
-    currentStep: '피킹',
-    steps: [
-      { key: '피킹', label: '피킹' },
-      { key: '패킹 검수', label: '패킹 검수' },
-      { key: '작업 완료', label: '작업 완료' },
-    ],
-    referenceStatus: '피킹대기',
-    note: '동선 순서 기준으로 피킹 후 패킹 검수까지 이어지는 작업입니다.',
-  },
-  {
-    id: 'OB-2026-0312-02',
-    type: '피킹&패킹',
-    sellerCompany: '스마트키친랩',
-    refNo: 'PICK-240312-702',
-    assignedBinCount: 2,
-    totalQty: 80,
-    status: '진행중',
-    currentStep: '피킹',
-    steps: [
-      { key: '피킹', label: '피킹' },
-      { key: '패킹 검수', label: '패킹 검수' },
-      { key: '작업 완료', label: '작업 완료' },
-    ],
-    referenceStatus: '피킹중',
-    note: '피킹 수량 입력 후 부분 저장 가능한 작업입니다.',
-  },
-  {
-    id: 'OB-2026-0312-03',
-    type: '피킹&패킹',
-    sellerCompany: '리빙하우스',
-    refNo: 'PICK-240312-703',
-    assignedBinCount: 2,
-    totalQty: 55,
-    status: '진행중',
-    currentStep: '패킹 검수',
-    steps: [
-      { key: '피킹', label: '피킹' },
-      { key: '패킹 검수', label: '패킹 검수' },
-      { key: '작업 완료', label: '작업 완료' },
-    ],
-    referenceStatus: '피킹&패킹중',
-    note: '피킹 완료 후 패킹 검수 대기중인 작업입니다.',
-  },
-  {
-    id: 'OB-2026-0312-04',
-    type: '피킹&패킹',
-    sellerCompany: '모던리빙',
-    refNo: 'PICK-240312-704',
-    assignedBinCount: 4,
-    totalQty: 116,
-    status: '대기',
-    currentStep: '피킹',
-    steps: [
-      { key: '피킹', label: '피킹' },
-      { key: '패킹 검수', label: '패킹 검수' },
-      { key: '작업 완료', label: '작업 완료' },
-    ],
-    referenceStatus: '피킹대기',
-    note: '대량 출고 건으로 Bin 수가 많은 작업입니다.',
-  },
-  {
-    id: 'OB-2026-0311-04',
-    type: '피킹&패킹',
-    sellerCompany: '홈킷스토어',
-    refNo: 'PICK-240311-688',
-    assignedBinCount: 1,
-    totalQty: 42,
-    status: '완료',
-    currentStep: '작업 완료',
-    steps: [
-      { key: '피킹', label: '피킹' },
-      { key: '패킹 검수', label: '패킹 검수' },
-      { key: '작업 완료', label: '작업 완료' },
-    ],
-    referenceStatus: '출고대기',
-    note: '패킹 검수 완료 후 출고대기로 전환된 작업입니다.',
-  },
-])
-
 const tasks = ref([])
+const alerts = ref([])
 const activeFilter = ref('전체')
 const selectedTaskId = ref('')
 
-function cloneSeed(seed) {
-  return JSON.parse(JSON.stringify(seed))
+function syncTasksState() {
+  const state = loadWorkerState()
+  tasks.value = createWorkerTaskSummaries(state)
+  alerts.value = createWorkerAlerts(state)
+  applySelectionFromRoute()
+  ensureVisibleSelection()
 }
-
-function outboundReferenceStatus(task) {
-  if (task.activeStep === '작업 완료' || task.status === '완료') return '출고대기'
-  if (task.activeStep === '패킹 검수') return '피킹&패킹중'
-  return task.status === '대기' ? '피킹대기' : '피킹중'
-}
-
-function mapSharedTasks(saved) {
-  const inboundTasks = (saved?.inboundTasks ?? []).map((task) => ({
-    id: task.id,
-    type: '검수&적재',
-    sellerCompany: task.sellerCompany,
-    refNo: task.refNo,
-    assignedBinCount: task.assignedBinCount,
-    totalQty: task.totalQty,
-    status: task.status,
-    currentStep: task.activeStep,
-    steps: [
-      { key: '검수', label: '검수' },
-      { key: '적재', label: '적재' },
-      { key: '작업 완료', label: '작업 완료' },
-    ],
-    referenceStatus: task.asnStatus,
-    note: task.notes,
-  }))
-
-  const outboundTasks = (saved?.outboundTasks ?? []).map((task) => ({
-    id: task.id,
-    type: '피킹&패킹',
-    sellerCompany: task.sellerCompany,
-    refNo: task.pickListNo,
-    assignedBinCount: task.assignedBinCount,
-    totalQty: task.totalQty,
-    status: task.status,
-    currentStep: task.activeStep,
-    steps: [
-      { key: '피킹', label: '피킹' },
-      { key: '패킹 검수', label: '패킹 검수' },
-      { key: '작업 완료', label: '작업 완료' },
-    ],
-    referenceStatus: outboundReferenceStatus(task),
-    note: task.notes,
-  }))
-
-  return [...inboundTasks, ...outboundTasks]
-}
-
-function loadTaskSummaries() {
-  if (typeof window === 'undefined') return cloneSeed(TASKS_SEED)
-  try {
-    const saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null')
-    const sharedTasks = mapSharedTasks(saved)
-    if (sharedTasks.length) return sharedTasks
-  } catch (error) {
-    console.warn('task summary parse failed', error)
-  }
-  return cloneSeed(TASKS_SEED)
-}
-
-
-function refreshFromSharedState() {
-  const currentId = selectedTaskId.value
-  tasks.value = loadTaskSummaries()
-  if (tasks.value.some((task) => task.id === currentId)) {
-    selectedTaskId.value = currentId
-    return
-  }
-  selectedTaskId.value = tasks.value[0]?.id ?? ''
-}
-
-function handleSharedStateUpdate() {
-  refreshFromSharedState()
-}
-
-function sortTasks(a, b) {
-  const statusRank = { 대기: 0, 진행중: 1, 완료: 2 }
-  return (statusRank[a.status] ?? 9) - (statusRank[b.status] ?? 9) || a.id.localeCompare(b.id)
-}
-
-onMounted(() => {
-  refreshFromSharedState()
-  if (typeof window !== 'undefined') {
-    window.addEventListener('storage', handleSharedStateUpdate)
-    window.addEventListener('wh-worker-state-updated', handleSharedStateUpdate)
-  }
-})
-
-onActivated(() => {
-  refreshFromSharedState()
-})
-
-onBeforeUnmount(() => {
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('storage', handleSharedStateUpdate)
-    window.removeEventListener('wh-worker-state-updated', handleSharedStateUpdate)
-  }
-})
 
 const filteredTasks = computed(() => {
   const list = activeFilter.value === '전체'
@@ -280,11 +40,52 @@ const filteredTasks = computed(() => {
 })
 
 const selectedTask = computed(() => {
-  return tasks.value.find((task) => task.id === selectedTaskId.value) ?? filteredTasks.value[0] ?? null
+  return (
+    filteredTasks.value.find((task) => task.id === selectedTaskId.value) ??
+    filteredTasks.value[0] ??
+    tasks.value.find((task) => task.id === selectedTaskId.value) ??
+    tasks.value[0] ??
+    null
+  )
 })
+
+const alertCards = computed(() => {
+  return alerts.value
+    .map((alert) => ({
+      ...alert,
+      task: tasks.value.find((task) => task.id === alert.taskId) ?? null,
+    }))
+    .filter((alert) => alert.task)
+})
+
+function applySelectionFromRoute() {
+  const taskId = String(route.query.taskId || '')
+  if (!taskId) return
+  const matched = tasks.value.find((task) => task.id === taskId)
+  if (!matched) return
+  activeFilter.value = '전체'
+  selectedTaskId.value = matched.id
+}
+
+function ensureVisibleSelection() {
+  if (!tasks.value.length) {
+    selectedTaskId.value = ''
+    return
+  }
+
+  if (filteredTasks.value.some((task) => task.id === selectedTaskId.value)) return
+  selectedTaskId.value = filteredTasks.value[0]?.id ?? tasks.value[0]?.id ?? ''
+}
 
 function selectTask(taskId) {
   selectedTaskId.value = taskId
+}
+
+function focusAlertTask(alert) {
+  if (!alert?.task) return
+  activeFilter.value = '전체'
+  selectedTaskId.value = alert.task.id
+  router.replace({ query: { ...route.query, taskId: alert.task.id, alertId: alert.id } })
 }
 
 function openSelectedTask() {
@@ -305,6 +106,12 @@ function statusClass(status) {
   return 'status-badge--done'
 }
 
+function alertLevelClass(level) {
+  if (level === '안내') return 'alert-badge--blue'
+  if (level === '확인') return 'alert-badge--purple'
+  return 'alert-badge--red'
+}
+
 const summaryInfo = computed(() => {
   const task = selectedTask.value
   if (!task) return []
@@ -318,6 +125,26 @@ const summaryInfo = computed(() => {
     { label: '총 수량', value: `${task.totalQty}개` },
     { label: '작업 메모', value: task.note },
   ]
+})
+
+watch(() => route.query.taskId, () => {
+  applySelectionFromRoute()
+  ensureVisibleSelection()
+}, { immediate: true })
+
+watch([activeFilter, filteredTasks], () => {
+  ensureVisibleSelection()
+})
+
+let removeListeners = () => {}
+
+onMounted(() => {
+  syncTasksState()
+  removeListeners = addWorkerStateListeners(syncTasksState)
+})
+
+onBeforeUnmount(() => {
+  removeListeners()
 })
 </script>
 
@@ -378,10 +205,57 @@ const summaryInfo = computed(() => {
         </div>
       </section>
 
+      <!-- 중단: 예외 알림 목록 카드 -->
+      <section class="section-card alert-section">
+        <div class="section-card__header alert-section__header">
+          <div>
+            <h2 class="section-title">예외 알림 목록</h2>
+            <p class="section-subtitle">대시보드의 최근 예외 알림을 내 작업 화면에서도 카드 형태로 바로 확인할 수 있습니다.</p>
+          </div>
+        </div>
+
+        <div v-if="alertCards.length" class="alert-grid">
+          <button
+            v-for="alert in alertCards"
+            :key="alert.id"
+            type="button"
+            class="alert-card"
+            :class="{ 'alert-card--selected': selectedTask?.id === alert.task?.id }"
+            @click="focusAlertTask(alert)"
+          >
+            <div class="alert-card__top">
+              <span class="alert-badge" :class="alertLevelClass(alert.level)">{{ alert.level }}</span>
+              <span class="alert-time">{{ alert.time }}</span>
+            </div>
+
+            <div class="alert-card__body">
+              <strong class="alert-title">{{ alert.title }}</strong>
+              <p class="alert-desc">{{ alert.description }}</p>
+            </div>
+
+            <div class="alert-card__meta">
+              <span class="alert-task-id">{{ alert.task?.id }}</span>
+              <span class="alert-task-type">{{ alert.task?.type }}</span>
+              <span class="status-badge" :class="statusClass(alert.task?.status)">{{ alert.task?.status }}</span>
+            </div>
+
+            <div class="alert-card__linked">
+              <p class="alert-linked-label">연결 작업</p>
+              <p class="alert-linked-value">{{ alert.task?.sellerCompany }} · {{ alert.task?.refNo }}</p>
+            </div>
+          </button>
+        </div>
+
+        <div v-else class="alert-empty">
+          현재 확인할 예외 알림이 없습니다.
+        </div>
+      </section>
+
+      <!-- 하단: 선택 작업 요약 카드 -->
       <section v-if="selectedTask" class="section-card summary-card">
         <div class="section-card__header summary-card__header">
           <h2 class="section-title">선택 작업 요약</h2>
-          <button type="button" class="summary-link" @click="openSelectedTask">
+          <button type="button" class="ui-btn ui-btn--primary" @click="openSelectedTask">
             {{ selectedTask.type === '검수&적재' ? '입고 관리에서 열기' : '출고 관리에서 열기' }}
           </button>
         </div>
@@ -444,6 +318,13 @@ const summaryInfo = computed(() => {
   line-height: 1.2;
   font-weight: 800;
   color: var(--text-primary, #172554);
+}
+
+.section-subtitle {
+  margin: 8px 0 0;
+  color: var(--t4, #7c8aa5);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .filter-tabs {
@@ -522,7 +403,8 @@ const summaryInfo = computed(() => {
   background: rgba(79, 110, 247, 0.12);
 }
 
-.status-badge {
+.status-badge,
+.alert-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -549,19 +431,173 @@ const summaryInfo = computed(() => {
   color: #16a34a;
 }
 
+.alert-section {
+  padding-bottom: 20px;
+}
+
+.alert-section__header {
+  padding-bottom: 16px;
+}
+
+.alert-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  padding: 0 20px;
+  align-items: stretch;
+}
+
+.alert-grid > * {
+  min-width: 0;
+}
+
+.alert-card {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border, #dbe2ea);
+  background: var(--surface-2, #f8fafc);
+  border-radius: 18px;
+  padding: 18px;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font: inherit;
+  color: inherit;
+  box-shadow: none;
+  transition: all 0.2s ease;
+}
+
+.alert-card:hover {
+  border-color: var(--blue, #4f6ef7);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(79, 110, 247, 0.08);
+}
+
+.alert-card--selected {
+  border-color: var(--blue, #4f6ef7);
+  background: rgba(79, 110, 247, 0.06);
+  box-shadow: 0 10px 20px rgba(79, 110, 247, 0.08);
+}
+
+.alert-card__top,
+.alert-card__meta,
+.summary-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.alert-card__top {
+  flex-wrap: wrap;
+}
+
+.alert-card__body {
+  min-width: 0;
+}
+
+.alert-card__meta {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.alert-title {
+  display: block;
+  margin: 0;
+  color: var(--text-primary, #172554);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.4;
+  word-break: keep-all;
+}
+
+.alert-desc {
+  margin: 8px 0 0;
+  color: var(--t4, #7c8aa5);
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.alert-time {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--t4, #7c8aa5);
+}
+
+.alert-badge--blue {
+  background: #eef2ff;
+  color: #4f6ef7;
+}
+
+.alert-badge--purple {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
+.alert-badge--red {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.alert-task-id,
+.alert-task-type {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--border);
+  color: var(--text-primary, #172554);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.alert-card__linked {
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.alert-linked-label {
+  margin: 0 0 6px;
+  color: var(--t4, #7c8aa5);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.alert-linked-value {
+  margin: 0;
+  color: var(--text-primary, #172554);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.alert-empty {
+  margin: 0 20px;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px dashed var(--border);
+  background: var(--surface-2, #f8fafc);
+  color: var(--t4, #7c8aa5);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+
 .summary-card {
   padding: 0 0 18px;
 }
 
 .summary-card__header {
   padding-bottom: 12px;
-}
-
-.summary-link {
-  color: var(--blue, #4f6ef7);
-  font-size: 14px;
-  font-weight: 700;
-  text-decoration: none;
 }
 
 .summary-card__body {
@@ -585,13 +621,6 @@ const summaryInfo = computed(() => {
   color: var(--blue, #4f6ef7);
   font-size: 13px;
   font-weight: 800;
-}
-
-.summary-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
 }
 
 .summary-title-row .status-badge {
@@ -661,7 +690,8 @@ const summaryInfo = computed(() => {
 
 @media (max-width: 860px) {
   .section-card__header,
-  .summary-title-row {
+  .summary-title-row,
+  .alert-card__top {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -674,8 +704,13 @@ const summaryInfo = computed(() => {
     min-width: 880px;
   }
 
+  .alert-grid,
   .summary-grid-boxes {
     grid-template-columns: 1fr;
+  }
+
+  .alert-card {
+    padding: 16px;
   }
 }
 </style>

@@ -1,127 +1,55 @@
 <script setup>
-import { computed, onMounted, onBeforeUnmount, onActivated, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import {
+  addWorkerStateListeners,
+  loadWorkerState,
+  nowStamp,
+  resetWorkerState,
+  updateWorkerState,
+} from '@/utils/whWorkerState'
 
-// 출고 관리 화면 브레드크럼
 const breadcrumb = [{ label: 'WH Worker' }, { label: '출고 관리' }]
 const route = useRoute()
-const STORAGE_KEY = 'wh-worker-shared-state-outbound-v1'
 
-// 출고 관리 목업용 작업 데이터
-const OUTBOUND_TASKS_SEED = Object.freeze([
-  {
-    id: 'OB-2026-0312-01',
-    type: '피킹&포장',
-    sellerCompany: '어반셀러코리아',
-    refNo: 'PICK-240312-701',
-    assignedBinCount: 3,
-    totalQty: 170,
-    status: '대기',
-    notes: '배정된 Bin 범위만 피킹합니다. 대기 상태 작업이 우선 노출됩니다.',
-    flow: ['피킹', '포장'],
-    activeStep: '피킹',
-    orderStatus: '피킹대기',
-    stockDeduction: false,
-    completedAt: '',
-    bins: [
-      {
-        id: '1',
-        location: 'ZONE-A · RACK-01 · BIN-01',
-        binCode: 'P-01',
-        sku: 'SKU-UV-1001',
-        orderedQty: 60,
-        pickedQty: '',
-        pickNote: '',
-        statusPick: '대기',
-        packedQty: '',
-        statusPack: '대기',
-      },
-      {
-        id: '2',
-        location: 'ZONE-A · RACK-01 · BIN-02',
-        binCode: 'P-02',
-        sku: 'SKU-UV-1002',
-        orderedQty: 50,
-        pickedQty: '',
-        pickNote: '',
-        statusPick: '대기',
-        packedQty: '',
-        statusPack: '대기',
-      },
-      {
-        id: '3',
-        location: 'ZONE-A · RACK-02 · BIN-01',
-        binCode: 'P-03',
-        sku: 'SKU-UV-1003',
-        orderedQty: 60,
-        pickedQty: '',
-        pickNote: '',
-        statusPick: '대기',
-        packedQty: '',
-        statusPack: '대기',
-      },
-    ],
-  },
-  {
-    id: 'OB-2026-0312-02',
-    type: '피킹&포장',
-    sellerCompany: '푸드라인컴퍼니',
-    refNo: 'PICK-240312-705',
-    assignedBinCount: 2,
-    totalQty: 80,
-    status: '진행중',
-    notes: '피킹이 완료되어 현재 포장 검수 단계로 넘어간 작업입니다.',
-    flow: ['피킹', '포장'],
-    activeStep: '포장',
-    orderStatus: '피킹완료',
-    stockDeduction: false,
-    completedAt: '',
-    bins: [
-      {
-        id: '1',
-        location: 'ZONE-B · RACK-03 · BIN-02',
-        binCode: 'P-04',
-        sku: 'SKU-FD-2001',
-        orderedQty: 40,
-        pickedQty: '40',
-        pickNote: '',
-        statusPick: '완료',
-        packedQty: '40',
-        statusPack: '완료',
-      },
-      {
-        id: '2',
-        location: 'ZONE-B · RACK-03 · BIN-03',
-        binCode: 'P-05',
-        sku: 'SKU-FD-2002',
-        orderedQty: 40,
-        pickedQty: '40',
-        pickNote: '',
-        statusPick: '완료',
-        packedQty: '',
-        statusPack: '대기',
-      },
-    ],
-  }
-])
-
-// 출고 작업 화면 상태
-const tasks = ref(loadOutboundTasks())
-const selectedTaskId = ref(String(route.query.taskId || tasks.value[0]?.id || ''))
+const tasks = ref([])
+const selectedTaskId = ref(String(route.query.taskId || ''))
 const outboundSubTab = ref('pick')
 
-// 좌측 목록에서 선택한 출고 작업 상세 데이터
+function cloneSeed(seed) {
+  return JSON.parse(JSON.stringify(seed))
+}
+
+function resolveTaskTab(task) {
+  if (!task) return 'pick'
+  if (task.status === '완료' || task.activeStep === '작업 완료') return 'done'
+  return task.activeStep === '포장' ? 'pack' : 'pick'
+}
+
+function syncOutboundState() {
+  const state = loadWorkerState()
+  tasks.value = cloneSeed(state.outboundTasks)
+  applySelectionFromRoute()
+  ensureVisibleSelection()
+}
+
 const selectedTask = computed(() => tasks.value.find((task) => task.id === selectedTaskId.value) ?? null)
+
+function applySelectionFromRoute() {
+  const taskId = String(route.query.taskId || '')
+  if (!taskId) return
+  const matched = tasks.value.find((task) => task.id === taskId)
+  if (!matched) return
+  selectedTaskId.value = matched.id
+  outboundSubTab.value = resolveTaskTab(matched)
+}
 
 watch(
   () => route.query.taskId,
-  (taskId) => {
-    if (!taskId) return
-    const matched = tasks.value.find((task) => task.id === String(taskId))
-    if (!matched) return
-    selectedTaskId.value = matched.id
-    outboundSubTab.value = matched.status === '완료' ? 'done' : matched.activeStep === '포장' ? 'pack' : 'pick'
+  () => {
+    applySelectionFromRoute()
+    ensureVisibleSelection()
   },
   { immediate: true }
 )
@@ -140,12 +68,6 @@ const totalAssignedCount = computed(() => tasks.value.length)
 const waitingTaskCount = computed(() => tasks.value.filter((task) => task.status === '대기').length)
 const progressTaskCount = computed(() => tasks.value.filter((task) => task.status === '진행중').length)
 const doneTaskCount = computed(() => tasks.value.filter((task) => task.status === '완료').length)
-const totalPickDoneCount = computed(() => tasks.value.reduce((sum, task) => sum + pickDone(task), 0))
-const totalPackDoneCount = computed(() => tasks.value.reduce((sum, task) => sum + packDone(task), 0))
-const stockDeductionCount = computed(() =>
-  tasks.value.reduce((sum, task) => sum + task.bins.filter((bin) => bin.statusPick === '완료' && bin.statusPack === '완료').length, 0)
-)
-const pendingDeductionCount = computed(() => totalPackDoneCount.value - stockDeductionCount.value)
 
 // 상단 요약 카드 (출고 버전)
 const summaryCards = computed(() => [
@@ -186,7 +108,6 @@ const summaryCards = computed(() => [
   },
 ])
 
-// 우측 상세 패널 상단 요약 카드 (출고 버전)
 const detailSummaryCards = computed(() => {
   const task = selectedTask.value
   if (!task) return []
@@ -195,24 +116,24 @@ const detailSummaryCards = computed(() => {
     {
       label: '피킹 진행',
       value: `${pickDone(task)} / ${task.bins.length} Bin`,
-      description: 'Bin 위치 확인 및 피킹 수량 입력 기준',
+      description: '피킹 수량 입력과 피킹 완료 처리 기준',
     },
     {
       label: '포장 진행',
-      value: `${packDone(task)} / ${task.bins.length} Box`,
-      description: '상품 포장 및 송장 확인 기준',
+      value: `${packDone(task)} / ${task.bins.length} Bin`,
+      description: '포장 수량 입력과 포장 완료 처리 기준',
     },
     {
-      label: '재고 반영',
-      value: task.stockDeduction ? '차감 완료' : '출고 대기',
-      description: task.stockDeduction ? task.completedAt || '출고 시각 기록됨' : '포장 완료 시 재고 차감 반영',
+      label: '재고 차감',
+      value: task.stockDeduction ? '차감 완료' : '포장 대기',
+      description: task.stockDeduction ? task.completedAt || '완료 시각 기록됨' : '포장 완료 Bin만 차감',
     },
   ]
 })
 
 const outboundDetailStepIndex = computed(() => {
   if (!selectedTask.value) return 1
-  return { '피킹': 1, '포장': 2, '작업 완료': 3 }[selectedTask.value.activeStep] ?? 1
+  return { 피킹: 1, 포장: 2, '작업 완료': 3 }[selectedTask.value.activeStep] ?? 1
 })
 
 function outboundStepNodeClass(index) {
@@ -231,86 +152,30 @@ function outboundLineClass(index) {
   return outboundDetailStepIndex.value > index ? 'flow-line--done' : ''
 }
 
-// 탭 보정 로직
-watch(
-  [selectedTask, filteredTaskCards, outboundSubTab],
-  ([task, cards]) => {
-    if (!cards.length) {
-      selectedTaskId.value = ''
-      return
-    }
-    if (!task || !cards.some((card) => card.id === task.id)) {
-      selectedTaskId.value = cards[0].id
-    }
-  },
-  { immediate: true }
-)
-
-function cloneSeed(seed) {
-  return JSON.parse(JSON.stringify(seed))
-}
-
-function loadOutboundTasks() {
-  if (typeof window === 'undefined') return cloneSeed(OUTBOUND_TASKS_SEED)
-  try {
-    const saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null')
-    if (saved && Array.isArray(saved.outboundTasks)) return saved.outboundTasks
-  } catch (error) {
-    console.warn('shared outbound parse failed', error)
-  }
-  return cloneSeed(OUTBOUND_TASKS_SEED)
-}
-
-function refreshFromSharedState() {
-  const currentId = selectedTaskId.value
-  tasks.value = cloneSeed(loadOutboundTasks())
-  const matched = tasks.value.find((task) => task.id === currentId)
-  if (matched) {
-    selectedTaskId.value = matched.id
-    outboundSubTab.value = matched.activeStep === '포장' || matched.activeStep === '작업 완료' ? 'pack' : 'pick'
+function ensureVisibleSelection() {
+  if (!tasks.value.length) {
+    selectedTaskId.value = ''
     return
   }
-  const first = tasks.value.find((task) => {
-    if (outboundSubTab.value === 'pick') return task.activeStep === '피킹'
-    return task.activeStep === '포장' || task.activeStep === '작업 완료'
-  }) ?? tasks.value[0]
-  selectedTaskId.value = first?.id ?? ''
-  outboundSubTab.value = first?.activeStep === '포장' || first?.activeStep === '작업 완료' ? 'pack' : 'pick'
+
+  if (!filteredTaskCards.value.length) {
+    const fallbackTask = tasks.value[0]
+    selectedTaskId.value = fallbackTask?.id ?? ''
+    if (fallbackTask) outboundSubTab.value = resolveTaskTab(fallbackTask)
+    return
+  }
+
+  if (!filteredTaskCards.value.some((card) => card.id === selectedTaskId.value)) {
+    selectedTaskId.value = filteredTaskCards.value[0].id
+  }
 }
 
-function handleSharedStateUpdate() { refreshFromSharedState() }
+watch([filteredTaskCards, outboundSubTab], () => {
+  ensureVisibleSelection()
+})
 
 function persistTasks() {
-  if (typeof window === 'undefined') return
-  let saved = {}
-  try { saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null') || {} } catch (error) { saved = {} }
-  saved.outboundTasks = cloneSeed(tasks.value)
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved))
-  window.dispatchEvent(new CustomEvent('wh-worker-state-updated'))
-}
-
-onMounted(() => {
-  refreshFromSharedState()
-  if (typeof window !== 'undefined') {
-    window.addEventListener('storage', handleSharedStateUpdate)
-    window.addEventListener('wh-worker-state-updated', handleSharedStateUpdate)
-  }
-})
-
-onActivated(() => { refreshFromSharedState() })
-
-onBeforeUnmount(() => {
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('storage', handleSharedStateUpdate)
-    window.removeEventListener('wh-worker-state-updated', handleSharedStateUpdate)
-  }
-})
-
-function nowStamp() {
-  const now = new Date()
-  const y = now.getFullYear(); const m = String(now.getMonth() + 1).padStart(2, '0'); const d = String(now.getDate()).padStart(2, '0')
-  const hh = String(now.getHours()).padStart(2, '0'); const mm = String(now.getMinutes()).padStart(2, '0')
-  return `${y}-${m}-${d} ${hh}:${mm}`
+  updateWorkerState({ outboundTasks: cloneSeed(tasks.value) })
 }
 
 function sortTasks(a, b) {
@@ -334,11 +199,15 @@ function packMismatch(bin) {
 }
 
 function resetSamples() {
-  tasks.value = cloneSeed(OUTBOUND_TASKS_SEED)
+  resetWorkerState()
   outboundSubTab.value = 'pick'
-  selectedTaskId.value = tasks.value.find((task) => task.activeStep === '피킹' && task.status !== '완료')?.id ?? ''
-  persistTasks()
+  syncOutboundState()
 }
+
+function openPick() { outboundSubTab.value = 'pick' }
+function openPack() { outboundSubTab.value = 'pack' }
+function openDone() { outboundSubTab.value = 'done' }
+function selectTask(taskId) { selectedTaskId.value = taskId }
 
 function openPick() { outboundSubTab.value = 'pick' }
 function openPack() { outboundSubTab.value = 'pack' }
@@ -348,7 +217,13 @@ function selectTask(taskId) { selectedTaskId.value = taskId }
 function recomputeTask(task) {
   const isPickDone = task.bins.every((bin) => bin.statusPick === '완료')
   const isPackDone = task.bins.every((bin) => bin.statusPack === '완료')
-  const hasProgress = task.bins.some(bin => bin.statusPick === '완료' || bin.statusPack === '완료' || String(bin.pickedQty).trim() !== '' || String(bin.packedQty).trim() !== '')
+  const hasProgress = task.bins.some(
+    (bin) =>
+      bin.statusPick === '완료' ||
+      bin.statusPack === '완료' ||
+      String(bin.pickedQty).trim() !== '' ||
+      String(bin.packedQty).trim() !== ''
+  )
 
   if (isPackDone) {
     task.status = '완료'
@@ -379,30 +254,38 @@ function recomputeTask(task) {
   task.orderStatus = '피킹대기'
   task.stockDeduction = false
   task.completedAt = ''
-  persistTasks()
+}
+
+function isWholeNumberInput(value) {
+  return /^\d+$/.test(String(value).trim())
 }
 
 function savePick(bin) {
   const task = selectedTask.value
   if (!task) return
   const pickedQty = String(bin.pickedQty).trim()
-  if (!pickedQty) return
+  if (!isWholeNumberInput(pickedQty)) return
 
+  bin.pickedQty = pickedQty
   bin.statusPick = '완료'
   if (Number(pickedQty) !== Number(bin.orderedQty) && !String(bin.pickNote).trim()) {
     bin.pickNote = `[불일치] 수량 차이 확인 필요`
   }
-  recomputeTask(task); persistTasks()
+  recomputeTask(task)
+  persistTasks()
 }
 
 function savePack(bin) {
   const task = selectedTask.value
   if (!task) return
   const packedQty = String(bin.packedQty).trim()
-  if (!packedQty) return
+  if (!isWholeNumberInput(packedQty)) return
 
+  bin.packedQty = packedQty
   bin.statusPack = '완료'
-  recomputeTask(task); persistTasks()
+  recomputeTask(task)
+  if (task.status === '완료') outboundSubTab.value = 'done'
+  persistTasks()
 }
 
 function completePickAll() {
@@ -412,7 +295,9 @@ function completePickAll() {
     if (!String(bin.pickedQty).trim()) bin.pickedQty = String(bin.orderedQty)
     bin.statusPick = '완료'
   })
-  recomputeTask(task); outboundSubTab.value = 'pack'; persistTasks()
+  recomputeTask(task)
+  outboundSubTab.value = 'pack'
+  persistTasks()
 }
 
 function completePackAll() {
@@ -426,8 +311,21 @@ function completePackAll() {
     }
     bin.statusPack = '완료'
   })
-  recomputeTask(task); persistTasks()
+  recomputeTask(task)
+  outboundSubTab.value = 'done'
+  persistTasks()
 }
+
+let removeListeners = () => {}
+
+onMounted(() => {
+  syncOutboundState()
+  removeListeners = addWorkerStateListeners(syncOutboundState)
+})
+
+onBeforeUnmount(() => {
+  removeListeners()
+})
 </script>
 
 <template>
@@ -443,7 +341,7 @@ function completePackAll() {
     </template>
 
     <section class="inbound-page">
-      <div class="summary-grid summary-grid--five">
+      <div class="summary-grid">
         <article v-for="card in summaryCards" :key="card.key" :class="`summary-card--${card.tone}`" class="summary-card">
           <p class="summary-card__label">{{ card.label }}</p>
           <strong class="summary-card__value">{{ card.value }}</strong>
@@ -532,7 +430,7 @@ function completePackAll() {
                 <p>
                   {{
                     outboundSubTab === 'pick'
-                      ? 'Bin 위치를 확인하고 실제 피킹 수량을 입력하세요. 수량이 다르면 사유를 남깁니다.'
+                      ? '지시 수량과 실제 피킹 수량을 비교하고, 필요하면 비고를 남깁니다.'
                       : outboundSubTab === 'pack'
                         ? '피킹된 상품을 확인하고 포장 수량을 입력해 출고 준비를 마칩니다.'
                         : '피킹과 포장이 모두 끝난 상품만 표시됩니다.'
@@ -552,11 +450,12 @@ function completePackAll() {
               <table class="work-table">
                 <thead v-if="outboundSubTab === 'pick'">
                 <tr>
-                  <th>Bin 위치</th>
+                  <th>Bin</th>
+                  <th>위치</th>
                   <th>SKU</th>
-                  <th>주문 스펙 수량</th>
+                  <th>지시 수량</th>
                   <th>피킹 수량</th>
-                  <th>불일치 사유</th>
+                  <th>비고</th>
                   <th>상태</th>
                   <th>처리</th>
                 </tr>
@@ -585,13 +484,14 @@ function completePackAll() {
                 <tbody>
                 <tr v-for="bin in selectedTask.bins" :key="bin.id" :class="{ 'row-alert': pickMismatch(bin) || packMismatch(bin) }">
                   <template v-if="outboundSubTab === 'pick'">
-                    <td><div><strong>{{ bin.binCode }}</strong><br/><span style="font-size: 12px; color: var(--t3)">{{ bin.location }}</span></div></td>
+                    <td>{{ bin.binCode }}</td>
+                    <td>{{ bin.location }}</td>
                     <td>{{ bin.sku }}</td>
                     <td>{{ bin.orderedQty }}</td>
                     <td><input v-model="bin.pickedQty" class="field field--short" inputmode="numeric" /></td>
-                    <td><input v-model="bin.pickNote" class="field" placeholder="사유 입력" /></td>
+                    <td><input v-model="bin.pickNote" class="field" placeholder="비고 입력" /></td>
                     <td><span :class="['status-chip', statusClass(bin.statusPick === '완료' ? '완료' : bin.pickedQty ? '진행중' : '대기')]">{{ bin.statusPick }}</span></td>
-                    <td><button class="text-btn" type="button" @click="savePick(bin)">부분 저장</button></td>
+                    <td><button class="text-btn" type="button" @click="savePick(bin)">피킹 저장</button></td>
                   </template>
                   <template v-else-if="outboundSubTab === 'pack'">
                     <td>{{ bin.sku }}</td>
@@ -633,9 +533,6 @@ function completePackAll() {
   gap: var(--space-4);
 }
 
-.summary-grid--five {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-}
 
 .summary-card,
 .panel,
@@ -1024,11 +921,13 @@ function completePackAll() {
   color: var(--t2);
   font-size: var(--font-size-xs);
   font-weight: 700;
+  text-align: center;
 }
 
 .work-table td {
   color: var(--t2);
   font-size: var(--font-size-sm);
+  text-align: center;
 }
 
 .field {

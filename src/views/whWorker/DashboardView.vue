@@ -1,205 +1,42 @@
 <script setup>
-import { computed, onMounted, onBeforeUnmount, onActivated, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import TimelineStepper from '@/components/common/TimelineStepper.vue'
 import { ROUTE_NAMES } from '@/constants'
+import {
+  addWorkerStateListeners,
+  createWorkerAlerts,
+  createWorkerDashboardTasks,
+  loadWorkerState,
+  resetWorkerState,
+} from '@/utils/whWorkerState'
 
 const router = useRouter()
 const STORAGE_KEY = 'wh-worker-shared-state-v2'
 const OVERVIEW_FILTERS = ['전체', '대기', '진행중', '완료']
+const breadcrumb = [{ label: 'WH Worker' }, { label: '통합 대시보드' }]
 
-const WORKER_TASKS_SEED = Object.freeze([
-  {
-    id: 'IB-2026-0312-01', type: '검수&적재', sellerCompany: '어반셀러코리아', refNo: 'ASN-240312-A01', assignedBinCount: 3, totalQty: 170, status: '대기',
-    notes: '오늘 아침 입고 건입니다. 작업자는 본인에게 사전 배정된 Bin 범위 내 건만 확인합니다.', activeStep: '검수', flow: ['검수', '적재', '작업 완료'], referenceStatus: '입고예정', completedAt: '',
-    bins: [
-      { sku: 'SKU-UV-1001', plannedQty: 50, inspectedQty: '', putQty: '', statusInspect: '대기', statusPut: '대기' },
-      { sku: 'SKU-UV-1002', plannedQty: 60, inspectedQty: '', putQty: '', statusInspect: '대기', statusPut: '대기' },
-      { sku: 'SKU-UV-1003', plannedQty: 60, inspectedQty: '', putQty: '', statusInspect: '대기', statusPut: '대기' },
-    ],
-  },
-  {
-    id: 'IB-2026-0312-02', type: '검수&적재', sellerCompany: '푸드라인컴퍼니', refNo: 'ASN-240312-B04', assignedBinCount: 2, totalQty: 80, status: '진행중',
-    notes: '검수는 일부 완료되었고 현재 적재 단계로 넘어간 작업입니다.', activeStep: '적재', flow: ['검수', '적재', '작업 완료'], referenceStatus: '검수완료', completedAt: '',
-    bins: [
-      { sku: 'SKU-FD-2001', plannedQty: 40, inspectedQty: '40', putQty: '40', statusInspect: '완료', statusPut: '완료' },
-      { sku: 'SKU-FD-2002', plannedQty: 40, inspectedQty: '38', putQty: '', statusInspect: '완료', statusPut: '대기' },
-    ],
-  },
-  {
-    id: 'IB-2026-0312-03', type: '검수&적재', sellerCompany: '메가뷰티랩', refNo: 'ASN-240312-D11', assignedBinCount: 4, totalQty: 126, status: '대기',
-    notes: '코스메틱 신규 입고 건으로 검수 시작 전 상태입니다.', activeStep: '검수', flow: ['검수', '적재', '작업 완료'], referenceStatus: '입고예정', completedAt: '',
-    bins: [
-      { sku: 'SKU-MB-4101', plannedQty: 30, inspectedQty: '', putQty: '', statusInspect: '대기', statusPut: '대기' },
-      { sku: 'SKU-MB-4102', plannedQty: 28, inspectedQty: '', putQty: '', statusInspect: '대기', statusPut: '대기' },
-      { sku: 'SKU-MB-4103', plannedQty: 32, inspectedQty: '', putQty: '', statusInspect: '대기', statusPut: '대기' },
-      { sku: 'SKU-MB-4104', plannedQty: 36, inspectedQty: '', putQty: '', statusInspect: '대기', statusPut: '대기' },
-    ],
-  },
-  {
-    id: 'IB-2026-0311-05', type: '검수&적재', sellerCompany: '리빙하우스', refNo: 'ASN-240311-C09', assignedBinCount: 2, totalQty: 55, status: '완료',
-    notes: '적재까지 완료되어 재고 관리에서 조회 가능한 작업입니다.', activeStep: '작업 완료', flow: ['검수', '적재', '작업 완료'], referenceStatus: '보관중', completedAt: '2026-03-12 09:12',
-    bins: [
-      { sku: 'SKU-LV-3301', plannedQty: 25, inspectedQty: '25', putQty: '25', statusInspect: '완료', statusPut: '완료' },
-      { sku: 'SKU-LV-3302', plannedQty: 30, inspectedQty: '30', putQty: '30', statusInspect: '완료', statusPut: '완료' },
-    ],
-  },
-  {
-    id: 'OB-2026-0312-01', type: '피킹&패킹', sellerCompany: '어반셀러코리아', refNo: 'PICK-240312-701', assignedBinCount: 3, totalQty: 170, status: '대기',
-    notes: '피킹 리스트 기준 작업입니다. 1 Bin = 1 SKU로 동선 순서에 맞춰 이동합니다.', activeStep: '피킹', flow: ['피킹', '패킹 검수', '작업 완료'], referenceStatus: '피킹대기', completedAt: '',
-    bins: [
-      { id: 'P-01', routeOrder: 1, location: 'ZONE-A · RACK-01 · BIN-01', sku: 'SKU-UV-1001', orderSpecQty: 60, pickedQty: '', packedQty: '', reason: '', pickStatus: '대기', packStatus: '대기' },
-      { id: 'P-02', routeOrder: 2, location: 'ZONE-A · RACK-01 · BIN-02', sku: 'SKU-UV-1002', orderSpecQty: 50, pickedQty: '', packedQty: '', reason: '', pickStatus: '대기', packStatus: '대기' },
-      { id: 'P-03', routeOrder: 3, location: 'ZONE-A · RACK-02 · BIN-01', sku: 'SKU-UV-1003', orderSpecQty: 60, pickedQty: '', packedQty: '', reason: '', pickStatus: '대기', packStatus: '대기' },
-    ],
-  },
-  {
-    id: 'OB-2026-0312-02', type: '피킹&패킹', sellerCompany: '스마트키친랩', refNo: 'PICK-240312-702', assignedBinCount: 2, totalQty: 80, status: '진행중',
-    notes: '피킹 수량 입력 후 Bin 단위로 부분 저장과 완료 처리가 가능합니다.', activeStep: '피킹', flow: ['피킹', '패킹 검수', '작업 완료'], referenceStatus: '피킹중', completedAt: '',
-    bins: [
-      { id: 'P-04', routeOrder: 1, location: 'ZONE-B · RACK-03 · BIN-02', sku: 'SKU-KT-2201', orderSpecQty: 60, pickedQty: '60', packedQty: '', reason: '', pickStatus: '완료', packStatus: '대기' },
-      { id: 'P-05', routeOrder: 2, location: 'ZONE-B · RACK-03 · BIN-03', sku: 'SKU-KT-2202', orderSpecQty: 20, pickedQty: '18', packedQty: '', reason: '2개 부족', pickStatus: '진행중', packStatus: '대기' },
-    ],
-  },
-  {
-    id: 'OB-2026-0312-03', type: '피킹&패킹', sellerCompany: '리빙하우스', refNo: 'PICK-240312-703', assignedBinCount: 2, totalQty: 55, status: '진행중',
-    notes: '피킹 완료 후 주문 스펙 대조 기반으로 패킹 검수를 진행합니다.', activeStep: '패킹 검수', flow: ['피킹', '패킹 검수', '작업 완료'], referenceStatus: '피킹&패킹중', completedAt: '',
-    bins: [
-      { id: 'P-06', routeOrder: 1, location: 'ZONE-C · RACK-01 · BIN-01', sku: 'SKU-LV-3303', orderSpecQty: 30, pickedQty: '30', packedQty: '30', reason: '', pickStatus: '완료', packStatus: '완료' },
-      { id: 'P-07', routeOrder: 2, location: 'ZONE-C · RACK-01 · BIN-02', sku: 'SKU-LV-3304', orderSpecQty: 25, pickedQty: '25', packedQty: '', reason: '', pickStatus: '완료', packStatus: '대기' },
-    ],
-  },
-  {
-    id: 'OB-2026-0312-04', type: '피킹&패킹', sellerCompany: '모던리빙', refNo: 'PICK-240312-704', assignedBinCount: 4, totalQty: 116, status: '대기',
-    notes: '오후 마감 예정 출고 건으로 Bin 수가 많은 작업입니다.', activeStep: '피킹', flow: ['피킹', '패킹 검수', '작업 완료'], referenceStatus: '피킹대기', completedAt: '',
-    bins: [
-      { id: 'P-09', routeOrder: 1, location: 'ZONE-D · RACK-02 · BIN-01', sku: 'SKU-ML-5101', orderSpecQty: 24, pickedQty: '', packedQty: '', reason: '', pickStatus: '대기', packStatus: '대기' },
-      { id: 'P-10', routeOrder: 2, location: 'ZONE-D · RACK-02 · BIN-02', sku: 'SKU-ML-5102', orderSpecQty: 28, pickedQty: '', packedQty: '', reason: '', pickStatus: '대기', packStatus: '대기' },
-      { id: 'P-11', routeOrder: 3, location: 'ZONE-D · RACK-03 · BIN-01', sku: 'SKU-ML-5103', orderSpecQty: 30, pickedQty: '', packedQty: '', reason: '', pickStatus: '대기', packStatus: '대기' },
-      { id: 'P-12', routeOrder: 4, location: 'ZONE-D · RACK-03 · BIN-02', sku: 'SKU-ML-5104', orderSpecQty: 34, pickedQty: '', packedQty: '', reason: '', pickStatus: '대기', packStatus: '대기' },
-    ],
-  },
-  {
-    id: 'OB-2026-0311-04', type: '피킹&패킹', sellerCompany: '홈킷스토어', refNo: 'PICK-240311-688', assignedBinCount: 1, totalQty: 42, status: '완료',
-    notes: '패킹 검수 완료 후 출고대기 상태로 전환된 작업입니다.', activeStep: '작업 완료', flow: ['피킹', '패킹 검수', '작업 완료'], referenceStatus: '출고대기', completedAt: '2026-03-18 09:42',
-    bins: [
-      { id: 'P-08', routeOrder: 1, location: 'ZONE-D · RACK-01 · BIN-01', sku: 'SKU-HK-1101', orderSpecQty: 42, pickedQty: '42', packedQty: '42', reason: '', pickStatus: '완료', packStatus: '완료' },
-    ],
-  },
-])
-
-const ALERTS_SEED = Object.freeze([
-  { id: 'ALT-01', taskId: 'IB-2026-0312-02', level: '주의', title: '검수 수량 불일치', description: 'SKU-FD-2002가 예정 40개 대비 38개로 확인되었습니다.', time: '09:18' },
-  { id: 'ALT-02', taskId: 'OB-2026-0312-03', level: '확인', title: '패킹 검수 대기', description: '피킹 완료 후 1개 Bin이 아직 패킹 검수 전입니다.', time: '10:05' },
-  { id: 'ALT-03', taskId: 'IB-2026-0312-01', level: '안내', title: '입고 예정 작업 신규 배정', description: '오전 입고 작업이 작업자에게 새로 배정되었습니다.', time: '10:22' },
-  { id: 'ALT-04', taskId: 'OB-2026-0312-01', level: '주의', title: '출고 우선순위 높음', description: '당일 마감 주문 포함 건으로 우선 처리 권장입니다.', time: '11:10' },
-  { id: 'ALT-05', taskId: 'IB-2026-0312-03', level: '안내', title: '화장품 입고 신규 배정', description: '메가뷰티랩 ASN-240312-D11 검수 대기 상태입니다.', time: '11:38' },
-  { id: 'ALT-06', taskId: 'OB-2026-0312-04', level: '확인', title: '대량 피킹 작업 배정', description: '모던리빙 PICK-240312-704가 오후 출고 대상입니다.', time: '12:02' },
-])
-
-const breadcrumb = [{ label: '  WH Worker' }, { label: '통합 대시보드' }]
 const tasks = ref([])
-const alerts = ref(cloneSeed(ALERTS_SEED))
+const alerts = ref([])
 const overviewFilter = ref('전체')
 const highlightedTaskId = ref('')
 
-function cloneSeed(seed) {
-  return JSON.parse(JSON.stringify(seed))
-}
+function syncDashboardState() {
+  const state = loadWorkerState()
+  tasks.value = createWorkerDashboardTasks(state)
+  alerts.value = createWorkerAlerts(state)
 
-function outboundReferenceStatus(task) {
-  if (task.activeStep === '작업 완료' || task.status === '완료') return '출고대기'
-  if (task.activeStep === '패킹 검수') return '피킹&패킹중'
-  return task.status === '대기' ? '피킹대기' : '피킹중'
-}
-
-function loadWorkerTasks() {
-  if (typeof window === 'undefined') return cloneSeed(WORKER_TASKS_SEED)
-  try {
-    const saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null')
-    if (saved && (Array.isArray(saved.inboundTasks) || Array.isArray(saved.outboundTasks))) {
-      const inbound = (saved.inboundTasks ?? []).map((task) => ({
-        id: task.id,
-        type: '검수&적재',
-        sellerCompany: task.sellerCompany,
-        refNo: task.refNo,
-        assignedBinCount: task.assignedBinCount,
-        totalQty: task.totalQty,
-        status: task.status,
-        notes: task.notes,
-        activeStep: task.activeStep,
-        flow: ['검수', '적재', '작업 완료'],
-        referenceStatus: task.asnStatus,
-        completedAt: task.completedAt,
-        bins: task.bins,
-      }))
-
-      const outbound = (saved.outboundTasks ?? []).map((task) => ({
-        id: task.id,
-        type: '피킹&패킹',
-        sellerCompany: task.sellerCompany,
-        refNo: task.pickListNo,
-        assignedBinCount: task.assignedBinCount,
-        totalQty: task.totalQty,
-        status: task.status,
-        notes: task.notes,
-        activeStep: task.activeStep,
-        flow: ['피킹', '패킹 검수', '작업 완료'],
-        referenceStatus: outboundReferenceStatus(task),
-        completedAt: task.completedAt,
-        bins: task.bins,
-      }))
-
-      const merged = [...inbound, ...outbound]
-      if (merged.length) return merged
-    }
-  } catch (error) {
-    console.warn('dashboard shared parse failed', error)
+  const hasHighlighted = tasks.value.some((task) => task.id === highlightedTaskId.value)
+  if (!hasHighlighted) {
+    highlightedTaskId.value = tasks.value[0]?.id ?? ''
   }
-  return cloneSeed(WORKER_TASKS_SEED)
 }
-
-
-function refreshFromSharedState() {
-  const currentId = highlightedTaskId.value
-  tasks.value = loadWorkerTasks()
-  if (tasks.value.some((task) => task.id === currentId)) {
-    highlightedTaskId.value = currentId
-    return
-  }
-  highlightedTaskId.value = tasks.value[0]?.id ?? ''
-}
-
-function handleSharedStateUpdate() {
-  refreshFromSharedState()
-}
-
-onMounted(() => {
-  refreshFromSharedState()
-  if (typeof window !== 'undefined') {
-    window.addEventListener('storage', handleSharedStateUpdate)
-    window.addEventListener('wh-worker-state-updated', handleSharedStateUpdate)
-  }
-})
-
-onActivated(() => {
-  refreshFromSharedState()
-})
-
-onBeforeUnmount(() => {
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('storage', handleSharedStateUpdate)
-    window.removeEventListener('wh-worker-state-updated', handleSharedStateUpdate)
-  }
-})
 
 const allTaskCount = computed(() => tasks.value.length)
 const waitingTaskCount = computed(() => tasks.value.filter((task) => task.status === '대기').length)
 const progressTaskCount = computed(() => tasks.value.filter((task) => task.status === '진행중').length)
 const doneTaskCount = computed(() => tasks.value.filter((task) => task.status === '완료').length)
-const reflectedInventoryCount = computed(() => inventoryRows(tasks.value).filter((row) => row.reflected).length)
-const pendingInventoryCount = computed(() => inventoryRows(tasks.value).filter((row) => row.pending).length)
 
 const filteredOverviewTasks = computed(() => {
   const ordered = [...tasks.value].sort(sortTasks)
@@ -212,23 +49,40 @@ const outboundTasks = computed(() => [...tasks.value].filter((task) => task.type
 const highlightedTask = computed(() => tasks.value.find((task) => task.id === highlightedTaskId.value) ?? filteredOverviewTasks.value[0] ?? null)
 
 const summaryCards = computed(() => [
-  { key: 'all', label: '전체 작업', value: `${allTaskCount.value}건`, description: '오늘 작업자에게 배정된 전체 작업 수', tone: 'blue' },
-  { key: 'wait', label: '대기 작업', value: `${waitingTaskCount.value}건`, description: '바로 시작 가능한 작업', tone: 'amber' },
-  { key: 'progress', label: '진행중 작업', value: `${progressTaskCount.value}건`, description: '현재 입력 또는 검수 중인 작업', tone: 'purple' },
-  { key: 'done', label: '완료 작업', value: `${doneTaskCount.value}건`, description: '오늘 완료 처리된 작업', tone: 'green' },
-  { key: 'inventory', label: '재고 반영 Bin', value: `${reflectedInventoryCount.value} Bin`, description: `적재 대기 ${pendingInventoryCount.value} Bin`, tone: 'gold' },
+  {
+    key: 'all',
+    label: '전체 작업',
+    value: `${allTaskCount.value}건`,
+    description: '오늘 작업자에게 배정된 전체 작업 수',
+    tone: 'blue',
+  },
+  {
+    key: 'wait',
+    label: '대기 작업',
+    value: `${waitingTaskCount.value}건`,
+    description: '바로 시작 가능한 작업',
+    tone: 'amber',
+  },
+  {
+    key: 'progress',
+    label: '진행중 작업',
+    value: `${progressTaskCount.value}건`,
+    description: '현재 입력 또는 검수 중인 작업',
+    tone: 'purple',
+  },
+  {
+    key: 'done',
+    label: '완료 작업',
+    value: `${doneTaskCount.value}건`,
+    description: '오늘 완료 처리된 작업',
+    tone: 'green',
+  },
 ])
 
 function sortTasks(a, b) {
   const statusRank = { 대기: 0, 진행중: 1, 완료: 2 }
   const typeRank = { '검수&적재': 0, '피킹&패킹': 1 }
   return (statusRank[a.status] ?? 99) - (statusRank[b.status] ?? 99) || (typeRank[a.type] ?? 99) - (typeRank[b.type] ?? 99) || a.refNo.localeCompare(b.refNo)
-}
-
-function inventoryRows(taskList) {
-  return taskList
-    .filter((task) => task.type === '검수&적재')
-    .flatMap((task) => task.bins.map((bin) => ({ taskId: task.id, reflected: bin.statusInspect === '완료' && bin.statusPut === '완료', pending: bin.statusInspect === '완료' && bin.statusPut !== '완료' })))
 }
 
 function taskStatusClass(status) {
@@ -264,11 +118,9 @@ function highlightTask(taskId) {
 }
 
 function resetSamples() {
-  if (typeof window !== 'undefined') window.localStorage.removeItem(STORAGE_KEY)
-  tasks.value = loadWorkerTasks()
-  alerts.value = cloneSeed(ALERTS_SEED)
+  resetWorkerState()
   overviewFilter.value = '전체'
-  highlightedTaskId.value = tasks.value[0]?.id ?? ''
+  syncDashboardState()
 }
 
 function openFirstWaitingTask() {
@@ -287,13 +139,31 @@ function openTask(task) {
   router.push({ name: ROUTE_NAMES.WH_WORKER_OUTBOUND, query: { taskId: task.id } })
 }
 
-function goToTasks() {
-  router.push({ name: ROUTE_NAMES.WH_WORKER_TASKS })
+function goToTasks(target = null) {
+  const query = {}
+  if (target?.taskId) {
+    query.taskId = target.taskId
+    query.alertId = target.id
+  } else if (target?.id) {
+    query.taskId = target.id
+  }
+  router.push({ name: ROUTE_NAMES.WH_WORKER_TASKS, query })
 }
 
 function goToInventory() {
   router.push({ name: ROUTE_NAMES.WH_WORKER_INVENTORY })
 }
+
+let removeListeners = () => {}
+
+onMounted(() => {
+  syncDashboardState()
+  removeListeners = addWorkerStateListeners(syncDashboardState)
+})
+
+onBeforeUnmount(() => {
+  removeListeners()
+})
 </script>
 
 <template>
@@ -370,7 +240,7 @@ function goToInventory() {
           </div>
 
           <div class="table-footer-actions">
-            <button class="ui-btn ui-btn--primary" @click="goToTasks">내 작업 전체 보기</button>
+            <button class="ui-btn ui-btn--primary" @click="goToTasks()">내 작업 전체 보기</button>
           </div>
         </article>
 
@@ -469,7 +339,7 @@ function goToInventory() {
                 <h2 class="section-title">최근 예외 알림</h2>
                 <p class="section-subtitle">수량 불일치, 패킹 검수 대기, 신규 배정 등 확인이 필요한 항목만 모았습니다.</p>
               </div>
-              <button class="ui-btn ui-btn--primary" @click="goToTasks">내 작업에서 자세히 보기</button>
+              <button class="ui-btn ui-btn--primary" @click="goToTasks()">내 작업에서 자세히 보기</button>
             </div>
 
             <div class="alert-list">
@@ -478,7 +348,7 @@ function goToInventory() {
                 :key="alert.id"
                 class="alert-item"
                 type="button"
-                @click="highlightTask(alert.taskId)"
+                @click="goToTasks(alert)"
               >
                 <div class="alert-item__top">
                   <span :class="alertLevelClass(alert.level)" class="alert-badge">{{ alert.level }}</span>
@@ -543,7 +413,7 @@ function goToInventory() {
 
         <div class="bottom-actions">
           <button class="ui-btn ui-btn--ghost" @click="goToInventory">재고 화면 보기</button>
-          <button class="ui-btn ui-btn--ghost" @click="goToTasks">내 작업 이동</button>
+          <button class="ui-btn ui-btn--ghost" @click="goToTasks()">내 작업 이동</button>
         </div>
       </article>
     </section>
@@ -559,7 +429,7 @@ function goToInventory() {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-4);
 }
 
@@ -810,7 +680,7 @@ function goToInventory() {
 
 .meta-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3);
   margin-top: var(--space-4);
 }
@@ -940,7 +810,7 @@ function goToInventory() {
 
 @media (max-width: 1400px) {
   .summary-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .dashboard-main-grid {

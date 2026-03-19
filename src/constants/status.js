@@ -68,6 +68,24 @@ export const ACCOUNT_STATUS = {
   TEMP_PASSWORD: 'TEMP_PASSWORD', // 임시 비밀번호 (첫 로그인 강제 변경)
   INACTIVE: 'INACTIVE', // 비활성
 }
+/**
+ * SELLER_STATUS — 셀러 상태 3단계
+ *
+ * 상태 전이 흐름:
+ *
+ *   (신규 셀러 등록) → PENDING → ACTIVE
+ *                                ↓
+ *                             SUSPENDED (관리자 비활성화)
+ *
+ * PENDING: 셀러 초대 대기중
+ * SUSPENDED: 정지됨
+ *
+ */
+export const SELLER_STATUS ={
+  ACTIVE: 'ACTIVE',
+  PENDING: 'PENDING',
+  SUSPENDED: 'SUSPENDED',
+}
 
 /**
  * ITEM_STATUS — 물품 상태 7단계 (REQ-074)
@@ -158,4 +176,47 @@ export const PICKING_LIST_STATUS = {
   WAITING:     'WAITING',     // 피킹 대기
   IN_PROGRESS: 'IN_PROGRESS', // 피킹 진행 중
   COMPLETED:   'COMPLETED',   // 피킹 완료
+}
+
+/**
+ * WORKER_PRESENCE_STATUS — 작업자 재실 상태 4단계
+ *
+ * 상태 전이 흐름:
+ *
+ *   IDLE ⇄ PICKING | PUTAWAY
+ *   IDLE / PICKING / PUTAWAY → OFFLINE (로그아웃/비활성화)
+ *
+ * PICKING:  피킹&패킹 작업 진행 중
+ * PUTAWAY:  검수&적재(Put-away) 작업 진행 중
+ * IDLE:     대기 중 (로그인 상태, 작업 없음)
+ * OFFLINE:  오프라인 (로그아웃 또는 비활성 계정)
+ *
+ * StatusBadge.vue의 MAP.workerPresence와 연동됨.
+ */
+export const WORKER_PRESENCE_STATUS = {
+  PICKING:  'PICKING',  // 작업 중 (피킹)
+  PUTAWAY:  'PUTAWAY',  // 작업 중 (Put-away)
+  IDLE:     'IDLE',     // 대기 중
+  OFFLINE:  'OFFLINE',  // 오프라인
+}
+
+/**
+ * TASK_STATUS — 작업 처리 상태 5단계
+ * StatusBadge.vue의 MAP.taskStatus와 연동됨.
+ */
+export const TASK_STATUS = {
+  WAITING:        'WAITING',        // 대기
+  IN_PROGRESS:    'IN_PROGRESS',    // 진행중
+  PARTIAL_DONE:   'PARTIAL_DONE',   // 부분완료
+  COMPLETED:      'COMPLETED',      // 완료
+  REVIEW_NEEDED:  'REVIEW_NEEDED',  // 검토 필요
+}
+
+/**
+ * TASK_ASSIGN_TYPE — 작업 배정 방식
+ * StatusBadge.vue의 MAP.taskAssignType과 연동됨.
+ */
+export const TASK_ASSIGN_TYPE = {
+  AUTO:   'AUTO',   // 자동 배정
+  MANUAL: 'MANUAL', // 수동 배정
 }

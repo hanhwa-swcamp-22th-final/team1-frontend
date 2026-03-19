@@ -4,19 +4,19 @@ import { ROUTE_NAMES } from '@/constants/routes'
 /**
  * masterAdmin 라우트
  *
- *   master-dashboard                — Dashboard.vue
- *   master-warehouse-list           — WarehouseList.vue
- *   master-warehouse-register       — WarehouseRegister.vue
- *   master-warehouse-detail         — WarehouseDetail.vue
- *   master-asn-list                 — AsnList.vue
- *   master-order-list               — OrderList.vue
+ *   MASTER_DASHBOARD                — Dashboard.vue
+ *   MASTER_WAREHOUSE_LIST           — WarehouseList.vue
+ *   MASTER_WAREHOUSE_REGISTER       — WarehouseRegister.vue
+ *   MASTER_WAREHOUSE_DETAIL         — WarehouseDetail.vue
+ *   MASTER_ASN_LIST                 — AsnList.vue
+ *   MASTER_ORDER_LIST               — OrderList.vue
  *   MASTER_FEE_SETTING              — FeeView.vue
- *   master-fee-settings             — FeeSettings.vue
+ *   MASTER_FEE_SETTINGS             — FeeSettings.vue
  *   MASTER_SELLER_COMPANY_LIST      — SellerList.vue
  *   MASTER_SELLER_COMPANY_REGISTER  — SellerRegister.vue
- *   MASTER_ACCOUNT_INVITE           — AccountInvite.vue
- *   master-account-manager          — AccountInvite.vue
- *   master-account-worker           — AccountInvite.vue
+ *   MASTER_ACCOUNT_INVITE           — AccountInvite.vue (셀러 담당자)
+ *   MASTER_ACCOUNT_MANAGER          — AccountInvite.vue (창고 관리자)
+ *   MASTER_ACCOUNT_WORKER           — AccountInvite.vue (창고 작업자)
  *   MASTER_ACCOUNT_LIST             — UserList.vue
  *   MASTER_RBAC_SETTING             — RbacSettings.vue
  */
@@ -46,7 +46,7 @@ export default [
     path: '/master/warehouses/detail/:id',
     name: ROUTE_NAMES.MASTER_WAREHOUSE_DETAIL,
     component: () => import('@/views/masterAdmin/WarehouseDetail.vue'),
-    meta: { role: ROLES.MASTER_ADMIN },
+    meta: { role: ROLES.MASTER_ADMIN, activeMenu: ROUTE_NAMES.MASTER_WAREHOUSE_LIST },
   },
 
   // ── 입출고 ────────────────────────────────────────────────────────────────
@@ -58,7 +58,7 @@ export default [
   },
   {
     path: '/master/orders',
-    name: 'master-order-list',
+    name: ROUTE_NAMES.MASTER_ORDER_LIST,
     component: () => import('@/views/masterAdmin/OrderList.vue'),
     meta: { role: ROLES.MASTER_ADMIN },
   },
@@ -72,7 +72,7 @@ export default [
   },
   {
     path: '/master/fee/settings',
-    name: 'master-fee-settings',
+    name: ROUTE_NAMES.MASTER_FEE_SETTINGS,
     component: () => import('@/views/masterAdmin/FeeSettings.vue'),
     meta: { role: ROLES.MASTER_ADMIN },
   },
@@ -95,18 +95,6 @@ export default [
   {
     path: '/master/accounts/invite',
     name: ROUTE_NAMES.MASTER_ACCOUNT_INVITE,
-    component: () => import('@/views/masterAdmin/AccountInvite.vue'),
-    meta: { role: ROLES.MASTER_ADMIN },
-  },
-  {
-    path: '/master/accounts/manager',
-    name: 'master-account-manager',
-    component: () => import('@/views/masterAdmin/AccountInvite.vue'),
-    meta: { role: ROLES.MASTER_ADMIN },
-  },
-  {
-    path: '/master/accounts/worker',
-    name: 'master-account-worker',
     component: () => import('@/views/masterAdmin/AccountInvite.vue'),
     meta: { role: ROLES.MASTER_ADMIN },
   },

@@ -35,11 +35,26 @@ export default [
   // TODO(frontend): 주문 상세 라우트 추가
 
   // 상품 관리
-  // TODO(frontend): 상품 등록 라우트 추가
-  // TODO(frontend): 상품 목록 라우트 추가
+  {
+    path: '/seller/products/register',
+    name: ROUTE_NAMES.SELLER_PRODUCT_REGISTER,
+    component: () => import('@/views/seller/SellerProductRegisterView.vue'),
+    meta: { role: ROLES.SELLER },
+  },
+  {
+    path: '/seller/products/list',
+    name: ROUTE_NAMES.SELLER_PRODUCT_LIST,
+    component: () => import('@/views/seller/SellerProductListView.vue'),
+    meta: { role: ROLES.SELLER },
+  },
 
   // 재고 관리
-  // TODO(frontend): 재고 목록 라우트 추가
+  {
+    path: '/seller/inventory',
+    name: ROUTE_NAMES.SELLER_INVENTORY,
+    component: () => import('@/views/seller/SellerInventoryListView.vue'),
+    meta: { role: ROLES.SELLER },
+  },
 
   // Seller ASN 등록 화면
   {
@@ -48,7 +63,7 @@ export default [
     component: () => import('@/views/seller/SellerAsnCreateView.vue'),
     meta: { role: ROLES.SELLER },
   },
-    // Seller ASN 목록 화면
+  // Seller ASN 목록 화면
   {
     path: '/seller/asn/list',
     name: ROUTE_NAMES.SELLER_ASN_LIST,
@@ -58,6 +73,22 @@ export default [
   // TODO(frontend): ASN 상세 라우트 추가
 
   // 부가 기능
-  // TODO(frontend): 마진 시뮬레이터 라우트 추가
-  // TODO(frontend): 주문 연동 및 조회 라우트 추가
+  {
+    path: '/seller/channels/orders',
+    name: ROUTE_NAMES.SELLER_AMAZON_CONNECT,
+    component: () => import('@/views/seller/SellerChannelOrdersView.vue'),
+    meta: { role: ROLES.SELLER },
+  },
+  {
+    path: '/seller/margin-simulator',
+    name: ROUTE_NAMES.SELLER_MARGIN_SIMULATOR,
+    component: () => import('@/views/seller/SellerMarginSimulatorView.vue'),
+    meta: { role: ROLES.SELLER },
+  },
+  {
+    path: '/seller/notifications',
+    name: ROUTE_NAMES.SELLER_NOTIFICATIONS,
+    component: () => import('@/views/seller/SellerNotificationsView.vue'),
+    meta: { role: ROLES.SELLER },
+  },
 ]

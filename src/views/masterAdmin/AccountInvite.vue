@@ -11,17 +11,14 @@
  * 역할에 따라 소속 조직 셀렉트 목록을 셀러사/창고로 전환.
  */
 import { ref, reactive, computed, watch, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
-import { ROUTE_NAMES } from '@/constants'
 import { inviteAccount, getSellerList } from '@/api/member'
 import { getWarehouseList } from '@/api/wms'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
+import ToastMessage from '@/components/common/ToastMessage.vue'
 
-const route  = useRoute()
-const router = useRouter()
-const ui     = useUiStore()
+const ui = useUiStore()
 
 // ── 역할 정의 ─────────────────────────────────────────────────────────────────
 const ROLES = [
@@ -30,38 +27,22 @@ const ROLES = [
     label: 'SELLER',
     icon: 'SE',
     desc: '셀러사 전용 계정\n(주문/재고 관리)',
-    route: ROUTE_NAMES.MASTER_ACCOUNT_INVITE,
   },
   {
     value: 'WH_MANAGER',
     label: 'WH_MANAGER',
     icon: 'WM',
     desc: '창고 관리자 계정\n(작업 지시 및 관리)',
-    route: 'master-account-manager',
   },
   {
     value: 'WH_WORKER',
     label: 'WH_WORKER',
     icon: 'WW',
     desc: '현장 작업자 계정\n(하역/검수/적재)',
-    route: 'master-account-worker',
   },
 ]
 
-// ── 라우트명으로 초기 역할 결정 ────────────────────────────────────────────────
-function routeToRole(name) {
-  if (name === 'master-account-manager') return 'WH_MANAGER'
-  if (name === 'master-account-worker')  return 'WH_WORKER'
-  return 'SELLER'
-}
-
-const selectedRole = ref(routeToRole(route.name))
-
-// 라우트 변경 시 역할 자동 동기화 (사이드바 메뉴 전환)
-watch(() => route.name, (name) => {
-  selectedRole.value = routeToRole(name)
-  form.organizationId = ''
-})
+const selectedRole = ref('SELLER')
 
 // ── 폼 ───────────────────────────────────────────────────────────────────────
 const form = reactive({
@@ -77,6 +58,7 @@ const errors = reactive({
 })
 
 const submitError = ref('')
+// 저장 완료 배너 대신 공통 ToastMessage 표시 상태를 사용한다.
 const submitSuccess = ref(false)
 
 // ── 조직 목록 ─────────────────────────────────────────────────────────────────
@@ -165,6 +147,12 @@ onMounted(loadOrganizations)
 
 <template>
   <AppLayout :breadcrumb="breadcrumb" :title="pageTitle" :loading="ui.isLoading">
+    <!-- 공통 성공 토스트: 초대 메일 발송 성공 시 자동으로 닫힌다. -->
+    <ToastMessage
+      v-model:visible="submitSuccess"
+      message="초대 메일이 성공적으로 발송되었습니다."
+      type="success"
+    />
 
     <div class="ai-page">
 
@@ -172,14 +160,6 @@ onMounted(loadOrganizations)
       <div class="form-card">
         <div class="form-card-header">
           <span class="form-card-title">신규 사용자 초대</span>
-        </div>
-
-        <!-- 발송 성공 알림 -->
-        <div v-if="submitSuccess" class="success-banner">
-          <svg width="18" height="18" viewBox="0 0 14 14" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M1.5 7l3.5 3.5L12.5 3"/>
-          </svg>
-          초대 메일이 성공적으로 발송되었습니다.
         </div>
 
         <div class="form-body">
@@ -325,20 +305,6 @@ onMounted(loadOrganizations)
 }
 
 .form-card-title { font-size: var(--font-size-lg); font-weight: 700; color: var(--t1); }
-
-/* ── 성공 배너 ── */
-.success-banner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 24px;
-  background: var(--green-pale);
-  border-bottom: 1px solid var(--green);
-  font-family: 'Barlow', sans-serif;
-  font-weight: 500;
-  font-size: 14px;
-  color: #14532D;
-}
 
 /* ── 폼 본문 ── */
 .form-body {

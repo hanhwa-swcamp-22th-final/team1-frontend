@@ -4,7 +4,7 @@
  *
  * Props:
  *   status : string  — constants/status.js의 값 (예: ORDER_STATUS.PENDING)
- *   type   : 'order' | 'asn' | 'account' | 'item' | 'worker'  — 상태 맵 선택 (기본 'order')
+ *   type   : 'order' | 'asn' | 'account' | 'seller' | 'item' | 'worker'  — 상태 맵 선택 (기본 'order')
  *
  * 상태별 색상 매핑 테이블:
  *
@@ -24,6 +24,11 @@
  *   ACTIVE        → green (정상)
  *   TEMP_PASSWORD → amber (임시비밀번호)
  *   INACTIVE      → red   (비활성)
+ *
+ * [seller]
+ *   ACTIVE        → green (정상)
+ *   PENDING       → amber (초대대기)
+ *   SUSPENDED     → red   (정지)
  *
  * [item]
  *   INBOUND_SCHEDULED  → amber  (입고예정)
@@ -48,7 +53,7 @@
  *   <StatusBadge :status="item.status" type="item" />
  */
 import { computed } from 'vue'
-import { ACCOUNT_STATUS, ASN_STATUS, ITEM_STATUS, LABEL_STATUS, ORDER_STATUS, OUTBOUND_CONFIRM_STATUS, PICKING_LIST_STATUS, WORKER_STATUS } from '@/constants'
+import { ACCOUNT_STATUS, ASN_STATUS, ITEM_STATUS, LABEL_STATUS, ORDER_STATUS, OUTBOUND_CONFIRM_STATUS, PICKING_LIST_STATUS, TASK_ASSIGN_TYPE, TASK_STATUS, WORKER_PRESENCE_STATUS, WORKER_STATUS, SELLER_STATUS } from '@/constants'
 
 const props = defineProps({
   status: { type: String, required: true },
@@ -73,6 +78,11 @@ const MAP = {
     [ACCOUNT_STATUS.ACTIVE]: { label: '정상', color: 'green' },
     [ACCOUNT_STATUS.TEMP_PASSWORD]: { label: '임시비밀번호', color: 'amber' },
     [ACCOUNT_STATUS.INACTIVE]: { label: '비활성', color: 'red' },
+  },
+  seller: {
+    [SELLER_STATUS.ACTIVE]: { label: '정상', color: 'green' },
+    [SELLER_STATUS.PENDING]: { label: '초대대기', color: 'amber' },
+    [SELLER_STATUS.SUSPENDED]: { label: '비활성', color: 'red' },
   },
   item: {
     [ITEM_STATUS.INBOUND_SCHEDULED]: { label: '입고예정', color: 'amber' },
@@ -104,6 +114,23 @@ const MAP = {
   outboundConfirm: {
     [OUTBOUND_CONFIRM_STATUS.PENDING_CONFIRM]: { label: '인계 완료',    color: 'amber' },
     [OUTBOUND_CONFIRM_STATUS.CONFIRMED]:       { label: '출고 확정 완료', color: 'green' },
+  },
+  workerPresence: {
+    [WORKER_PRESENCE_STATUS.PICKING]:  { label: '작업 중 (피킹&패킹)', color: 'amber'   },
+    [WORKER_PRESENCE_STATUS.PUTAWAY]:  { label: '작업 중 (Put-away)', color: 'purple'  },
+    [WORKER_PRESENCE_STATUS.IDLE]:     { label: '대기 중',            color: 'green'   },
+    [WORKER_PRESENCE_STATUS.OFFLINE]:  { label: '오프라인',           color: 'default' },
+  },
+  taskStatus: {
+    [TASK_STATUS.WAITING]:       { label: '대기',      color: 'default' },
+    [TASK_STATUS.IN_PROGRESS]:   { label: '진행중',    color: 'amber'   },
+    [TASK_STATUS.PARTIAL_DONE]:  { label: '부분완료',  color: 'amber'   },
+    [TASK_STATUS.COMPLETED]:     { label: '완료',      color: 'green'   },
+    [TASK_STATUS.REVIEW_NEEDED]: { label: '검토 필요', color: 'red'     },
+  },
+  taskAssignType: {
+    [TASK_ASSIGN_TYPE.AUTO]:   { label: '자동', color: 'blue' },
+    [TASK_ASSIGN_TYPE.MANUAL]: { label: '수동', color: 'gold' },
   },
 }
 
