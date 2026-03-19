@@ -1,178 +1,49 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import {
+  addWorkerStateListeners,
+  loadWorkerState,
+  nowStamp,
+  resetWorkerState,
+  updateWorkerState,
+} from '@/utils/whWorkerState'
 
-// 입고 관리 화면 브레드크럼
 const breadcrumb = [{ label: 'WH Worker' }, { label: '입고 관리' }]
 const route = useRoute()
 
-// 입고 관리 목업용 작업 데이터
-const INBOUND_TASKS_SEED = Object.freeze([
-  {
-    id: 'IB-2026-0312-01',
-    type: '검수&적재',
-    sellerCompany: '어반셀러코리아',
-    refNo: 'ASN-240312-A01',
-    assignedBinCount: 3,
-    totalQty: 170,
-    status: '대기',
-    notes:
-      '오늘 아침 입고 건입니다. 작업자는 본인에게 사전 배정된 Bin 범위 내 건만 확인합니다.',
-    flow: ['검수', '적재'],
-    activeStep: '검수',
-    asnStatus: '입고예정',
-    stockActivation: false,
-    completedAt: '',
-    bins: [
-      {
-        id: 'A-01',
-        location: 'ZONE-A · RACK-01 · BIN-01',
-        designatedBinCode: 'A-01-01',
-        sku: 'SKU-UV-1001',
-        plannedQty: 50,
-        inspectedQty: '',
-        inspectNote: '',
-        statusInspect: '대기',
-        confirmBinCode: '',
-        putQty: '',
-        statusPut: '대기',
-      },
-      {
-        id: 'A-02',
-        location: 'ZONE-A · RACK-01 · BIN-02',
-        designatedBinCode: 'A-01-02',
-        sku: 'SKU-UV-1002',
-        plannedQty: 60,
-        inspectedQty: '',
-        inspectNote: '',
-        statusInspect: '대기',
-        confirmBinCode: '',
-        putQty: '',
-        statusPut: '대기',
-      },
-      {
-        id: 'A-03',
-        location: 'ZONE-A · RACK-02 · BIN-01',
-        designatedBinCode: 'A-02-01',
-        sku: 'SKU-UV-1003',
-        plannedQty: 60,
-        inspectedQty: '',
-        inspectNote: '',
-        statusInspect: '대기',
-        confirmBinCode: '',
-        putQty: '',
-        statusPut: '대기',
-      },
-    ],
-  },
-  {
-    id: 'IB-2026-0312-02',
-    type: '검수&적재',
-    sellerCompany: '푸드라인컴퍼니',
-    refNo: 'ASN-240312-B04',
-    assignedBinCount: 2,
-    totalQty: 80,
-    status: '진행중',
-    notes: '검수는 일부 완료되었고 현재 적재 단계로 넘어간 작업입니다.',
-    flow: ['검수', '적재'],
-    activeStep: '적재',
-    asnStatus: '검수완료',
-    stockActivation: false,
-    completedAt: '',
-    bins: [
-      {
-        id: 'B-01',
-        location: 'ZONE-B · RACK-03 · BIN-02',
-        designatedBinCode: 'B-03-02',
-        sku: 'SKU-FD-2001',
-        plannedQty: 40,
-        inspectedQty: '40',
-        inspectNote: '',
-        statusInspect: '완료',
-        confirmBinCode: 'B-03-02',
-        putQty: '40',
-        statusPut: '완료',
-      },
-      {
-        id: 'B-02',
-        location: 'ZONE-B · RACK-03 · BIN-03',
-        designatedBinCode: 'B-03-03',
-        sku: 'SKU-FD-2002',
-        plannedQty: 40,
-        inspectedQty: '38',
-        inspectNote: '박스 1개 파손 확인',
-        statusInspect: '완료',
-        confirmBinCode: '',
-        putQty: '',
-        statusPut: '대기',
-      },
-    ],
-  },
-  {
-    id: 'IB-2026-0311-05',
-    type: '검수&적재',
-    sellerCompany: '리빙하우스',
-    refNo: 'ASN-240311-C09',
-    assignedBinCount: 2,
-    totalQty: 55,
-    status: '완료',
-    notes: '적재까지 완료되어 재고 관리에서 조회 가능한 작업입니다.',
-    flow: ['검수', '적재'],
-    activeStep: '적재 완료',
-    asnStatus: '보관중',
-    stockActivation: true,
-    completedAt: '2026-03-12 09:12',
-    bins: [
-      {
-        id: 'C-01',
-        location: 'ZONE-C · RACK-01 · BIN-01',
-        designatedBinCode: 'C-01-01',
-        sku: 'SKU-LV-3301',
-        plannedQty: 25,
-        inspectedQty: '25',
-        inspectNote: '',
-        statusInspect: '완료',
-        confirmBinCode: 'C-01-01',
-        putQty: '25',
-        statusPut: '완료',
-      },
-      {
-        id: 'C-02',
-        location: 'ZONE-C · RACK-01 · BIN-02',
-        designatedBinCode: 'C-01-02',
-        sku: 'SKU-LV-3302',
-        plannedQty: 30,
-        inspectedQty: '30',
-        inspectNote: '',
-        statusInspect: '완료',
-        confirmBinCode: 'C-01-02',
-        putQty: '30',
-        statusPut: '완료',
-      },
-    ],
-  },
-])
-
-// 입고 작업 화면 상태
-const tasks = ref(cloneSeed(INBOUND_TASKS_SEED))
-const selectedTaskId = ref(String(route.query.taskId || tasks.value[0]?.id || ''))
+const tasks = ref([])
+const selectedTaskId = ref(String(route.query.taskId || ''))
 const inboundSubTab = ref('inspect')
 
-// 좌측 목록에서 선택한 입고 작업 상세 데이터
+function cloneSeed(seed) {
+  return JSON.parse(JSON.stringify(seed))
+}
+
+function resolveTaskTab(task) {
+  if (!task) return 'inspect'
+  if (task.status === '완료' || task.activeStep === '적재 완료') return 'done'
+  return task.activeStep === '적재' ? 'put' : 'inspect'
+}
+
+function syncInboundState() {
+  const state = loadWorkerState()
+  tasks.value = cloneSeed(state.inboundTasks)
+  applySelectionFromRoute()
+  ensureVisibleSelection()
+}
+
 const selectedTask = computed(() => tasks.value.find((task) => task.id === selectedTaskId.value) ?? null)
 
-watch(
-  () => route.query.taskId,
-  (taskId) => {
-    if (!taskId) return
-    const matched = tasks.value.find((task) => task.id === String(taskId))
-    if (!matched) return
-    selectedTaskId.value = matched.id
-    inboundSubTab.value = matched.status === '완료' ? 'done' : matched.activeStep === '적재' ? 'put' : 'inspect'
-  },
-  { immediate: true }
-)
+function applySelectionFromRoute() {
+  const taskId = String(route.query.taskId || '')
+  if (!taskId) return
+  const matched = tasks.value.find((task) => task.id === taskId)
+  if (!matched) return
+  selectedTaskId.value = matched.id
+  inboundSubTab.value = resolveTaskTab(matched)
+}
 
 const filteredTaskCards = computed(() => {
   const list = [...tasks.value].filter((task) => {
@@ -183,18 +54,12 @@ const filteredTaskCards = computed(() => {
   })
   return list.sort(sortTasks)
 })
+
 const totalAssignedCount = computed(() => tasks.value.length)
 const waitingTaskCount = computed(() => tasks.value.filter((task) => task.status === '대기').length)
 const progressTaskCount = computed(() => tasks.value.filter((task) => task.status === '진행중').length)
 const doneTaskCount = computed(() => tasks.value.filter((task) => task.status === '완료').length)
-const totalInspectDoneCount = computed(() => tasks.value.reduce((sum, task) => sum + inspectDone(task), 0))
-const totalPutDoneCount = computed(() => tasks.value.reduce((sum, task) => sum + putDone(task), 0))
-const stockActivationCount = computed(() =>
-  tasks.value.reduce((sum, task) => sum + task.bins.filter((bin) => bin.statusInspect === '완료' && bin.statusPut === '완료').length, 0)
-)
-const pendingInventoryCount = computed(() => totalPutDoneCount.value - stockActivationCount.value)
 
-// 상단 요약 카드는 대시보드 카드와 같은 톤/구조를 사용
 const summaryCards = computed(() => [
   {
     key: 'all',
@@ -224,16 +89,8 @@ const summaryCards = computed(() => [
     description: '오늘 완료 처리된 입고 작업',
     tone: 'green',
   },
-  {
-    key: 'inventory',
-    label: '재고 반영 Bin',
-    value: `${stockActivationCount.value} Bin`,
-    description: `적재 대기 ${pendingInventoryCount.value} Bin`,
-    tone: 'gold',
-  },
 ])
 
-// 우측 상세 패널 상단 요약 카드
 const detailSummaryCards = computed(() => {
   const task = selectedTask.value
   if (!task) return []
@@ -257,11 +114,9 @@ const detailSummaryCards = computed(() => {
   ]
 })
 
-
-
 const inboundDetailStepIndex = computed(() => {
   if (!selectedTask.value) return 1
-  return { '검수': 1, '적재': 2, '적재 완료': 3 }[selectedTask.value.activeStep] ?? 1
+  return { 검수: 1, 적재: 2, '적재 완료': 3 }[selectedTask.value.activeStep] ?? 1
 })
 
 function inboundStepNodeClass(index) {
@@ -280,39 +135,41 @@ function inboundLineClass(index) {
   return inboundDetailStepIndex.value > index ? 'flow-line--done' : ''
 }
 
-// 현재 선택된 탭에 맞는 작업이 없으면 첫 번째 작업으로 자동 보정
-watch(
-  [selectedTask, filteredTaskCards, inboundSubTab],
-  ([task, cards]) => {
-    if (!cards.length) {
-      selectedTaskId.value = ''
-      return
-    }
+function ensureVisibleSelection() {
+  if (!tasks.value.length) {
+    selectedTaskId.value = ''
+    return
+  }
 
-    if (!task || !cards.some((card) => card.id === task.id)) {
-      selectedTaskId.value = cards[0].id
-    }
+  if (!filteredTaskCards.value.length) {
+    const fallbackTask = tasks.value[0]
+    selectedTaskId.value = fallbackTask?.id ?? ''
+    if (fallbackTask) inboundSubTab.value = resolveTaskTab(fallbackTask)
+    return
+  }
+
+  if (!filteredTaskCards.value.some((card) => card.id === selectedTaskId.value)) {
+    selectedTaskId.value = filteredTaskCards.value[0].id
+  }
+}
+
+watch(
+  () => route.query.taskId,
+  () => {
+    applySelectionFromRoute()
+    ensureVisibleSelection()
   },
   { immediate: true }
 )
 
-// 초기 시드 데이터를 화면용 반응형 데이터로 복제
-function cloneSeed(seed) {
-  return JSON.parse(JSON.stringify(seed))
+watch([filteredTaskCards, inboundSubTab], () => {
+  ensureVisibleSelection()
+})
+
+function persistTasks() {
+  updateWorkerState({ inboundTasks: cloneSeed(tasks.value) })
 }
 
-// 완료 시점 기록용 현재 시간 문자열 생성
-function nowStamp() {
-  const now = new Date()
-  const y = now.getFullYear()
-  const m = String(now.getMonth() + 1).padStart(2, '0')
-  const d = String(now.getDate()).padStart(2, '0')
-  const hh = String(now.getHours()).padStart(2, '0')
-  const mm = String(now.getMinutes()).padStart(2, '0')
-  return `${y}-${m}-${d} ${hh}:${mm}`
-}
-
-// 작업 상태 우선순위 기준 정렬
 function sortTasks(a, b) {
   const statusRank = { 대기: 0, 진행중: 1, 완료: 2 }
   return (statusRank[a.status] ?? 9) - (statusRank[b.status] ?? 9) || a.id.localeCompare(b.id)
@@ -341,7 +198,6 @@ function stepClass(task, step) {
   return ''
 }
 
-
 function inspectMismatch(bin) {
   return String(bin.inspectedQty).trim() !== '' && Number(bin.inspectedQty) !== Number(bin.plannedQty)
 }
@@ -355,9 +211,9 @@ function putCodeMismatch(bin) {
 }
 
 function resetSamples() {
-  tasks.value = cloneSeed(INBOUND_TASKS_SEED)
+  resetWorkerState()
   inboundSubTab.value = 'inspect'
-  selectedTaskId.value = tasks.value.find((task) => task.activeStep === '검수' && task.status !== '완료')?.id ?? ''
+  syncInboundState()
 }
 
 function openInspect() {
@@ -422,19 +278,25 @@ function recomputeTask(task) {
   task.completedAt = ''
 }
 
+function isWholeNumberInput(value) {
+  return /^\d+$/.test(String(value).trim())
+}
+
 function saveInspect(bin) {
   const task = selectedTask.value
   if (!task) return
 
   const inspectedQty = String(bin.inspectedQty).trim()
-  if (!inspectedQty) return
+  if (!isWholeNumberInput(inspectedQty)) return
 
+  bin.inspectedQty = inspectedQty
   bin.statusInspect = '완료'
   if (Number(inspectedQty) !== Number(bin.plannedQty) && !String(bin.inspectNote).trim()) {
     bin.inspectNote = `[불일치] ${bin.id} / ${bin.sku} 수량 차이 확인 필요`
   }
 
   recomputeTask(task)
+  persistTasks()
 }
 
 function savePut(bin) {
@@ -443,10 +305,14 @@ function savePut(bin) {
 
   const putQty = String(bin.putQty).trim()
   const confirmBinCode = String(bin.confirmBinCode).trim()
-  if (!putQty || !confirmBinCode) return
+  if (!isWholeNumberInput(putQty) || !confirmBinCode) return
 
+  bin.putQty = putQty
+  bin.confirmBinCode = confirmBinCode
   bin.statusPut = '완료'
   recomputeTask(task)
+  if (task.status === '완료') inboundSubTab.value = 'done'
+  persistTasks()
 }
 
 function completeInspectAll() {
@@ -462,6 +328,7 @@ function completeInspectAll() {
 
   recomputeTask(task)
   inboundSubTab.value = 'put'
+  persistTasks()
 }
 
 function completePutAll() {
@@ -477,15 +344,26 @@ function completePutAll() {
     }
     if (bin.statusInspect !== '완료') {
       bin.statusInspect = '완료'
-      if (!String(bin.inspectedQty).trim()) {
-        bin.inspectedQty = String(bin.plannedQty)
-      }
+      if (!String(bin.inspectedQty).trim()) bin.inspectedQty = String(bin.plannedQty)
     }
     bin.statusPut = '완료'
   })
 
   recomputeTask(task)
+  inboundSubTab.value = 'done'
+  persistTasks()
 }
+
+let removeListeners = () => {}
+
+onMounted(() => {
+  syncInboundState()
+  removeListeners = addWorkerStateListeners(syncInboundState)
+})
+
+onBeforeUnmount(() => {
+  removeListeners()
+})
 </script>
 
 <template>
@@ -503,7 +381,7 @@ function completePutAll() {
     <!-- 입고 관리 메인 화면 -->
     <section class="inbound-page">
       <!-- 상단 요약 카드 영역 -->
-      <div class="summary-grid summary-grid--five">
+      <div class="summary-grid">
         <article v-for="card in summaryCards" :key="card.key" :class="`summary-card--${card.tone}`" class="summary-card">
           <p class="summary-card__label">{{ card.label }}</p>
           <strong class="summary-card__value">{{ card.value }}</strong>
@@ -757,9 +635,6 @@ function completePutAll() {
   gap: var(--space-4);
 }
 
-.summary-grid--five {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-}
 
 .summary-card,
 .panel,
@@ -1141,7 +1016,7 @@ function completePutAll() {
 .work-table td {
   padding: 12px 10px;
   border-bottom: 1px solid var(--border);
-  text-align: left;
+  text-align: center;
   vertical-align: middle;
 }
 

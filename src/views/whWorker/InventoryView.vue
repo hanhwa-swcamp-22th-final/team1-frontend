@@ -1,22 +1,21 @@
 <script setup>
-// 창고 작업자 > 재고 관리 화면
-// 적재 완료 여부에 따라 반영 재고와 반영 대기 재고를 분리해서 보여준다.
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import {
+  addWorkerStateListeners,
+  createInventoryRows,
+  loadWorkerState,
+} from '@/utils/whWorkerState'
 
 const breadcrumb = [{ label: 'WH Worker' }, { label: '재고 관리' }]
 const FILTERS = ['전체', '반영 완료', '반영 대기']
 
-// 입고 작업 기반 재고 목업 데이터
-const inventoryRows = ref([
-  { refNo: 'ASN-240312-A01', sellerCompany: '어반셀러코리아', sku: 'SKU-UV-1001', location: 'A-01-01', inspectedQty: 50, putQty: 0, stockStatus: '반영 대기', reflected: false, updatedAt: '2026-03-17 09:20' },
-  { refNo: 'ASN-240312-B04', sellerCompany: '푸드라인컴퍼니', sku: 'SKU-FD-2001', location: 'B-03-02', inspectedQty: 40, putQty: 40, stockStatus: '반영 완료', reflected: true, updatedAt: '2026-03-17 09:32' },
-  { refNo: 'ASN-240312-B04', sellerCompany: '푸드라인컴퍼니', sku: 'SKU-FD-2002', location: 'B-03-03', inspectedQty: 38, putQty: 0, stockStatus: '반영 대기', reflected: false, updatedAt: '2026-03-17 09:35' },
-  { refNo: 'ASN-240311-C09', sellerCompany: '리빙하우스', sku: 'SKU-LV-3301', location: 'C-01-01', inspectedQty: 25, putQty: 25, stockStatus: '반영 완료', reflected: true, updatedAt: '2026-03-17 08:50' },
-  { refNo: 'ASN-240311-C09', sellerCompany: '리빙하우스', sku: 'SKU-LV-3302', location: 'C-01-02', inspectedQty: 30, putQty: 30, stockStatus: '반영 완료', reflected: true, updatedAt: '2026-03-17 08:52' },
-])
-
+const inventoryRows = ref([])
 const currentFilter = ref('전체')
+
+function syncInventoryState() {
+  inventoryRows.value = createInventoryRows(loadWorkerState())
+}
 
 const counts = computed(() => ({
   all: inventoryRows.value.length,
@@ -41,6 +40,17 @@ const filteredRows = computed(() => {
 function inventoryStatusClass(status) {
   return status === '반영 완료' ? 'status-chip status-chip--green' : 'status-chip status-chip--amber'
 }
+
+let removeListeners = () => {}
+
+onMounted(() => {
+  syncInventoryState()
+  removeListeners = addWorkerStateListeners(syncInventoryState)
+})
+
+onBeforeUnmount(() => {
+  removeListeners()
+})
 </script>
 
 <template>
