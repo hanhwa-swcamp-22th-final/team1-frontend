@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   filterSellerProductRows,
+  getSellerProductDetailById,
   getSellerProductStatusMeta,
   SELLER_PRODUCT_LIST_ROWS,
 } from '@/utils/productList.utils.js'
@@ -31,5 +32,26 @@ describe('productList utils', () => {
 
     expect(result).toHaveLength(1)
     expect(result[0].sku).toBe('LB-FOA-120')
+  })
+
+  it('상품 상세 mock 데이터를 반환한다', () => {
+    expect(getSellerProductDetailById('seller-product-1', SELLER_PRODUCT_LIST_ROWS[0])).toEqual(
+      expect.objectContaining({
+        brand: 'LUMIERE BEAUTY',
+        totalStock: 290,
+        marginAmount: 22,
+        marginRate: 73.3,
+      }),
+    )
+  })
+
+  it('상세 mock이 없는 상품은 fallback 정보를 반환한다', () => {
+    expect(getSellerProductDetailById('seller-product-3', SELLER_PRODUCT_LIST_ROWS[2])).toEqual(
+      expect.objectContaining({
+        barcode: '미등록',
+        totalStock: 170,
+        description: '비타민C 크림 100ml 상세 정보 준비중',
+      }),
+    )
   })
 })

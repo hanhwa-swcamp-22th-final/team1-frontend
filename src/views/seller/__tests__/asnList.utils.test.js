@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   filterSellerAsnRows,
+  getSellerAsnDetailById,
   getSellerAsnKpi,
   SELLER_ASN_LIST_ROWS,
 } from '@/utils/asnList.utils.js'
@@ -37,5 +38,38 @@ describe('asnList utils', () => {
         asnNo: 'ASN-20260317-003',
       }),
     ])
+  })
+
+  it('ASN 상세 mock 데이터를 반환한다', () => {
+    expect(getSellerAsnDetailById('seller-asn-2')).toEqual(
+      expect.objectContaining({
+        supplierName: 'Lumiere Beauty Air Hub',
+        totalCartons: 18,
+        items: [
+          expect.objectContaining({
+            sku: 'LB-SUN-50',
+            cartons: 8,
+          }),
+          expect.objectContaining({
+            sku: 'LB-MSK-5P',
+            cartons: 10,
+          }),
+        ],
+      }),
+    )
+  })
+
+  it('상세 mock이 없는 ASN은 fallback 정보를 반환한다', () => {
+    expect(getSellerAsnDetailById('seller-asn-5', SELLER_ASN_LIST_ROWS[4])).toEqual(
+      expect.objectContaining({
+        bookingNo: 'BL-240313-04',
+        totalCartons: 5,
+        items: [
+          expect.objectContaining({
+            quantity: 720,
+          }),
+        ],
+      }),
+    )
   })
 })

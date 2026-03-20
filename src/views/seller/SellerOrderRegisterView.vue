@@ -9,10 +9,12 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import FileUpload from '@/components/common/FileUpload.vue'
+import SellerExcelUploadResultModal from '@/components/seller/SellerExcelUploadResultModal.vue'
 import { parseExcel } from '@/utils/excel'
 import {
   buildBulkOrderPayload,
   buildManualOrderPayload,
+  buildOrderUploadResultSummary,
   ORDER_PREVIEW_COLUMNS,
   ORDER_TEMPLATE_PREVIEW_ROWS,
   ORDER_UPLOAD_REQUIRED_COLUMNS,
@@ -36,6 +38,8 @@ const uploadSuccessMessage = ref('')
 const bulkSubmitMessage = ref('')
 const bulkSubmitErrorMessage = ref('')
 const isSubmittingBulk = ref(false)
+const isUploadResultModalOpen = ref(false)
+const uploadResultSummary = ref(null)
 // 업로드 전에는 샘플 행을 보여주고, 업로드 후에는 실제 행으로 교체한다.
 const previewRows = ref(ORDER_TEMPLATE_PREVIEW_ROWS)
 const isPreviewSample = ref(true)
@@ -92,8 +96,14 @@ function resetUploadState() {
   uploadSuccessMessage.value = ''
   bulkSubmitMessage.value = ''
   bulkSubmitErrorMessage.value = ''
+  isUploadResultModalOpen.value = false
+  uploadResultSummary.value = null
   previewRows.value = ORDER_TEMPLATE_PREVIEW_ROWS
   isPreviewSample.value = true
+}
+
+function handleCloseUploadResultModal() {
+  isUploadResultModalOpen.value = false
 }
 
 // 선택한 엑셀 파일을 파싱하고 필수 헤더 검증 후 미리보기 표에 반영한다.
@@ -104,6 +114,8 @@ async function handleFileSelected(file) {
   uploadSuccessMessage.value = ''
   bulkSubmitMessage.value = ''
   bulkSubmitErrorMessage.value = ''
+  isUploadResultModalOpen.value = false
+  uploadResultSummary.value = null
 
   if (!targetFile) {
     resetUploadState()
@@ -133,6 +145,8 @@ async function handleFileSelected(file) {
     previewRows.value = mapOrderUploadRows(rows)
     isPreviewSample.value = false
     uploadSuccessMessage.value = `${targetFile.name} 파일에서 ${previewRows.value.length}건을 불러왔습니다.`
+    uploadResultSummary.value = buildOrderUploadResultSummary(previewRows.value, targetFile.name)
+    isUploadResultModalOpen.value = true
   } catch (error) {
     previewRows.value = ORDER_TEMPLATE_PREVIEW_ROWS
     isPreviewSample.value = true
@@ -375,6 +389,12 @@ async function handleBulkSubmit() {
         <BaseTable :columns="ORDER_PREVIEW_COLUMNS" :rows="previewRows" row-key="id" />
       </div>
     </section>
+
+    <SellerExcelUploadResultModal
+      :isOpen="isUploadResultModalOpen"
+      :summary="uploadResultSummary"
+      @cancel="handleCloseUploadResultModal"
+    />
   </AppLayout>
 </template>
 

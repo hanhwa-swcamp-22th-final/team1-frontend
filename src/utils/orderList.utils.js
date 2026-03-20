@@ -38,6 +38,15 @@ export const SELLER_ORDER_CHANNEL_META = {
   엑셀: { label: '엑셀', tone: 'excel' },
 }
 
+// 주문 상세 모달에 표시할 5단계 출고 처리 흐름.
+export const SELLER_ORDER_PROGRESS_STEPS = [
+  { key: 'RECEIVED', label: '접수' },
+  { key: 'ALLOCATED', label: '할당' },
+  { key: 'WAITING', label: '출고 대기' },
+  { key: 'DISPATCHED', label: '출고 지시' },
+  { key: 'COMPLETED', label: '출고 완료' },
+]
+
 // 주문 목록 테이블 mock 원본 데이터.
 export const SELLER_ORDER_LIST_ROWS = [
   {
@@ -175,6 +184,64 @@ export const SELLER_ORDER_LIST_COLUMNS = [
   { key: 'actions', label: '관리', width: '90px', align: 'center' },
 ]
 
+const SELLER_ORDER_DETAIL_MAP = {
+  'seller-order-1': {
+    receiverPhone: '+1-213-555-0101',
+    state: 'California',
+    city: 'Los Angeles',
+    zipCode: '90001',
+    addressLine: '742 Spring St Apt 12',
+    shippingMethod: 'UPS Ground',
+    carrier: 'UPS',
+    memo: '문 앞 수령 요청',
+    items: [
+      { sku: 'LB-AMP-30', productName: '루미에르 앰플 30ml', quantity: 2, unitPrice: 34 },
+      { sku: 'LB-MSK-5P', productName: '콜라겐 마스크 5매입', quantity: 1, unitPrice: 18 },
+    ],
+  },
+  'seller-order-3': {
+    receiverPhone: '+1-713-555-0188',
+    state: 'Texas',
+    city: 'Houston',
+    zipCode: '77002',
+    addressLine: '180 Main St Suite 6',
+    shippingMethod: 'FedEx Home Delivery',
+    carrier: 'FedEx',
+    memo: '엑셀 업로드 주문, 오전 출고 우선',
+    items: [
+      { sku: 'LB-CRM-100', productName: '리페어 크림 100ml', quantity: 1, unitPrice: 29 },
+      { sku: 'LB-AMP-30', productName: '루미에르 앰플 30ml', quantity: 1, unitPrice: 34 },
+    ],
+  },
+  'seller-order-5': {
+    receiverPhone: '+1-206-555-0173',
+    state: 'Washington',
+    city: 'Seattle',
+    zipCode: '98101',
+    addressLine: '55 Pine St Floor 3',
+    shippingMethod: 'UPS Ground',
+    carrier: 'UPS',
+    memo: '접수 후 재고 할당 대기',
+    items: [
+      { sku: 'LB-SRM-50', productName: '히알루론 세럼 50ml', quantity: 2, unitPrice: 26 },
+      { sku: 'LB-CRM-100', productName: '리페어 크림 100ml', quantity: 2, unitPrice: 29 },
+    ],
+  },
+  'seller-order-10': {
+    receiverPhone: '+1-702-555-0110',
+    state: 'Nevada',
+    city: 'Las Vegas',
+    zipCode: '89101',
+    addressLine: '240 Fremont St Unit 8',
+    shippingMethod: 'FedEx Home Delivery',
+    carrier: 'FedEx',
+    memo: '재고 확보 후 일괄 출고 예정',
+    items: [
+      { sku: 'LB-MSK-5P', productName: '콜라겐 마스크 5매입', quantity: 3, unitPrice: 18 },
+    ],
+  },
+}
+
 // 주문 상태 라벨과 배지 색상을 반환한다.
 export function getSellerOrderStatusMeta(status) {
   return SELLER_ORDER_STATUS_META[status] ?? { label: status ?? '-', tone: 'default' }
@@ -183,6 +250,52 @@ export function getSellerOrderStatusMeta(status) {
 // 주문 채널 라벨과 태그 색상을 반환한다.
 export function getSellerOrderChannelMeta(channel) {
   return SELLER_ORDER_CHANNEL_META[channel] ?? { label: channel ?? '-', tone: 'default' }
+}
+
+// 주문 상태를 5단계 스텝퍼 기준 key 로 변환한다.
+export function getSellerOrderProgressStep(status) {
+  const matchedStep = SELLER_ORDER_PROGRESS_STEPS.find((step) => step.key === status)
+  if (matchedStep) return matchedStep.key
+  return 'RECEIVED'
+}
+
+// 주문 상세 모달에 필요한 로컬 mock 정보를 반환한다.
+export function getSellerOrderDetailById(orderId, order = {}) {
+  const detail = SELLER_ORDER_DETAIL_MAP[orderId]
+
+  if (detail) {
+    return {
+      ...detail,
+      items: detail.items.map((item) => ({
+        ...item,
+        amount: item.quantity * item.unitPrice,
+      })),
+    }
+  }
+
+  const [state = '-', city = '-'] = String(order.address ?? '')
+    .split(',')
+    .map((value) => value.trim())
+
+  return {
+    receiverPhone: '+1-000-000-0000',
+    state,
+    city,
+    zipCode: '00000',
+    addressLine: order.address ?? '-',
+    shippingMethod: '택배',
+    carrier: order.trackingNo ? '운송장 발급 완료' : '출고 준비중',
+    memo: '상세 mock 데이터 준비 전 기본 정보만 표시합니다.',
+    items: [
+      {
+        sku: order.itemsSummary?.split(' × ')[0] ?? '-',
+        productName: order.itemsSummary ?? '상품 정보 준비중',
+        quantity: 1,
+        unitPrice: 0,
+        amount: 0,
+      },
+    ],
+  }
 }
 
 /**

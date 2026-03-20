@@ -7,9 +7,12 @@ import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
+import SellerConfirmDialog from '@/components/seller/SellerConfirmDialog.vue'
+import SellerOrderDetailModal from '@/components/seller/SellerOrderDetailModal.vue'
 import { ROUTE_NAMES } from '@/constants'
 import {
   filterSellerOrderRows,
+  getSellerOrderDetailById,
   getSellerOrderChannelMeta,
   getSellerOrderStatusMeta,
   SELLER_ORDER_CHANNEL_OPTIONS,
@@ -26,6 +29,11 @@ const activeStatus = ref('all')
 const activeChannel = ref('all')
 const searchKeyword = ref('')
 const toolbarMessage = ref('')
+const orderRows = ref(SELLER_ORDER_LIST_ROWS.map((row) => ({ ...row })))
+const selectedOrderId = ref('')
+const pendingCancelOrderId = ref('')
+const isDetailModalOpen = ref(false)
+const isCancelDialogOpen = ref(false)
 
 // 페이지네이션은 로컬 mock 기준으로 단순 처리한다.
 const currentPage = ref(1)
@@ -38,7 +46,7 @@ watch([activeStatus, activeChannel, searchKeyword], () => {
 
 // 현재 상태와 채널, 검색어를 기준으로 주문 목록을 필터링한다.
 const filteredRows = computed(() => {
-  return filterSellerOrderRows(SELLER_ORDER_LIST_ROWS, {
+  return filterSellerOrderRows(orderRows.value, {
     status: activeStatus.value,
     channel: activeChannel.value,
     search: searchKeyword.value,
@@ -61,9 +69,58 @@ function handlePageChange(page) {
   currentPage.value = page
 }
 
-// UI 범위만 구현하므로 세부 필터와 CSV, 취소는 안내 메시지로 처리한다.
+const selectedOrder = computed(() => {
+  return orderRows.value.find((row) => row.id === selectedOrderId.value) ?? null
+})
+
+const selectedOrderDetail = computed(() => {
+  if (!selectedOrder.value) return null
+  return getSellerOrderDetailById(selectedOrder.value.id, selectedOrder.value)
+})
+
+const pendingCancelOrder = computed(() => {
+  return orderRows.value.find((row) => row.id === pendingCancelOrderId.value) ?? null
+})
+
 function showToolbarMessage(message) {
   toolbarMessage.value = message
+}
+
+function handleOpenOrderDetail(row) {
+  selectedOrderId.value = row.id
+  isDetailModalOpen.value = true
+}
+
+function handleCloseOrderDetail() {
+  isDetailModalOpen.value = false
+}
+
+function handleOpenCancelDialog(row) {
+  pendingCancelOrderId.value = row.id
+  isCancelDialogOpen.value = true
+}
+
+function handleCloseCancelDialog() {
+  isCancelDialogOpen.value = false
+  pendingCancelOrderId.value = ''
+}
+
+function handleConfirmCancel() {
+  if (!pendingCancelOrder.value) return
+
+  orderRows.value = orderRows.value.map((row) => {
+    if (row.id !== pendingCancelOrder.value.id) return row
+
+    return {
+      ...row,
+      status: 'CANCELLED',
+      canCancel: false,
+      trackingNo: '',
+    }
+  })
+
+  toolbarMessage.value = `${pendingCancelOrder.value.orderNo} 주문을 취소했습니다.`
+  handleCloseCancelDialog()
 }
 </script>
 
@@ -147,34 +204,62 @@ function showToolbarMessage(message) {
           row-key="id"
           @page-change="handlePageChange"
         >
-          <template #cell-orderNo="{ value }">
-            <span class="order-num">{{ value }}</span>
+          <template #cell-orderNo="{ row, value }">
+            <button class="cell-trigger cell-trigger--order" type="button" @click="handleOpenOrderDetail(row)">
+              <span class="order-num">{{ value }}</span>
+            </button>
           </template>
 
-          <template #cell-channel="{ value }">
-            <span
-              class="channel-tag"
-              :class="`channel-tag--${getSellerOrderChannelMeta(value).tone}`"
-            >
-              {{ getSellerOrderChannelMeta(value).label }}
-            </span>
+          <template #cell-channel="{ row, value }">
+            <button class="cell-trigger" type="button" @click="handleOpenOrderDetail(row)">
+              <span
+                class="channel-tag"
+                :class="`channel-tag--${getSellerOrderChannelMeta(value).tone}`"
+              >
+                {{ getSellerOrderChannelMeta(value).label }}
+              </span>
+            </button>
           </template>
 
-          <template #cell-itemsSummary="{ value }">
-            <span class="sku-summary">{{ value }}</span>
+          <template #cell-recipient="{ row, value }">
+            <button class="cell-trigger cell-trigger--text" type="button" @click="handleOpenOrderDetail(row)">
+              {{ value }}
+            </button>
           </template>
 
-          <template #cell-status="{ value }">
-            <span
-              class="order-status-badge"
-              :class="`order-status-badge--${getSellerOrderStatusMeta(value).tone}`"
-            >
-              {{ getSellerOrderStatusMeta(value).label }}
-            </span>
+          <template #cell-address="{ row, value }">
+            <button class="cell-trigger cell-trigger--text" type="button" @click="handleOpenOrderDetail(row)">
+              {{ value }}
+            </button>
           </template>
 
-          <template #cell-trackingNo="{ value }">
-            <span :class="{ 'tracking-empty': !value }">{{ value || '—' }}</span>
+          <template #cell-itemsSummary="{ row, value }">
+            <button class="cell-trigger cell-trigger--text" type="button" @click="handleOpenOrderDetail(row)">
+              <span class="sku-summary">{{ value }}</span>
+            </button>
+          </template>
+
+          <template #cell-orderedAt="{ row, value }">
+            <button class="cell-trigger cell-trigger--text" type="button" @click="handleOpenOrderDetail(row)">
+              {{ value }}
+            </button>
+          </template>
+
+          <template #cell-status="{ row, value }">
+            <button class="cell-trigger" type="button" @click="handleOpenOrderDetail(row)">
+              <span
+                class="order-status-badge"
+                :class="`order-status-badge--${getSellerOrderStatusMeta(value).tone}`"
+              >
+                {{ getSellerOrderStatusMeta(value).label }}
+              </span>
+            </button>
+          </template>
+
+          <template #cell-trackingNo="{ row, value }">
+            <button class="cell-trigger cell-trigger--text" type="button" @click="handleOpenOrderDetail(row)">
+              <span :class="{ 'tracking-empty': !value }">{{ value || '—' }}</span>
+            </button>
           </template>
 
           <template #cell-actions="{ row }">
@@ -182,7 +267,7 @@ function showToolbarMessage(message) {
               v-if="row.canCancel"
               class="action-btn action-btn--danger"
               type="button"
-              @click="showToolbarMessage(`${row.orderNo} 취소 UI는 다음 단계에서 연결합니다.`)"
+              @click.stop="handleOpenCancelDialog(row)"
             >
               취소
             </button>
@@ -191,6 +276,23 @@ function showToolbarMessage(message) {
         </BaseTable>
       </section>
     </section>
+
+    <SellerOrderDetailModal
+      :detail="selectedOrderDetail"
+      :isOpen="isDetailModalOpen"
+      :order="selectedOrder"
+      @cancel="handleCloseOrderDetail"
+    />
+
+    <SellerConfirmDialog
+      :isOpen="isCancelDialogOpen"
+      :message="pendingCancelOrder ? `${pendingCancelOrder.orderNo} 주문을 취소하시겠습니까?` : '주문을 취소하시겠습니까?'"
+      confirmLabel="취소 확정"
+      title="주문 취소"
+      :danger="true"
+      @cancel="handleCloseCancelDialog"
+      @confirm="handleConfirmCancel"
+    />
   </AppLayout>
 </template>
 
@@ -318,6 +420,27 @@ function showToolbarMessage(message) {
   font-weight: 700;
 }
 
+.cell-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cell-trigger--order {
+  width: auto;
+}
+
+.cell-trigger--text:hover {
+  color: var(--blue);
+}
+
 .channel-tag,
 .order-status-badge {
   display: inline-flex;
@@ -412,6 +535,10 @@ function showToolbarMessage(message) {
   border: 1px solid var(--red);
   background: var(--surface);
   color: var(--red);
+}
+
+.action-btn--danger:hover {
+  background: var(--red-pale);
 }
 
 .action-empty {
