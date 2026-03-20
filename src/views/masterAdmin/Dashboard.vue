@@ -32,11 +32,10 @@ const BILLING_COLUMNS = [
 ]
 
 const SELLER_FEE_COLUMNS = [
-  { key: 'sellerName',  label: '셀러' },
-  { key: 'totalBilled', label: '총 청구액', align: 'right',  width: '140px' },
-  { key: 'paid',        label: '수납액',    align: 'right',  width: '130px' },
-  { key: 'unpaid',      label: '미수금',    align: 'right',  width: '130px' },
-  { key: 'daysOverdue', label: '연체일',    align: 'center', width: '80px'  },
+  { key: 'sellerName',   label: '셀러' },
+  { key: 'estimatedCost',label: '당월 예상 비용', align: 'right',  width: '120px' },
+  { key: 'momGrowth',    label: '전월비',    align: 'right',  width: '80px'  },
+  { key: 'turnoverRate', label: '출고회전율', align: 'center', width: '90px'  },
 ]
 
 // ── 차트 옵션 ─────────────────────────────────────────────────────────────────
@@ -287,14 +286,16 @@ onMounted(fetchDashboard)
             {{ value }}
           </div>
         </template>
-        <template #cell-totalBilled="{ value }">
+        <template #cell-estimatedCost="{ value }">
           <span class="amount-cell">₩{{ formatNumber(value) }}</span>
         </template>
-        <template #cell-paid="{ value }">
-          ₩{{ formatNumber(value) }}
+        <template #cell-momGrowth="{ value }">
+          <span :class="value > 0 ? 'trend-up-text' : 'trend-down-text'">
+            {{ value > 0 ? '▲' : '▼' }} {{ Math.abs(value).toFixed(1) }}%
+          </span>
         </template>
-        <template #cell-unpaid="{ value }">
-          <span :class="{ 'amount-alert': value > 0 }">₩{{ formatNumber(value) }}</span>
+        <template #cell-turnoverRate="{ value }">
+          <span class="turnover-rate">{{ value }}%</span>
         </template>
         <template #cell-daysOverdue="{ value }">
           <span v-if="value === 0" class="overdue-none">정상</span>
@@ -670,6 +671,26 @@ export default { components: { VueApexCharts } }
   font-weight: 700;
   font-size: 10px;
   flex-shrink: 0;
+}
+
+.trend-up-text {
+  color: var(--red);
+  font-family: var(--font-barlow);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+}
+
+.trend-down-text {
+  color: var(--blue);
+  font-family: var(--font-barlow);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+}
+
+.turnover-rate {
+  font-family: var(--font-barlow);
+  font-weight: 600;
+  color: var(--green);
 }
 
 .overdue-none {
