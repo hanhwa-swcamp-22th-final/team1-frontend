@@ -35,8 +35,8 @@
     --header-height: clamp(68px, 10vh, 108px);
 
     /* 사이드바 하단 푸터 높이
-       1080px → 9.72vh = 104.98px ≈ 105px */
-    --footer-height: clamp(76px, 9.72vh, 105px);
+       1080px → 7vh = 76px */
+    --footer-height: clamp(30px, 7vh, 60px);
 
     /* 사이드바 로고 영역 높이 — 헤더와 동일 높이로 맞춰 수평 정렬 */
     --sidebar-logo-h: clamp(68px, 10vh, 108px);
