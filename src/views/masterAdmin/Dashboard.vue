@@ -137,13 +137,7 @@ onMounted(fetchDashboard)
         </svg>
         데이터 내보내기
       </button>
-      <button class="ui-btn btn-gold">
-        <svg fill="none" height="14" viewBox="0 0 14 14" width="14">
-          <line stroke="currentColor" stroke-linecap="round" stroke-width="2" x1="7" x2="7" y1="2" y2="12" />
-          <line stroke="currentColor" stroke-linecap="round" stroke-width="2" x1="2" x2="12" y1="7" y2="7" />
-        </svg>
-        신규 출고 지시
-      </button>
+
     </template>
 
     <div v-if="errorMsg" class="fetch-error">
