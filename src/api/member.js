@@ -77,3 +77,19 @@ export async function deactivateUser(userId) {
 export async function reactivateUser(userId) {
   return instance.post(`/members/users/${userId}/reactivate`)
 }
+
+/**
+ * 셀러별 당월 매출 조회
+ * @returns {Promise<AxiosResponse>} { success, data: Array<{ sellerCode, sellerName, monthRevenue, totalOrders, avgOrderValue }> }
+ */
+export function getSellerRevenue() {
+  return instance.get('/members/sellers/revenue')
+}
+
+/**
+ * 셀러별 미수금 현황 조회
+ * @returns {Promise<AxiosResponse>} { success, data: Array<{ sellerCode, sellerName, totalBilled, paid, unpaid, daysOverdue }> }
+ */
+export function getSellerReceivables() {
+  return instance.get('/members/sellers/receivables')
+}

@@ -1,4 +1,43 @@
 {
+  "revenue_current": {
+    "totalRevenue": 159000000,
+    "trend": "+11.2%",
+    "trendLabel": "전월 대비",
+    "trendType": "up"
+  },
+
+  "revenue_monthly": [
+    { "month": "2025-10", "label": "10월", "revenue": 112000000 },
+    { "month": "2025-11", "label": "11월", "revenue": 128000000 },
+    { "month": "2025-12", "label": "12월", "revenue": 145000000 },
+    { "month": "2026-01", "label": "1월",  "revenue": 131000000 },
+    { "month": "2026-02", "label": "2월",  "revenue": 143000000 },
+    { "month": "2026-03", "label": "3월",  "revenue": 159000000 }
+  ],
+
+  "storage_billing": [
+    { "id": 1, "warehouseName": "LA West Coast Hub",    "billingMonth": "2026-03", "storageQty": 8240, "unitRate": 500, "amount": 4120000, "status": "PENDING", "locationUtil": 72 },
+    { "id": 2, "warehouseName": "Central Dallas Center", "billingMonth": "2026-03", "storageQty": 5180, "unitRate": 500, "amount": 2590000, "status": "BILLED",  "locationUtil": 48 },
+    { "id": 3, "warehouseName": "East NY Hub",           "billingMonth": "2026-03", "storageQty": 6850, "unitRate": 500, "amount": 3425000, "status": "PENDING", "locationUtil": 63 },
+    { "id": 4, "warehouseName": "Chicago MidWest Hub",   "billingMonth": "2026-03", "storageQty": 4200, "unitRate": 500, "amount": 2100000, "status": "BILLED",  "locationUtil": 55 }
+  ],
+
+  "seller_revenue": [
+    { "sellerCode": "CUST-001", "sellerName": "TechGear Inc.",   "monthRevenue": 42000000, "totalOrders": 182, "avgOrderValue": 230769 },
+    { "sellerCode": "CUST-002", "sellerName": "HomeStyle Co.",   "monthRevenue": 38500000, "totalOrders": 154, "avgOrderValue": 250000 },
+    { "sellerCode": "CUST-003", "sellerName": "FashionKorea",    "monthRevenue": 31200000, "totalOrders": 130, "avgOrderValue": 240000 },
+    { "sellerCode": "CUST-004", "sellerName": "NutriVita LLC",   "monthRevenue": 26800000, "totalOrders": 110, "avgOrderValue": 243636 },
+    { "sellerCode": "CUST-005", "sellerName": "SportZone USA",   "monthRevenue": 20500000, "totalOrders":  89, "avgOrderValue": 230337 }
+  ],
+
+  "seller_receivables": [
+    { "sellerCode": "CUST-001", "sellerName": "TechGear Inc.",  "totalBilled": 45000000, "paid": 42000000, "unpaid": 3000000, "daysOverdue": 0  },
+    { "sellerCode": "CUST-002", "sellerName": "HomeStyle Co.",  "totalBilled": 40000000, "paid": 38500000, "unpaid": 1500000, "daysOverdue": 5  },
+    { "sellerCode": "CUST-003", "sellerName": "FashionKorea",   "totalBilled": 32000000, "paid": 31200000, "unpaid":  800000, "daysOverdue": 0  },
+    { "sellerCode": "CUST-004", "sellerName": "NutriVita LLC",  "totalBilled": 30000000, "paid": 22000000, "unpaid": 8000000, "daysOverdue": 18 },
+    { "sellerCode": "CUST-005", "sellerName": "SportZone USA",  "totalBilled": 22000000, "paid": 20500000, "unpaid": 1500000, "daysOverdue": 3  }
+  ],
+
   "wms_asn_stats": {
     "unprocessedCount": 5,
     "trend": "+2",

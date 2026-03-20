@@ -261,6 +261,12 @@ module.exports = function (BASE_URL) {
     res.status(201).json({ success: true, message: '창고가 등록되었습니다.', data: created })
   })
 
+  // GET /wms/storage-billing — 창고 보관료 청구 현황
+  router.get('/storage-billing', async (req, res) => {
+    const { data } = await http.get('/storage_billing')
+    res.json({ success: true, data })
+  })
+
   // GET /wms/fee-settings — 요금 설정 조회
   router.get('/fee-settings', async (req, res) => {
     const { data } = await http.get('/fee_settings')

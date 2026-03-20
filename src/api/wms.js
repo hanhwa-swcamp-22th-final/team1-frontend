@@ -25,6 +25,14 @@ export async function getWarehouseStatus() {
 }
 
 /**
+ * 대시보드용 창고 보관료 청구 현황 조회
+ * @returns {Promise<AxiosResponse>} { success, data: Array<{ id, warehouseName, billingMonth, storageQty, unitRate, amount, status }> }
+ */
+export function getStorageBilling() {
+  return instance.get('/wms/storage-billing')
+}
+
+/**
  * 창고 목록 페이지 — 상단 요약 카드 5개 데이터 조회
  * (등록 창고 수, 활성 창고 수, 총 재고, 금일 출고, 평균 로케이션 가동률)
  * @returns {Promise<AxiosResponse>}

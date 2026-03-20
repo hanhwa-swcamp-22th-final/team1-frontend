@@ -13,6 +13,18 @@ module.exports = function (BASE_URL) {
     res.json({ success: true, data })
   })
 
+  // GET /orders/revenue/current — 대시보드용 당월 총 매출
+  router.get('/revenue/current', async (req, res) => {
+    const { data } = await http.get('/revenue_current')
+    res.json({ success: true, data })
+  })
+
+  // GET /orders/revenue/monthly — 월별 매출 추이 (6개월)
+  router.get('/revenue/monthly', async (req, res) => {
+    const { data } = await http.get('/revenue_monthly')
+    res.json({ success: true, data })
+  })
+
   // GET /orders/list — 주문 목록 조회 (masterAdmin)
   router.get('/list', async (req, res) => {
     const { data } = await http.get('/orders')
