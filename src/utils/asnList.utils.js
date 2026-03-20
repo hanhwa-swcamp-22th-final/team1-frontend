@@ -68,6 +68,57 @@ export const SELLER_ASN_LIST_ROWS = [
   },
 ]
 
+const SELLER_ASN_DETAIL_MAP = {
+  'seller-asn-1': {
+    supplierName: 'Lumiere Beauty HQ',
+    originCountry: '대한민국',
+    originPort: 'Busan Port',
+    transportMode: 'Ocean Freight',
+    incoterms: 'FOB',
+    bookingNo: 'BK-260318-001',
+    carrier: 'Maersk',
+    arrivalWindow: '2026-03-21 AM',
+    documents: ['Invoice', 'Packing List', 'MSDS'],
+    items: [
+      { sku: 'LB-AMP-30', productName: '루미에르 앰플 30ml', quantity: 180, cartons: 18 },
+      { sku: 'LB-SRM-50', productName: '히알루론 세럼 50ml', quantity: 120, cartons: 12 },
+      { sku: 'LB-CRM-100', productName: '비타민C 크림 100ml', quantity: 120, cartons: 10 },
+    ],
+  },
+  'seller-asn-2': {
+    supplierName: 'Lumiere Beauty Air Hub',
+    originCountry: '대한민국',
+    originPort: 'ICN Air Cargo',
+    transportMode: 'Air Freight',
+    incoterms: 'FCA',
+    bookingNo: 'BK-260317-009',
+    carrier: 'Korean Air Cargo',
+    arrivalWindow: '2026-03-19 PM',
+    documents: ['Invoice', 'Packing List'],
+    items: [
+      { sku: 'LB-SUN-50', productName: 'UV 선크림 SPF50 50ml', quantity: 80, cartons: 8 },
+      { sku: 'LB-MSK-5P', productName: '콜라겐 마스크 5매입', quantity: 100, cartons: 10 },
+    ],
+  },
+  'seller-asn-3': {
+    supplierName: 'Lumiere Beauty Dallas',
+    originCountry: '미국',
+    originPort: 'Dallas FTZ',
+    transportMode: 'Ground',
+    incoterms: 'DAP',
+    bookingNo: 'BK-260316-004',
+    carrier: 'XPO Logistics',
+    arrivalWindow: '2026-03-18 14:00',
+    documents: ['Inbound Sheet', 'Packing List'],
+    items: [
+      { sku: 'LB-FOA-120', productName: '약산성 폼클렌저 120ml', quantity: 160, cartons: 8 },
+      { sku: 'LB-TNR-150', productName: '리파이닝 토너 150ml', quantity: 120, cartons: 6 },
+      { sku: 'LB-CLN-200', productName: '젤 클렌저 200ml', quantity: 140, cartons: 7 },
+      { sku: 'LB-MST-100', productName: '미스트 토닝 100ml', quantity: 140, cartons: 7 },
+    ],
+  },
+}
+
 // 테이블 렌더링에 사용하는 컬럼 정의.
 export const SELLER_ASN_LIST_COLUMNS = [
   { key: 'asnNo', label: 'ASN 번호', width: '170px' },
@@ -78,7 +129,41 @@ export const SELLER_ASN_LIST_COLUMNS = [
   { key: 'referenceNo', label: '참조 번호', width: '130px' },
   { key: 'createdAt', label: '등록일', width: '110px' },
   { key: 'status', label: '상태', width: '100px' },
+  { key: 'actions', label: '관리', width: '150px', align: 'center' },
 ]
+
+// ASN 상세 모달에 필요한 로컬 mock 정보를 반환한다.
+export function getSellerAsnDetailById(asnId, row = {}) {
+  const detail = SELLER_ASN_DETAIL_MAP[asnId]
+
+  if (detail) {
+    return {
+      ...detail,
+      totalCartons: detail.items.reduce((sum, item) => sum + Number(item.cartons ?? 0), 0),
+    }
+  }
+
+  return {
+    supplierName: 'Lumiere Beauty Partner',
+    originCountry: '대한민국',
+    originPort: 'Origin Hub',
+    transportMode: 'Mixed',
+    incoterms: 'EXW',
+    bookingNo: row.referenceNo ?? '-',
+    carrier: '배차 정보 준비중',
+    arrivalWindow: row.expectedDate ?? '-',
+    documents: ['Packing List'],
+    totalCartons: row.skuCount ?? 0,
+    items: [
+      {
+        sku: row.referenceNo ?? 'SKU-PENDING',
+        productName: row.note ?? '상세 품목 정보 준비중',
+        quantity: row.totalQuantity ?? 0,
+        cartons: row.skuCount ?? 0,
+      },
+    ],
+  }
+}
 
 // 상단 요약 카드에서 사용하는 KPI 값을 계산한다.
 export function getSellerAsnKpi(rows = []) {

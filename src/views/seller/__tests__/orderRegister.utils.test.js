@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildBulkOrderPayload,
   buildManualOrderPayload,
+  buildOrderUploadResultSummary,
   ORDER_UPLOAD_REQUIRED_COLUMNS,
   getMissingOrderUploadColumns,
   mapOrderUploadRows,
@@ -120,6 +121,35 @@ describe('orderRegister utils', () => {
         requestNote: '문 앞 보관',
       },
     ])
+  })
+
+  it('업로드 결과 모달용 요약 정보를 계산한다', () => {
+    const result = buildOrderUploadResultSummary(
+      [
+        {
+          orderNo: 'ORD-20260317-009',
+          recipient: '홍길동',
+          sku: 'SKU-AMPLE-009',
+          quantity: '3',
+        },
+        {
+          orderNo: 'ORD-20260317-010',
+          recipient: '김영희',
+          sku: 'SKU-MASK-001',
+          quantity: '2',
+        },
+      ],
+      'orders.xlsx',
+    )
+
+    expect(result).toEqual({
+      fileName: 'orders.xlsx',
+      rowCount: 2,
+      totalQuantity: 5,
+      uniqueSkuCount: 2,
+      uniqueRecipientCount: 2,
+      firstOrderNo: 'ORD-20260317-009',
+    })
   })
 
   it('필수값이 비어 있으면 주문 등록 검증 에러를 반환한다', () => {

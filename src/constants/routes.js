@@ -37,6 +37,7 @@ export const ROUTE_NAMES = {
   SELLER_ORDER_DETAIL: 'seller-order-detail',
   SELLER_ORDER_REGISTER: 'seller-order-register',
   SELLER_AMAZON_CONNECT: 'seller-amazon-connect',
+  SELLER_MODAL_SHOWCASE: 'seller-modal-showcase',
   SELLER_MARGIN_SIMULATOR: 'seller-margin-simulator',
   SELLER_NOTIFICATIONS: 'seller-notifications',
 
@@ -92,5 +93,7 @@ export const ROUTE_NAMES = {
   // 접두어: 'sys-'
   SYS_COMPANY_LIST: 'sys-company-list',
   SYS_COMPANY_REGISTER: 'sys-company-register',
+  SYS_COMPANY_DETAIL: 'sys-company-detail',
   SYS_FEE_SETTING: 'sys-fee-setting',
+  SYS_USER_ACCOUNT_LIST: 'sys-user-account-list',
 }

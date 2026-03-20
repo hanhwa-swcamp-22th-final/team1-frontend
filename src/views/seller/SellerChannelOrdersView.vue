@@ -3,10 +3,12 @@
  * 셀러 주문 연동 및 조회 화면.
  * 채널 연결 카드와 통합 주문 목록을 로컬 mock 데이터 기준으로 먼저 구성한다.
  */
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
+import SellerChannelConnectModal from '@/components/seller/SellerChannelConnectModal.vue'
 import {
+  buildSellerConnectedChannelCard,
   filterSellerChannelOrderRows,
   getSellerChannelMeta,
   getSellerChannelOrderStatusMeta,
@@ -23,6 +25,19 @@ const breadcrumb = [{ label: 'Seller' }, { label: '주문 연동 및 조회' }]
 const activeChannel = ref('all')
 const searchKeyword = ref('')
 const toolbarMessage = ref('')
+const channelCards = ref(
+  SELLER_CHANNEL_SYNC_CARDS.map((card) => ({
+    ...card,
+    actions: card.actions.map((action) => ({ ...action })),
+  })),
+)
+const selectedChannelKey = ref('')
+const isConnectModalOpen = ref(false)
+const connectForm = reactive({
+  storeAlias: '',
+  contactEmail: '',
+  syncMode: 'AUTO',
+})
 
 // 페이지네이션은 로컬 mock 기준으로 단순 처리한다.
 const currentPage = ref(1)
@@ -55,10 +70,59 @@ function handlePageChange(page) {
   currentPage.value = page
 }
 
+const selectedChannelCard = computed(() => {
+  return channelCards.value.find((card) => card.key === selectedChannelKey.value) ?? null
+})
+
+function resetConnectForm() {
+  connectForm.storeAlias = ''
+  connectForm.contactEmail = ''
+  connectForm.syncMode = 'AUTO'
+}
+
+function handleOpenConnectModal(card) {
+  selectedChannelKey.value = card.key
+  connectForm.storeAlias = `${card.label} KR Store`
+  connectForm.contactEmail = ''
+  connectForm.syncMode = 'AUTO'
+  isConnectModalOpen.value = true
+}
+
+function handleCloseConnectModal() {
+  isConnectModalOpen.value = false
+  selectedChannelKey.value = ''
+  resetConnectForm()
+}
+
+function handleConfirmChannelConnect() {
+  if (!selectedChannelCard.value) return
+
+  channelCards.value = channelCards.value.map((card) => {
+    if (card.key !== selectedChannelCard.value.key) return card
+
+    return buildSellerConnectedChannelCard(card, {
+      storeAlias: connectForm.storeAlias,
+      connectedAt: '2026-03-19 17:30',
+    })
+  })
+
+  toolbarMessage.value = `${selectedChannelCard.value.label} 채널 연결을 완료했습니다.`
+  handleCloseConnectModal()
+}
+
 // UI 단계라 버튼 클릭은 동기화/가져오기/내보내기 안내 메시지로 처리한다.
 // TODO(frontend): 채널 동기화, 주문 가져오기, 내보내기 실동작을 연결한다.
 function showToolbarMessage(message) {
   toolbarMessage.value = message
+}
+
+function handleCardAction(card, action) {
+  if (action.key === 'connect') {
+    handleOpenConnectModal(card)
+    return
+  }
+
+  showToolbarMessage(`${card.label} ${action.label} UI는 다음 단계에서 연결합니다.`)
 }
 </script>
 
@@ -67,7 +131,7 @@ function showToolbarMessage(message) {
     <section class="seller-channel-orders-page">
       <div class="channel-grid">
         <article
-          v-for="card in SELLER_CHANNEL_SYNC_CARDS"
+          v-for="card in channelCards"
           :key="card.key"
           class="channel-card"
         >
@@ -112,7 +176,7 @@ function showToolbarMessage(message) {
                 'channel-action-btn--primary': action.variant === 'primary',
               }"
               :disabled="action.disabled"
-              @click="showToolbarMessage(`${card.label} ${action.label} UI는 다음 단계에서 연결합니다.`)"
+              @click="handleCardAction(card, action)"
             >
               {{ action.label }}
             </button>
@@ -201,6 +265,14 @@ function showToolbarMessage(message) {
         </BaseTable>
       </section>
     </section>
+
+    <SellerChannelConnectModal
+      :channelCard="selectedChannelCard"
+      :form="connectForm"
+      :isOpen="isConnectModalOpen"
+      @cancel="handleCloseConnectModal"
+      @confirm="handleConfirmChannelConnect"
+    />
   </AppLayout>
 </template>
 

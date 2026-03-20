@@ -99,6 +99,22 @@ export function buildBulkOrderPayload(rows = []) {
   }))
 }
 
+// 업로드 결과 모달에 표시할 요약 정보를 계산한다.
+export function buildOrderUploadResultSummary(rows = [], fileName = '') {
+  const normalizedRows = Array.isArray(rows) ? rows : []
+
+  return {
+    fileName: String(fileName ?? '').trim(),
+    rowCount: normalizedRows.length,
+    totalQuantity: normalizedRows.reduce((sum, row) => sum + Number(row.quantity ?? 0), 0),
+    uniqueSkuCount: new Set(normalizedRows.map((row) => String(row.sku ?? '').trim()).filter(Boolean)).size,
+    uniqueRecipientCount: new Set(
+      normalizedRows.map((row) => String(row.recipient ?? '').trim()).filter(Boolean),
+    ).size,
+    firstOrderNo: normalizedRows[0]?.orderNo ?? '-',
+  }
+}
+
 // 현재 수동 주문 등록 폼을 검증하고 필드별 에러 메시지를 반환한다.
 export function validateOrderForm(form = {}) {
   const errors = {

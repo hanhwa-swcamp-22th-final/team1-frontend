@@ -154,6 +154,79 @@ export const SELLER_PRODUCT_LIST_ROWS = [
   },
 ]
 
+const SELLER_PRODUCT_DETAIL_MAP = {
+  'seller-product-1': {
+    brand: 'LUMIERE BEAUTY',
+    barcode: '8809812300011',
+    originCountry: '대한민국 (KR)',
+    hsCode: '3304.99.5000',
+    customsValue: 8,
+    unitWeightLbs: 0.32,
+    dimensions: '5.8 x 1.9 x 1.9 in',
+    leadTimeDays: 5,
+    shelfLifeMonths: 24,
+    description: '흡수가 빠른 브라이트닝 앰플. Amazon 주력 SKU로 운영 중이다.',
+    memo: 'Prime 묶음 프로모션 후보 SKU',
+    keywords: ['Amazon', 'Prime', 'Best Seller'],
+  },
+  'seller-product-2': {
+    brand: 'LUMIERE BEAUTY',
+    barcode: '8809812300012',
+    originCountry: '대한민국 (KR)',
+    hsCode: '3304.99.5000',
+    customsValue: 6.5,
+    unitWeightLbs: 0.41,
+    dimensions: '6.1 x 2.2 x 2.2 in',
+    leadTimeDays: 7,
+    shelfLifeMonths: 24,
+    description: '보습 강화 세럼. 재고 부족 구간이라 보충 입고 우선 SKU로 관리한다.',
+    memo: 'ICN-A 안전재고 20 미만',
+    keywords: ['Low Stock', 'Hydration', 'Refill Priority'],
+  },
+  'seller-product-4': {
+    brand: 'LUMIERE BEAUTY',
+    barcode: '8809812300014',
+    originCountry: '대한민국 (KR)',
+    hsCode: '3307.90.0000',
+    customsValue: 4.5,
+    unitWeightLbs: 0.58,
+    dimensions: '8.4 x 5.6 x 1.3 in',
+    leadTimeDays: 4,
+    shelfLifeMonths: 30,
+    description: '5매입 번들 마스크팩. 프로모션 배너와 묶음 판매에 자주 쓰이는 SKU다.',
+    memo: 'Amazon 광고 집행 중',
+    keywords: ['Mask Pack', 'Bundle', 'Campaign'],
+  },
+  'seller-product-7': {
+    brand: 'LUMIERE BEAUTY',
+    barcode: '8809812300017',
+    originCountry: '대한민국 (KR)',
+    hsCode: '3304.99.9000',
+    customsValue: 4.2,
+    unitWeightLbs: 0.76,
+    dimensions: '7.2 x 2.7 x 2.7 in',
+    leadTimeDays: 10,
+    shelfLifeMonths: 24,
+    description: '민감성용 젤 클렌저. 시즌 종료로 현재 판매 비활성 상태다.',
+    memo: '리뉴얼 패키지 적용 전 임시 비활성',
+    keywords: ['Inactive', 'Renewal', 'Cleansing'],
+  },
+  'seller-product-8': {
+    brand: 'LUMIERE BEAUTY',
+    barcode: '8809812300018',
+    originCountry: '대한민국 (KR)',
+    hsCode: '3304.99.9000',
+    customsValue: 7.2,
+    unitWeightLbs: 0.37,
+    dimensions: '5.6 x 2.1 x 1.9 in',
+    leadTimeDays: 6,
+    shelfLifeMonths: 24,
+    description: 'SPF50 선크림. 재고 부족으로 긴급 보충 대상에 포함되어 있다.',
+    memo: 'PUS-B 재고 5개',
+    keywords: ['Suncare', 'Low Stock', 'PUS-B'],
+  },
+}
+
 // 상품 목록 테이블 렌더링에 사용하는 컬럼 정의.
 export const SELLER_PRODUCT_LIST_COLUMNS = [
   { key: 'image', label: '이미지', width: '72px', align: 'center' },
@@ -170,6 +243,34 @@ export const SELLER_PRODUCT_LIST_COLUMNS = [
 // 상품 상태 라벨과 배지 색상을 반환한다.
 export function getSellerProductStatusMeta(status) {
   return SELLER_PRODUCT_STATUS_META[status] ?? { label: status ?? '-', tone: 'default' }
+}
+
+// 상품 상세 모달에 필요한 로컬 mock 정보를 반환한다.
+export function getSellerProductDetailById(productId, product = {}) {
+  const detail = SELLER_PRODUCT_DETAIL_MAP[productId]
+  const salePrice = Number(product.salePrice ?? 0)
+  const costPrice = Number(product.costPrice ?? 0)
+  const totalStock = Number(product.availableStock ?? 0) + Number(product.allocatedStock ?? 0)
+  const marginAmount = Number((salePrice - costPrice).toFixed(2))
+  const marginRate = salePrice > 0 ? Number((((salePrice - costPrice) / salePrice) * 100).toFixed(1)) : 0
+
+  return {
+    brand: detail?.brand ?? 'LUMIERE BEAUTY',
+    barcode: detail?.barcode ?? '미등록',
+    originCountry: detail?.originCountry ?? '대한민국 (KR)',
+    hsCode: detail?.hsCode ?? '3304.99.9000',
+    customsValue: detail?.customsValue ?? costPrice,
+    unitWeightLbs: detail?.unitWeightLbs ?? 0,
+    dimensions: detail?.dimensions ?? '사이즈 정보 준비중',
+    leadTimeDays: detail?.leadTimeDays ?? 7,
+    shelfLifeMonths: detail?.shelfLifeMonths ?? 24,
+    description: detail?.description ?? `${product.productName ?? '상품'} 상세 정보 준비중`,
+    memo: detail?.memo ?? '상세 운영 메모 준비 전 기본 정보만 표시합니다.',
+    keywords: detail?.keywords ?? [product.category ?? '기본', product.warehouseName ?? 'Warehouse'],
+    totalStock,
+    marginAmount,
+    marginRate,
+  }
 }
 
 /**

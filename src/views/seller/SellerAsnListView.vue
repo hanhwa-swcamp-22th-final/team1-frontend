@@ -8,9 +8,12 @@ import { RouterLink } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import SellerConfirmDialog from '@/components/seller/SellerConfirmDialog.vue'
+import SellerAsnDetailModal from '@/components/seller/SellerAsnDetailModal.vue'
 import { ASN_STATUS, ROUTE_NAMES } from '@/constants'
 import {
   filterSellerAsnRows,
+  getSellerAsnDetailById,
   getSellerAsnKpi,
   SELLER_ASN_LIST_COLUMNS,
   SELLER_ASN_LIST_ROWS,
@@ -22,6 +25,13 @@ const breadcrumb = [{ label: 'Seller' }, { label: 'ASN 목록' }]
 // 목록 화면은 상태 탭과 검색어만으로 먼저 필터링한다.
 const activeStatus = ref('all')
 const searchKeyword = ref('')
+const toolbarMessage = ref('')
+const asnRows = ref(SELLER_ASN_LIST_ROWS.map((row) => ({ ...row })))
+const selectedAsnId = ref('')
+const pendingCancelAsnId = ref('')
+const isDetailModalOpen = ref(false)
+const isCancelDialogOpen = ref(false)
+const isCsvDialogOpen = ref(false)
 
 // 페이지네이션은 클라이언트 기준으로 단순 처리한다.
 const currentPage = ref(1)
@@ -33,7 +43,7 @@ watch([activeStatus, searchKeyword], () => {
 })
 
 // 상단 KPI 카드에 필요한 집계를 계산한다.
-const kpi = computed(() => getSellerAsnKpi(SELLER_ASN_LIST_ROWS))
+const kpi = computed(() => getSellerAsnKpi(asnRows.value))
 
 // 상태 탭은 KPI 수치를 함께 보여준다.
 const statusTabs = computed(() => [
@@ -45,7 +55,7 @@ const statusTabs = computed(() => [
 
 // 현재 상태 탭과 검색어를 기준으로 목록을 필터링한다.
 const filteredRows = computed(() => {
-  return filterSellerAsnRows(SELLER_ASN_LIST_ROWS, {
+  return filterSellerAsnRows(asnRows.value, {
     status: activeStatus.value,
     search: searchKeyword.value,
   })
@@ -65,6 +75,73 @@ const pagination = computed(() => ({
 
 function handlePageChange(page) {
   currentPage.value = page
+}
+
+const selectedAsn = computed(() => {
+  return asnRows.value.find((row) => row.id === selectedAsnId.value) ?? null
+})
+
+const selectedAsnDetail = computed(() => {
+  if (!selectedAsn.value) return null
+  return getSellerAsnDetailById(selectedAsn.value.id, selectedAsn.value)
+})
+
+const pendingCancelAsn = computed(() => {
+  return asnRows.value.find((row) => row.id === pendingCancelAsnId.value) ?? null
+})
+
+const csvDialogMessage = computed(() => {
+  const count = filteredRows.value.length
+  return `${count}건 ASN 목록을 CSV로 내보내시겠습니까?`
+})
+
+function handleOpenAsnDetail(row) {
+  selectedAsnId.value = row.id
+  isDetailModalOpen.value = true
+}
+
+function handleCloseAsnDetail() {
+  isDetailModalOpen.value = false
+}
+
+function handleOpenCancelDialog(row) {
+  pendingCancelAsnId.value = row.id
+  isCancelDialogOpen.value = true
+}
+
+function handleCloseCancelDialog() {
+  isCancelDialogOpen.value = false
+  pendingCancelAsnId.value = ''
+}
+
+function handleConfirmCancel() {
+  if (!pendingCancelAsn.value) return
+
+  asnRows.value = asnRows.value.map((row) => {
+    if (row.id !== pendingCancelAsn.value.id) return row
+
+    return {
+      ...row,
+      status: ASN_STATUS.CANCELLED,
+      note: `${row.note} / 셀러 취소 요청`,
+    }
+  })
+
+  toolbarMessage.value = `${pendingCancelAsn.value.asnNo} ASN을 취소 처리했습니다.`
+  handleCloseCancelDialog()
+}
+
+function handleOpenCsvDialog() {
+  isCsvDialogOpen.value = true
+}
+
+function handleCloseCsvDialog() {
+  isCsvDialogOpen.value = false
+}
+
+function handleConfirmCsv() {
+  toolbarMessage.value = `${filteredRows.value.length}건 ASN CSV 내보내기 요청을 접수했습니다.`
+  handleCloseCsvDialog()
 }
 </script>
 
@@ -111,14 +188,23 @@ function handlePageChange(page) {
             <h2 class="section-title">등록한 ASN을 상태별로 확인합니다.</h2>
           </div>
 
-          <label class="search-field">
-            <span class="search-label">검색</span>
-            <input
-              v-model="searchKeyword"
-              type="text"
-              placeholder="ASN 번호, 창고, 참조 번호, 메모"
-            />
-          </label>
+          <div class="list-tools">
+            <label class="search-field">
+              <input
+                v-model="searchKeyword"
+                type="text"
+                placeholder="ASN 번호, 창고, 참조 번호, 메모"
+              />
+            </label>
+
+            <button
+              class="ui-btn ui-btn--ghost toolbar-btn"
+              type="button"
+              @click="handleOpenCsvDialog"
+            >
+              CSV 내보내기
+            </button>
+          </div>
         </div>
 
         <!-- 상태 탭으로 제출됨/입고완료/취소 상태를 빠르게 전환한다. -->
@@ -136,6 +222,8 @@ function handlePageChange(page) {
           </button>
         </div>
 
+        <p v-if="toolbarMessage" class="toolbar-message">{{ toolbarMessage }}</p>
+
         <BaseTable
           :columns="SELLER_ASN_LIST_COLUMNS"
           :rows="pagedRows"
@@ -143,6 +231,18 @@ function handlePageChange(page) {
           row-key="id"
           @page-change="handlePageChange"
         >
+          <template #cell-asnNo="{ row, value }">
+            <button class="cell-trigger cell-trigger--text" type="button" @click="handleOpenAsnDetail(row)">
+              <span class="asn-code">{{ value }}</span>
+            </button>
+          </template>
+
+          <template #cell-warehouseName="{ row, value }">
+            <button class="cell-trigger cell-trigger--text" type="button" @click="handleOpenAsnDetail(row)">
+              {{ value }}
+            </button>
+          </template>
+
           <template #cell-skuCount="{ value }">
             {{ value }}종
           </template>
@@ -151,12 +251,60 @@ function handlePageChange(page) {
             {{ value.toLocaleString() }}
           </template>
 
-          <template #cell-status="{ value }">
-            <StatusBadge :status="value" type="asn" />
+          <template #cell-referenceNo="{ row, value }">
+            <button class="cell-trigger cell-trigger--text" type="button" @click="handleOpenAsnDetail(row)">
+              {{ value }}
+            </button>
+          </template>
+
+          <template #cell-status="{ row, value }">
+            <button class="cell-trigger" type="button" @click="handleOpenAsnDetail(row)">
+              <StatusBadge :status="value" type="asn" />
+            </button>
+          </template>
+
+          <template #cell-actions="{ row }">
+            <div class="action-group">
+              <button
+                v-if="row.status === ASN_STATUS.SUBMITTED"
+                class="action-btn action-btn--danger"
+                type="button"
+                @click="handleOpenCancelDialog(row)"
+              >
+                취소
+              </button>
+              <span v-else class="action-empty">—</span>
+            </div>
           </template>
         </BaseTable>
       </section>
     </section>
+
+    <SellerAsnDetailModal
+      :asn="selectedAsn"
+      :detail="selectedAsnDetail"
+      :isOpen="isDetailModalOpen"
+      @cancel="handleCloseAsnDetail"
+    />
+
+    <SellerConfirmDialog
+      :isOpen="isCancelDialogOpen"
+      :message="pendingCancelAsn ? `${pendingCancelAsn.asnNo} ASN을 취소하시겠습니까?` : 'ASN을 취소하시겠습니까?'"
+      confirmLabel="취소 확정"
+      title="ASN 취소"
+      :danger="true"
+      @cancel="handleCloseCancelDialog"
+      @confirm="handleConfirmCancel"
+    />
+
+    <SellerConfirmDialog
+      :isOpen="isCsvDialogOpen"
+      :message="csvDialogMessage"
+      confirmLabel="내보내기"
+      title="ASN CSV 내보내기"
+      @cancel="handleCloseCsvDialog"
+      @confirm="handleConfirmCsv"
+    />
   </AppLayout>
 </template>
 
@@ -228,21 +376,25 @@ function handlePageChange(page) {
   font-size: var(--font-size-xl);
 }
 
-.search-field {
-  min-width: min(100%, 320px);
+.list-tools {
   display: flex;
-  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
   gap: var(--space-2);
 }
 
-.search-label {
-  color: var(--t3);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
+.search-field {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  min-width: 0;
+  flex: 0 1 420px;
 }
 
 .search-field input {
-  width: 100%;
+  width: min(100%, 320px);
+  min-width: 240px;
   min-height: 38px;
   padding: 0 12px;
   border: 1px solid var(--border);
@@ -259,6 +411,11 @@ function handlePageChange(page) {
 .search-field input:focus {
   border-color: var(--blue);
   box-shadow: 0 0 0 3px var(--blue-pale);
+}
+
+.toolbar-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .status-tabs {
@@ -293,6 +450,65 @@ function handlePageChange(page) {
   color: var(--blue);
 }
 
+.toolbar-message {
+  margin: 0 0 var(--space-4);
+  color: var(--t3);
+  font-size: var(--font-size-sm);
+}
+
+.cell-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cell-trigger--text:hover {
+  color: var(--blue);
+}
+
+.asn-code {
+  color: var(--t1);
+  font-family: var(--font-condensed);
+  font-size: var(--font-size-md);
+  font-weight: 700;
+}
+
+.action-group {
+  display: flex;
+  justify-content: center;
+}
+
+.action-btn {
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.action-btn--danger {
+  border: 1px solid var(--red);
+  background: var(--surface);
+  color: var(--red);
+}
+
+.action-btn--danger:hover {
+  background: var(--red-pale);
+}
+
+.action-empty {
+  color: var(--t4);
+  font-size: var(--font-size-sm);
+}
+
 @media (max-width: 1080px) {
   .kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -301,6 +517,11 @@ function handlePageChange(page) {
   .list-head {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .list-tools {
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 }
 

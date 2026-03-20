@@ -6,8 +6,10 @@
 import { computed, ref, watch } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
+import SellerInventoryDetailModal from '@/components/seller/SellerInventoryDetailModal.vue'
 import {
   filterSellerInventoryRows,
+  getSellerInventoryDetailById,
   getSellerInventoryStatusMeta,
   SELLER_INVENTORY_LIST_COLUMNS,
   SELLER_INVENTORY_LIST_ROWS,
@@ -22,6 +24,9 @@ const activeStatus = ref('all')
 const activeWarehouse = ref('all')
 const searchKeyword = ref('')
 const toolbarMessage = ref('')
+const inventoryRows = ref(SELLER_INVENTORY_LIST_ROWS.map((row) => ({ ...row })))
+const selectedInventoryId = ref('')
+const isDetailModalOpen = ref(false)
 
 // 페이지네이션은 로컬 mock 기준으로 단순 처리한다.
 const currentPage = ref(1)
@@ -34,7 +39,7 @@ watch([activeStatus, activeWarehouse, searchKeyword], () => {
 
 // 현재 상태와 창고, 검색어를 기준으로 재고 목록을 필터링한다.
 const filteredRows = computed(() => {
-  return filterSellerInventoryRows(SELLER_INVENTORY_LIST_ROWS, {
+  return filterSellerInventoryRows(inventoryRows.value, {
     status: activeStatus.value,
     warehouse: activeWarehouse.value,
     search: searchKeyword.value,
@@ -57,7 +62,25 @@ function handlePageChange(page) {
   currentPage.value = page
 }
 
-// UI 범위만 구현하므로 CSV와 상세 모달은 안내 메시지로 처리한다.
+const selectedInventory = computed(() => {
+  return inventoryRows.value.find((row) => row.id === selectedInventoryId.value) ?? null
+})
+
+const selectedInventoryDetail = computed(() => {
+  if (!selectedInventory.value) return null
+  return getSellerInventoryDetailById(selectedInventory.value.id, selectedInventory.value)
+})
+
+function handleOpenInventoryDetail(row) {
+  selectedInventoryId.value = row.id
+  isDetailModalOpen.value = true
+}
+
+function handleCloseInventoryDetail() {
+  isDetailModalOpen.value = false
+}
+
+// UI 범위만 구현하므로 CSV는 안내 메시지로 처리한다.
 function showToolbarMessage(message) {
   toolbarMessage.value = message
 }
@@ -129,8 +152,16 @@ function showToolbarMessage(message) {
           row-key="id"
           @page-change="handlePageChange"
         >
-          <template #cell-sku="{ value }">
-            <span class="sku-code">{{ value }}</span>
+          <template #cell-sku="{ row, value }">
+            <button class="cell-trigger cell-trigger--text" type="button" @click="handleOpenInventoryDetail(row)">
+              <span class="sku-code">{{ value }}</span>
+            </button>
+          </template>
+
+          <template #cell-productName="{ row, value }">
+            <button class="cell-trigger cell-trigger--text" type="button" @click="handleOpenInventoryDetail(row)">
+              <span class="product-name">{{ value }}</span>
+            </button>
           </template>
 
           <template #cell-warehouseName="{ value }">
@@ -165,18 +196,26 @@ function showToolbarMessage(message) {
             <span class="stock-sub-value">{{ value.toLocaleString() }}</span>
           </template>
 
-          <template #cell-status="{ value }">
-            <!-- TODO(frontend): 재고 상세 모달 또는 상세 화면을 연결한다. -->
-            <span
-              class="inventory-status-badge"
-              :class="`inventory-status-badge--${getSellerInventoryStatusMeta(value).tone}`"
-            >
-              {{ getSellerInventoryStatusMeta(value).label }}
-            </span>
+          <template #cell-status="{ row, value }">
+            <button class="cell-trigger" type="button" @click="handleOpenInventoryDetail(row)">
+              <span
+                class="inventory-status-badge"
+                :class="`inventory-status-badge--${getSellerInventoryStatusMeta(value).tone}`"
+              >
+                {{ getSellerInventoryStatusMeta(value).label }}
+              </span>
+            </button>
           </template>
         </BaseTable>
       </section>
     </section>
+
+    <SellerInventoryDetailModal
+      :detail="selectedInventoryDetail"
+      :inventory="selectedInventory"
+      :isOpen="isDetailModalOpen"
+      @cancel="handleCloseInventoryDetail"
+    />
   </AppLayout>
 </template>
 
@@ -295,11 +334,35 @@ function showToolbarMessage(message) {
   font-weight: 600;
 }
 
+.cell-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cell-trigger--text:hover .sku-code,
+.cell-trigger--text:hover .product-name {
+  color: var(--blue);
+}
+
 .sku-code {
   color: var(--t1);
   font-family: var(--font-condensed);
   font-size: var(--font-size-md);
   font-weight: 700;
+}
+
+.product-name {
+  color: var(--t2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
 }
 
 .warehouse-chip {
@@ -359,6 +422,11 @@ function showToolbarMessage(message) {
 .inventory-status-badge--red {
   background: var(--red-pale);
   color: #7f1d1d;
+}
+
+.inventory-status-badge--default {
+  background: var(--surface-2);
+  color: var(--t3);
 }
 
 @media (max-width: 1200px) {

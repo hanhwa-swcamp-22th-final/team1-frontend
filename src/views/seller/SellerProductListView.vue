@@ -7,9 +7,12 @@ import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
+import SellerConfirmDialog from '@/components/seller/SellerConfirmDialog.vue'
+import SellerProductDetailModal from '@/components/seller/SellerProductDetailModal.vue'
 import { ROUTE_NAMES } from '@/constants'
 import {
   filterSellerProductRows,
+  getSellerProductDetailById,
   getSellerProductStatusMeta,
   SELLER_PRODUCT_CATEGORY_OPTIONS,
   SELLER_PRODUCT_LIST_COLUMNS,
@@ -24,6 +27,12 @@ const activeStatus = ref('all')
 const activeCategory = ref('all')
 const searchKeyword = ref('')
 const toolbarMessage = ref('')
+const productRows = ref(SELLER_PRODUCT_LIST_ROWS.map((row) => ({ ...row })))
+const selectedProductId = ref('')
+const pendingStatusProductId = ref('')
+const pendingStatusMode = ref('')
+const isDetailModalOpen = ref(false)
+const isStatusDialogOpen = ref(false)
 
 // 페이지네이션은 로컬 mock 기준으로 단순 처리한다.
 const currentPage = ref(1)
@@ -36,7 +45,7 @@ watch([activeStatus, activeCategory, searchKeyword], () => {
 
 // 현재 상태와 카테고리, 검색어를 기준으로 상품 목록을 필터링한다.
 const filteredRows = computed(() => {
-  return filterSellerProductRows(SELLER_PRODUCT_LIST_ROWS, {
+  return filterSellerProductRows(productRows.value, {
     status: activeStatus.value,
     category: activeCategory.value,
     search: searchKeyword.value,
@@ -59,9 +68,92 @@ function handlePageChange(page) {
   currentPage.value = page
 }
 
-// UI 범위만 구현하므로 CSV, 수정, 비활성은 안내 메시지로 처리한다.
+const selectedProduct = computed(() => {
+  return productRows.value.find((row) => row.id === selectedProductId.value) ?? null
+})
+
+const selectedProductDetail = computed(() => {
+  if (!selectedProduct.value) return null
+  return getSellerProductDetailById(selectedProduct.value.id, selectedProduct.value)
+})
+
+const pendingStatusProduct = computed(() => {
+  return productRows.value.find((row) => row.id === pendingStatusProductId.value) ?? null
+})
+
+const isReactivateAction = computed(() => pendingStatusMode.value === 'reactivate')
+
+const statusDialogTitle = computed(() => {
+  return isReactivateAction.value ? '상품 재활성' : '상품 비활성'
+})
+
+const statusDialogConfirmLabel = computed(() => {
+  return isReactivateAction.value ? '재활성 확정' : '비활성 확정'
+})
+
+const statusDialogMessage = computed(() => {
+  if (!pendingStatusProduct.value) return '상품 상태를 변경하시겠습니까?'
+
+  return isReactivateAction.value
+    ? `${pendingStatusProduct.value.sku} 상품을 다시 판매 상태로 전환하시겠습니까?`
+    : `${pendingStatusProduct.value.sku} 상품을 비활성 처리하시겠습니까?`
+})
+
+// UI 범위만 구현하므로 CSV와 수정은 안내 메시지로 남겨 둔다.
 function showToolbarMessage(message) {
   toolbarMessage.value = message
+}
+
+function handleOpenProductDetail(row) {
+  selectedProductId.value = row.id
+  isDetailModalOpen.value = true
+}
+
+function handleCloseProductDetail() {
+  isDetailModalOpen.value = false
+}
+
+function handleOpenStatusDialog(row, mode) {
+  pendingStatusProductId.value = row.id
+  pendingStatusMode.value = mode
+  isStatusDialogOpen.value = true
+}
+
+function handleCloseStatusDialog() {
+  isStatusDialogOpen.value = false
+  pendingStatusProductId.value = ''
+  pendingStatusMode.value = ''
+}
+
+function buildReactivatedStatus(row) {
+  if (row.previousStatus && row.previousStatus !== 'INACTIVE') return row.previousStatus
+  if (Number(row.availableStock ?? 0) <= 0) return 'OUT_OF_STOCK'
+  if (Number(row.availableStock ?? 0) <= 10) return 'LOW_STOCK'
+  return 'ACTIVE'
+}
+
+function handleConfirmStatusChange() {
+  if (!pendingStatusProduct.value) return
+
+  const nextStatus = isReactivateAction.value
+    ? buildReactivatedStatus(pendingStatusProduct.value)
+    : 'INACTIVE'
+
+  productRows.value = productRows.value.map((row) => {
+    if (row.id !== pendingStatusProduct.value.id) return row
+
+    return {
+      ...row,
+      previousStatus: isReactivateAction.value ? '' : row.status,
+      status: nextStatus,
+    }
+  })
+
+  toolbarMessage.value = isReactivateAction.value
+    ? `${pendingStatusProduct.value.sku} 상품을 ${getSellerProductStatusMeta(nextStatus).label} 상태로 전환했습니다.`
+    : `${pendingStatusProduct.value.sku} 상품을 비활성 처리했습니다.`
+
+  handleCloseStatusDialog()
 }
 </script>
 
@@ -138,13 +230,23 @@ function showToolbarMessage(message) {
           @page-change="handlePageChange"
         >
           <template #cell-image="{ row }">
-            <div class="image-thumb" :title="row.productName">
-              <span>{{ row.sku.slice(0, 2) }}</span>
-            </div>
+            <button class="cell-trigger cell-trigger--thumb" type="button" @click="handleOpenProductDetail(row)">
+              <div class="image-thumb" :title="row.productName">
+                <span>{{ row.sku.slice(0, 2) }}</span>
+              </div>
+            </button>
           </template>
 
-          <template #cell-sku="{ value }">
-            <span class="sku-code">{{ value }}</span>
+          <template #cell-sku="{ row, value }">
+            <button class="cell-trigger cell-trigger--text" type="button" @click="handleOpenProductDetail(row)">
+              <span class="sku-code">{{ value }}</span>
+            </button>
+          </template>
+
+          <template #cell-productName="{ row, value }">
+            <button class="cell-trigger cell-trigger--text" type="button" @click="handleOpenProductDetail(row)">
+              <span class="product-name">{{ value }}</span>
+            </button>
           </template>
 
           <template #cell-warehouseName="{ value }">
@@ -173,13 +275,15 @@ function showToolbarMessage(message) {
             <span class="stock-allocated">{{ row.allocatedStock }}</span>
           </template>
 
-          <template #cell-status="{ value }">
-            <span
-              class="product-status-badge"
-              :class="`product-status-badge--${getSellerProductStatusMeta(value).tone}`"
-            >
-              {{ getSellerProductStatusMeta(value).label }}
-            </span>
+          <template #cell-status="{ row, value }">
+            <button class="cell-trigger" type="button" @click="handleOpenProductDetail(row)">
+              <span
+                class="product-status-badge"
+                :class="`product-status-badge--${getSellerProductStatusMeta(value).tone}`"
+              >
+                {{ getSellerProductStatusMeta(value).label }}
+              </span>
+            </button>
           </template>
 
           <template #cell-actions="{ row }">
@@ -197,7 +301,7 @@ function showToolbarMessage(message) {
                 v-if="row.status !== 'INACTIVE'"
                 class="action-btn action-btn--danger"
                 type="button"
-                @click="showToolbarMessage(`${row.sku} 비활성 UI는 다음 단계에서 연결합니다.`)"
+                @click="handleOpenStatusDialog(row, 'deactivate')"
               >
                 비활성
               </button>
@@ -206,7 +310,7 @@ function showToolbarMessage(message) {
                 v-else
                 class="action-btn action-btn--success"
                 type="button"
-                @click="showToolbarMessage(`${row.sku} 재활성 UI는 다음 단계에서 연결합니다.`)"
+                @click="handleOpenStatusDialog(row, 'reactivate')"
               >
                 재활성
               </button>
@@ -215,6 +319,23 @@ function showToolbarMessage(message) {
         </BaseTable>
       </section>
     </section>
+
+    <SellerProductDetailModal
+      :detail="selectedProductDetail"
+      :isOpen="isDetailModalOpen"
+      :product="selectedProduct"
+      @cancel="handleCloseProductDetail"
+    />
+
+    <SellerConfirmDialog
+      :isOpen="isStatusDialogOpen"
+      :title="statusDialogTitle"
+      :message="statusDialogMessage"
+      :confirmLabel="statusDialogConfirmLabel"
+      :danger="!isReactivateAction"
+      @cancel="handleCloseStatusDialog"
+      @confirm="handleConfirmStatusChange"
+    />
   </AppLayout>
 </template>
 
@@ -348,11 +469,39 @@ function showToolbarMessage(message) {
   font-weight: 700;
 }
 
+.cell-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cell-trigger--thumb {
+  justify-content: center;
+}
+
+.cell-trigger--text:hover .sku-code,
+.cell-trigger--text:hover .product-name {
+  color: var(--blue);
+}
+
 .sku-code {
   color: var(--t1);
   font-family: var(--font-condensed);
   font-size: var(--font-size-md);
   font-weight: 700;
+}
+
+.product-name {
+  color: var(--t2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
 }
 
 .warehouse-chip {

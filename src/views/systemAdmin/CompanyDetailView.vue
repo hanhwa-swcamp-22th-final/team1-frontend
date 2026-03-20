@@ -1,176 +1,374 @@
 <script setup>
-import { computed, reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
-import BaseTable from '@/components/common/BaseTable.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
+import BaseTable from '@/components/common/BaseTable.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
-import { ROUTE_NAMES } from '@/constants'
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import { formatDate } from '@/utils/format'
+import { createCompanyLog, createUser, getCompanies, getCompanyLogs, getUsers, updateCompany } from '@/api/systemAdmin'
+import { useUiStore } from '@/stores/ui'
 
 const route = useRoute()
-const router = useRouter()
-const breadcrumb = [{ label: '플랫폼 관리' }, { label: '업체 관리' }, { label: '업체 상세' }]
+const ui = useUiStore()
+const companyId = Number(route.params.id)
+const company = ref(null)
+const users = ref([])
+const logs = ref([])
+const editForm = reactive({ representative: '', businessNumber: '', phone: '', email: '', address: '' })
+const inviteModal = reactive({ open: false, name: '', email: '', error: '' })
 
-const companies = ref([
-  {
-    id: 1,
-    name: 'FASTSHIP LOGISTICS', tenantCode: 'US-3PL-001', status: '활성', businessNumber: '91-4820318', representative: 'Sarah Park', phone: '+1-213-555-1821', email: 'ops@fastshiplogistics.com', address: '1850 Alameda St, Los Angeles, CA 90058', companyType: 'K-글로벌 전문',
-    warehouses: [{ id: 1, code: 'LAX-A', name: 'LA Main Hub', status: '운영중', manager: 'Mike Choi' }],
-    sellers: [{ id: 1, name: 'Nordic House', country: '미국', joinedAt: '2025-12-01' }],
-    admins: [
-      { id: 1, name: 'Sarah Park', email: 'sarah.park@fastship.us', status: '활성', lastLogin: '2026-03-13 09:18' },
-      { id: 2, name: 'Daniel Kim', email: 'daniel@fastship.us', status: '초대대기', lastLogin: '-' },
-    ],
-    logs: [
-      { id: 1, at: '2026-03-12 10:12', actor: 'sysadmin@conk.io', action: '업체 등록' },
-      { id: 2, at: '2026-03-13 09:21', actor: 'sysadmin@conk.io', action: '대표 연락처 수정' },
-    ],
-  },
-  {
-    id: 2,
-    name: 'NOVA FULFILL KOREA', tenantCode: 'KR-3PL-007', status: '설정중', businessNumber: '220-88-10345', representative: 'Kim Minsoo', phone: '+82-2-555-0912', email: 'contact@novafullfill.kr', address: '321 Teheran-ro, Gangnam-gu, Seoul', companyType: '범용',
-    warehouses: [{ id: 2, code: 'ICN-A', name: 'Incheon Main WH', status: '설정중', manager: '정민호' }],
-    sellers: [{ id: 2, name: 'Wave For', country: '한국', joinedAt: '2026-02-03' }],
-    admins: [{ id: 3, name: 'Ops Team', email: 'ops@novafullfill.kr', status: '초대대기', lastLogin: '-' }],
-    logs: [{ id: 3, at: '2026-02-03 16:30', actor: 'sysadmin@conk.io', action: '업체 등록' }],
-  },
-])
+const breadcrumb = computed(() => [{ label: '플랫폼 관리' }, { label: '업체 관리' }, { label: company.value?.name || '업체 상세' }])
 
-const company = computed(() => companies.value.find((item) => String(item.id) === String(route.params.id)) ?? companies.value[0])
-const editMode = ref(false)
-const saveModal = ref(false)
-const inviteModal = ref(false)
-const inviteForm = reactive({ name: '', email: '' })
-const form = reactive({ businessNumber: '', representative: '', phone: '', email: '', address: '', companyType: '' })
-
-function syncForm() {
-  form.businessNumber = company.value.businessNumber
-  form.representative = company.value.representative
-  form.phone = company.value.phone
-  form.email = company.value.email
-  form.address = company.value.address
-  form.companyType = company.value.companyType
-}
-syncForm()
-
-function openSave() { saveModal.value = true }
-function confirmSave() {
-  company.value.businessNumber = form.businessNumber
-  company.value.representative = form.representative
-  company.value.phone = form.phone
-  company.value.email = form.email
-  company.value.address = form.address
-  company.value.companyType = form.companyType
-  company.value.logs.unshift({ id: Date.now(), at: '2026-03-19 11:20', actor: 'sysadmin@conk.io', action: '업체 기본 정보 수정' })
-  saveModal.value = false
-  editMode.value = false
-}
-function issueAdmin() {
-  company.value.admins.push({ id: Date.now(), name: inviteForm.name, email: inviteForm.email, status: '초대대기', lastLogin: '-' })
-  company.value.logs.unshift({ id: Date.now(), at: '2026-03-19 11:42', actor: 'sysadmin@conk.io', action: `총괄 관리자 추가 발급 (${inviteForm.email})` })
-  inviteForm.name = ''
-  inviteForm.email = ''
-  inviteModal.value = false
-}
-
-const warehouseColumns = [
-  { key: 'code', label: '창고 코드', width: '20%' },
-  { key: 'name', label: '창고명', width: '35%' },
-  { key: 'status', label: '상태', width: '20%' },
-  { key: 'manager', label: '담당자', width: '25%' },
-]
-const sellerColumns = [
-  { key: 'name', label: '셀러 회사', width: '40%' },
-  { key: 'country', label: '국가', width: '25%' },
-  { key: 'joinedAt', label: '등록일', width: '35%' },
-]
 const adminColumns = [
-  { key: 'name', label: '이름', width: '20%' },
-  { key: 'email', label: '이메일', width: '35%' },
-  { key: 'status', label: '상태', width: '15%' },
-  { key: 'lastLogin', label: '마지막 로그인', width: '30%' },
+  { key: 'name', label: '이름' },
+  { key: 'email', label: '이메일' },
+  { key: 'status', label: '상태', align: 'center' },
+  { key: 'lastLoginAt', label: '마지막 로그인', align: 'center' },
+]
+const warehouseColumns = [
+  { key: 'code', label: '코드' },
+  { key: 'name', label: '창고명' },
+  { key: 'status', label: '상태', align: 'center' },
 ]
 const logColumns = [
-  { key: 'at', label: '일시', width: '22%' },
-  { key: 'actor', label: '수정자', width: '28%' },
-  { key: 'action', label: '작업 내용', width: '50%' },
+  { key: 'at', label: '일시', width: '25%' },
+  { key: 'actor', label: '작업자', width: '25%' },
+  { key: 'action', label: '변경 내용', width: '50%' },
 ]
+
+async function fetchData() {
+  ui.setLoading(true)
+  try {
+    const [companyRes, userRes, logRes] = await Promise.all([
+      getCompanies({ id: companyId }),
+      getUsers({ companyId }),
+      getCompanyLogs({ companyId }),
+    ])
+    company.value = companyRes.data[0] || null
+    users.value = userRes.data
+    logs.value = logRes.data.sort((a, b) => new Date(b.at) - new Date(a.at))
+    if (company.value) {
+      editForm.representative = company.value.representative || ''
+      editForm.businessNumber = company.value.businessNumber || ''
+      editForm.phone = company.value.phone || ''
+      editForm.email = company.value.email || ''
+      editForm.address = company.value.address || ''
+    }
+  } finally {
+    ui.setLoading(false)
+  }
+}
+
+onMounted(fetchData)
+
+const masterAdmins = computed(() => users.value.filter((item) => item.role === 'MASTER_ADMIN'))
+
+function statusText(status) {
+  return { ACTIVE: '활성', SETTING: '설정중', INACTIVE: '비활성', INVITE_PENDING: '초대대기', LOCKED: '잠금' }[status] ?? status
+}
+
+function statusClass(status) {
+  return {
+    ACTIVE: 'chip chip--green',
+    SETTING: 'chip chip--amber',
+    INACTIVE: 'chip chip--red',
+    INVITE_PENDING: 'chip chip--blue',
+    LOCKED: 'chip chip--purple',
+  }[status] ?? 'chip'
+}
+
+async function saveBasicInfo() {
+  if (!company.value) return
+  ui.setLoading(true)
+  try {
+    await updateCompany(company.value.id, {
+      representative: editForm.representative,
+      businessNumber: editForm.businessNumber,
+      phone: editForm.phone,
+      email: editForm.email,
+      address: editForm.address,
+    })
+    await createCompanyLog({
+      id: Date.now(), companyId: company.value.id, at: new Date().toISOString(), actor: 'sys.admin@conk.com', action: '업체 기본 정보 수정',
+    })
+    await fetchData()
+  } finally {
+    ui.setLoading(false)
+  }
+}
+
+async function issueAdmin() {
+  if (!inviteModal.name.trim() || !inviteModal.email.trim()) {
+    inviteModal.error = '이름과 이메일을 모두 입력해주세요.'
+    return
+  }
+  const nextId = Math.max(0, ...users.value.map((item) => Number(item.id) || 0)) + 1
+  ui.setLoading(true)
+  try {
+    await createUser({
+      id: nextId,
+      companyId,
+      name: inviteModal.name.trim(),
+      email: inviteModal.email.trim(),
+      role: 'MASTER_ADMIN',
+      organization: company.value.name,
+      warehouse: '-',
+      status: 'INVITE_PENDING',
+      registeredAt: new Date().toISOString(),
+      lastLoginAt: null,
+      wasActiveBeforeCompanyInactivation: false,
+    })
+    await updateCompany(companyId, { userCount: Number(company.value.userCount || 0) + 1 })
+    await createCompanyLog({ id: Date.now(), companyId, at: new Date().toISOString(), actor: 'sys.admin@conk.com', action: '총괄 관리자 추가 발급' })
+    inviteModal.open = false
+    inviteModal.name = ''
+    inviteModal.email = ''
+    await fetchData()
+  } finally {
+    ui.setLoading(false)
+  }
+}
 </script>
 
 <template>
-  <AppLayout :breadcrumb="breadcrumb" title="업체 상세">
-    <template #header-action>
-      <button class="ui-btn ui-btn--ghost" @click="router.push({ name: ROUTE_NAMES.SYS_COMPANY_LIST })">목록</button>
-      <button v-if="!editMode" class="ui-btn ui-btn--primary" @click="editMode = true">정보 수정</button>
-      <button v-else class="ui-btn ui-btn--primary" @click="openSave">수정 저장</button>
-    </template>
+  <AppLayout :breadcrumb="breadcrumb" :title="company?.name || '업체 상세'">
+    <LoadingSpinner v-if="ui.isLoading" fullscreen />
 
-    <div class="page-stack">
-      <section class="detail-card">
-        <div class="section-head"><h3>{{ company.name }}</h3><span class="status-chip">{{ company.status }}</span></div>
-        <div class="info-grid two">
-          <BaseForm label="테넌트 코드"><input :value="company.tenantCode" disabled /></BaseForm>
-          <BaseForm label="사업자등록번호"><input v-model="form.businessNumber" :disabled="!editMode" /></BaseForm>
-          <BaseForm label="대표자명"><input v-model="form.representative" :disabled="!editMode" /></BaseForm>
-          <BaseForm label="업체 유형">
-            <select v-model="form.companyType" :disabled="!editMode"><option>K-글로벌 전문</option><option>범용</option></select>
-          </BaseForm>
-          <BaseForm label="연락처"><input v-model="form.phone" :disabled="!editMode" /></BaseForm>
-          <BaseForm label="이메일"><input v-model="form.email" :disabled="!editMode" /></BaseForm>
+    <div v-if="company" class="page-grid">
+      <section class="overview-card">
+        <div class="overview-main">
+          <p class="overview-label">테넌트 코드</p>
+          <strong class="overview-code">{{ company.tenantCode }}</strong>
+          <p class="overview-sub">테넌트 코드는 수정할 수 없습니다.</p>
         </div>
-        <div class="info-grid one">
-          <BaseForm label="사업장 주소"><textarea v-model="form.address" rows="3" :disabled="!editMode" /></BaseForm>
+        <div class="overview-side">
+          <span :class="statusClass(company.status)">{{ statusText(company.status) }}</span>
+          <span class="overview-date">등록일 {{ formatDate(company.createdAt) }}</span>
         </div>
       </section>
 
-      <section class="detail-card">
-        <div class="section-head"><h4>총괄 관리자 계정</h4><button class="ui-btn ui-btn--ghost" @click="inviteModal = true">총괄 관리자 추가 발급</button></div>
-        <BaseTable :columns="adminColumns" :rows="company.admins" />
-      </section>
+      <div class="content-grid">
+        <section class="section-card">
+          <header class="section-head">
+            <div>
+              <h3 class="section-title">업체 기본 정보</h3>
+              <p class="section-sub">사업자번호, 주소, 연락처 등의 기본 정보를 수정할 수 있습니다.</p>
+            </div>
+            <button class="ui-btn ui-btn--gold" type="button" @click="saveBasicInfo">수정 저장</button>
+          </header>
 
-      <section class="split-grid">
-        <article class="detail-card"><div class="section-head"><h4>소속 창고 목록</h4></div><BaseTable :columns="warehouseColumns" :rows="company.warehouses" /></article>
-        <article class="detail-card"><div class="section-head"><h4>등록 셀러 회사 목록</h4></div><BaseTable :columns="sellerColumns" :rows="company.sellers" /></article>
-      </section>
+          <div class="form-grid">
+            <BaseForm label="대표자명"><input v-model="editForm.representative" type="text" /></BaseForm>
+            <BaseForm label="사업자등록번호"><input v-model="editForm.businessNumber" type="text" /></BaseForm>
+            <BaseForm label="연락처"><input v-model="editForm.phone" type="text" /></BaseForm>
+            <BaseForm label="이메일"><input v-model="editForm.email" type="email" /></BaseForm>
+            <BaseForm class="full" label="주소"><input v-model="editForm.address" type="text" /></BaseForm>
+          </div>
+        </section>
 
-      <section class="detail-card">
-        <div class="section-head"><h4>수정 이력 로그</h4><span>테넌트 코드는 수정 불가</span></div>
-        <BaseTable :columns="logColumns" :rows="company.logs" />
+        <section class="section-card">
+          <header class="section-head">
+            <div>
+              <h3 class="section-title">총괄 관리자 계정</h3>
+              <p class="section-sub">총괄 관리자 상태와 최근 로그인 현황을 확인합니다.</p>
+            </div>
+            <button class="ui-btn ui-btn--ghost" type="button" @click="inviteModal.open = true">추가 발급</button>
+          </header>
+          <BaseTable :columns="adminColumns" :rows="masterAdmins">
+            <template #cell-status="{ value }"><span :class="statusClass(value)">{{ statusText(value) }}</span></template>
+            <template #cell-lastLoginAt="{ value }">{{ formatDate(value, 'datetime') }}</template>
+          </BaseTable>
+        </section>
+      </div>
+
+      <div class="content-grid">
+        <section class="section-card">
+          <header class="section-head">
+            <div>
+              <h3 class="section-title">소속 창고 목록</h3>
+              <p class="section-sub">현재 업체에 연결된 창고 정보를 조회합니다.</p>
+            </div>
+          </header>
+          <BaseTable :columns="warehouseColumns" :rows="company.warehouseList || []" />
+        </section>
+
+        <section class="section-card">
+          <header class="section-head">
+            <div>
+              <h3 class="section-title">등록 셀러 회사</h3>
+              <p class="section-sub">연결된 셀러 회사 목록입니다.</p>
+            </div>
+          </header>
+          <ul class="seller-list">
+            <li v-for="seller in company.sellerCompanyList || []" :key="seller">{{ seller }}</li>
+          </ul>
+        </section>
+      </div>
+
+      <section class="section-card full-row">
+        <header class="section-head">
+          <div>
+            <h3 class="section-title">수정 이력 로그</h3>
+            <p class="section-sub">업체 정보와 관리자 발급 이력을 시간 순으로 보여줍니다.</p>
+          </div>
+        </header>
+        <BaseTable :columns="logColumns" :rows="logs">
+          <template #cell-at="{ value }">{{ formatDate(value, 'datetime') }}</template>
+        </BaseTable>
       </section>
     </div>
 
-    <BaseModal :open="saveModal" title="업체 정보 수정 저장" @close="saveModal = false">
-      <p class="modal-copy">기본 정보 변경 내역이 로그에 기록됩니다. 테넌트 코드는 수정되지 않습니다.</p>
-      <template #footer>
-        <button class="ui-btn ui-btn--ghost" @click="saveModal = false">취소</button>
-        <button class="ui-btn ui-btn--primary" @click="confirmSave">저장</button>
-      </template>
-    </BaseModal>
-
-    <BaseModal :open="inviteModal" title="총괄 관리자 추가 발급" @close="inviteModal = false">
-      <div class="modal-fields">
-        <BaseForm label="이름" required><input v-model="inviteForm.name" /></BaseForm>
-        <BaseForm label="이메일" required><input v-model="inviteForm.email" type="email" /></BaseForm>
-        <p class="modal-copy">발급 즉시 초대 메일이 발송되며, 최초 비밀번호 설정 후 계정이 활성화됩니다.</p>
+    <BaseModal :is-open="inviteModal.open" title="총괄 관리자 추가 발급" width="520px" @cancel="inviteModal.open = false" @confirm="issueAdmin">
+      <div class="modal-grid">
+        <BaseForm label="이름" required><input v-model="inviteModal.name" type="text" /></BaseForm>
+        <BaseForm label="이메일" required :error="inviteModal.error"><input v-model="inviteModal.email" type="email" /></BaseForm>
       </div>
-      <template #footer>
-        <button class="ui-btn ui-btn--ghost" @click="inviteModal = false">취소</button>
-        <button class="ui-btn ui-btn--primary" :disabled="!inviteForm.name || !inviteForm.email" @click="issueAdmin">발급</button>
-      </template>
     </BaseModal>
   </AppLayout>
 </template>
 
 <style scoped>
-.page-stack { display:flex; flex-direction:column; gap:20px; }
-.detail-card { background: var(--surface); border:1px solid var(--border); border-radius: var(--radius-xl); padding:20px; box-shadow: var(--shadow-sm); }
-.section-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
-.info-grid { display:grid; gap:16px; }
-.info-grid.two { grid-template-columns: repeat(2, 1fr); }
-.info-grid.one, .split-grid { grid-template-columns: 1fr; }
-.split-grid { display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
-.status-chip { display:inline-flex; padding:4px 10px; border-radius:999px; background: var(--blue-pale); color: var(--blue); font-size:12px; font-weight:700; }
-.modal-copy { margin:0; color: var(--t2); line-height:1.6; }
-.modal-fields { display:grid; gap:14px; }
-@media (max-width: 960px) { .info-grid.two, .split-grid { grid-template-columns: 1fr; } }
+.page-grid {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.overview-card,
+.section-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.overview-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border-top: 4px solid var(--gold);
+}
+
+.overview-label,
+.overview-sub,
+.overview-date {
+  color: var(--t3);
+}
+
+.overview-code {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--font-condensed);
+  font-size: clamp(28px, 2vw, 40px);
+  line-height: 1;
+  color: var(--t1);
+}
+
+.overview-sub {
+  margin-top: 8px;
+  font-size: var(--font-size-sm);
+}
+
+.overview-side {
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+.section-card {
+  padding: var(--space-6);
+}
+
+.full-row {
+  grid-column: 1 / -1;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.section-title {
+  color: var(--t1);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+}
+
+.section-sub {
+  margin-top: 4px;
+  color: var(--t3);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.form-grid .full {
+  grid-column: 1 / -1;
+}
+
+.seller-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--t2);
+}
+
+.modal-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+.chip--green { background: var(--green-pale); color: var(--green); }
+.chip--amber { background: var(--amber-pale); color: #b45309; }
+.chip--red { background: var(--red-pale); color: var(--red); }
+.chip--blue { background: var(--blue-pale); color: var(--blue); }
+.chip--purple { background: var(--purple-pale); color: var(--purple); }
+
+@media (max-width: 1080px) {
+  .content-grid,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .overview-card,
+  .section-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .overview-side {
+    justify-items: start;
+  }
+}
 </style>

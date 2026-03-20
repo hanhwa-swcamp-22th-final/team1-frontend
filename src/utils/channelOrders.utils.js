@@ -74,6 +74,7 @@ export const SELLER_CHANNEL_FILTER_OPTIONS = [
   { key: 'AMAZON', label: 'Amazon' },
   { key: 'SHOPIFY', label: 'Shopify 예정' },
   { key: 'MANUAL', label: '수동' },
+  { key: 'QOO10', label: 'Qoo10' },
 ]
 
 // 채널 통합 주문 조회 테이블 mock 원본 데이터.
@@ -171,6 +172,23 @@ export function getSellerChannelMeta(channel) {
 // 통합 주문 목록의 주문 상태 배지 표현을 반환한다.
 export function getSellerChannelOrderStatusMeta(status) {
   return SELLER_CHANNEL_ORDER_STATUS_META[status] ?? { label: status ?? '-', tone: 'default' }
+}
+
+// 채널 연결 모달 완료 후 카드 상태를 연결 완료 기준으로 갱신한다.
+export function buildSellerConnectedChannelCard(card = {}, connection = {}) {
+  const label = card.label ?? '채널'
+  const storeAlias = String(connection.storeAlias ?? '').trim() || `${label} Store`
+
+  return {
+    ...card,
+    syncStatus: 'CONNECTED',
+    lastSyncedAt: connection.connectedAt ?? '2026-03-19 17:30',
+    description: `${storeAlias} 기준으로 주문을 수집합니다. 연결 후 동기화와 주문 가져오기를 바로 사용할 수 있습니다.`,
+    actions: [
+      { key: 'sync', label: '동기화', variant: 'ghost', disabled: false },
+      { key: 'import', label: '주문 가져오기', variant: 'primary', disabled: false },
+    ],
+  }
 }
 
 /**
