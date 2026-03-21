@@ -4,7 +4,7 @@
  *
  * Props:
  *   status : string  — constants/status.js의 값 (예: ORDER_STATUS.PENDING)
- *   type   : 'order' | 'asn' | 'account' | 'seller' | 'item' | 'worker' | 'billing'  — 상태 맵 선택 (기본 'order')
+ *   type   : 'order' | 'asn' | 'account' | 'seller' | 'item' | 'worker'  — 상태 맵 선택 (기본 'order')
  *
  * 상태별 색상 매핑 테이블:
  *
@@ -131,10 +131,6 @@ const MAP = {
   taskAssignType: {
     [TASK_ASSIGN_TYPE.AUTO]:   { label: '자동', color: 'blue' },
     [TASK_ASSIGN_TYPE.MANUAL]: { label: '수동', color: 'gold' },
-  },
-  billing: {
-    PENDING: { label: '청구 대기', color: 'amber' },
-    BILLED:  { label: '청구 완료', color: 'green' },
   },
 }
 
