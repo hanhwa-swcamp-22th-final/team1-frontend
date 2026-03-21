@@ -1,219 +1,520 @@
 <script setup>
 /**
  * 셀러 대시보드 화면.
- * 실제 API 연동 전까지 로컬 mock 데이터를 사용해 운영 현황을 렌더링한다.
+ * Figma export 기준으로 KPI, 추이 차트, 도넛 차트, 하단 테이블 레이아웃을 먼저 맞춘다.
  */
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+
 import { ROUTE_NAMES } from '@/constants'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import SellerInventoryDetailModal from '@/components/seller/SellerInventoryDetailModal.vue'
+import SellerOrderDetailModal from '@/components/seller/SellerOrderDetailModal.vue'
+import {
+  buildSellerDashboardDonutSegments,
+  buildSellerDashboardTrendChart,
+  buildSellerDashboardViewState,
+  getSellerDashboardTrendSeries,
+  SELLER_DASHBOARD_INBOUND_ROWS,
+  SELLER_DASHBOARD_KPI_CARDS,
+  SELLER_DASHBOARD_PERIOD_OPTIONS,
+  SELLER_DASHBOARD_RECENT_ACTIVITY_ROWS,
+  SELLER_DASHBOARD_STOCK_RATIO,
+} from '@/utils/sellerDashboard.utils.js'
 
-/** Header 브레드크럼 표시용 */
-const breadcrumb = [{ label: 'Seller' }, { label: 'Dashboard' }]
+const breadcrumb = [{ label: 'Seller' }, { label: '대시보드' }]
+const activePeriod = ref('month')
+const router = useRouter()
+// TODO(owner): Replace mock state flags with dashboard API request state once backend contract is ready.
+const isDashboardLoading = ref(false)
+const dashboardErrorMessage = ref('')
+const selectedRecentOrder = ref(null)
+const selectedRecentOrderDetail = ref(null)
+const isRecentOrderDetailOpen = ref(false)
+const selectedInboundInventory = ref(null)
+const selectedInboundInventoryDetail = ref(null)
+const isInboundInventoryDetailOpen = ref(false)
 
-// 셀러 대시보드 API 가 준비되기 전까지 화면에서 사용하는 로컬 mock 데이터.
-const dashboardData = {
-  // 상단 KPI 카드에 표시할 요약 수치.
-  summary: {
-    availableStockQty: 12840,
-    availableSkuCount: 236,
-    todayNewOrders: 87,
-    outbound: {
-      pending: 12,
-      inProgress: 31,
-      completed: 44,
-    },
-    lowStockSkuCount: 9,
-  },
-  // 운영 메모나 임시 공지를 보여주는 배너 데이터.
-  memoBanner: {
-    title: '운영 메모',
-    message: '금주 입고 예정 물량이 증가하여 ASN 등록 일정 확인 필요',
-    updatedAt: '2026-03-17 09:00',
-  },
-  // 최근 7일 주문/출고 추이를 직접 그리기 위한 데이터.
-  weeklyTrend: [
-    { label: '03/11', orders: 42, shipped: 35 },
-    { label: '03/12', orders: 51, shipped: 39 },
-    { label: '03/13', orders: 48, shipped: 41 },
-    { label: '03/14', orders: 66, shipped: 52 },
-    { label: '03/15', orders: 73, shipped: 61 },
-    { label: '03/16', orders: 58, shipped: 46 },
-    { label: '03/17', orders: 87, shipped: 44 },
-  ],
-  // 재고 상태 비율 영역에 사용하는 데이터.
-  ratioChart: [
-    { label: '정상 재고', value: 78 },
-    { label: '할당 재고', value: 15 },
-    { label: '부족 재고', value: 7 },
-  ],
-  // 하단 최근 활동 패널에 사용하는 피드 데이터.
-  recentActivities: [
-    { id: 1, type: 'ORDER', message: '주문 12건이 신규 등록됨', time: '10분 전' },
-    { id: 2, type: 'ASN', message: 'ASN-20260317-001 입고 완료', time: '32분 전' },
-    { id: 3, type: 'ALERT', message: 'SKU-203 재고 부족 알림 발생', time: '1시간 전' },
-  ],
-  // 하단 입고 예정 재고 목록 패널에 사용하는 데이터.
-  inboundInventory: [
-    { id: 1, asnNo: 'ASN-20260317-001', warehouse: 'NJ Warehouse', qty: 1200, eta: '2026-03-19', status: '입고예정' },
-    { id: 2, asnNo: 'ASN-20260316-004', warehouse: 'LA Warehouse', qty: 860, eta: '2026-03-18', status: '입고중' },
-  ],
+const dashboardKpiCards = computed(() => SELLER_DASHBOARD_KPI_CARDS)
+const newOrdersCard = computed(() => {
+  return dashboardKpiCards.value.find((card) => card.key === 'new-orders') ?? null
+})
+const outboundStatusCard = computed(() => {
+  return dashboardKpiCards.value.find((card) => card.key === 'outbound-status') ?? null
+})
+const availableStockCard = computed(() => {
+  return dashboardKpiCards.value.find((card) => card.key === 'available-stock') ?? null
+})
+const lowStockCard = computed(() => {
+  return dashboardKpiCards.value.find((card) => card.key === 'low-stock') ?? null
+})
+const inventorySummaryRouteName = computed(() => {
+  return lowStockCard.value?.routeName ?? availableStockCard.value?.routeName ?? null
+})
+const currentTrendSeries = computed(() => getSellerDashboardTrendSeries(activePeriod.value))
+const trendChart = computed(() => {
+  return buildSellerDashboardTrendChart(currentTrendSeries.value.points, {
+    maxValue: currentTrendSeries.value.maxValue,
+  })
+})
+const stockRatio = computed(() => SELLER_DASHBOARD_STOCK_RATIO)
+const recentActivityRows = computed(() => SELLER_DASHBOARD_RECENT_ACTIVITY_ROWS)
+const inboundRows = computed(() => SELLER_DASHBOARD_INBOUND_ROWS)
+const dashboardViewState = computed(() => {
+  return buildSellerDashboardViewState({
+    kpiCards: dashboardKpiCards.value,
+    trendSeries: currentTrendSeries.value,
+    recentActivityRows: recentActivityRows.value,
+    inboundRows: inboundRows.value,
+    isLoading: isDashboardLoading.value,
+    errorMessage: dashboardErrorMessage.value,
+  })
+})
+const donutSegments = computed(() => buildSellerDashboardDonutSegments(stockRatio.value))
+const donutTotal = computed(() => {
+  return stockRatio.value.reduce((sum, item) => sum + Number(item.value || 0), 0)
+})
+
+function navigateToRoute(name) {
+  if (!name) return
+  router.push({ name })
 }
 
+function handleRecentActivityCodeClick(row) {
+  if (row.type === '주문' && row.order) {
+    selectedRecentOrder.value = row.order
+    selectedRecentOrderDetail.value = row.orderDetail
+    isRecentOrderDetailOpen.value = true
+    return
+  }
+
+  navigateToRoute(row.routeName)
+}
+
+function handleCloseRecentOrderDetail() {
+  isRecentOrderDetailOpen.value = false
+  selectedRecentOrder.value = null
+  selectedRecentOrderDetail.value = null
+}
+
+function handleInboundSkuClick(row) {
+  if (!row.inventory) {
+    navigateToRoute(row.routeName)
+    return
+  }
+
+  selectedInboundInventory.value = row.inventory
+  selectedInboundInventoryDetail.value = row.inventoryDetail
+  isInboundInventoryDetailOpen.value = true
+}
+
+function handleCloseInboundInventoryDetail() {
+  isInboundInventoryDetailOpen.value = false
+  selectedInboundInventory.value = null
+  selectedInboundInventoryDetail.value = null
+}
+
+function handleRetryDashboard() {
+  dashboardErrorMessage.value = ''
+}
 </script>
 
 <template>
-  <AppLayout title="Seller Dashboard" :breadcrumb="breadcrumb">
+  <AppLayout title="대시보드" :breadcrumb="breadcrumb">
     <template #header-action>
-      <!-- 현재 연결된 두 개의 셀러 작업 화면으로 바로 이동하는 CTA -->
       <RouterLink :to="{ name: ROUTE_NAMES.SELLER_ASN_CREATE }" class="ui-btn ui-btn--ghost">ASN 등록</RouterLink>
       <RouterLink :to="{ name: ROUTE_NAMES.SELLER_ORDER_REGISTER }" class="ui-btn ui-btn--primary">주문 등록</RouterLink>
     </template>
 
     <section class="seller-dashboard">
-      <!-- KPI 카드 4개 영역 -->
-      <div class="kpi-grid">
-        <div class="dashboard-card">
-          <p class="card-label">가용 재고 총 수량</p>
-          <strong class="card-value">{{ dashboardData.summary.availableStockQty }}</strong>
-          <span class="card-sub">{{ dashboardData.summary.availableSkuCount }} SKU</span>
-        </div>
+      <section v-if="dashboardViewState.isLoading" class="dashboard-state">
+        <p class="dashboard-state__eyebrow">Loading</p>
+        <strong class="dashboard-state__title">대시보드 데이터를 불러오는 중입니다.</strong>
+        <p class="dashboard-state__copy">Seller 운영 현황을 정리하는 동안 잠시만 기다려주세요.</p>
+      </section>
 
-        <div class="dashboard-card">
-          <p class="card-label">금일 신규 주문</p>
-          <strong class="card-value">{{ dashboardData.summary.todayNewOrders }}</strong>
-          <span class="card-sub">오늘 기준 신규 등록 건수</span>
-        </div>
+      <section v-else-if="dashboardViewState.hasError" class="dashboard-state dashboard-state--error">
+        <p class="dashboard-state__eyebrow">Load Failed</p>
+        <strong class="dashboard-state__title">대시보드 데이터를 불러오지 못했습니다.</strong>
+        <p class="dashboard-state__copy">{{ dashboardViewState.errorMessage }}</p>
+        <button type="button" class="ui-btn ui-btn--ghost" @click="handleRetryDashboard">다시 불러오기</button>
+      </section>
 
-        <div class="dashboard-card">
-          <p class="card-label">출고 처리 현황</p>
-          <strong class="card-value">{{ dashboardData.summary.outbound.completed }}</strong>
-          <span class="card-sub">대기 {{ dashboardData.summary.outbound.pending }} / 진행 {{ dashboardData.summary.outbound.inProgress }}
-          </span>
-        </div>
+      <section v-else-if="dashboardViewState.isEmpty" class="dashboard-state">
+        <p class="dashboard-state__eyebrow">No Data</p>
+        <strong class="dashboard-state__title">표시할 운영 데이터가 없습니다.</strong>
+        <p class="dashboard-state__copy">주문 등록 또는 ASN 등록 후 운영 현황을 이 화면에서 확인할 수 있습니다.</p>
+      </section>
 
-        <div class="dashboard-card">
-          <p class="card-label">재고 부족 알림</p>
-          <strong class="card-value">{{ dashboardData.summary.lowStockSkuCount }}</strong>
-          <span class="card-sub">안전재고 이하 SKU 수</span>
-        </div>
-      </div>
+      <template v-else>
+        <section class="kpi-grid">
+          <button
+            v-if="newOrdersCard"
+            type="button"
+            class="dashboard-card kpi-card kpi-card--interactive"
+            @click="navigateToRoute(newOrdersCard.routeName)"
+          >
+            <div class="kpi-card-head">
+              <span class="kpi-label">{{ newOrdersCard.label }}</span>
+              <span class="kpi-icon" :class="`kpi-icon--${newOrdersCard.tone}`" />
+            </div>
 
+            <strong class="kpi-value">{{ newOrdersCard.value }}</strong>
 
-      <!-- 운영 메모 배너 -->
-      <div class="dashboard-card dashboard-banner">
-        <p class="card-label">{{ dashboardData.memoBanner.title }}</p>
-        <strong class="banner-message">{{ dashboardData.memoBanner.message }}</strong>
-        <span class="card-sub">업데이트: {{ dashboardData.memoBanner.updatedAt }}</span>
-      </div>
+            <div class="kpi-meta">
+              <span
+                v-if="newOrdersCard.trend"
+                class="kpi-trend"
+                :class="`kpi-trend--${newOrdersCard.trendTone}`"
+              >
+                {{ newOrdersCard.trend }}
+              </span>
+              <span class="kpi-sub">{{ newOrdersCard.subtext }}</span>
+            </div>
+          </button>
 
-      <!-- 차트 2개 영역 -->
-      <div class="chart-grid">
-        <div class="dashboard-card">
-          <div class="section-head">
-            <h2 class="section-title">주간 주문/출고 추이</h2>
-            <span class="section-count">최근 7일</span>
-          </div>
+          <button
+            v-if="outboundStatusCard"
+            type="button"
+            class="dashboard-card kpi-card kpi-card--interactive"
+            @click="navigateToRoute(outboundStatusCard.routeName)"
+          >
+            <div class="kpi-card-head">
+              <span class="kpi-label">{{ outboundStatusCard.label }}</span>
+              <span class="kpi-icon" :class="`kpi-icon--${outboundStatusCard.tone}`" />
+            </div>
 
-          <div class="trend-chart">
-            <div
-                v-for="item in dashboardData.weeklyTrend"
-                :key="item.label"
-                class="trend-item"
-            >
-              <div class="trend-bars">
-                <span class="trend-bar trend-bar--orders" :style="{ height: `${item.orders}px` }" />
-                <span class="trend-bar trend-bar--shipped" :style="{ height: `${item.shipped}px` }" />
+            <strong class="kpi-value">{{ outboundStatusCard.value }}</strong>
+
+            <div class="kpi-meta">
+              <span class="kpi-sub">{{ outboundStatusCard.subtext }}</span>
+            </div>
+          </button>
+
+          <button
+            v-if="availableStockCard || lowStockCard"
+            type="button"
+            class="dashboard-card kpi-card kpi-card--interactive kpi-card--split"
+            @click="navigateToRoute(inventorySummaryRouteName)"
+          >
+            <div v-if="availableStockCard" class="kpi-split-item">
+              <div class="kpi-card-head">
+                <span class="kpi-label">{{ availableStockCard.label }}</span>
+                <span class="kpi-icon" :class="`kpi-icon--${availableStockCard.tone}`" />
               </div>
-              <span class="trend-label">{{ item.label }}</span>
+
+              <strong class="kpi-value">{{ availableStockCard.value }}</strong>
+              <div class="kpi-meta">
+                <span class="kpi-sub">{{ availableStockCard.subtext }}</span>
+              </div>
+            </div>
+
+            <div v-if="lowStockCard" class="kpi-split-item">
+              <div class="kpi-card-head">
+                <span class="kpi-label">{{ lowStockCard.label }}</span>
+                <span class="kpi-icon" :class="`kpi-icon--${lowStockCard.tone}`" />
+              </div>
+
+              <strong class="kpi-value">{{ lowStockCard.value }}</strong>
+              <div class="kpi-meta">
+                <span class="kpi-sub">{{ lowStockCard.subtext }}</span>
+              </div>
+            </div>
+          </button>
+        </section>
+
+        <section class="charts-row">
+        <article class="dashboard-card chart-card chart-card--wide">
+          <div class="chart-head">
+            <div>
+              <p class="section-eyebrow">Order Trend</p>
+              <h2 class="section-title">기간별 주문 추이</h2>
+            </div>
+
+            <div class="period-toggle">
+              <button
+                v-for="option in SELLER_DASHBOARD_PERIOD_OPTIONS"
+                :key="option.key"
+                type="button"
+                class="period-btn"
+                :class="{ 'period-btn--active': activePeriod === option.key }"
+                @click="activePeriod = option.key"
+              >
+                {{ option.label }}
+              </button>
             </div>
           </div>
 
-          <p class="chart-note">주문 / 출고</p>
-        </div>
+          <div class="line-chart-wrap">
+            <div v-if="!dashboardViewState.hasTrendData" class="chart-empty">
+              기간별 주문 데이터가 아직 없습니다.
+            </div>
+            <svg viewBox="0 0 680 220" preserveAspectRatio="none" aria-hidden="true">
+              <template v-if="dashboardViewState.hasTrendData">
+              <defs>
+                <linearGradient id="sellerDashboardGoldGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#F5A623" />
+                  <stop offset="100%" stop-color="#F5A623" stop-opacity="0" />
+                </linearGradient>
+              </defs>
 
-        <div class="dashboard-card">
-          <div class="section-head">
-            <h2 class="section-title">비율 차트</h2>
-            <span class="section-count">재고 상태</span>
+              <line x1="60" y1="20" x2="660" y2="20" class="chart-grid-line" stroke-dasharray="4" />
+              <line x1="60" y1="60" x2="660" y2="60" class="chart-grid-line" stroke-dasharray="4" />
+              <line x1="60" y1="100" x2="660" y2="100" class="chart-grid-line" stroke-dasharray="4" />
+              <line x1="60" y1="140" x2="660" y2="140" class="chart-grid-line" stroke-dasharray="4" />
+              <line x1="60" y1="180" x2="660" y2="180" class="chart-grid-line" />
+
+              <text
+                v-for="label in trendChart.yLabels"
+                :key="`y-${label.value}`"
+                x="50"
+                :y="label.y"
+                text-anchor="end"
+                class="chart-axis-label"
+              >
+                {{ label.value }}
+              </text>
+
+              <text
+                v-for="label in trendChart.xLabels"
+                :key="`x-${label.label}`"
+                :x="label.x"
+                y="200"
+                text-anchor="middle"
+                class="chart-axis-label"
+              >
+                {{ label.label }}
+              </text>
+
+              <polygon :points="trendChart.areaPoints" class="chart-area" />
+              <polyline :points="trendChart.linePoints" class="chart-line" />
+
+              <circle
+                v-for="point in trendChart.points"
+                :key="`${point.label}-${point.x}`"
+                :cx="point.x"
+                :cy="point.y"
+                :r="point.label === trendChart.points.at(-1)?.label ? 5 : 4"
+                class="chart-dot"
+              />
+              </template>
+            </svg>
+          </div>
+        </article>
+
+        <article class="dashboard-card chart-card chart-card--narrow">
+          <div class="chart-head">
+            <div>
+              <p class="section-eyebrow">Stock Mix</p>
+              <h2 class="section-title">재고 구성 비율</h2>
+            </div>
           </div>
 
-          <ul class="ratio-list">
-            <li
-                v-for="(item, index) in dashboardData.ratioChart"
-                :key="item.label"
-                class="ratio-item"
-            >
-              <div class="ratio-meta">
-                <span :class="`ratio-dot ratio-dot--${index}`" />
-                <span class="ratio-label">{{ item.label }}</span>
-                <strong class="ratio-value">{{ item.value }}%</strong>
-              </div>
-              <div class="ratio-track">
-                <span :class="`ratio-fill ratio-fill--${index}`" :style="{ width: `${item.value}%` }" />
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
+          <div class="donut-wrap">
+            <svg class="donut-svg" viewBox="0 0 160 160" aria-hidden="true">
+              <circle cx="80" cy="80" r="60" fill="none" stroke="#F3F5F8" stroke-width="22" />
+              <circle
+                v-for="segment in donutSegments"
+                :key="segment.key"
+                cx="80"
+                cy="80"
+                r="60"
+                fill="none"
+                :stroke="segment.color"
+                stroke-width="22"
+                :stroke-dasharray="segment.dasharray"
+                :stroke-dashoffset="segment.dashoffset"
+                transform="rotate(-90 80 80)"
+              />
+              <text x="80" y="76" text-anchor="middle" class="donut-total">
+                {{ donutTotal }}
+              </text>
+              <text x="80" y="94" text-anchor="middle" class="donut-copy">재고 구성 비율</text>
+            </svg>
 
-      <!-- 하단 테이블 2개 영역 - 최근 활동, 기간별 입고 재고 목록 -->
-      <div class="table-grid">
-        <div class="dashboard-card">
-          <div class="section-head">
-            <h2 class="section-title">최근 활동</h2>
-            <span class="section-count">{{ dashboardData.recentActivities.length }}건</span>
+            <div class="donut-legend">
+              <div
+                v-for="segment in stockRatio"
+                :key="segment.key"
+                class="legend-item"
+              >
+                <span class="legend-dot" :style="{ backgroundColor: segment.color }" />
+                <span class="legend-label">{{ segment.label }}</span>
+                <strong class="legend-value">{{ segment.value }}%</strong>
+              </div>
+            </div>
+          </div>
+        </article>
+        </section>
+
+        <section class="tables-row">
+        <article class="dashboard-card table-card">
+          <div class="table-head">
+            <div>
+              <p class="section-eyebrow">Recent Feed</p>
+              <h2 class="section-title">최근 활동</h2>
+            </div>
+            <button
+              type="button"
+              class="table-more"
+              @click="navigateToRoute(ROUTE_NAMES.SELLER_NOTIFICATIONS)"
+            >
+              전체보기 →
+            </button>
           </div>
 
-          <ul class="activity-list">
-            <li
-                v-for="activity in dashboardData.recentActivities"
-                :key="activity.id"
-                class="activity-item"
-            >
-              <div class="activity-main">
-                <strong class="activity-type">{{ activity.type }}</strong>
-                <p class="activity-message">{{ activity.message }}</p>
-              </div>
-              <span class="activity-time">{{ activity.time }}</span>
-            </li>
-          </ul>
-        </div>
+          <div class="table-wrap">
+            <table v-if="dashboardViewState.hasRecentActivity" class="dash-table">
+              <thead>
+                <tr>
+                  <th>구분</th>
+                  <th>번호</th>
+                  <th>대상</th>
+                  <th>수량</th>
+                  <th>상태</th>
+                  <th>일시</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in recentActivityRows" :key="row.id">
+                  <td>
+                    <span class="row-tag" :class="`row-tag--${row.typeTone}`">{{ row.type }}</span>
+                  </td>
+                  <td>
+                    <button type="button" class="row-link" @click="handleRecentActivityCodeClick(row)">
+                      {{ row.code }}
+                    </button>
+                  </td>
+                  <td>{{ row.target }}</td>
+                  <td>{{ row.quantity }}</td>
+                  <td>
+                    <span class="status-badge" :class="`status-badge--${row.statusTone}`">
+                      {{ row.statusLabel }}
+                    </span>
+                  </td>
+                  <td>{{ row.occurredAt }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div v-else class="table-empty">
+              최근 활동이 아직 없습니다.
+            </div>
+          </div>
+        </article>
 
-        <div class="dashboard-card">
-          <div class="section-head">
-            <h2 class="section-title">기간별 입고 재고 목록</h2>
-            <span class="section-count">{{ dashboardData.inboundInventory.length }}건</span>
+        <article class="dashboard-card table-card">
+          <div class="table-head">
+            <div>
+              <p class="section-eyebrow">Inbound Schedule</p>
+              <h2 class="section-title">기간별 입고 재고 목록</h2>
+            </div>
+            <button
+              type="button"
+              class="table-more"
+              @click="navigateToRoute(ROUTE_NAMES.SELLER_ASN_LIST)"
+            >
+              전체보기 →
+            </button>
           </div>
 
-          <ul class="inventory-list">
-            <li
-                v-for="item in dashboardData.inboundInventory"
-                :key="item.id"
-                class="inventory-item"
-            >
-              <div class="inventory-main">
-                <strong class="inventory-id">{{ item.asnNo }}</strong>
-                <p class="inventory-meta">{{ item.warehouse }} · ETA {{ item.eta }}</p>
-              </div>
-
-              <div class="inventory-side">
-                <strong class="inventory-qty">{{ item.qty }}</strong>
-                <span class="inventory-status">{{ item.status }}</span>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
-
+          <div class="table-wrap">
+            <table v-if="dashboardViewState.hasInboundRows" class="dash-table">
+              <thead>
+                <tr>
+                  <th>기간</th>
+                  <th>SKU</th>
+                  <th>상품</th>
+                  <th>입고 예정</th>
+                  <th>ETA</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in inboundRows" :key="row.id">
+                  <td class="row-code">{{ row.period }}</td>
+                  <td>
+                    <button type="button" class="row-link" @click="handleInboundSkuClick(row)">
+                      {{ row.sku }}
+                    </button>
+                  </td>
+                  <td>{{ row.productName }}</td>
+                  <td>{{ row.expectedQty }}</td>
+                  <td>
+                    <span class="status-badge" :class="`status-badge--${row.etaTone}`">
+                      {{ row.etaLabel }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div v-else class="table-empty">
+              예정된 입고 재고가 없습니다.
+            </div>
+          </div>
+        </article>
+        </section>
+      </template>
     </section>
+
+    <SellerOrderDetailModal
+      :is-open="isRecentOrderDetailOpen"
+      :order="selectedRecentOrder"
+      :detail="selectedRecentOrderDetail"
+      @cancel="handleCloseRecentOrderDetail"
+    />
+
+    <SellerInventoryDetailModal
+      :is-open="isInboundInventoryDetailOpen"
+      :inventory="selectedInboundInventory"
+      :detail="selectedInboundInventoryDetail"
+      @cancel="handleCloseInboundInventoryDetail"
+    />
   </AppLayout>
 </template>
 
 <style scoped>
-/* 대시보드 레이아웃 골격 Style */
 .seller-dashboard {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
+}
+
+.dashboard-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: 28px 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-state--error {
+  border-color: rgba(191, 38, 38, 0.18);
+  background: rgba(191, 38, 38, 0.03);
+}
+
+.dashboard-state__eyebrow {
+  margin: 0;
+  color: var(--blue);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dashboard-state__title {
+  color: var(--t1);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+}
+
+.dashboard-state__copy {
+  margin: 0;
+  color: var(--t3);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
 }
 
 .kpi-grid {
@@ -222,287 +523,450 @@ const dashboardData = {
   gap: var(--space-4);
 }
 
-.chart-grid,
-.table-grid {
+.charts-row,
+.tables-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
   gap: var(--space-4);
 }
 
 .dashboard-card {
-  min-height: 180px;
-  padding: var(--space-5);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
 }
 
-.dashboard-banner {
-  min-height: 120px;
+.kpi-card {
+  padding: 22px 24px;
+  text-align: left;
 }
-/* kpi 카드 style */
-.card-label {
-  font-size: var(--font-size-sm);
+
+.kpi-card--split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-column: span 2;
+  padding: 0;
+  overflow: hidden;
+}
+
+.kpi-card--interactive {
+  width: 100%;
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.kpi-split-item {
+  width: 100%;
+  padding: 22px 24px;
+  text-align: left;
+}
+
+.kpi-split-item + .kpi-split-item {
+  border-left: 1px solid var(--border);
+}
+
+.kpi-card--interactive:hover {
+  border-color: rgba(245, 166, 35, 0.45);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.kpi-card-head,
+.chart-head,
+.table-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.kpi-label,
+.kpi-sub,
+.section-eyebrow,
+.chart-axis-label,
+.legend-label,
+.table-more,
+.dash-table th,
+.dash-table td {
+  font-size: var(--font-size-xs);
+}
+
+.kpi-label,
+.kpi-sub,
+.section-eyebrow,
+.chart-axis-label,
+.legend-label,
+.dash-table th {
   color: var(--t3);
 }
 
-.card-value {
+.chart-axis-label {
+  font-weight: 600;
+  letter-spacing: 0;
+  text-rendering: geometricPrecision;
+}
+
+.section-eyebrow {
+  margin: 0 0 var(--space-2);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+.section-title {
+  margin: 0;
+  color: var(--t1);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+}
+
+.kpi-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.kpi-icon--gold {
+  background: var(--gold-pale);
+}
+
+.kpi-icon--green {
+  background: var(--green-pale);
+}
+
+.kpi-icon--blue {
+  background: var(--blue-pale);
+}
+
+.kpi-icon--amber {
+  background: rgba(245, 166, 35, 0.16);
+}
+
+.kpi-value {
   display: block;
   margin-top: var(--space-3);
   font-family: var(--font-condensed);
   font-size: 32px;
+  line-height: 1.1;
   color: var(--t1);
-  line-height: 1;
 }
 
-.card-sub {
-  display: block;
+.kpi-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   margin-top: var(--space-2);
-  font-size: var(--font-size-sm);
-  color: var(--t3);
-}
-.banner-message {
-  display: block;
-  margin-top: var(--space-3);
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--t1);
-  line-height: 1.5;
 }
 
-/* 최근 활등 Style */
-.section-head {
+.kpi-trend {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+.kpi-trend--up {
+  color: var(--green);
+}
+
+.kpi-trend--down {
+  color: var(--red);
+}
+
+.chart-card,
+.table-card {
+  padding: 24px;
+}
+
+.chart-card--narrow .chart-head {
+  margin-bottom: var(--space-5);
+}
+
+.period-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+.period-btn {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--t3);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.period-btn--active {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: #0d0d0d;
+}
+
+.line-chart-wrap {
+  width: 100%;
+  height: 220px;
+  overflow-x: auto;
+}
+
+.chart-empty,
+.table-empty {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-4);
-}
-
-.section-title {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--t1);
-}
-
-.section-count {
-  font-size: var(--font-size-sm);
+  justify-content: center;
+  min-height: 180px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
   color: var(--t3);
+  font-size: var(--font-size-sm);
+  text-align: center;
 }
 
-.activity-list {
+.line-chart-wrap svg {
+  width: 100%;
+  height: 100%;
+  min-width: 680px;
+}
+
+.chart-grid-line {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chart-area {
+  fill: url(#sellerDashboardGoldGrad);
+  opacity: 0.18;
+}
+
+.chart-dot {
+  fill: var(--gold);
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.donut-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+}
+
+.donut-svg {
+  width: 160px;
+  height: 160px;
+}
+
+.donut-total {
+  fill: var(--t1);
+  font-family: var(--font-condensed);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.donut-copy {
+  fill: var(--t3);
+  font-size: 10px;
+}
+
+.donut-legend {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 12px;
+  min-width: 140px;
 }
 
-.activity-item {
+.legend-item {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--border);
+  align-items: center;
+  gap: 8px;
 }
 
-.activity-item:first-child {
-  padding-top: 0;
-  border-top: none;
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
 }
 
-.activity-main {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.activity-type {
+.legend-value {
+  margin-left: auto;
+  color: var(--t1);
   font-size: var(--font-size-xs);
-  color: var(--blue);
+  font-weight: 700;
 }
 
-.activity-message {
-  font-size: var(--font-size-md);
+.table-more {
+  border: none;
+  background: transparent;
+  color: var(--blue);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.table-wrap {
+  margin-top: var(--space-4);
+  overflow-x: auto;
+}
+
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dash-table th,
+.dash-table td {
+  padding: 11px 12px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+
+.dash-table th {
+  background: var(--surface-2);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.dash-table td {
   color: var(--t2);
 }
 
-.activity-time {
-  font-size: var(--font-size-sm);
-  color: var(--t3);
+.dash-table tr:last-child td {
+  border-bottom: none;
+}
+
+.row-code {
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.row-link {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--blue);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.row-link:hover {
+  text-decoration: underline;
+}
+
+.row-tag,
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 4px;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
   white-space: nowrap;
 }
 
-/* 기간별 입고 재고 목록 Style */
-.inventory-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+.row-tag--gold {
+  background: var(--gold-pale);
+  color: #92400e;
 }
 
-.inventory-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--border);
-}
-
-.inventory-item:first-child {
-  padding-top: 0;
-  border-top: none;
-}
-
-.inventory-main {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.inventory-id {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-  color: var(--t1);
-}
-
-.inventory-meta {
-  font-size: var(--font-size-sm);
-  color: var(--t3);
-}
-
-.inventory-side {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-1);
-}
-
-.inventory-qty {
-  font-family: var(--font-condensed);
-  font-size: var(--font-size-lg);
-  color: var(--t1);
-}
-
-.inventory-status {
-  font-size: var(--font-size-sm);
+.row-tag--blue {
+  background: var(--blue-pale);
   color: var(--blue);
 }
 
-/* 차트 부분 Style */
-.trend-chart {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-3);
-  min-height: 180px;
-}
-
-.trend-item {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.trend-bars {
-  width: 100%;
-  min-height: 140px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 6px;
-}
-
-.trend-bar {
-  width: 14px;
-  border-radius: var(--radius-full);
-}
-
-.trend-bar--orders {
-  background: var(--blue);
-}
-
-.trend-bar--shipped {
-  background: var(--gold);
-}
-
-.trend-label {
-  font-size: var(--font-size-xs);
-  color: var(--t3);
-}
-
-.chart-note {
-  margin-top: var(--space-3);
-  font-size: var(--font-size-sm);
-  color: var(--t3);
-}
-
-.ratio-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.ratio-item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.ratio-meta {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.ratio-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: var(--radius-full);
-}
-
-.ratio-dot--0,
-.ratio-fill--0 {
-  background: var(--green);
-}
-
-.ratio-dot--1,
-.ratio-fill--1 {
-  background: var(--blue);
-}
-
-.ratio-dot--2,
-.ratio-fill--2 {
-  background: var(--red);
-}
-
-.ratio-label {
-  flex: 1;
-  font-size: var(--font-size-md);
-  color: var(--t2);
-}
-
-.ratio-value {
-  font-family: var(--font-condensed);
-  font-size: var(--font-size-lg);
-  color: var(--t1);
-}
-
-.ratio-track {
-  width: 100%;
-  height: 10px;
+.row-tag--default {
   background: var(--surface-2);
-  border-radius: var(--radius-full);
-  overflow: hidden;
+  color: var(--t3);
 }
 
-.ratio-fill {
-  display: block;
-  height: 100%;
-  border-radius: var(--radius-full);
+.status-badge--green {
+  background: var(--green-pale);
+  color: var(--green);
 }
 
+.status-badge--amber {
+  background: rgba(245, 166, 35, 0.16);
+  color: #92400e;
+}
 
+.status-badge--blue {
+  background: var(--blue-pale);
+  color: var(--blue);
+}
+
+.status-badge--red {
+  background: var(--red-pale);
+  color: #7f1d1d;
+}
+
+.status-badge--gold {
+  background: var(--gold-pale);
+  color: #92400e;
+}
+
+@media (max-width: 1200px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .kpi-card--split {
+    grid-column: span 2;
+  }
+
+  .charts-row,
+  .tables-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi-card--split {
+    grid-template-columns: 1fr;
+    grid-column: auto;
+  }
+
+  .kpi-split-item + .kpi-split-item {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+
+  .kpi-card,
+  .chart-card,
+  .table-card {
+    padding: 20px;
+  }
+
+  .chart-head,
+  .table-head,
+  .donut-wrap {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .period-toggle {
+    flex-wrap: wrap;
+  }
+
+  .donut-svg {
+    width: 144px;
+    height: 144px;
+  }
+}
 </style>
