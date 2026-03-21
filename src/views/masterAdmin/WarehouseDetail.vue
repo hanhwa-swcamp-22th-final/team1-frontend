@@ -8,9 +8,9 @@
  *   우측 드로어  로케이션 가용률 (슬라이드 인)
  *
  * 데이터:   onMounted + watch(warehouseId) → fetchDetail (Promise.all 5개 병렬)
- * 창고전환: 헤더 wh-select 드롭다운 → router.push → warehouseId watch 트리거 → 재조회
+ * 창고이동: WarehouseList에서 클릭 → URL(:id) 기반 진입. 헤더 "창고 목록" 버튼으로 복귀.
  */
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
 import { ROUTE_NAMES, ORDER_STATUS } from '@/constants'
@@ -33,7 +33,6 @@ const ui     = useUiStore()
 
 // ── 상태 ─────────────────────────────────────────────────────────────────────
 const warehouseId     = computed(() => Number(route.params.id))
-const allWarehouses   = ref([])
 const warehouse       = ref(null)
 const inventory       = ref([])
 const outboundTab     = ref('today')
@@ -46,6 +45,13 @@ const errorMsg        = ref('')
 
 // 드로어 열림 상태
 const drawerOpen = ref(false)
+
+// 주문 현황 통합 카드 뷰 전환 ('outbound' | 'detail')
+const orderView = ref('outbound')
+
+// 헤더 창고 선택 드롭다운
+const allWarehouses  = ref([])
+const whDropdownOpen = ref(false)
 
 // ── SKU 상세 모달 (SkuDetailModal 컴포넌트 위임) ────────────────────────────
 const showSkuModal = ref(false)
@@ -68,6 +74,7 @@ function openOrderDetail(orderId) {
 // ── computed ─────────────────────────────────────────────────────────────────
 const currentOutbound = computed(() => outboundData.value[outboundTab.value] ?? [])
 const currentZone     = computed(() => zones.value[selectedZoneIdx.value] ?? null)
+const isInactive      = computed(() => warehouse.value?.status === 'INACTIVE')
 
 /** KPI: 전 Zone 통합 Bin 가용률 (가용 Bin / 전체 Bin) */
 const kpiAvailBinPct = computed(() => {
@@ -89,27 +96,33 @@ async function fetchDetail() {
   ui.setLoading(true)
   try {
     const id = warehouseId.value
-    const [listRes, invRes, outRes, ordRes, locRes] = await Promise.all([
-      getWarehouseList(),
+
+    // 1단계: 창고 목록 (드롭다운 + 현재 창고 정보)
+    const listRes = await getWarehouseList()
+    const allWh = listRes.data.data ?? []
+    warehouse.value     = allWh.find(w => w.id === id) ?? null
+    allWarehouses.value = allWh
+
+    // 비활성 창고는 상세 데이터 조회 생략
+    if (isInactive.value) return
+
+    // 2단계: 상세 데이터 (활성/주의 창고만)
+    const [invRes, outRes, ordRes, locRes] = await Promise.all([
       getWarehouseInventory(id),
       getWarehouseOutbound(id),
       getWarehouseOrders(id),
       getWarehouseLocations(id),
     ])
 
-    const allWh        = listRes.data.data ?? []
-    allWarehouses.value = allWh.filter(w => w.status !== 'INACTIVE')
-    warehouse.value     = allWh.find(w => w.id === id) ?? null
+    inventory.value    = invRes.data.data ?? []
+    outboundData.value = outRes.data.data ?? { today: [], week: [], month: [] }
+    outboundTab.value  = 'today'
 
-    inventory.value     = invRes.data.data ?? []
-    outboundData.value  = outRes.data.data ?? { today: [], week: [], month: [] }
-    outboundTab.value   = 'today'
+    const ordData    = ordRes.data.data ?? {}
+    orderStats.value = ordData.stats ?? { waiting: 0, inProgress: 0, done: 0 }
+    orders.value     = ordData.list  ?? []
 
-    const ordData       = ordRes.data.data ?? {}
-    orderStats.value    = ordData.stats ?? { waiting: 0, inProgress: 0, done: 0 }
-    orders.value        = ordData.list  ?? []
-
-    zones.value         = locRes.data.data ?? []
+    zones.value           = locRes.data.data ?? []
     selectedZoneIdx.value = 0
   } catch (err) {
     errorMsg.value = '데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
@@ -119,7 +132,11 @@ async function fetchDetail() {
   }
 }
 
-onMounted(fetchDetail)
+function onOutsideClick(e) {
+  if (!e.target.closest('.wh-dropdown')) whDropdownOpen.value = false
+}
+onMounted(() => { fetchDetail(); document.addEventListener('click', onOutsideClick) })
+onUnmounted(() => document.removeEventListener('click', onOutsideClick))
 watch(warehouseId, fetchDetail)
 
 // ── 출고 처리 확인 다이얼로그 ─────────────────────────────────────────────────
@@ -155,6 +172,13 @@ function handleProcessOutbound(row) {
 }
 
 // ── 헬퍼 ─────────────────────────────────────────────────────────────────────
+/** 드롭다운 창고 항목 dot 색상 클래스 */
+function dotClass(wh) {
+  if (wh.id === warehouseId.value) return 'dot-current'
+  if (wh.status === 'INACTIVE')    return 'dot-inactive'
+  return 'dot-idle'
+}
+
 function binClass(state) {
   return { avail: 'bin-avail', used: 'bin-used', off: 'bin-off' }[state] ?? ''
 }
@@ -174,11 +198,15 @@ function binPctClass(pct) {
   return 'kpi-accent-red'
 }
 
-function goToWarehouse(evt) {
-  const id = Number(evt.target.value)
-  if (id !== warehouseId.value) {
-    router.push({ name: ROUTE_NAMES.MASTER_WAREHOUSE_DETAIL, params: { id } })
-  }
+function selectWarehouse(id) {
+  whDropdownOpen.value = false
+  if (id === warehouseId.value) return
+  router.push({ name: ROUTE_NAMES.MASTER_WAREHOUSE_DETAIL, params: { id } })
+}
+
+function goToWarehouseList() {
+  whDropdownOpen.value = false
+  router.push({ name: ROUTE_NAMES.MASTER_WAREHOUSE_LIST })
 }
 </script>
 
@@ -187,16 +215,56 @@ function goToWarehouse(evt) {
 
     <!-- ── 헤더 액션 슬롯 ─────────────────────────────────────────────────── -->
     <template #header-action>
-      <select
-        v-if="allWarehouses.length"
-        class="wh-select"
-        :value="warehouseId"
-        @change="goToWarehouse"
-      >
-        <option v-for="wh in allWarehouses" :key="wh.id" :value="wh.id">
-          {{ wh.name }}
-        </option>
-      </select>
+      <!-- 창고 선택 드롭다운 -->
+      <div class="wh-dropdown">
+        <button
+          class="ui-btn ui-btn--ghost wh-dropdown-trigger"
+          @click.stop="whDropdownOpen = !whDropdownOpen"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          {{ warehouse?.name ?? '창고 선택' }}
+          <svg class="dropdown-chevron" :class="{ open: whDropdownOpen }"
+               width="12" height="12" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+
+        <Transition name="dropdown">
+          <div v-if="whDropdownOpen" class="wh-dropdown-menu">
+            <button class="wh-dropdown-list-link" @click="goToWarehouseList">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6"/>
+                <line x1="8" y1="12" x2="21" y2="12"/>
+                <line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6" x2="3.01" y2="6"/>
+                <line x1="3" y1="12" x2="3.01" y2="12"/>
+                <line x1="3" y1="18" x2="3.01" y2="18"/>
+              </svg>
+              창고 목록 전체 보기
+            </button>
+            <div class="wh-dropdown-divider"/>
+            <button
+              v-for="wh in allWarehouses"
+              :key="wh.id"
+              :class="['wh-dropdown-item', {
+                active:   wh.id === warehouseId,
+                inactive: wh.status === 'INACTIVE',
+              }]"
+              @click="selectWarehouse(wh.id)"
+            >
+              <span class="wh-item-dot" :class="dotClass(wh)"/>
+              {{ wh.name }}
+              <span v-if="wh.status === 'INACTIVE'" class="wh-inactive-badge">비활성</span>
+            </button>
+          </div>
+        </Transition>
+      </div>
 
       <!-- 로케이션 드로어 열기 버튼 -->
       <button class="ui-btn ui-btn--ghost btn-location" @click="drawerOpen = true">
@@ -231,7 +299,7 @@ function goToWarehouse(evt) {
     <div class="wd-page">
 
       <!-- ── KPI 요약 바 ────────────────────────────────────────────────── -->
-      <div class="kpi-bar">
+      <div class="kpi-bar" :class="{ 'kpi-bar--inactive': isInactive }">
 
         <!-- KPI 1: 총 SKU -->
         <div class="kpi-card">
@@ -325,8 +393,25 @@ function goToWarehouse(evt) {
 
       </div><!-- /.kpi-bar -->
 
-      <!-- ── 하단 3패널 ────────────────────────────────────────────────── -->
-      <div class="panels-row">
+      <!-- ── 비활성 창고 안내 ──────────────────────────────────────────── -->
+      <div v-if="isInactive" class="inactive-notice">
+        <div class="inactive-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <p class="inactive-title">이 창고는 현재 비활성 상태입니다</p>
+        <p class="inactive-desc">운영이 중단되어 재고·주문 데이터를 조회할 수 없습니다.</p>
+        <button class="ui-btn ui-btn--ghost inactive-back-btn" @click="goToWarehouseList">
+          창고 목록으로 이동
+        </button>
+      </div>
+
+      <!-- ── 하단 패널 (활성/주의 창고) ────────────────────────────────── -->
+      <div v-else class="panels-row">
 
         <!-- ══════ Panel 1: 재고 현황 ══════ -->
         <div class="panel panel-stock">
@@ -368,70 +453,25 @@ function goToWarehouse(evt) {
           </div>
         </div>
 
-        <!-- ══════ Panel 2: 출고 현황 ══════ -->
-        <div class="panel panel-shipping">
-          <div class="panel-hd">출고 현황</div>
+        <!-- ══════ Panel 2+3 통합: 주문 현황 ══════ -->
+        <div class="panel panel-orders-combined">
 
-          <div class="tab-row">
-            <button
-              v-for="t in [{ k: 'today', l: '금일' }, { k: 'week', l: '주간' }, { k: 'month', l: '월간' }]"
-              :key="t.k"
-              :class="['tab-btn', { active: outboundTab === t.k }]"
-              @click="outboundTab = t.k"
-            >
-              {{ t.l }}
-              <span v-if="t.k === 'today' && outboundData.today.length" class="tab-count">
-                {{ outboundData.today.length }}
-              </span>
-            </button>
-          </div>
-
-          <div class="panel-body">
-            <table class="data-tbl">
-              <thead>
-                <tr>
-                  <th>주문번호</th>
-                  <th>셀러</th>
-                  <th>상태</th>
-                  <th>액션</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="row in currentOutbound" :key="row.orderId">
-                  <td>
-                    <button class="order-id-btn" @click="openOrderDetail(row.orderId)">
-                      {{ row.orderId }}
-                    </button>
-                  </td>
-                  <td>{{ row.seller }}</td>
-                  <td>
-                    <StatusBadge :status="row.status" type="order" />
-                  </td>
-                  <td class="action-cell">
-                    <button
-                      v-if="row.status !== ORDER_STATUS.SHIPPED"
-                      class="btn-action-sm"
-                      @click="handleProcessOutbound(row)"
-                    >
-                      처리
-                    </button>
-                  </td>
-                </tr>
-                <tr v-if="!currentOutbound.length && !ui.isLoading">
-                  <td colspan="4" class="empty-cell">데이터 없음</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- ══════ Panel 3: 주문 처리 상세 ══════ -->
-        <div class="panel panel-orders">
+          <!-- 헤더 + 뷰 전환 탭 -->
           <div class="panel-hd">
-            주문 처리 상세
+            주문 현황
+            <div class="view-tab-row">
+              <button
+                :class="['view-tab', { active: orderView === 'outbound' }]"
+                @click="orderView = 'outbound'"
+              >출고 현황</button>
+              <button
+                :class="['view-tab', { active: orderView === 'detail' }]"
+                @click="orderView = 'detail'"
+              >처리 상세</button>
+            </div>
           </div>
 
-          <!-- 통계 바 -->
+          <!-- 공통 통계 바 (두 뷰 모두에서 표시) -->
           <div class="order-stat-bar">
             <div class="order-stat stat-wait">
               <span class="stat-num">{{ orderStats.waiting }}</span>
@@ -447,42 +487,100 @@ function goToWarehouse(evt) {
             </div>
           </div>
 
-          <div class="panel-body">
-            <table class="data-tbl">
-              <thead>
-                <tr>
-                  <th>주문번호</th>
-                  <th>상품(SKU)</th>
-                  <th class="col-num">수량</th>
-                  <th>배송지</th>
-                  <th>상태</th>
-                  <th>담당 작업자</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="ord in orders" :key="ord.orderId">
-                  <td>
-                    <button class="order-id-btn" @click="openOrderDetail(ord.orderId)">
-                      {{ ord.orderId }}
-                    </button>
-                  </td>
-                  <td>
-                    <span class="product-name-cell">{{ ord.productName }}</span>
-                    <div class="sku-code-sub">{{ ord.sku }}</div>
-                  </td>
-                  <td class="col-num">{{ ord.qty }}</td>
-                  <td class="dest-cell">{{ ord.dest }}</td>
-                  <td>
-                    <StatusBadge :status="ord.status" type="order" />
-                  </td>
-                  <td>{{ ord.worker }}</td>
-                </tr>
-                <tr v-if="!orders.length && !ui.isLoading">
-                  <td colspan="6" class="empty-cell">데이터 없음</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <!-- ── 출고 현황 뷰 ── -->
+          <template v-if="orderView === 'outbound'">
+            <div class="tab-row">
+              <button
+                v-for="t in [{ k: 'today', l: '금일' }, { k: 'week', l: '주간' }, { k: 'month', l: '월간' }]"
+                :key="t.k"
+                :class="['tab-btn', { active: outboundTab === t.k }]"
+                @click="outboundTab = t.k"
+              >
+                {{ t.l }}
+                <span v-if="t.k === 'today' && outboundData.today.length" class="tab-count">
+                  {{ outboundData.today.length }}
+                </span>
+              </button>
+            </div>
+            <div class="panel-body">
+              <table class="data-tbl">
+                <thead>
+                  <tr>
+                    <th>주문번호</th>
+                    <th>셀러</th>
+                    <th>상태</th>
+                    <th>액션</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in currentOutbound" :key="row.orderId">
+                    <td>
+                      <button class="order-id-btn" @click="openOrderDetail(row.orderId)">
+                        {{ row.orderId }}
+                      </button>
+                    </td>
+                    <td>{{ row.seller }}</td>
+                    <td>
+                      <StatusBadge :status="row.status" type="order" />
+                    </td>
+                    <td class="action-cell">
+                      <button
+                        v-if="row.status !== ORDER_STATUS.SHIPPED"
+                        class="btn-action-sm"
+                        @click="handleProcessOutbound(row)"
+                      >
+                        처리
+                      </button>
+                    </td>
+                  </tr>
+                  <tr v-if="!currentOutbound.length && !ui.isLoading">
+                    <td colspan="4" class="empty-cell">데이터 없음</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </template>
+
+          <!-- ── 처리 상세 뷰 ── -->
+          <template v-else>
+            <div class="panel-body">
+              <table class="data-tbl">
+                <thead>
+                  <tr>
+                    <th>주문번호</th>
+                    <th>상품(SKU)</th>
+                    <th class="col-num">수량</th>
+                    <th>배송지</th>
+                    <th>상태</th>
+                    <th>담당 작업자</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="ord in orders" :key="ord.orderId">
+                    <td>
+                      <button class="order-id-btn" @click="openOrderDetail(ord.orderId)">
+                        {{ ord.orderId }}
+                      </button>
+                    </td>
+                    <td>
+                      <span class="product-name-cell">{{ ord.productName }}</span>
+                      <div class="sku-code-sub">{{ ord.sku }}</div>
+                    </td>
+                    <td class="col-num">{{ ord.qty }}</td>
+                    <td class="dest-cell">{{ ord.dest }}</td>
+                    <td>
+                      <StatusBadge :status="ord.status" type="order" />
+                    </td>
+                    <td>{{ ord.worker }}</td>
+                  </tr>
+                  <tr v-if="!orders.length && !ui.isLoading">
+                    <td colspan="6" class="empty-cell">데이터 없음</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </template>
+
         </div>
 
       </div><!-- /.panels-row -->
@@ -640,22 +738,160 @@ function goToWarehouse(evt) {
   font-size: 13px;
 }
 
-.wh-select {
-  height: 36px;
-  padding: 0 10px;
-  background: var(--surface-2);
+/* ── KPI 비활성 상태 ────────────────────────────────────────────────────── */
+.kpi-bar--inactive { opacity: 0.35; pointer-events: none; }
+
+/* ── 비활성 창고 안내 화면 ──────────────────────────────────────────────── */
+.inactive-notice {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
+  padding: 48px 24px;
+  text-align: center;
+}
+.inactive-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: rgba(245, 166, 35, .12);
+  color: #B45309;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.inactive-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--t1);
+  margin: 0;
+}
+.inactive-desc {
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  color: var(--t3);
+  line-height: 1.6;
+  margin: 0;
+}
+.inactive-back-btn {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── 창고 선택 드롭다운 ─────────────────────────────────────────────────── */
+.wh-dropdown { position: relative; }
+
+.wh-dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: 'Barlow', sans-serif;
   font-weight: 600;
   font-size: 13px;
+  max-width: 220px;
+}
+.dropdown-chevron {
+  flex-shrink: 0;
+  transition: transform .2s ease;
+  opacity: .6;
+}
+.dropdown-chevron.open { transform: rotate(180deg); }
+
+.wh-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 200px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border-dk);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 200;
+  padding: 4px 0;
+}
+.wh-dropdown-menu::-webkit-scrollbar       { width: 4px; }
+.wh-dropdown-menu::-webkit-scrollbar-track { background: transparent; }
+.wh-dropdown-menu::-webkit-scrollbar-thumb { background: var(--border-dk); border-radius: 2px; }
+
+.wh-dropdown-list-link {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  font-family: 'Barlow', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--t3);
+  cursor: pointer;
+  text-align: left;
+  transition: background .12s, color .12s;
+}
+.wh-dropdown-list-link:hover { background: var(--surface-2); color: var(--t1); }
+
+.wh-dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+.wh-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--t1);
   cursor: pointer;
-  outline: none;
-  transition: border-color .15s;
+  text-align: left;
+  transition: background .12s;
 }
-.wh-select:hover { border-color: var(--gold); }
-.wh-select:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(245,166,35,.2); }
+.wh-dropdown-item:hover  { background: var(--surface-2); }
+.wh-dropdown-item.active { background: rgba(76, 116, 255, .07); font-weight: 700; }
+
+.wh-item-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-current  { background: var(--blue); }
+.dot-idle     { background: var(--border-dk); }
+.dot-inactive { background: var(--t4); }
+
+.wh-dropdown-item.inactive { opacity: 0.55; }
+.wh-inactive-badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--t4);
+  background: var(--border);
+  padding: 1px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.dropdown-enter-active,
+.dropdown-leave-active { transition: opacity .15s ease, transform .15s ease; }
+.dropdown-enter-from,
+.dropdown-leave-to    { opacity: 0; transform: translateY(-6px); }
 
 /* ── 에러 배너 ───────────────────────────────────────────────────────────── */
 .fetch-error {
@@ -831,9 +1067,8 @@ function goToWarehouse(evt) {
   box-shadow: var(--shadow-sm);
 }
 
-.panel-stock    { width: 320px; }
-.panel-shipping { width: 330px; }
-.panel-orders   { flex: 1; min-width: 0; flex-shrink: 1; }
+.panel-stock           { flex: 0 0 clamp(300px, 25%, 440px); }
+.panel-orders-combined { flex: 1; min-width: 0; }
 
 .panel-hd {
   display: flex;
@@ -864,6 +1099,31 @@ function goToWarehouse(evt) {
 .panel-body::-webkit-scrollbar       { width: 4px; }
 .panel-body::-webkit-scrollbar-track { background: transparent; }
 .panel-body::-webkit-scrollbar-thumb { background: var(--border-dk); border-radius: 2px; }
+
+/* ── 주문 현황 뷰 전환 탭 ────────────────────────────────────────────── */
+.view-tab-row {
+  display: flex;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+}
+.view-tab {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  font-family: 'Barlow', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--t3);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  white-space: nowrap;
+}
+.view-tab:hover  { color: var(--t1); }
+.view-tab.active { background: var(--gold); color: #fff; font-weight: 700; }
 
 /* ── 출고 탭 ──────────────────────────────────────────────────────────── */
 .tab-row {
@@ -976,8 +1236,6 @@ function goToWarehouse(evt) {
 .num-low   { font-weight: 700; color: var(--red); }
 .num-alloc { color: var(--t2); }
 .num-total { font-weight: 700; color: var(--t1); }
-.sku-code  { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--t2); }
-.order-id  { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #3B82F6; }
 
 /* ── 출고 액션 버튼 ─────────────────────────────────────────────────────── */
 .btn-action-sm {
