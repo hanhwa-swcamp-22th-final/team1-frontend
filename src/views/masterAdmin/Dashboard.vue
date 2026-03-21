@@ -1,10 +1,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
 import { formatDate, formatNumber } from '@/utils/format'
 import { getOutboundStats, getCurrentRevenue, getMonthlyRevenue } from '@/api/order'
-import { getAsnStats, getInventoryStats, getWarehouseStatus, getStorageBilling } from '@/api/wms'
-import { getSellerStats, getSellerReceivables } from '@/api/member'
+import { getAsnStats, getInventoryStats, getWarehouseStatus } from '@/api/wms'
+import { getSellerStats, getSellerFeeSummary, getSellerRevenue } from '@/api/member'
 import { ROUTE_NAMES } from '@/constants'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
@@ -12,24 +13,19 @@ import VueApexCharts from 'vue3-apexcharts'
 
 const breadcrumb = [{ label: 'CONK' }, { label: '대시보드' }]
 
+const router            = useRouter()
 const ui                = useUiStore()
 const summaryCards      = ref([])
 const warehouses        = ref([])
-const storageBilling    = ref([])
 const sellerFees        = ref([])
+const sellerRevenueRows = ref([])
 const monthlyRevenue    = ref([])
+const sellerFeeViewMode  = ref('chart')
+const revenueChartType   = ref('area') // 'area' | 'bar' | 'donut'
 const fetchedAt         = ref(null)
 const errorMsg          = ref('')
 
 // ── 테이블 컬럼 정의 ──────────────────────────────────────────────────────────
-
-const BILLING_COLUMNS = [
-  { key: 'warehouseName', label: '창고' },
-  { key: 'storageQty',    label: '재고(SKU)',  align: 'right',  width: '90px'  },
-  { key: 'locationUtil',  label: '사용률',     align: 'center', width: '120px' },
-  { key: 'amount',        label: '청구액',     align: 'right',  width: '110px' },
-  { key: 'status',        label: '상태',       align: 'center', width: '90px'  },
-]
 
 const SELLER_FEE_COLUMNS = [
   { key: 'sellerName',   label: '셀러' },
@@ -44,37 +40,207 @@ const sectionDate = computed(() =>
   fetchedAt.value ? formatDate(fetchedAt.value, 'datetime') + ' 실시간 기준' : ''
 )
 
-const chartOptions = computed(() => ({
-  chart:      { type: 'area', toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
-  stroke:     { curve: 'smooth', width: 2.5 },
-  fill:       { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.25, opacityTo: 0, stops: [0, 100] } },
-  colors:     ['#4C74FF'],
-  dataLabels: { enabled: false },
-  xaxis: {
-    categories: monthlyRevenue.value.map(d => d.label),
-    axisBorder: { show: false },
-    axisTicks:  { show: false },
-    labels:     { style: { colors: '#7B859A', fontSize: '11px' } },
+const revenueChartOptions = computed(() => {
+  const data = monthlyRevenue.value
+  const avg  = data.length ? data.reduce((s, d) => s + d.revenue, 0) / data.length : 0
+
+  // ── 도넛 전용 ──
+  if (revenueChartType.value === 'donut') {
+    return {
+      chart:    { type: 'donut', fontFamily: 'Inter, sans-serif' },
+      labels:   data.map(d => d.label),
+      colors:   ['#4C74FF', '#34B469', '#F5A623', '#E84646', '#9747FF', '#14B8A6'],
+      legend:   { position: 'bottom', fontSize: '12px', fontFamily: 'Inter, sans-serif' },
+      dataLabels: { enabled: true, formatter: val => val.toFixed(1) + '%' },
+      plotOptions: { pie: { donut: { size: '65%' } } },
+      tooltip:  { y: { formatter: v => `₩${formatNumber(v)}` } },
+    }
+  }
+
+  // ── area / bar 공통 ──
+  const momColors = data.map((d, i) =>
+    i === 0 ? 'transparent' : d.revenue >= data[i - 1].revenue ? '#34B469' : '#E84646'
+  )
+  const base = {
+    chart: { type: revenueChartType.value, toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
+    colors: ['#4C74FF'],
+    dataLabels: {
+      enabled: true,
+      formatter: (val, { dataPointIndex: i }) => {
+        if (i === 0) return ''
+        const pct = ((data[i].revenue - data[i - 1].revenue) / data[i - 1].revenue * 100).toFixed(1)
+        return (pct >= 0 ? '+' : '') + pct + '%'
+      },
+      style: { fontSize: '10px', fontWeight: 700, colors: momColors },
+      background: { enabled: false },
+      offsetY: -8,
+    },
+    xaxis: {
+      categories: data.map(d => d.label),
+      axisBorder: { show: false }, axisTicks: { show: false },
+      labels: { style: { colors: '#7B859A', fontSize: '11px' } },
+    },
+    yaxis: {
+      labels: {
+        style: { colors: '#7B859A', fontSize: '11px' },
+        formatter: v => `₩${(v / 1_000_000).toFixed(0)}M`,
+      },
+    },
+    grid: { borderColor: '#E4E8F0', strokeDashArray: 4 },
+    annotations: {
+      yaxis: [{
+        y: avg, borderColor: '#F5A623', borderWidth: 1, strokeDashArray: 5,
+        label: { text: '평균', position: 'right',
+          style: { color: '#F5A623', background: 'transparent', fontSize: '10px', fontWeight: 600 } },
+      }],
+    },
+    tooltip: {
+      y: {
+        formatter: (v, { dataPointIndex: i }) => {
+          const b = `₩${formatNumber(v)}`
+          if (i === 0) return b
+          const pct = ((data[i].revenue - data[i - 1].revenue) / data[i - 1].revenue * 100).toFixed(1)
+          return `${b}  (전월비 ${pct >= 0 ? '+' : ''}${pct}%)`
+        },
+      },
+    },
+  }
+
+  if (revenueChartType.value === 'area') {
+    return {
+      ...base,
+      stroke:  { curve: 'smooth', width: 2.5 },
+      fill:    { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.02, stops: [0, 100] } },
+      markers: { size: 4, colors: ['#4C74FF'], strokeColors: '#fff', strokeWidth: 2, hover: { size: 6 } },
+    }
+  }
+  // bar
+  return {
+    ...base,
+    stroke: { show: false },
+    fill:   { type: 'solid' },
+    plotOptions: { bar: { borderRadius: 4, columnWidth: '55%' } },
+  }
+})
+
+const revenueChartSeries = computed(() =>
+  revenueChartType.value === 'donut'
+    ? monthlyRevenue.value.map(d => d.revenue)
+    : [{ name: '매출액', data: monthlyRevenue.value.map(d => d.revenue) }]
+)
+
+const sellerFeeChartRows = computed(() => {
+  const revenueMap = new Map(
+    sellerRevenueRows.value.map(row => [row.sellerCode, row.monthRevenue ?? 0])
+  )
+
+  return [...sellerFees.value]
+    .map(row => ({
+      ...row,
+      monthRevenue: revenueMap.get(row.sellerCode) ?? 0,
+    }))
+    .sort((a, b) => b.monthRevenue - a.monthRevenue)
+    .slice(0, 5)
+})
+
+const sellerFeeChartOptions = computed(() => ({
+  chart: {
+    type: 'donut',
+    toolbar: { show: false },
+    fontFamily: 'Inter, sans-serif',
   },
-  yaxis: {
-    labels: {
-      style:     { colors: '#7B859A', fontSize: '11px' },
-      formatter: v => `₩${(v / 1_000_000).toFixed(0)}M`,
+  labels: sellerFeeChartRows.value.map(row => row.sellerName),
+  colors: ['#1746A2', '#2563EB', '#4C74FF', '#6B8CFF', '#9BB2FF', '#C7D4FF'],
+  stroke: {
+    width: 0,
+  },
+  plotOptions: {
+    pie: {
+      donut: {
+        size: '62%',
+        labels: {
+          show: true,
+          name: {
+            show: true,
+            fontSize: '12px',
+            fontWeight: 600,
+            color: '#7B859A',
+          },
+          value: {
+            show: true,
+            fontSize: '18px',
+            fontWeight: 700,
+            color: '#22304A',
+            formatter: value => `₩${formatNumber(Number(value))}`,
+          },
+          total: {
+            show: true,
+            label: '총 예상 비용',
+            fontSize: '12px',
+            fontWeight: 600,
+            color: '#7B859A',
+            formatter: () => {
+              const total = sellerFeeChartRows.value.reduce((sum, row) => sum + row.estimatedCost, 0)
+              return `₩${formatNumber(total)}`
+            },
+          },
+        },
+      },
     },
   },
-  grid:    { borderColor: '#E4E8F0', strokeDashArray: 4 },
-  tooltip: { y: { formatter: v => `₩${formatNumber(v)}` } },
+  dataLabels: {
+    enabled: true,
+    formatter: value => `${value.toFixed(1)}%`,
+    style: {
+      fontSize: '11px',
+      fontWeight: 600,
+      colors: ['#FFFFFF'],
+    },
+  },
+  legend: {
+    show: true,
+    position: 'right',
+    fontSize: '12px',
+    fontWeight: 600,
+    labels: {
+      colors: '#22304A',
+    },
+    itemMargin: {
+      horizontal: 8,
+      vertical: 6,
+    },
+    formatter: (seriesName, opts) => {
+      const row = sellerFeeChartRows.value[opts.seriesIndex]
+      if (!row) return seriesName
+      return `${seriesName}  ₩${formatNumber(row.estimatedCost)}`
+    },
+  },
+  tooltip: {
+    custom: ({ dataPointIndex }) => {
+      const row = sellerFeeChartRows.value[dataPointIndex]
+      if (!row) return ''
+
+      const growthLabel = row.momGrowth > 0
+        ? `전월비 +${row.momGrowth.toFixed(1)}%`
+        : `전월비 ${row.momGrowth.toFixed(1)}%`
+
+      return `
+        <div class="seller-fee-tooltip">
+          <strong>${row.sellerName}</strong>
+          <span>당월 매출: ₩${formatNumber(row.monthRevenue)}</span>
+          <span>예상 비용: ₩${formatNumber(row.estimatedCost)}</span>
+          <span>${growthLabel}</span>
+          <span>출고회전율 ${row.turnoverRate}%</span>
+        </div>
+      `
+    },
+  },
 }))
 
-const chartSeries = computed(() => [{
-  name: '매출액',
-  data: monthlyRevenue.value.map(d => d.revenue),
-}])
+const sellerFeeChartSeries = computed(() => sellerFeeChartRows.value.map(row => row.estimatedCost))
 
-// ── 헬퍼 ─────────────────────────────────────────────────────────────────────
-
-function billingStatusLabel(status) {
-  return status === 'BILLED' ? '청구 완료' : '청구 예정'
+function moveToSellerRevenue() {
+  router.push({ name: ROUTE_NAMES.MASTER_SELLER_REVENUE })
 }
 
 // ── 데이터 fetch ──────────────────────────────────────────────────────────────
@@ -84,7 +250,7 @@ async function fetchDashboard() {
   ui.setLoading(true)
   try {
     const [outboundRes, asnRes, inventoryRes, sellerRes, whRes,
-           revenueRes, monthlyRes, billingRes, sellerRecRes] = await Promise.all([
+           revenueRes, monthlyRes, sellerFeeRes, sellerRevenueRes] = await Promise.all([
       getOutboundStats(),
       getAsnStats(),
       getInventoryStats(),
@@ -92,8 +258,8 @@ async function fetchDashboard() {
       getWarehouseStatus(),
       getCurrentRevenue(),
       getMonthlyRevenue(),
-      getStorageBilling(),
-      getSellerReceivables(),
+      getSellerFeeSummary(),
+      getSellerRevenue(),
     ])
 
     const o = outboundRes.data.data
@@ -112,8 +278,9 @@ async function fetchDashboard() {
 
     warehouses.value     = whRes.data.data
     monthlyRevenue.value = monthlyRes.data.data
-    storageBilling.value = billingRes.data.data
-    sellerFees.value     = sellerRecRes.data.data
+    sellerFees.value     = [...(sellerFeeRes.data.data ?? [])]
+      .sort((a, b) => b.estimatedCost - a.estimatedCost)
+    sellerRevenueRows.value = sellerRevenueRes.data.data ?? []
     fetchedAt.value      = new Date()
   } catch (err) {
     errorMsg.value = '데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
@@ -128,17 +295,6 @@ onMounted(fetchDashboard)
 
 <template>
   <AppLayout :breadcrumb="breadcrumb" title="대시보드" :loading="ui.isLoading">
-    <template #header-action>
-      <button class="ui-btn ui-btn--ghost btn-export">
-        <svg fill="none" height="14" viewBox="0 0 14 14" width="14">
-          <path d="M7 1v8M3.5 6.5L7 10l3.5-3.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" />
-          <path d="M1.5 11v1.5h11V11" stroke="currentColor" stroke-linecap="round" stroke-width="1.5" />
-        </svg>
-        데이터 내보내기
-      </button>
-
-    </template>
-
     <div v-if="errorMsg" class="fetch-error">
       {{ errorMsg }}
       <button @click="fetchDashboard">다시 시도</button>
@@ -213,61 +369,32 @@ onMounted(fetchDashboard)
       </div>
     </div>
 
-    <!-- ③ 월별 매출 추이 + 보관료 청구 현황 -->
-    <div class="two-col-grid">
-      <!-- 월별 매출 차트 -->
-      <div class="panel">
-        <div class="panel-header">
+    <!-- ③ 월별 매출 추이 -->
+    <div class="panel panel--spacious">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
           <span class="panel-title">월별 매출 추이</span>
           <span class="panel-sub">최근 6개월</span>
         </div>
-        <VueApexCharts
-          v-if="monthlyRevenue.length"
-          type="area"
-          height="220"
-          :options="chartOptions"
-          :series="chartSeries"
-        />
-      </div>
-
-      <!-- 창고 보관료 청구 현황 -->
-      <div class="panel">
-        <div class="panel-header">
-          <div class="panel-title-wrap">
-            <span class="panel-title">창고 보관료 청구 현황</span>
-            <span class="panel-sub">{{ storageBilling[0]?.billingMonth ?? '' }}</span>
-          </div>
-          <router-link :to="{ name: ROUTE_NAMES.MASTER_STORAGE_BILLING }" class="panel-more">전체보기 →</router-link>
+        <div class="view-toggle" role="tablist" aria-label="차트 유형">
+          <button type="button" class="view-toggle__button"
+            :class="{ 'view-toggle__button--active': revenueChartType === 'area' }"
+            @click="revenueChartType = 'area'">추이</button>
+          <button type="button" class="view-toggle__button"
+            :class="{ 'view-toggle__button--active': revenueChartType === 'bar' }"
+            @click="revenueChartType = 'bar'">막대</button>
+          <button type="button" class="view-toggle__button"
+            :class="{ 'view-toggle__button--active': revenueChartType === 'donut' }"
+            @click="revenueChartType = 'donut'">비중</button>
         </div>
-        <BaseTable :columns="BILLING_COLUMNS" :rows="storageBilling" :pagination="null" row-key="id">
-          <template #cell-storageQty="{ value }">
-            {{ formatNumber(value) }}
-          </template>
-          <template #cell-locationUtil="{ value }">
-            <div class="util-wrap">
-              <div class="util-bar">
-                <div
-                  class="util-fill"
-                  :style="{ width: value + '%' }"
-                />
-              </div>
-              <span class="util-pct">{{ value }}%</span>
-            </div>
-          </template>
-          <template #cell-amount="{ value }">
-            <span class="amount-cell">₩{{ formatNumber(value) }}</span>
-          </template>
-          <template #cell-status="{ value }">
-            <span
-              class="billing-badge"
-              :class="{
-                'billing-badge--billed':  value === 'BILLED',
-                'billing-badge--pending': value === 'PENDING',
-              }"
-            >{{ billingStatusLabel(value) }}</span>
-          </template>
-        </BaseTable>
       </div>
+      <VueApexCharts
+        v-if="monthlyRevenue.length"
+        :type="revenueChartType"
+        height="260"
+        :options="revenueChartOptions"
+        :series="revenueChartSeries"
+      />
     </div>
 
     <!-- ④ 셀러별 3PL 비용 현황 (full-width) -->
@@ -275,11 +402,41 @@ onMounted(fetchDashboard)
       <div class="panel-header">
         <div class="panel-title-wrap">
           <span class="panel-title">셀러별 3PL 비용 현황</span>
-          <span class="panel-sub">당월 청구 기준</span>
+          <span class="panel-sub">
+            {{ sellerFeeViewMode === 'chart' ? '매출액 상위 5개 셀러 비용 비중' : '당월 청구 기준' }}
+          </span>
         </div>
-        <router-link :to="{ name: ROUTE_NAMES.MASTER_SELLER_RECEIVABLES }" class="panel-more">전체보기 →</router-link>
+        <div class="panel-actions">
+          <div class="view-toggle" role="tablist" aria-label="셀러별 3PL 비용 보기 방식">
+            <button
+              type="button"
+              class="view-toggle__button"
+              :class="{ 'view-toggle__button--active': sellerFeeViewMode === 'table' }"
+              @click="sellerFeeViewMode = 'table'"
+            >
+              테이블
+            </button>
+            <button
+              type="button"
+              class="view-toggle__button"
+              :class="{ 'view-toggle__button--active': sellerFeeViewMode === 'chart' }"
+              @click="sellerFeeViewMode = 'chart'"
+            >
+              그래프
+            </button>
+          </div>
+          <button type="button" class="panel-more panel-more--button" @click="moveToSellerRevenue">
+            상세보기 →
+          </button>
+        </div>
       </div>
-      <BaseTable :columns="SELLER_FEE_COLUMNS" :rows="sellerFees" :pagination="null" row-key="sellerCode">
+      <BaseTable
+        v-if="sellerFeeViewMode === 'table'"
+        :columns="SELLER_FEE_COLUMNS"
+        :rows="sellerFees"
+        :pagination="null"
+        row-key="sellerCode"
+      >
         <template #cell-sellerName="{ row, value }">
           <div class="seller-name-cell">
             <span class="rank-badge">{{ sellerFees.indexOf(row) + 1 }}</span>
@@ -297,39 +454,27 @@ onMounted(fetchDashboard)
         <template #cell-turnoverRate="{ value }">
           <span class="turnover-rate">{{ value }}%</span>
         </template>
-        <template #cell-daysOverdue="{ value }">
-          <span v-if="value === 0" class="overdue-none">정상</span>
-          <span v-else class="overdue-badge">{{ value }}일</span>
-        </template>
       </BaseTable>
+      <div v-else class="seller-fee-chart-panel">
+        <VueApexCharts
+          v-if="sellerFeeChartRows.length"
+          type="donut"
+          height="340"
+          :options="sellerFeeChartOptions"
+          :series="sellerFeeChartSeries"
+        />
+        <div v-else class="seller-fee-empty">
+          표시할 셀러 비용 데이터가 없습니다.
+        </div>
+        <div v-if="sellerFeeChartRows.length" class="seller-fee-chart-note">
+          당월 매출액 기준 상위 {{ sellerFeeChartRows.length }}개 셀러의 3PL 비용 비중을 보여줍니다.
+        </div>
+      </div>
     </div>
   </AppLayout>
 </template>
 
-<script>
-import VueApexCharts from 'vue3-apexcharts'
-export default { components: { VueApexCharts } }
-</script>
-
 <style scoped>
-.btn-export {
-  border-radius: var(--radius-sm);
-  font-family: var(--font-barlow);
-  font-weight: 500;
-}
-.btn-export svg { width: 14px; height: 14px; flex-shrink: 0; }
-
-.btn-gold {
-  border-radius: var(--radius-sm);
-  background: var(--gold);
-  font-family: var(--font-barlow);
-  font-weight: 700;
-  color: var(--t1);
-  border: none;
-}
-.btn-gold:hover { background: var(--gold-lt); }
-.btn-gold svg { width: 14px; height: 14px; flex-shrink: 0; }
-
 /* ── 에러 배너 ───────────────────────────────── */
 .fetch-error {
   display: flex;
@@ -544,14 +689,6 @@ export default { components: { VueApexCharts } }
   margin-left: 2px;
 }
 
-/* ── 2열 그리드 ──────────────────────────────── */
-.two-col-grid {
-  display: grid;
-  grid-template-columns: 3fr 2fr;
-  gap: var(--space-5);
-  margin-bottom: var(--space-6);
-}
-
 /* ── 패널 ────────────────────────────────────── */
 .panel {
   background: var(--surface);
@@ -561,10 +698,15 @@ export default { components: { VueApexCharts } }
   border-top: 3px solid var(--blue);
 }
 
+.panel--spacious {
+  margin-bottom: var(--space-6);
+}
+
 .panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-3);
   padding: var(--space-4) var(--space-5) var(--space-3);
 }
 
@@ -585,6 +727,13 @@ export default { components: { VueApexCharts } }
 }
 .panel-more:hover { text-decoration: underline; }
 
+.panel-more--button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
 .panel-title {
   font-family: var(--font-condensed);
   font-weight: 700;
@@ -597,34 +746,62 @@ export default { components: { VueApexCharts } }
   color: var(--t3);
 }
 
+.panel-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.view-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  background: #edf2ff;
+  border-radius: var(--radius-full);
+}
+
+.view-toggle__button {
+  min-width: 60px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--t2);
+  font-family: var(--font-barlow);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.view-toggle__button--active {
+  background: var(--surface);
+  color: var(--blue);
+  box-shadow: var(--shadow-sm);
+}
+
 /* chart 패딩 */
 .panel > :deep(.apexcharts-canvas) {
   padding: 0 var(--space-2);
 }
 
-/* ── 사용률 컬럼 ──────────────────────────────── */
-.util-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
+.seller-fee-chart-panel {
+  padding: 0 var(--space-3) var(--space-4);
 }
 
-.util-bar {
-  width: 64px;
-  height: 5px;
-  background: var(--border);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.util-fill { height: 100%; border-radius: 3px; background: var(--green); }
-
-.util-pct {
-  font-family: var(--font-barlow);
-  font-weight: 600;
+.seller-fee-chart-note {
+  padding: 0 var(--space-2);
   font-size: var(--font-size-xs);
-  color: var(--t2);
+  color: var(--t3);
+}
+
+.seller-fee-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  color: var(--t3);
+  font-size: var(--font-size-sm);
 }
 
 /* ── 셀 커스텀 스타일 ─────────────────────────── */
@@ -633,24 +810,6 @@ export default { components: { VueApexCharts } }
   font-weight: 600;
   color: var(--t1);
 }
-
-.amount-alert {
-  font-family: var(--font-barlow);
-  font-weight: 700;
-  color: var(--red);
-}
-
-.billing-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  font-family: var(--font-barlow);
-  font-weight: 600;
-  font-size: var(--font-size-xs);
-  white-space: nowrap;
-}
-.billing-badge--billed  { background: var(--green-pale); color: var(--green); }
-.billing-badge--pending { background: var(--amber-pale); color: #b45309; }
 
 .seller-name-cell {
   display: flex;
@@ -693,20 +852,32 @@ export default { components: { VueApexCharts } }
   color: var(--green);
 }
 
-.overdue-none {
-  font-size: var(--font-size-xs);
-  color: var(--green);
-  font-weight: 600;
+:deep(.seller-fee-tooltip) {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--t1) 94%, transparent);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
-.overdue-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  background: var(--red-pale);
-  color: var(--red);
-  font-family: var(--font-barlow);
+:deep(.seller-fee-tooltip strong) {
+  font-size: 12px;
   font-weight: 700;
-  font-size: var(--font-size-xs);
+}
+
+@media (max-width: 960px) {
+  .panel-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .panel-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 </style>

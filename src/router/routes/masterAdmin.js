@@ -12,9 +12,7 @@ import { ROUTE_NAMES } from '@/constants/routes'
  *   MASTER_ORDER_LIST               — OrderList.vue
  *   MASTER_FEE_SETTING              — FeeView.vue
  *   MASTER_FEE_SETTINGS             — FeeSettings.vue
- *   MASTER_STORAGE_BILLING          — StorageBillingView.vue
  *   MASTER_SELLER_REVENUE           — SellerRevenueView.vue
- *   MASTER_SELLER_RECEIVABLES       — SellerReceivablesView.vue
  *   MASTER_SELLER_COMPANY_LIST      — SellerList.vue
  *   MASTER_SELLER_COMPANY_REGISTER  — SellerRegister.vue
  *   MASTER_ACCOUNT_INVITE           — AccountInvite.vue (셀러 담당자)
@@ -80,27 +78,11 @@ export default [
     meta: { role: ROLES.MASTER_ADMIN },
   },
 
-  // ── 보관료 청구 현황 ──────────────────────────────────────────────────────
-  {
-    path: '/master/storage-billing',
-    name: ROUTE_NAMES.MASTER_STORAGE_BILLING,
-    component: () => import('@/views/masterAdmin/StorageBillingView.vue'),
-    meta: { role: ROLES.MASTER_ADMIN },
-  },
-
   // ── 셀러별 매출 ───────────────────────────────────────────────────────────
   {
     path: '/master/seller-revenue',
     name: ROUTE_NAMES.MASTER_SELLER_REVENUE,
     component: () => import('@/views/masterAdmin/SellerRevenueView.vue'),
-    meta: { role: ROLES.MASTER_ADMIN },
-  },
-
-  // ── 셀러별 미수금 ─────────────────────────────────────────────────────────
-  {
-    path: '/master/seller-receivables',
-    name: ROUTE_NAMES.MASTER_SELLER_RECEIVABLES,
-    component: () => import('@/views/masterAdmin/SellerReceivablesView.vue'),
     meta: { role: ROLES.MASTER_ADMIN },
   },
 

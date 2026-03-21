@@ -87,9 +87,9 @@ export function getSellerRevenue() {
 }
 
 /**
- * 셀러별 미수금 현황 조회
- * @returns {Promise<AxiosResponse>} { success, data: Array<{ sellerCode, sellerName, totalBilled, paid, unpaid, daysOverdue }> }
+ * 대시보드용 셀러별 3PL 비용 요약 조회
+ * @returns {Promise<AxiosResponse>} { success, data: Array<{ sellerCode, sellerName, estimatedCost, momGrowth, turnoverRate }> }
  */
-export function getSellerReceivables() {
-  return instance.get('/members/sellers/receivables')
+export function getSellerFeeSummary() {
+  return instance.get('/members/sellers/fee-summary')
 }

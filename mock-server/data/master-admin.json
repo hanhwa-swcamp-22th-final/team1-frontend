@@ -37,48 +37,6 @@
       "revenue": 159000000
     }
   ],
-  "storage_billing": [
-    {
-      "id": 1,
-      "warehouseName": "LA West Coast Hub",
-      "billingMonth": "2026-03",
-      "storageQty": 8240,
-      "unitRate": 500,
-      "amount": 4120000,
-      "status": "PENDING",
-      "locationUtil": 72
-    },
-    {
-      "id": 2,
-      "warehouseName": "Central Dallas Center",
-      "billingMonth": "2026-03",
-      "storageQty": 5180,
-      "unitRate": 500,
-      "amount": 2590000,
-      "status": "BILLED",
-      "locationUtil": 48
-    },
-    {
-      "id": 3,
-      "warehouseName": "East NY Hub",
-      "billingMonth": "2026-03",
-      "storageQty": 6850,
-      "unitRate": 500,
-      "amount": 3425000,
-      "status": "PENDING",
-      "locationUtil": 63
-    },
-    {
-      "id": 4,
-      "warehouseName": "Chicago MidWest Hub",
-      "billingMonth": "2026-03",
-      "storageQty": 4200,
-      "unitRate": 500,
-      "amount": 2100000,
-      "status": "BILLED",
-      "locationUtil": 55
-    }
-  ],
   "seller_revenue": [
     {
       "sellerCode": "CUST-001",
@@ -116,51 +74,41 @@
       "avgOrderValue": 230337
     }
   ],
-  "seller_receivables": [
+  "seller_fee_summary": [
     {
       "sellerCode": "CUST-001",
       "sellerName": "TechGear Inc.",
-      "totalBilled": 45000000,
-      "paid": 42000000,
-      "unpaid": 3000000,
-      "daysOverdue": 0,
-      "estimatedCost": 45000000
+      "estimatedCost": 45000000,
+      "momGrowth": 5.2,
+      "turnoverRate": 85
     },
     {
       "sellerCode": "CUST-002",
       "sellerName": "HomeStyle Co.",
-      "totalBilled": 40000000,
-      "paid": 38500000,
-      "unpaid": 1500000,
-      "daysOverdue": 5,
-      "estimatedCost": 40000000
+      "estimatedCost": 40000000,
+      "momGrowth": -1.5,
+      "turnoverRate": 92
     },
     {
       "sellerCode": "CUST-003",
       "sellerName": "FashionKorea",
-      "totalBilled": 32000000,
-      "paid": 31200000,
-      "unpaid": 800000,
-      "daysOverdue": 0,
-      "estimatedCost": 32000000
+      "estimatedCost": 32000000,
+      "momGrowth": 2.8,
+      "turnoverRate": 78
     },
     {
       "sellerCode": "CUST-004",
       "sellerName": "NutriVita LLC",
-      "totalBilled": 30000000,
-      "paid": 22000000,
-      "unpaid": 8000000,
-      "daysOverdue": 18,
-      "estimatedCost": 30000000
+      "estimatedCost": 30000000,
+      "momGrowth": 0,
+      "turnoverRate": 64
     },
     {
       "sellerCode": "CUST-005",
       "sellerName": "SportZone USA",
-      "totalBilled": 22000000,
-      "paid": 20500000,
-      "unpaid": 1500000,
-      "daysOverdue": 3,
-      "estimatedCost": 22000000
+      "estimatedCost": 22000000,
+      "momGrowth": -3.2,
+      "turnoverRate": 81
     }
   ],
   "wms_asn_stats": {

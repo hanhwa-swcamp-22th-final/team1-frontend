@@ -19,9 +19,9 @@ module.exports = function (BASE_URL) {
     res.json({ success: true, data })
   })
 
-  // GET /members/sellers/receivables — 셀러별 미수금 현황
-  router.get('/sellers/receivables', async (req, res) => {
-    const { data } = await http.get('/seller_receivables')
+  // GET /members/sellers/fee-summary — 대시보드용 셀러별 3PL 비용 요약
+  router.get('/sellers/fee-summary', async (req, res) => {
+    const { data } = await http.get('/seller_fee_summary')
     res.json({ success: true, data })
   })
 

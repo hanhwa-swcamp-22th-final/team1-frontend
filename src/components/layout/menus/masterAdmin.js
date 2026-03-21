@@ -37,7 +37,6 @@ export const MASTER_ADMIN_MENU_GROUPS = [
     items: [
       { name: ROUTE_NAMES.MASTER_FEE_SETTING,     label: '현재 설정 요금 조회', icon: '$' },
       { name: ROUTE_NAMES.MASTER_FEE_SETTINGS,    label: '3PL 사용료 설정',     icon: '⚙' },
-      { name: ROUTE_NAMES.MASTER_STORAGE_BILLING, label: '보관료 청구 현황',     icon: '₩' },
     ],
   },
   {
@@ -46,7 +45,6 @@ export const MASTER_ADMIN_MENU_GROUPS = [
       { name: ROUTE_NAMES.MASTER_SELLER_COMPANY_LIST,      label: '셀러 목록',   icon: '◉' },
       { name: ROUTE_NAMES.MASTER_SELLER_COMPANY_REGISTER,  label: '셀러 등록',   icon: '+' },
       { name: ROUTE_NAMES.MASTER_SELLER_REVENUE,           label: '셀러별 매출', icon: '↑' },
-      { name: ROUTE_NAMES.MASTER_SELLER_RECEIVABLES,       label: '셀러별 미수금', icon: '!' },
     ],
   },
   {
