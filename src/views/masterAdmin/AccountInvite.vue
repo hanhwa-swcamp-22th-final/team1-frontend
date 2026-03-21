@@ -38,7 +38,7 @@ const ROLES = [
     value: 'WH_WORKER',
     label: 'WH_WORKER',
     icon: 'WW',
-    desc: '현장 작업자 계정\n(하역/검수/적재)',
+    desc: '창고 작업자 계정\n(하역/검수/적재)',
   },
 ]
 
@@ -49,12 +49,14 @@ const form = reactive({
   organizationId: '',
   name:           '',
   email:          '',
+  employeeNumber: '',
 })
 
 const errors = reactive({
   organizationId: '',
   name:           '',
   email:          '',
+  employeeNumber: '',
 })
 
 const submitError = ref('')
@@ -86,8 +88,13 @@ const orgPlaceholder = computed(() =>
   selectedRole.value === 'SELLER' ? '셀러사 선택' : '창고 선택'
 )
 
-// 역할 변경 시 조직 선택 초기화
-watch(selectedRole, () => { form.organizationId = '' })
+// 역할 변경 시 조직 선택 및 에러 초기화
+watch(selectedRole, () => { 
+  form.organizationId = ''
+  form.email = ''
+  form.employeeNumber = ''
+  Object.keys(errors).forEach(k => (errors[k] = ''))
+})
 
 // ── 페이지 타이틀 / 브레드크럼 ────────────────────────────────────────────────
 const pageTitle = computed(() => {
@@ -105,8 +112,16 @@ const breadcrumb = computed(() => [
 function validate() {
   errors.organizationId = form.organizationId ? '' : '소속 조직을 선택해주세요.'
   errors.name           = form.name.trim()    ? '' : '이름을 입력해주세요.'
-  errors.email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)
-    ? '' : '유효한 이메일 주소를 입력해주세요.'
+  
+  if (selectedRole.value === 'WH_WORKER') {
+    errors.email = ''
+    errors.employeeNumber = form.employeeNumber.trim() ? '' : '사번을 입력해주세요.'
+  } else {
+    errors.employeeNumber = ''
+    errors.email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)
+      ? '' : '유효한 이메일 주소를 입력해주세요.'
+  }
+
   return !Object.values(errors).some(Boolean)
 }
 
@@ -114,6 +129,7 @@ function resetForm() {
   form.organizationId = ''
   form.name           = ''
   form.email          = ''
+  form.employeeNumber = ''
   Object.keys(errors).forEach(k => (errors[k] = ''))
   submitError.value   = ''
 }
@@ -126,12 +142,19 @@ async function submitForm() {
 
   ui.setLoading(true)
   try {
-    await inviteAccount({
+    const payload = {
       role:           selectedRole.value,
       organizationId: Number(form.organizationId),
       name:           form.name,
-      email:          form.email,
-    })
+    }
+
+    if (selectedRole.value === 'WH_WORKER') {
+      payload.employeeNumber = form.employeeNumber
+    } else {
+      payload.email = form.email
+    }
+
+    await inviteAccount(payload)
     submitSuccess.value = true
     resetForm()
   } catch (err) {
@@ -216,6 +239,7 @@ onMounted(loadOrganizations)
               </BaseForm>
 
               <BaseForm
+                v-if="selectedRole !== 'WH_WORKER'"
                 label="이메일 (ID)"
                 :error="errors.email"
                 hint="초대 메일을 받을 주소"
@@ -225,6 +249,20 @@ onMounted(loadOrganizations)
                   v-model="form.email"
                   type="email"
                   placeholder="user@company.com"
+                />
+              </BaseForm>
+
+              <BaseForm
+                v-else
+                label="사번 (ID)"
+                :error="errors.employeeNumber"
+                hint="작업자 로그인 ID로 사용됩니다."
+                required
+              >
+                <input
+                  v-model="form.employeeNumber"
+                  type="text"
+                  placeholder="사번을 입력하세요"
                 />
               </BaseForm>
             </div>
@@ -237,7 +275,7 @@ onMounted(loadOrganizations)
           <p v-if="submitError" class="submit-error" role="alert">{{ submitError }}</p>
           <div class="footer-actions">
             <button class="ui-btn ui-btn--ghost" type="button" @click="resetForm">초기화</button>
-            <button class="ui-btn ui-btn--gold"  type="button" @click="submitForm">초대 메일 발송</button>
+            <button class="ui-btn ui-btn--gold"  type="button" @click="submitForm">{{ selectedRole === 'WH_WORKER' ? '계정 발급' : '초대 메일 발송' }}</button>
           </div>
         </div>
       </div><!-- /form-card -->
@@ -247,8 +285,11 @@ onMounted(loadOrganizations)
         <div class="guide-card">
           <div class="guide-card-header">발급 프로세스 안내</div>
           <div class="guide-card-body">
-            <p class="guide-desc">
+            <p v-if="selectedRole !== 'WH_WORKER'" class="guide-desc">
               발급 버튼을 클릭하면 입력한 이메일로 <strong>임시 비밀번호</strong>와 접속 링크가 발송됩니다.
+            </p>
+            <p v-else class="guide-desc">
+              작업자 계정은 사번을 ID로 하여 즉시 발급됩니다. 초기 비밀번호는 별도 가이드를 참고하세요.
             </p>
             <p class="guide-desc" style="margin-top:10px;">
               사용자는 최초 로그인 후 비밀번호를 변경해야 하며, 변경이 완료되면 계정이 최종 활성화됩니다.
