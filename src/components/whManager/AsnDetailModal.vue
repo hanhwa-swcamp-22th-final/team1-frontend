@@ -1,21 +1,23 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import BaseModal from '@/components/common/BaseModal.vue'
+import TimelineStepper from '@/components/common/TimelineStepper.vue'
 
 const props = defineProps({
-  isOpen: { type: Boolean, required: true },
-  asn:    { type: Object,  default: null  },
+  isOpen:    { type: Boolean, required: true },
+  asn:       { type: Object,  default: null  },
+  canAssign: { type: Boolean, default: false }, // false = 읽기 전용, true = Bin 배정 편집 모드
 })
 
-defineEmits(['cancel'])
+const emit = defineEmits(['cancel', 'confirm'])
 
+// ── 상태 매핑
 const STATUS_MAP = {
   pending:  { label: '입고 대기',   badge: 'amber' },
   transit:  { label: '운송 중',     badge: 'blue'  },
   mismatch: { label: '수량 불일치', badge: 'red'   },
   received: { label: '검수 완료',   badge: 'green' },
 }
-
 const STATUS_STEP_LABEL = {
   pending:  '등록됨',
   transit:  '입고됨',
@@ -23,72 +25,137 @@ const STATUS_STEP_LABEL = {
   received: '보관중',
 }
 
-// ASN ID별 SKU 구성 (mock)
-const SKU_MAP = {
+// ── SKU-Bin 레지스트리 (세션 내 유지 — 실제 환경에서는 API 저장)
+// 등록된 SKU → 이전에 배정된 Bin (기존 상품)
+// 등록 안 된 SKU → 신규 상품, 수동 배정 필요
+const skuBinRegistry = reactive({
+  'SKU-GB-001': 'A-3-2',
+  'SKU-KS-001': 'C-1-4',
+  'SKU-KS-002': 'C-1-5',
+  'SKU-EP-001': 'B-2-1',
+  'SKU-KF-001': 'D-1-2',
+  'SKU-BL-001': 'A-2-1',
+  // SKU-GB-002, SKU-GB-003, SKU-BL-002 → 신규 (레지스트리에 없음)
+})
+
+// 배정 가능한 빈 Bin 목록 (mock)
+const AVAILABLE_BINS = [
+  'A-1-1', 'A-1-2', 'A-2-2', 'A-2-3',
+  'A-3-3', 'A-3-4', 'B-1-1', 'B-1-3',
+  'B-3-1', 'C-2-2', 'D-1-3', 'D-2-2',
+]
+
+// ── ASN별 SKU 원본 데이터 (bin 정보 없음 — 레지스트리에서 동적으로 결정)
+const SKU_MAP_RAW = {
   'ASN-2024-0312-001': [
-    { code: 'SKU-GB-001', name: '앰플 세럼 30ml',  qty: 600, bin: 'A-3-2', avail: 720 },
-    { code: 'SKU-GB-002', name: '마스크팩 10매입', qty: 400, bin: 'A-3-3', avail: 500 },
+    { code: 'SKU-GB-001', name: '앰플 세럼 30ml',  qty: 600, avail: 720 },
+    { code: 'SKU-GB-002', name: '마스크팩 10매입', qty: 400, avail: 500 }, // 신규
   ],
   'ASN-2024-0311-005': [
-    { code: 'SKU-KS-001', name: '티셔츠 L',  qty: 300, bin: 'C-1-4', avail: 400 },
-    { code: 'SKU-KS-002', name: '청바지 M',  qty: 200, bin: 'C-1-5', avail: 280 },
+    { code: 'SKU-KS-001', name: '티셔츠 L',  qty: 300, avail: 400 },
+    { code: 'SKU-KS-002', name: '청바지 M',  qty: 200, avail: 280 },
   ],
   'ASN-2024-0310-003': [
-    { code: 'SKU-EP-001', name: '텀블러 350ml', qty: 200, bin: 'B-2-1', avail: 240 },
+    { code: 'SKU-EP-001', name: '텀블러 350ml', qty: 200, avail: 240 },
   ],
   'ASN-2024-0309-002': [
-    { code: 'SKU-GB-003', name: '마스크팩 10매입', qty: 800, bin: 'A-3-3', avail: 800 },
+    { code: 'SKU-GB-003', name: '마스크팩 10매입 (신상)', qty: 800, avail: 800 }, // 신규
   ],
   'ASN-2024-0308-001': [
-    { code: 'SKU-KF-001', name: '특산 진액 30팩', qty: 300, bin: 'D-1-2', avail: 320 },
+    { code: 'SKU-KF-001', name: '특산 진액 30팩', qty: 300, avail: 320 },
   ],
   'ASN-2024-0307-004': [
-    { code: 'SKU-BL-001', name: 'BB크림',           qty: 250, bin: 'A-2-1', avail: 300 },
-    { code: 'SKU-BL-002', name: '파운데이션 SPF50', qty: 150, bin: 'A-2-2', avail: 200 },
+    { code: 'SKU-BL-001', name: 'BB크림',           qty: 250, avail: 300 },
+    { code: 'SKU-BL-002', name: '파운데이션 SPF50', qty: 150, avail: 200 }, // 신규
   ],
 }
 
-const skuList = computed(() => SKU_MAP[props.asn?.id] ?? [])
+// ── 모달 세션 내 임시 상태
+const tempBins     = ref({})  // { [skuCode]: 사용자가 선택한 Bin }
+const changingBins = ref({})  // { [skuCode]: true } — 기존 SKU "변경" 클릭 시
 
-// inboundStatus (wh_inbound_asns 필드) 또는 status 둘 다 지원
-const asnStatus = computed(() => props.asn?.inboundStatus ?? props.asn?.status ?? '')
+// 모달 열릴 때마다 초기화
+watch(() => props.isOpen, (open) => {
+  if (open) {
+    tempBins.value     = {}
+    changingBins.value = {}
+  }
+})
 
+// ── SKU 목록 (신규/기존 여부와 현재 배정 Bin 포함)
+const skuList = computed(() => {
+  const raw = SKU_MAP_RAW[props.asn?.id] ?? []
+  return raw.map(sku => {
+    const registryBin = skuBinRegistry[sku.code] ?? null
+    const isNewSku    = !registryBin
+    const tempBin     = tempBins.value[sku.code] ?? null
+    return {
+      ...sku,
+      isNewSku,
+      registryBin,
+      currentBin: tempBin ?? registryBin,
+      isChanging: !!changingBins.value[sku.code],
+    }
+  })
+})
+
+// 이미 레지스트리에 쓰인 Bin 목록 (다른 SKU와 중복 배정 방지)
+const usedBins = computed(() => new Set(Object.values(skuBinRegistry)))
+
+// 특정 SKU에서 선택 가능한 Bin 목록
+// (AVAILABLE_BINS에서 이미 다른 SKU가 쓰는 Bin 제외, 단 자기 자신의 기존 Bin은 포함)
+function availableBinsFor(sku) {
+  return AVAILABLE_BINS.filter(b => !usedBins.value.has(b) || b === sku.registryBin)
+}
+
+// 입고 확인 버튼 활성화 조건: 모든 신규 SKU에 Bin이 배정되어야 함
+const newSkus    = computed(() => skuList.value.filter(s => s.isNewSku))
+const canConfirm = computed(() => newSkus.value.every(s => s.currentBin))
+
+function selectBin(skuCode, bin) {
+  tempBins.value = { ...tempBins.value, [skuCode]: bin || null }
+}
+
+function startChanging(skuCode) {
+  changingBins.value = { ...changingBins.value, [skuCode]: true }
+}
+
+function cancelChanging(skuCode) {
+  const next = { ...changingBins.value }
+  delete next[skuCode]
+  changingBins.value = next
+  const nextTemp = { ...tempBins.value }
+  delete nextTemp[skuCode]
+  tempBins.value = nextTemp
+}
+
+// 입고 확인: 신규 SKU의 Bin 배정을 레지스트리에 저장
+function handleConfirm() {
+  skuList.value.forEach(sku => {
+    if (sku.currentBin) {
+      skuBinRegistry[sku.code] = sku.currentBin
+    }
+  })
+  emit('confirm', { asnId: props.asn?.id })
+}
+
+// ── 타임라인
+const asnStatus  = computed(() => props.asn?.inboundStatus ?? props.asn?.status ?? '')
 const statusInfo = computed(() => STATUS_MAP[asnStatus.value] ?? { label: '-', badge: 'gray' })
 
-// 타임라인: ASN 상태에 따라 완료 여부 결정
-const timeline = computed(() => {
-  if (!props.asn) return []
-  const s = asnStatus.value
-  return [
-    {
-      title: '등록됨',
-      sub: '셀러 등록 완료',
-      done: true,
-    },
-    {
-      title: '입고 확인',
-      sub: s !== 'pending' ? `${props.asn.eta ?? '-'} · 입고 확인됨` : '관리자 확인 대기',
-      done: s !== 'pending',
-    },
-    {
-      title: '검수&적재중',
-      sub: ['received', 'mismatch'].includes(s) ? '작업자 검수 진행됨' : '검수 작업 대기',
-      done: s === 'received',
-    },
-    {
-      title: '보관중',
-      sub: s === 'received' ? '적재 완료 · 재고 반영됨' : '완료 후 재고 반영',
-      done: s === 'received',
-    },
-  ]
-})
+const ASN_STEPS = [
+  { key: 'pending',  label: '등록됨' },
+  { key: 'transit',  label: '입고됨' },
+  { key: 'mismatch', label: '검수&적재중' },
+  { key: 'received', label: '보관중' },
+]
 </script>
 
 <template>
   <BaseModal
     title="ASN 상세 정보"
     :is-open="isOpen"
-    width="720px"
+    width="760px"
     @cancel="$emit('cancel')"
   >
     <div v-if="asn">
@@ -100,14 +167,12 @@ const timeline = computed(() => {
             <div class="modal-eyebrow">Inbound ASN</div>
             <div class="modal-hero-title">{{ asn.id }}</div>
             <div class="modal-hero-copy">
-              셀러가 등록한 입고 예정 데이터를 검수·적재 플로우 기준으로 확인합니다.
-              SKU별 추천 Bin과 수용 가능 수량을 함께 보여줍니다.
+              셀러가 등록한 입고 예정 데이터를 확인합니다.
+              신규 SKU는 Bin을 직접 배정하고, 기존 SKU는 이전 배정 이력으로 자동 매핑됩니다.
             </div>
           </div>
           <span class="badge" :class="`badge--${statusInfo.badge}`">{{ statusInfo.label }}</span>
         </div>
-
-        <!-- 메트릭 카드 4개 -->
         <div class="metric-grid">
           <div class="metric-card">
             <span class="metric-label">셀러사</span>
@@ -117,12 +182,11 @@ const timeline = computed(() => {
           <div class="metric-card">
             <span class="metric-label">예정 수량</span>
             <span class="metric-value">{{ (asn.plannedQty ?? asn.actualQty ?? 0).toLocaleString() }}</span>
-            <span class="metric-sub">{{ skuList.length > 0 ? skuList.length + ' SKU' : '상세 없음' }}</span>
+            <span class="metric-sub">{{ skuList.length }}개 SKU</span>
           </div>
           <div class="metric-card">
             <span class="metric-label">예정 도착일</span>
             <span class="metric-value">{{ (asn.eta ?? asn.expectedDate ?? '-').slice(0, 10) }}</span>
-            <span class="metric-sub">{{ asn.eta ?? asn.expectedDate ?? '-' }}</span>
           </div>
           <div class="metric-card">
             <span class="metric-label">현재 상태</span>
@@ -132,30 +196,127 @@ const timeline = computed(() => {
         </div>
       </div>
 
-      <!-- ── SKU 구성 및 추천 Bin ──────────────────── -->
+      <!-- ── SKU 구성 및 Bin 배정 ───────────────── -->
       <div class="modal-section">
         <div class="modal-section-head">
-          <div class="modal-section-title">SKU 구성 및 추천 Bin</div>
-          <div class="modal-section-copy">동일 SKU 적재 Bin 우선 규칙과 수용 가능 수량 기준으로 추천합니다.</div>
+          <div class="modal-section-title">SKU 구성 및 Bin 배정</div>
+          <div class="modal-section-copy">
+            신규 SKU는 직접 Bin을 배정해야 합니다.
+            배정된 Bin은 이후 같은 SKU 입고 시 자동으로 매핑됩니다.
+          </div>
         </div>
+
+        <!-- 신규 SKU 안내 배너 (배정 모드 + 신규 SKU가 있을 때만 표시) -->
+        <div v-if="canAssign && newSkus.length" class="new-sku-notice">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14" style="flex-shrink:0">
+            <circle cx="7" cy="7" r="5.5"/>
+            <path d="M7 5v4M7 3.5v.5" stroke-linecap="round"/>
+          </svg>
+          <span>
+            <strong>{{ newSkus.length }}개의 신규 SKU</strong>가 있습니다.
+            아직 Bin이 등록되지 않은 상품입니다. Bin을 배정하면 다음 입고부터 자동으로 매핑됩니다.
+          </span>
+        </div>
+
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
                 <th>SKU</th>
                 <th>상품명</th>
-                <th>예정 수량</th>
-                <th>추천 Bin</th>
-                <th>수용 가능</th>
+                <th style="text-align:right">예정 수량</th>
+                <th>배정 Bin</th>
+                <th style="text-align:right">수용 가능</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="sku in skuList" :key="sku.code">
+              <tr
+                v-for="sku in skuList"
+                :key="sku.code"
+                :class="{ 'row--new': sku.isNewSku && !sku.currentBin }"
+              >
+                <!-- SKU 코드 -->
                 <td><span class="code-cell">{{ sku.code }}</span></td>
-                <td>{{ sku.name }}</td>
-                <td>{{ sku.qty.toLocaleString() }}</td>
-                <td><span class="location-tag">{{ sku.bin }}</span></td>
-                <td>{{ sku.avail.toLocaleString() }}</td>
+
+                <!-- 상품명 + 신규 배지 -->
+                <td>
+                  <span class="sku-name">{{ sku.name }}</span>
+                  <span v-if="sku.isNewSku" class="badge badge--amber sku-new-badge">신규</span>
+                </td>
+
+                <!-- 예정 수량 -->
+                <td style="text-align:right">{{ sku.qty.toLocaleString() }}</td>
+
+                <!-- 배정 Bin 셀 -->
+                <td>
+                  <!-- ── 읽기 전용 모드 (ASN 목록 탭 상세) ── -->
+                  <template v-if="!canAssign">
+                    <div class="bin-cell">
+                      <template v-if="sku.currentBin">
+                        <span class="location-tag" :class="{ 'location-tag--new': sku.isNewSku }">
+                          {{ sku.currentBin }}
+                        </span>
+                        <span v-if="sku.isNewSku" class="badge badge--amber">미확정</span>
+                        <span v-else class="badge badge--blue">자동</span>
+                      </template>
+                      <span v-else class="badge badge--amber">미배정</span>
+                    </div>
+                  </template>
+
+                  <!-- ── 배정 편집 모드 (Bin 미배정 ASN 탭 배정하기) ── -->
+                  <template v-else>
+                    <!-- 신규 SKU: Bin 미배정 상태 -->
+                    <template v-if="sku.isNewSku && !sku.currentBin">
+                      <div class="bin-cell">
+                        <span class="badge badge--amber">⚠ 미배정</span>
+                        <select
+                          class="bin-select"
+                          value=""
+                          @change="e => selectBin(sku.code, e.target.value)"
+                        >
+                          <option value="">— Bin 선택 —</option>
+                          <option v-for="b in availableBinsFor(sku)" :key="b" :value="b">{{ b }}</option>
+                        </select>
+                      </div>
+                    </template>
+
+                    <!-- 신규 SKU: Bin 배정 완료 -->
+                    <template v-else-if="sku.isNewSku && sku.currentBin">
+                      <div class="bin-cell">
+                        <span class="location-tag location-tag--new">{{ sku.currentBin }}</span>
+                        <span class="badge badge--green">배정 완료</span>
+                        <button class="ui-btn ui-btn--ghost ui-btn--xs" @click="selectBin(sku.code, null)">변경</button>
+                      </div>
+                    </template>
+
+                    <!-- 기존 SKU: 자동 배정, 변경 중 아님 -->
+                    <template v-else-if="!sku.isChanging">
+                      <div class="bin-cell">
+                        <span class="location-tag">{{ sku.currentBin }}</span>
+                        <span class="badge badge--blue">자동</span>
+                        <button class="ui-btn ui-btn--ghost ui-btn--xs" @click="startChanging(sku.code)">변경</button>
+                      </div>
+                    </template>
+
+                    <!-- 기존 SKU: 변경 중 -->
+                    <template v-else>
+                      <div class="bin-cell">
+                        <select
+                          class="bin-select"
+                          :value="sku.currentBin ?? ''"
+                          @change="e => selectBin(sku.code, e.target.value)"
+                        >
+                          <option value="">— Bin 선택 —</option>
+                          <option v-for="b in availableBinsFor(sku)" :key="b" :value="b">{{ b }}</option>
+                        </select>
+                        <button class="ui-btn ui-btn--ghost ui-btn--xs" @click="cancelChanging(sku.code)">취소</button>
+                      </div>
+                    </template>
+                  </template>
+                </td>
+
+                <!-- 수용 가능 수량 -->
+                <td style="text-align:right">{{ sku.avail.toLocaleString() }}</td>
               </tr>
             </tbody>
           </table>
@@ -168,24 +329,22 @@ const timeline = computed(() => {
           <div class="modal-section-title">진행 타임라인</div>
           <div class="modal-section-copy">입고 확인 이후 검수&amp;적재 작업 배정으로 이어집니다.</div>
         </div>
-        <div class="timeline-list">
-          <div v-for="step in timeline" :key="step.title" class="timeline-item">
-            <div class="timeline-dot" :class="step.done ? 'timeline-dot--done' : 'timeline-dot--pending'" />
-            <div class="timeline-copy">
-              <div class="timeline-title">{{ step.title }}</div>
-              <div class="timeline-sub">{{ step.sub }}</div>
-            </div>
-            <span v-if="step.done" class="badge badge--green">완료</span>
-            <span v-else class="badge badge--amber">대기</span>
-          </div>
-        </div>
+        <TimelineStepper :steps="ASN_STEPS" :currentStep="asnStatus" />
       </div>
 
     </div>
 
     <template #footer>
       <button class="ui-btn ui-btn--ghost" @click="$emit('cancel')">닫기</button>
-      <button class="ui-btn ui-btn--primary">입고 확인</button>
+      <button
+        v-if="canAssign"
+        class="ui-btn ui-btn--primary"
+        :disabled="!canConfirm"
+        :title="canConfirm ? '' : '모든 신규 SKU에 Bin을 배정하세요'"
+        @click="handleConfirm"
+      >
+        입고 확인
+      </button>
     </template>
   </BaseModal>
 </template>
@@ -260,6 +419,22 @@ const timeline = computed(() => {
 .modal-section-title { font-size: var(--font-size-sm); font-weight: 700; color: var(--t1); }
 .modal-section-copy  { font-size: var(--font-size-xs); color: var(--t3); margin-top: 3px; }
 
+/* ── 신규 SKU 안내 배너 ─────────────────────── */
+.new-sku-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--amber-pale);
+  border: 1px solid #d97706;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: #92400e;
+  margin-bottom: var(--space-3);
+  line-height: 1.5;
+}
+.new-sku-notice strong { font-weight: 700; }
+
 /* ── Table ────────────────────────────────────── */
 .table-wrap { overflow-x: auto; }
 .table-wrap table {
@@ -282,52 +457,67 @@ const timeline = computed(() => {
   border-bottom: 1px solid var(--border);
   color: var(--t1);
   font-size: var(--font-size-sm);
+  vertical-align: middle;
 }
 .table-wrap tr:last-child td { border-bottom: none; }
+
+/* 신규 SKU 행: 미배정 상태 강조 */
+.row--new td { background: rgba(245, 166, 35, 0.04); }
 
 .code-cell {
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--t3);
 }
+
+.sku-name { margin-right: var(--space-2); }
+.sku-new-badge { font-size: 10px; padding: 1px 6px; vertical-align: middle; }
+
+/* ── Bin 셀 레이아웃 ─────────────────────────── */
+.bin-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: nowrap;
+}
+
+.bin-select {
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--amber);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--t1);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  min-width: 110px;
+}
+
 .location-tag {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   padding: 2px 8px;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-xs);
   font-weight: 600;
+  font-family: var(--font-mono);
   color: var(--t2);
+  white-space: nowrap;
+}
+/* 신규 SKU에 새로 배정된 Bin */
+.location-tag--new {
+  border-color: var(--green);
+  background: var(--green-pale);
+  color: var(--green);
 }
 
-/* ── Timeline List ────────────────────────────── */
-.timeline-list { display: flex; flex-direction: column; }
-.timeline-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) 0;
-  border-bottom: 1px solid var(--border);
-}
-.timeline-item:last-child { border-bottom: none; }
-.timeline-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.timeline-dot--done    { background: var(--green); }
-.timeline-dot--pending { background: var(--border); }
-.timeline-copy { flex: 1; }
-.timeline-title { font-size: var(--font-size-sm); font-weight: 600; color: var(--t1); }
-.timeline-sub   { font-size: var(--font-size-xs); color: var(--t3); margin-top: 2px; }
-
-/* ── Badges ───────────────────────────────────── */
+/* ── 배지 ─────────────────────────────────────── */
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
+  padding: 3px 8px;
   border-radius: var(--radius-full);
   font-size: var(--font-size-xs);
   font-weight: 600;
@@ -337,4 +527,40 @@ const timeline = computed(() => {
 .badge--blue  { background: var(--blue-pale);  color: var(--blue); }
 .badge--green { background: var(--green-pale); color: var(--green); }
 .badge--red   { background: var(--red-pale);   color: var(--red); }
+
+/* ── 버튼 ─────────────────────────────────────── */
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: background var(--ease-fast), opacity var(--ease-fast);
+}
+.ui-btn--ghost {
+  border-color: var(--border);
+  background: transparent;
+  color: var(--t2);
+  padding: 0 var(--space-4);
+  height: 36px;
+  font-size: var(--font-size-sm);
+}
+.ui-btn--ghost:hover { background: var(--surface-2); color: var(--t1); }
+.ui-btn--primary {
+  background: var(--blue);
+  color: #fff;
+  padding: 0 var(--space-4);
+  height: 36px;
+  font-size: var(--font-size-sm);
+}
+.ui-btn--primary:not(:disabled):hover { opacity: 0.9; }
+.ui-btn--primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.ui-btn--xs {
+  height: 26px;
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-xs);
+}
 </style>

@@ -13,6 +13,7 @@ const props = defineProps({
 
 const emit = defineEmits(['confirm', 'reset-password', 'cancel'])
 
+const isEditing = ref(false)
 const form = ref({ name: '', id: '', accountStatus: ACCOUNT_STATUS.ACTIVE, email: '', zones: [], memo: '' })
 const errors = ref({})
 
@@ -27,6 +28,7 @@ watch(() => props.worker, (w) => {
     memo:          w.memo          ?? '',
   }
   errors.value = {}
+  isEditing.value = false
 }, { immediate: true })
 
 function toggleZone(zone) {
@@ -57,13 +59,32 @@ function handleConfirm() {
 function handleResetPassword() {
   emit('reset-password', { workerId: props.worker.id })
 }
+
+function handleCancel() {
+  if (isEditing.value) {
+    // 편집 취소: 원본 데이터로 복원
+    const w = props.worker
+    form.value = {
+      name:          w.name          ?? '',
+      id:            w.id            ?? '',
+      accountStatus: w.accountStatus ?? ACCOUNT_STATUS.ACTIVE,
+      email:         w.email         ?? '',
+      zones:         [...(w.zones    ?? [])],
+      memo:          w.memo          ?? '',
+    }
+    errors.value = {}
+    isEditing.value = false
+  } else {
+    emit('cancel')
+  }
+}
 </script>
 
 <template>
   <BaseModal
-    title="작업자 정보 수정"
+    :title="isEditing ? '작업자 정보 수정' : '작업자 상세'"
     :isOpen="isOpen"
-    @cancel="$emit('cancel')"
+    @cancel="handleCancel"
   >
     <template v-if="worker">
       <!-- 히어로 -->
@@ -72,7 +93,7 @@ function handleResetPassword() {
           <div>
             <div class="eyebrow">Account Settings</div>
             <div class="hero-title">{{ worker.name }} · <span class="mono">{{ worker.id }}</span></div>
-            <div class="hero-copy">계정 상태와 담당 구역을 수정합니다.</div>
+            <div class="hero-copy">{{ isEditing ? '정보를 수정하고 저장 버튼을 누르세요.' : '작업자 계정 정보를 확인합니다.' }}</div>
           </div>
         </div>
       </div>
@@ -80,21 +101,26 @@ function handleResetPassword() {
       <!-- 기본 정보 -->
       <div class="section">
         <div class="form-grid">
-          <BaseForm label="이름" required :error="errors.name">
-            <input class="form-input" v-model="form.name" type="text" placeholder="홍길동" />
+          <BaseForm label="이름" :required="isEditing" :error="errors.name">
+            <span v-if="!isEditing" class="read-value">{{ form.name }}</span>
+            <input v-else class="form-input" v-model="form.name" type="text" placeholder="홍길동" />
           </BaseForm>
           <BaseForm label="작업자 코드">
-            <input class="form-input form-input--readonly" :value="form.id" type="text" readonly />
+            <span class="read-value read-value--muted">{{ form.id }}</span>
           </BaseForm>
           <BaseForm label="계정 상태">
-            <select class="form-select" v-model="form.accountStatus">
+            <span v-if="!isEditing" class="read-value">
+              {{ form.accountStatus === ACCOUNT_STATUS.ACTIVE ? '활성' : form.accountStatus === ACCOUNT_STATUS.INACTIVE ? '비활성' : '임시비밀번호' }}
+            </span>
+            <select v-else class="form-select" v-model="form.accountStatus">
               <option :value="ACCOUNT_STATUS.ACTIVE">활성</option>
               <option :value="ACCOUNT_STATUS.INACTIVE">비활성</option>
               <option :value="ACCOUNT_STATUS.TEMP_PASSWORD">임시비밀번호</option>
             </select>
           </BaseForm>
           <BaseForm label="이메일">
-            <input class="form-input" v-model="form.email" type="email" placeholder="worker@example.com" />
+            <span v-if="!isEditing" class="read-value">{{ form.email || '—' }}</span>
+            <input v-else class="form-input" v-model="form.email" type="email" placeholder="worker@example.com" />
           </BaseForm>
         </div>
       </div>
@@ -103,28 +129,35 @@ function handleResetPassword() {
       <div class="section">
         <div class="section-label">담당 구역</div>
         <div class="zone-row">
-          <button
-            v-for="zone in ZONES"
-            :key="zone"
-            type="button"
-            class="zone-chip"
-            :class="{ 'zone-chip--active': form.zones.includes(zone) }"
-            @click="toggleZone(zone)"
-          >
-            {{ zone }} 존
-          </button>
+          <template v-if="!isEditing">
+            <span v-if="form.zones.length" v-for="zone in form.zones" :key="zone" class="zone-chip zone-chip--active zone-chip--static">{{ zone }} 존</span>
+            <span v-else class="read-value read-value--muted">—</span>
+          </template>
+          <template v-else>
+            <button
+              v-for="zone in ZONES"
+              :key="zone"
+              type="button"
+              class="zone-chip"
+              :class="{ 'zone-chip--active': form.zones.includes(zone) }"
+              @click="toggleZone(zone)"
+            >
+              {{ zone }} 존
+            </button>
+          </template>
         </div>
       </div>
 
       <!-- 메모 -->
       <div class="section">
         <BaseForm label="메모">
-          <textarea class="form-textarea" v-model="form.memo" rows="2" placeholder="작업자 관련 메모" />
+          <span v-if="!isEditing" class="read-value">{{ form.memo || '—' }}</span>
+          <textarea v-else class="form-textarea" v-model="form.memo" rows="2" placeholder="작업자 관련 메모" />
         </BaseForm>
       </div>
 
-      <!-- 비밀번호 초기화 안내 -->
-      <div class="callout callout--warning">
+      <!-- 비밀번호 초기화 안내 (편집 모드에서만) -->
+      <div v-if="isEditing" class="callout callout--warning">
         <div class="callout-title">비밀번호 초기화 안내</div>
         <div class="callout-copy">
           임시 비밀번호를 재발급하면 다음 로그인 시 비밀번호 변경이 강제됩니다.
@@ -132,13 +165,25 @@ function handleResetPassword() {
       </div>
     </template>
 
+    <!-- 커스텀 푸터 -->
     <template #footer>
       <div class="footer-row">
-        <button class="ui-btn ui-btn--ghost" @click="handleResetPassword">비밀번호 초기화</button>
-        <div class="footer-right">
-          <button class="ui-btn ui-btn--ghost" @click="$emit('cancel')">취소</button>
-          <button class="ui-btn ui-btn--primary" :disabled="!worker" @click="handleConfirm">저장</button>
-        </div>
+        <!-- 읽기 전용 모드 -->
+        <template v-if="!isEditing">
+          <button class="ui-btn ui-btn--ghost" @click="handleResetPassword">비밀번호 초기화</button>
+          <div class="footer-right">
+            <button class="ui-btn ui-btn--ghost" @click="$emit('cancel')">닫기</button>
+            <button class="ui-btn ui-btn--primary" :disabled="!worker" @click="isEditing = true">수정</button>
+          </div>
+        </template>
+        <!-- 편집 모드 -->
+        <template v-else>
+          <div></div>
+          <div class="footer-right">
+            <button class="ui-btn ui-btn--ghost" @click="handleCancel">취소</button>
+            <button class="ui-btn ui-btn--primary" :disabled="!worker" @click="handleConfirm">저장</button>
+          </div>
+        </template>
       </div>
     </template>
   </BaseModal>
@@ -205,6 +250,17 @@ function handleResetPassword() {
   gap: var(--space-3);
 }
 
+/* ── 읽기 전용 값 표시 ── */
+.read-value {
+  display: block;
+  height: 36px;
+  line-height: 36px;
+  padding: 0 var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--t1);
+}
+.read-value--muted { color: var(--t3); }
+
 .form-input {
   width: 100%;
   height: 36px;
@@ -217,7 +273,6 @@ function handleResetPassword() {
 }
 
 .form-input:focus { outline: none; border-color: var(--blue); }
-.form-input--readonly { background: var(--surface-2); color: var(--t3); cursor: default; }
 
 .form-select {
   width: 100%;
@@ -270,6 +325,10 @@ function handleResetPassword() {
   border-color: var(--blue);
   background: var(--blue-pale);
   color: var(--blue);
+}
+
+.zone-chip--static {
+  cursor: default;
 }
 
 .callout {
