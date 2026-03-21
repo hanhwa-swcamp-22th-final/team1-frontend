@@ -52,6 +52,7 @@ export const ROUTE_NAMES = {
   MASTER_FEE_SETTINGS: 'master-fee-settings',
   MASTER_SELLER_COMPANY_LIST: 'master-seller-company-list',
   MASTER_SELLER_COMPANY_REGISTER: 'master-seller-company-register',
+  MASTER_SELLER_REVENUE:     'master-seller-revenue',
   MASTER_ACCOUNT_LIST: 'master-account-list',
   MASTER_ACCOUNT_INVITE: 'master-account-invite',
   MASTER_RBAC_SETTING: 'master-rbac-setting',
@@ -96,4 +97,5 @@ export const ROUTE_NAMES = {
   SYS_COMPANY_DETAIL: 'sys-company-detail',
   SYS_FEE_SETTING: 'sys-fee-setting',
   SYS_USER_ACCOUNT_LIST: 'sys-user-account-list',
+  SYS_IMPORT_SURCHARGE: 'sys-import-surcharge',
 }

@@ -12,11 +12,13 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "apexcharts": "^5.10.4",
     "axios": "^1.13.6",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
     "vue": "^3.5.29",
     "vue-router": "^4.6.4",
+    "vue3-apexcharts": "^1.11.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

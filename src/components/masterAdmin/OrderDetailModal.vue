@@ -320,7 +320,6 @@ function workStatusClass(ws) {
 .num-total { font-weight: 700; }
 
 .product-name {
-  font-family: 'Inter', sans-serif;
   font-size: 13px;
   color: var(--t1);
 }
@@ -342,7 +341,6 @@ function workStatusClass(ws) {
   font-weight: 600;
 }
 .no-location {
-  font-family: 'Barlow', sans-serif;
   font-size: 12px;
   color: var(--t4);
   font-style: italic;

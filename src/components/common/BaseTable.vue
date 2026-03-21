@@ -200,6 +200,7 @@ export default { components: { LoadingSpinner, EmptyState } }
   display: flex;
   flex-direction: column;
   gap: 12px;
+  background: var(--surface);
 }
 
 .table-scroll {
@@ -216,14 +217,14 @@ export default { components: { LoadingSpinner, EmptyState } }
 
 thead tr {
   background: var(--surface-2);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border-dk);
 }
 
 th {
   padding: 12px 16px;
-  font-weight: 600;
-  color: var(--t3);
-  font-size: var(--font-size-xs);
+  font-family: var(--font-barlow);
+  font-weight: 800;
+  font-size: var(--font-size-md);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   white-space: nowrap;
