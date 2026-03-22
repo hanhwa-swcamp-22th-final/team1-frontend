@@ -3,8 +3,11 @@
 // 라우터 담당 분리
 //   routes/auth.cjs    — POST /auth/*        (공통)
 //   routes/wms.cjs     — GET  /wms/*         (masterAdmin + 대시보드 공용) ← /wms/asns/* 포함
-//   routes/orders.cjs  — GET  /orders/*      (whManager)
+//   routes/orders.cjs  — GET  /orders/*      (whManager + seller order)
 //   routes/members.cjs — GET  /members/*     (systemAdmin)
+//   routes/products.cjs — GET /products/*    (seller product)
+//   routes/integrations.cjs — GET /integrations/* (seller channel)
+//   routes/notifications.cjs — GET /notifications/* (seller notifications)
 //
 // Mock 데이터 구조
 //   mock-server/data/common.json       — accounts (공통)
@@ -41,6 +44,9 @@ server.use('/auth',    require('./routes/auth.cjs')(BASE_URL))
 server.use('/wms',     require('./routes/wms.cjs')(BASE_URL))
 server.use('/orders',  require('./routes/orders.cjs')(BASE_URL))
 server.use('/members', require('./routes/members.cjs')(BASE_URL))
+server.use('/products', require('./routes/products.cjs')(BASE_URL))
+server.use('/integrations', require('./routes/integrations.cjs')(BASE_URL))
+server.use('/notifications', require('./routes/notifications.cjs')(BASE_URL))
 
 // 나머지는 db.json 기반 자동 REST API
 server.use(router)

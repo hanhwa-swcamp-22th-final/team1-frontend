@@ -88,6 +88,22 @@ export function getAsnList(params = {}) {
 }
 
 /**
+ * 셀러 ASN 목록 조회
+ * @returns {Promise<AxiosResponse>} { success, data: SellerAsn[] }
+ */
+export function getSellerAsnList() {
+  return instance.get('/wms/seller/asns')
+}
+
+/**
+ * 셀러 재고 목록 조회
+ * @returns {Promise<AxiosResponse>} { success, data: SellerInventory[] }
+ */
+export function getSellerInventoryList() {
+  return instance.get('/wms/seller/inventories')
+}
+
+/**
  * ASN 단건 상세 조회
  * @param {string} asnId — ASN 번호 (예: 'ASN-2026-0312-001')
  * @returns {Promise<AxiosResponse>} { success, data: ASN }

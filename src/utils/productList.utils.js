@@ -245,9 +245,8 @@ export function getSellerProductStatusMeta(status) {
   return SELLER_PRODUCT_STATUS_META[status] ?? { label: status ?? '-', tone: 'default' }
 }
 
-// 상품 상세 모달에 필요한 로컬 mock 정보를 반환한다.
-export function getSellerProductDetailById(productId, product = {}) {
-  const detail = SELLER_PRODUCT_DETAIL_MAP[productId]
+// 상품 상세 응답과 목록 row를 합쳐 상세 모달에 필요한 형식으로 정규화한다.
+export function normalizeSellerProductDetail(detail, product = {}) {
   const salePrice = Number(product.salePrice ?? 0)
   const costPrice = Number(product.costPrice ?? 0)
   const totalStock = Number(product.availableStock ?? 0) + Number(product.allocatedStock ?? 0)
@@ -271,6 +270,11 @@ export function getSellerProductDetailById(productId, product = {}) {
     marginAmount,
     marginRate,
   }
+}
+
+// 상품 상세 모달에 필요한 로컬 mock 정보를 반환한다.
+export function getSellerProductDetailById(productId, product = {}) {
+  return normalizeSellerProductDetail(SELLER_PRODUCT_DETAIL_MAP[productId], product)
 }
 
 /**

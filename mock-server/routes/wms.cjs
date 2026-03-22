@@ -69,6 +69,18 @@ module.exports = function (BASE_URL) {
     res.json({ success: true, data })
   })
 
+  // GET /wms/seller/asns — 셀러 ASN 목록 조회
+  router.get('/seller/asns', async (req, res) => {
+    const { data } = await http.get('/seller_asns')
+    res.json({ success: true, data })
+  })
+
+  // GET /wms/seller/inventories — 셀러 재고 목록 조회
+  router.get('/seller/inventories', async (req, res) => {
+    const { data } = await http.get('/seller_inventories')
+    res.json({ success: true, data })
+  })
+
   // ── 창고 운영 현황 (대시보드) ────────────────────────────────────────────────
 
   // GET /wms/warehouses/status

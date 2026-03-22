@@ -1,10 +1,11 @@
 <script setup>
 /**
  * 셀러 주문 목록 화면.
- * Pigma 주문 목록 시안을 기준으로 상태/채널 필터와 테이블 UI를 로컬 mock 데이터로 먼저 구성한다.
+ * mock-server seller 주문 목록 API를 기준으로 상태/채널 필터와 테이블 UI를 구성한다.
  */
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
+import { getSellerOrderList } from '@/api/order.js'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import SellerConfirmDialog from '@/components/seller/SellerConfirmDialog.vue'
@@ -12,12 +13,11 @@ import SellerOrderDetailModal from '@/components/seller/SellerOrderDetailModal.v
 import { ROUTE_NAMES } from '@/constants'
 import {
   filterSellerOrderRows,
-  getSellerOrderDetailById,
   getSellerOrderChannelMeta,
   getSellerOrderStatusMeta,
+  normalizeSellerOrderDetail,
   SELLER_ORDER_CHANNEL_OPTIONS,
   SELLER_ORDER_LIST_COLUMNS,
-  SELLER_ORDER_LIST_ROWS,
   SELLER_ORDER_STATUS_OPTIONS,
 } from '@/utils/orderList.utils.js'
 
@@ -29,13 +29,15 @@ const activeStatus = ref('all')
 const activeChannel = ref('all')
 const searchKeyword = ref('')
 const toolbarMessage = ref('')
-const orderRows = ref(SELLER_ORDER_LIST_ROWS.map((row) => ({ ...row })))
+const loadErrorMessage = ref('')
+const isLoading = ref(false)
+const orderRows = ref([])
 const selectedOrderId = ref('')
 const pendingCancelOrderId = ref('')
 const isDetailModalOpen = ref(false)
 const isCancelDialogOpen = ref(false)
 
-// 페이지네이션은 로컬 mock 기준으로 단순 처리한다.
+// 페이지네이션은 조회된 주문 목록 기준으로 단순 처리한다.
 const currentPage = ref(1)
 const PAGE_SIZE = 10
 
@@ -69,13 +71,33 @@ function handlePageChange(page) {
   currentPage.value = page
 }
 
+async function fetchSellerOrders() {
+  isLoading.value = true
+  loadErrorMessage.value = ''
+
+  try {
+    const res = await getSellerOrderList()
+    orderRows.value = Array.isArray(res.data?.data)
+      ? res.data.data.map((row) => ({ ...row }))
+      : []
+  } catch (error) {
+    console.error('[SellerOrderListView] fetch error:', error)
+    loadErrorMessage.value = '주문 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
+    orderRows.value = []
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(fetchSellerOrders)
+
 const selectedOrder = computed(() => {
   return orderRows.value.find((row) => row.id === selectedOrderId.value) ?? null
 })
 
 const selectedOrderDetail = computed(() => {
   if (!selectedOrder.value) return null
-  return getSellerOrderDetailById(selectedOrder.value.id, selectedOrder.value)
+  return normalizeSellerOrderDetail(selectedOrder.value.detail ?? null, selectedOrder.value)
 })
 
 const pendingCancelOrder = computed(() => {
@@ -195,10 +217,12 @@ function handleConfirmCancel() {
           </div>
         </div>
 
-        <p v-if="toolbarMessage" class="toolbar-message">{{ toolbarMessage }}</p>
+        <p v-if="loadErrorMessage" class="toolbar-message toolbar-message--error">{{ loadErrorMessage }}</p>
+        <p v-else-if="toolbarMessage" class="toolbar-message">{{ toolbarMessage }}</p>
 
         <BaseTable
           :columns="SELLER_ORDER_LIST_COLUMNS"
+          :loading="isLoading"
           :rows="pagedRows"
           :pagination="pagination"
           row-key="id"
@@ -411,6 +435,10 @@ function handleConfirmCancel() {
   margin: 0 0 var(--space-4);
   color: var(--t3);
   font-size: var(--font-size-sm);
+}
+
+.toolbar-message--error {
+  color: var(--red);
 }
 
 .order-num {

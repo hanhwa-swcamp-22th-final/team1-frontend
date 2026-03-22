@@ -4,6 +4,7 @@ import {
   filterSellerAsnRows,
   getSellerAsnDetailById,
   getSellerAsnKpi,
+  normalizeSellerAsnDetail,
   SELLER_ASN_LIST_ROWS,
 } from '@/utils/asnList.utils.js'
 import { ASN_STATUS } from '@/constants'
@@ -55,6 +56,21 @@ describe('asnList utils', () => {
             cartons: 10,
           }),
         ],
+      }),
+    )
+  })
+
+  it('API 상세 응답을 totalCartons가 포함된 구조로 정규화한다', () => {
+    expect(
+      normalizeSellerAsnDetail({
+        items: [
+          { sku: 'LB-AMP-30', cartons: 5 },
+          { sku: 'LB-MSK-5P', cartons: 7 },
+        ],
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        totalCartons: 12,
       }),
     )
   })

@@ -68,6 +68,12 @@ module.exports = function (BASE_URL) {
     })
   })
 
+  // GET /orders/seller/list — 셀러 주문 목록 조회
+  router.get('/seller/list', async (req, res) => {
+    const { data } = await http.get('/seller_orders')
+    res.json({ success: true, data })
+  })
+
   // GET /orders/whm — 창고 관리자 주문 목록
   router.get('/whm', async (req, res) => {
     const { data } = await http.get('/wh_orders')

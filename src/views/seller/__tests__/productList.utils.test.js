@@ -4,6 +4,7 @@ import {
   filterSellerProductRows,
   getSellerProductDetailById,
   getSellerProductStatusMeta,
+  normalizeSellerProductDetail,
   SELLER_PRODUCT_LIST_ROWS,
 } from '@/utils/productList.utils.js'
 
@@ -51,6 +52,27 @@ describe('productList utils', () => {
         barcode: '미등록',
         totalStock: 170,
         description: '비타민C 크림 100ml 상세 정보 준비중',
+      }),
+    )
+  })
+
+  it('API detail과 row를 합쳐 상품 상세 형식으로 정규화한다', () => {
+    expect(
+      normalizeSellerProductDetail(
+        {
+          brand: 'LUMIERE BEAUTY',
+          barcode: '8809812300018',
+          memo: 'PUS-B 재고 5개',
+        },
+        SELLER_PRODUCT_LIST_ROWS[7],
+      ),
+    ).toEqual(
+      expect.objectContaining({
+        brand: 'LUMIERE BEAUTY',
+        barcode: '8809812300018',
+        totalStock: 19,
+        marginAmount: 20.8,
+        marginRate: 74.3,
       }),
     )
   })
