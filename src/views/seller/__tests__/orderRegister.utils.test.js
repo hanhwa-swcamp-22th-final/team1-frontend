@@ -15,7 +15,7 @@ import {
   normalizeOrderRegisterTab,
   ORDER_UPLOAD_REQUIRED_COLUMNS,
   validateOrderForm,
-} from '@/utils/orderRegister.utils.js'
+} from '@/utils/seller/orderRegister.utils.js'
 
 describe('orderRegister utils', () => {
   it('상위 탭 키가 올바르지 않으면 단건 주문 등록 탭으로 fallback 한다', () => {

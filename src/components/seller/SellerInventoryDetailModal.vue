@@ -4,7 +4,7 @@
  * 재고 수량과 보관 위치, 회전 정보를 한 번에 보여준다.
  */
 import SellerBaseModal from '@/components/seller/SellerBaseModal.vue'
-import { getSellerInventoryStatusMeta } from '@/utils/inventoryList.utils.js'
+import { getSellerInventoryStatusMeta } from '@/utils/seller/inventoryList.utils.js'
 
 defineProps({
   isOpen: { type: Boolean, required: true },

@@ -18,7 +18,7 @@ import {
   SELLER_PRODUCT_CATEGORY_OPTIONS,
   SELLER_PRODUCT_LIST_COLUMNS,
   SELLER_PRODUCT_STATUS_OPTIONS,
-} from '@/utils/productList.utils.js'
+} from '@/utils/seller/productList.utils.js'
 
 const breadcrumb = [{ label: 'Seller' }, { label: '상품 목록' }]
 

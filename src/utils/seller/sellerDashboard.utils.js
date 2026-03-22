@@ -4,24 +4,24 @@
  */
 import { ASN_STATUS, ROUTE_NAMES } from '@/constants'
 
-import { getSellerAsnDetailById, normalizeSellerAsnDetail, SELLER_ASN_LIST_ROWS } from '@/utils/asnList.utils.js'
+import { getSellerAsnDetailById, normalizeSellerAsnDetail, SELLER_ASN_LIST_ROWS } from '@/utils/seller/asnList.utils.js'
 import {
   getSellerChannelMeta,
   getSellerChannelOrderStatusMeta,
   SELLER_CHANNEL_ORDER_ROWS,
-} from '@/utils/channelOrders.utils.js'
+} from '@/utils/seller/channelOrders.utils.js'
 import {
   getSellerInventoryDetailById,
   getSellerInventoryStatusMeta,
   normalizeSellerInventoryDetail,
   SELLER_INVENTORY_LIST_ROWS,
-} from '@/utils/inventoryList.utils.js'
+} from '@/utils/seller/inventoryList.utils.js'
 import {
   getSellerOrderDetailById,
   getSellerOrderStatusMeta,
   normalizeSellerOrderDetail,
   SELLER_ORDER_LIST_ROWS,
-} from '@/utils/orderList.utils.js'
+} from '@/utils/seller/orderList.utils.js'
 
 const numberFormatter = new Intl.NumberFormat('ko-KR')
 const DASHBOARD_ACTIVITY_LIMIT = 5

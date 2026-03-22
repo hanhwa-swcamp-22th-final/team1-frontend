@@ -16,7 +16,7 @@ import {
   getSellerChannelSyncStatusMeta,
   SELLER_CHANNEL_FILTER_OPTIONS,
   SELLER_CHANNEL_ORDER_COLUMNS,
-} from '@/utils/channelOrders.utils.js'
+} from '@/utils/seller/channelOrders.utils.js'
 
 const breadcrumb = [{ label: 'Seller' }, { label: '주문 연동 및 조회' }]
 

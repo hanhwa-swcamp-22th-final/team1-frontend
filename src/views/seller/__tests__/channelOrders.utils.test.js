@@ -7,7 +7,7 @@ import {
   getSellerChannelOrderStatusMeta,
   SELLER_CHANNEL_SYNC_CARDS,
   SELLER_CHANNEL_ORDER_ROWS,
-} from '@/utils/channelOrders.utils.js'
+} from '@/utils/seller/channelOrders.utils.js'
 
 describe('channelOrders utils', () => {
   it('채널 메타를 반환한다', () => {

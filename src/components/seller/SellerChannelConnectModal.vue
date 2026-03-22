@@ -4,7 +4,7 @@
  * 채널 연결에 필요한 기본 설정 값을 입력받는다.
  */
 import SellerBaseModal from '@/components/seller/SellerBaseModal.vue'
-import { getSellerChannelSyncStatusMeta } from '@/utils/channelOrders.utils.js'
+import { getSellerChannelSyncStatusMeta } from '@/utils/seller/channelOrders.utils.js'
 
 defineProps({
   isOpen: { type: Boolean, required: true },

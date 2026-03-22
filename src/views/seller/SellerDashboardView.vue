@@ -23,7 +23,7 @@ import {
   buildSellerDashboardTrendChart,
   buildSellerDashboardViewState,
   SELLER_DASHBOARD_PERIOD_OPTIONS,
-} from '@/utils/sellerDashboard.utils.js'
+} from '@/utils/seller/sellerDashboard.utils.js'
 
 const breadcrumb = [{ label: 'Seller' }, { label: '대시보드' }]
 const activePeriod = ref('month')

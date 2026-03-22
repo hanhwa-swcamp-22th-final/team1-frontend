@@ -19,7 +19,7 @@ import {
   SELLER_ORDER_CHANNEL_OPTIONS,
   SELLER_ORDER_LIST_COLUMNS,
   SELLER_ORDER_STATUS_OPTIONS,
-} from '@/utils/orderList.utils.js'
+} from '@/utils/seller/orderList.utils.js'
 
 /** Header 브레드크럼 표시용 */
 const breadcrumb = [{ label: 'Seller' }, { label: '주문 목록' }]
