@@ -259,17 +259,17 @@ export function getSellerOrderProgressStep(status) {
   return 'RECEIVED'
 }
 
-// 주문 상세 모달에 필요한 로컬 mock 정보를 반환한다.
-export function getSellerOrderDetailById(orderId, order = {}) {
-  const detail = SELLER_ORDER_DETAIL_MAP[orderId]
-
+// 주문 상세 응답을 화면에서 바로 사용할 수 있게 정규화한다.
+export function normalizeSellerOrderDetail(detail = null, order = {}) {
   if (detail) {
     return {
       ...detail,
-      items: detail.items.map((item) => ({
-        ...item,
-        amount: item.quantity * item.unitPrice,
-      })),
+      items: Array.isArray(detail.items)
+        ? detail.items.map((item) => ({
+            ...item,
+            amount: item.quantity * item.unitPrice,
+          }))
+        : [],
     }
   }
 
@@ -296,6 +296,11 @@ export function getSellerOrderDetailById(orderId, order = {}) {
       },
     ],
   }
+}
+
+// 주문 상세 모달에 필요한 로컬 mock 정보를 반환한다.
+export function getSellerOrderDetailById(orderId, order = {}) {
+  return normalizeSellerOrderDetail(SELLER_ORDER_DETAIL_MAP[orderId] ?? null, order)
 }
 
 /**

@@ -221,9 +221,8 @@ export function getSellerInventoryStatusMeta(status) {
   return SELLER_INVENTORY_STATUS_META[status] ?? { label: status ?? '-', tone: 'default' }
 }
 
-// 재고 상세 모달에 필요한 로컬 mock 정보를 반환한다.
-export function getSellerInventoryDetailById(inventoryId, row = {}) {
-  const detail = SELLER_INVENTORY_DETAIL_MAP[inventoryId]
+// 재고 상세 응답을 화면에서 바로 사용할 수 있게 정규화한다.
+export function normalizeSellerInventoryDetail(detail = null, row = {}) {
   const totalStock = Number(row.totalStock ?? 0)
   const availableStock = Number(row.availableStock ?? 0)
   const allocatedStock = Number(row.allocatedStock ?? 0)
@@ -242,6 +241,11 @@ export function getSellerInventoryDetailById(inventoryId, row = {}) {
     availableRate,
     allocatedRate,
   }
+}
+
+// 재고 상세 모달에 필요한 로컬 mock 정보를 반환한다.
+export function getSellerInventoryDetailById(inventoryId, row = {}) {
+  return normalizeSellerInventoryDetail(SELLER_INVENTORY_DETAIL_MAP[inventoryId] ?? null, row)
 }
 
 /**

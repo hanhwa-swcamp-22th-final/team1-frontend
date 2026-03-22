@@ -4,8 +4,9 @@ import {
   filterSellerInventoryRows,
   getSellerInventoryDetailById,
   getSellerInventoryStatusMeta,
+  normalizeSellerInventoryDetail,
   SELLER_INVENTORY_LIST_ROWS,
-} from '@/utils/inventoryList.utils.js'
+} from '@/utils/seller/inventoryList.utils.js'
 
 describe('inventoryList utils', () => {
   it('재고 상태 메타를 반환한다', () => {
@@ -41,6 +42,28 @@ describe('inventoryList utils', () => {
         availableRate: 40,
         allocatedRate: 60,
         nextInboundAsnNo: 'ASN-20260318-001',
+      }),
+    )
+  })
+
+  it('API 상세 응답을 가용/할당 비율이 포함된 구조로 정규화한다', () => {
+    expect(
+      normalizeSellerInventoryDetail(
+        {
+          locationCode: 'ICN-A / A-03-02',
+        },
+        {
+          warehouseName: 'ICN-A',
+          totalStock: 200,
+          availableStock: 50,
+          allocatedStock: 150,
+        },
+      ),
+    ).toEqual(
+      expect.objectContaining({
+        locationCode: 'ICN-A / A-03-02',
+        availableRate: 25,
+        allocatedRate: 75,
       }),
     )
   })

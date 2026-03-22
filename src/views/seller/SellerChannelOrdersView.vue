@@ -1,9 +1,10 @@
 <script setup>
 /**
  * 셀러 주문 연동 및 조회 화면.
- * 채널 연결 카드와 통합 주문 목록을 로컬 mock 데이터 기준으로 먼저 구성한다.
+ * mock-server seller 채널 연결 카드와 통합 주문 목록 API를 기준으로 화면을 구성한다.
  */
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { getSellerChannelCards, getSellerChannelOrders } from '@/api/integration.js'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import SellerChannelConnectModal from '@/components/seller/SellerChannelConnectModal.vue'
@@ -15,9 +16,7 @@ import {
   getSellerChannelSyncStatusMeta,
   SELLER_CHANNEL_FILTER_OPTIONS,
   SELLER_CHANNEL_ORDER_COLUMNS,
-  SELLER_CHANNEL_ORDER_ROWS,
-  SELLER_CHANNEL_SYNC_CARDS,
-} from '@/utils/channelOrders.utils.js'
+} from '@/utils/seller/channelOrders.utils.js'
 
 const breadcrumb = [{ label: 'Seller' }, { label: '주문 연동 및 조회' }]
 
@@ -25,12 +24,10 @@ const breadcrumb = [{ label: 'Seller' }, { label: '주문 연동 및 조회' }]
 const activeChannel = ref('all')
 const searchKeyword = ref('')
 const toolbarMessage = ref('')
-const channelCards = ref(
-  SELLER_CHANNEL_SYNC_CARDS.map((card) => ({
-    ...card,
-    actions: card.actions.map((action) => ({ ...action })),
-  })),
-)
+const loadErrorMessage = ref('')
+const isLoading = ref(false)
+const channelCards = ref([])
+const channelOrderRows = ref([])
 const selectedChannelKey = ref('')
 const isConnectModalOpen = ref(false)
 const connectForm = reactive({
@@ -49,7 +46,7 @@ watch([activeChannel, searchKeyword], () => {
 
 // 선택한 채널과 검색어를 기준으로 통합 주문 목록을 필터링한다.
 const filteredRows = computed(() => {
-  return filterSellerChannelOrderRows(SELLER_CHANNEL_ORDER_ROWS, {
+  return filterSellerChannelOrderRows(channelOrderRows.value, {
     channel: activeChannel.value,
     search: searchKeyword.value,
   })
@@ -69,6 +66,38 @@ const pagination = computed(() => ({
 function handlePageChange(page) {
   currentPage.value = page
 }
+
+async function fetchSellerChannelData() {
+  isLoading.value = true
+  loadErrorMessage.value = ''
+
+  try {
+    const [cardsRes, ordersRes] = await Promise.all([
+      getSellerChannelCards(),
+      getSellerChannelOrders(),
+    ])
+
+    channelCards.value = Array.isArray(cardsRes.data?.data)
+      ? cardsRes.data.data.map((card) => ({
+          ...card,
+          actions: Array.isArray(card.actions) ? card.actions.map((action) => ({ ...action })) : [],
+        }))
+      : []
+
+    channelOrderRows.value = Array.isArray(ordersRes.data?.data)
+      ? ordersRes.data.data.map((row) => ({ ...row }))
+      : []
+  } catch (error) {
+    console.error('[SellerChannelOrdersView] fetch error:', error)
+    loadErrorMessage.value = '주문 연동 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
+    channelCards.value = []
+    channelOrderRows.value = []
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(fetchSellerChannelData)
 
 const selectedChannelCard = computed(() => {
   return channelCards.value.find((card) => card.key === selectedChannelKey.value) ?? null
@@ -225,11 +254,13 @@ function handleCardAction(card, action) {
         </div>
 
         <p v-if="toolbarMessage" class="toolbar-message">{{ toolbarMessage }}</p>
+        <p v-if="loadErrorMessage" class="toolbar-message toolbar-message--error">{{ loadErrorMessage }}</p>
 
         <BaseTable
           :columns="SELLER_CHANNEL_ORDER_COLUMNS"
           :rows="pagedRows"
           :pagination="pagination"
+          :loading="isLoading"
           row-key="id"
           @page-change="handlePageChange"
         >
@@ -513,6 +544,10 @@ function handleCardAction(card, action) {
   color: var(--blue);
   font-size: var(--font-size-sm);
   font-weight: 600;
+}
+
+.toolbar-message--error {
+  color: var(--danger);
 }
 
 .order-code {

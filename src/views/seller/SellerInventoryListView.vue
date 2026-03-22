@@ -1,21 +1,21 @@
 <script setup>
 /**
  * 셀러 재고 목록 화면.
- * Pigma 재고 목록 시안을 기준으로 상태/창고 필터와 테이블 UI를 로컬 mock 데이터로 먼저 구성한다.
+ * mock-server seller 재고 목록 API를 기준으로 상태/창고 필터와 테이블 UI를 구성한다.
  */
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { getSellerInventoryList } from '@/api/wms.js'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import SellerInventoryDetailModal from '@/components/seller/SellerInventoryDetailModal.vue'
 import {
   filterSellerInventoryRows,
-  getSellerInventoryDetailById,
   getSellerInventoryStatusMeta,
+  normalizeSellerInventoryDetail,
   SELLER_INVENTORY_LIST_COLUMNS,
-  SELLER_INVENTORY_LIST_ROWS,
   SELLER_INVENTORY_STATUS_OPTIONS,
   SELLER_INVENTORY_WAREHOUSE_OPTIONS,
-} from '@/utils/inventoryList.utils.js'
+} from '@/utils/seller/inventoryList.utils.js'
 
 const breadcrumb = [{ label: 'Seller' }, { label: '재고 목록' }]
 
@@ -24,11 +24,13 @@ const activeStatus = ref('all')
 const activeWarehouse = ref('all')
 const searchKeyword = ref('')
 const toolbarMessage = ref('')
-const inventoryRows = ref(SELLER_INVENTORY_LIST_ROWS.map((row) => ({ ...row })))
+const loadErrorMessage = ref('')
+const isLoading = ref(false)
+const inventoryRows = ref([])
 const selectedInventoryId = ref('')
 const isDetailModalOpen = ref(false)
 
-// 페이지네이션은 로컬 mock 기준으로 단순 처리한다.
+// 페이지네이션은 조회된 재고 목록 기준으로 단순 처리한다.
 const currentPage = ref(1)
 const PAGE_SIZE = 10
 
@@ -62,13 +64,33 @@ function handlePageChange(page) {
   currentPage.value = page
 }
 
+async function fetchSellerInventories() {
+  isLoading.value = true
+  loadErrorMessage.value = ''
+
+  try {
+    const res = await getSellerInventoryList()
+    inventoryRows.value = Array.isArray(res.data?.data)
+      ? res.data.data.map((row) => ({ ...row }))
+      : []
+  } catch (error) {
+    console.error('[SellerInventoryListView] fetch error:', error)
+    loadErrorMessage.value = '재고 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
+    inventoryRows.value = []
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(fetchSellerInventories)
+
 const selectedInventory = computed(() => {
   return inventoryRows.value.find((row) => row.id === selectedInventoryId.value) ?? null
 })
 
 const selectedInventoryDetail = computed(() => {
   if (!selectedInventory.value) return null
-  return getSellerInventoryDetailById(selectedInventory.value.id, selectedInventory.value)
+  return normalizeSellerInventoryDetail(selectedInventory.value.detail ?? null, selectedInventory.value)
 })
 
 function handleOpenInventoryDetail(row) {
@@ -143,10 +165,12 @@ function showToolbarMessage(message) {
           </div>
         </div>
 
-        <p v-if="toolbarMessage" class="toolbar-message">{{ toolbarMessage }}</p>
+        <p v-if="loadErrorMessage" class="toolbar-message toolbar-message--error">{{ loadErrorMessage }}</p>
+        <p v-else-if="toolbarMessage" class="toolbar-message">{{ toolbarMessage }}</p>
 
         <BaseTable
           :columns="SELLER_INVENTORY_LIST_COLUMNS"
+          :loading="isLoading"
           :rows="pagedRows"
           :pagination="pagination"
           row-key="id"
@@ -332,6 +356,10 @@ function showToolbarMessage(message) {
   color: var(--t3);
   font-size: var(--font-size-sm);
   font-weight: 600;
+}
+
+.toolbar-message--error {
+  color: var(--red);
 }
 
 .cell-trigger {

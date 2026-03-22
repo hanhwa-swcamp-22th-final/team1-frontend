@@ -1,9 +1,10 @@
 <script setup>
 /**
  * 셀러 알림 화면.
- * 안읽음 필터와 전체 읽음 처리, 더 보기 흐름을 로컬 mock 데이터로 먼저 구성한다.
+ * mock-server seller 알림 목록 API를 기준으로 안읽음 필터와 읽음 처리 흐름을 구성한다.
  */
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { getSellerNotifications } from '@/api/notification.js'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import {
   countNotificationsByFilter,
@@ -12,16 +13,16 @@ import {
   getSellerNotificationTypeMeta,
   markAllNotificationsRead,
   SELLER_NOTIFICATION_FILTER_OPTIONS,
-  SELLER_NOTIFICATION_ROWS,
-} from '@/utils/notifications.utils.js'
+} from '@/utils/seller/notifications.utils.js'
 
 const breadcrumb = [{ label: 'Seller' }, { label: '알림' }]
 
-// TODO(frontend): 알림 store 또는 API와 연결해 실제 읽음 상태를 반영한다.
-// 알림은 로컬 mock 데이터를 복사해 읽음 상태를 이 화면 안에서만 바꾼다.
-const notifications = ref(SELLER_NOTIFICATION_ROWS.map((item) => ({ ...item })))
+// TODO(frontend): 알림 읽음 상태 저장 API와 연결해 실제 읽음 상태를 반영한다.
+const notifications = ref([])
 const activeFilter = ref('all')
 const feedbackMessage = ref('')
+const loadErrorMessage = ref('')
+const isLoading = ref(false)
 const visibleCount = ref(5)
 
 watch(activeFilter, () => {
@@ -45,6 +46,26 @@ const filteredRows = computed(() => {
 })
 
 const visibleRows = computed(() => filteredRows.value.slice(0, visibleCount.value))
+
+async function fetchSellerNotifications() {
+  isLoading.value = true
+  loadErrorMessage.value = ''
+
+  try {
+    const res = await getSellerNotifications()
+    notifications.value = Array.isArray(res.data?.data)
+      ? res.data.data.map((item) => ({ ...item }))
+      : []
+  } catch (error) {
+    console.error('[SellerNotificationsView] fetch error:', error)
+    loadErrorMessage.value = '알림 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
+    notifications.value = []
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(fetchSellerNotifications)
 
 function handleMarkAllRead() {
   notifications.value = markAllNotificationsRead(notifications.value)
@@ -98,8 +119,11 @@ function handleLoadMore() {
         </div>
 
         <p v-if="feedbackMessage" class="toolbar-message">{{ feedbackMessage }}</p>
+        <p v-if="loadErrorMessage" class="toolbar-message toolbar-message--error">{{ loadErrorMessage }}</p>
 
         <div class="notification-list">
+          <p v-if="isLoading" class="empty-state">알림을 불러오는 중입니다.</p>
+
           <button
             v-for="item in visibleRows"
             :key="item.id"
@@ -133,6 +157,8 @@ function handleLoadMore() {
               <p class="notification-body">{{ item.body }}</p>
             </div>
           </button>
+
+          <p v-if="!isLoading && !visibleRows.length" class="empty-state">표시할 알림이 없습니다.</p>
         </div>
 
         <div class="list-footer">
@@ -222,10 +248,25 @@ function handleLoadMore() {
   font-weight: 600;
 }
 
+.toolbar-message--error {
+  color: var(--danger);
+}
+
 .notification-list {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+}
+
+.empty-state {
+  margin: 0;
+  padding: var(--space-5);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--t3);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-align: center;
 }
 
 .notification-item {

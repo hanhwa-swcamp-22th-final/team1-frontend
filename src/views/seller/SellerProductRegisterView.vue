@@ -15,7 +15,7 @@ import {
   SELLER_PRODUCT_HS_CODE_OPTIONS,
   SELLER_PRODUCT_ORIGIN_OPTIONS,
   validateProductForm,
-} from '@/utils/productRegister.utils.js'
+} from '@/utils/seller/productRegister.utils.js'
 
 const breadcrumb = [{ label: 'Seller' }, { label: '상품 등록' }]
 

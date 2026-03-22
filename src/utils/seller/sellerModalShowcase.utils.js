@@ -2,12 +2,12 @@
  * Seller 모달 쇼케이스 화면용 샘플 데이터와 카드 구성을 관리한다.
  * 기존 Seller mock 유틸을 재사용해 모달 확인 화면만 별도로 묶는다.
  */
-import { SELLER_ASN_LIST_ROWS, getSellerAsnDetailById } from '@/utils/asnList.utils.js'
-import { SELLER_CHANNEL_SYNC_CARDS } from '@/utils/channelOrders.utils.js'
-import { SELLER_INVENTORY_LIST_ROWS, getSellerInventoryDetailById } from '@/utils/inventoryList.utils.js'
-import { SELLER_ORDER_LIST_ROWS, getSellerOrderDetailById } from '@/utils/orderList.utils.js'
-import { buildOrderUploadResultSummary } from '@/utils/orderRegister.utils.js'
-import { SELLER_PRODUCT_LIST_ROWS, getSellerProductDetailById } from '@/utils/productList.utils.js'
+import { SELLER_ASN_LIST_ROWS, getSellerAsnDetailById } from '@/utils/seller/asnList.utils.js'
+import { SELLER_CHANNEL_SYNC_CARDS } from '@/utils/seller/channelOrders.utils.js'
+import { SELLER_INVENTORY_LIST_ROWS, getSellerInventoryDetailById } from '@/utils/seller/inventoryList.utils.js'
+import { SELLER_ORDER_LIST_ROWS, getSellerOrderDetailById } from '@/utils/seller/orderList.utils.js'
+import { buildOrderUploadResultSummary } from '@/utils/seller/orderRegister.utils.js'
+import { SELLER_PRODUCT_LIST_ROWS, getSellerProductDetailById } from '@/utils/seller/productList.utils.js'
 
 export const SELLER_MODAL_SHOWCASE_GROUPS = [
   {

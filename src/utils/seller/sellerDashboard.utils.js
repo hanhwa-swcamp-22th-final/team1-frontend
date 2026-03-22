@@ -4,22 +4,24 @@
  */
 import { ASN_STATUS, ROUTE_NAMES } from '@/constants'
 
-import { getSellerAsnDetailById, SELLER_ASN_LIST_ROWS } from '@/utils/asnList.utils.js'
+import { getSellerAsnDetailById, normalizeSellerAsnDetail, SELLER_ASN_LIST_ROWS } from '@/utils/seller/asnList.utils.js'
 import {
   getSellerChannelMeta,
   getSellerChannelOrderStatusMeta,
   SELLER_CHANNEL_ORDER_ROWS,
-} from '@/utils/channelOrders.utils.js'
+} from '@/utils/seller/channelOrders.utils.js'
 import {
   getSellerInventoryDetailById,
   getSellerInventoryStatusMeta,
+  normalizeSellerInventoryDetail,
   SELLER_INVENTORY_LIST_ROWS,
-} from '@/utils/inventoryList.utils.js'
+} from '@/utils/seller/inventoryList.utils.js'
 import {
   getSellerOrderDetailById,
   getSellerOrderStatusMeta,
+  normalizeSellerOrderDetail,
   SELLER_ORDER_LIST_ROWS,
-} from '@/utils/orderList.utils.js'
+} from '@/utils/seller/orderList.utils.js'
 
 const numberFormatter = new Intl.NumberFormat('ko-KR')
 const DASHBOARD_ACTIVITY_LIMIT = 5
@@ -194,6 +196,7 @@ function buildDashboardOrderRows(
       orderNo: row.orderNo,
       channel: normalizeChannelLabel(row.channel),
       status: normalizeDashboardOrderStatus(row.status),
+      detail: row.detail ?? null,
     },
   }))
 
@@ -438,7 +441,9 @@ export function buildSellerDashboardRecentActivityRows({
       occurredAt: formatDateLabel(orderedAt),
       routeName: ROUTE_NAMES.SELLER_ORDER_LIST,
       order: row.order,
-      orderDetail: getSellerOrderDetailById(row.order.id, row.order),
+      orderDetail: row.order.detail
+        ? normalizeSellerOrderDetail(row.order.detail, row.order)
+        : getSellerOrderDetailById(row.order.id, row.order),
       sortAt: orderedAt?.getTime() || 0,
     }
   })
@@ -501,7 +506,9 @@ export function buildSellerDashboardInboundRows({
       return rightDate - leftDate
     })
     .reduce((map, row) => {
-      const detail = getSellerAsnDetailById(row.id, row)
+      const detail = row.detail
+        ? normalizeSellerAsnDetail(row.detail, row)
+        : getSellerAsnDetailById(row.id, row)
       const expectedDate = parseDateString(row.expectedDate)
 
       detail.items.forEach((item) => {
@@ -524,7 +531,9 @@ export function buildSellerDashboardInboundRows({
       const schedule = inboundScheduleBySku.get(row.sku)
       const expectedDate = schedule?.expectedDate ?? null
       const etaMeta = getInboundEtaMeta(schedule?.status)
-      const inventoryDetail = getSellerInventoryDetailById(row.id, row)
+      const inventoryDetail = row.detail
+        ? normalizeSellerInventoryDetail(row.detail, row)
+        : getSellerInventoryDetailById(row.id, row)
       const expectedQty = Number(schedule?.quantity ?? row.inboundExpected ?? 0)
       const inventory = schedule ? { ...row, inboundExpected: expectedQty } : row
 

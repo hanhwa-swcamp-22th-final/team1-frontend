@@ -6,7 +6,7 @@ import {
   createInitialAsnLine,
   getAsnProductBySku,
   validateAsnForm,
-} from '@/utils/asnCreate.utils.js'
+} from '@/utils/seller/asnCreate.utils.js'
 
 describe('asnCreate utils', () => {
   it('ASN 번호를 날짜와 순번 형식으로 생성한다', () => {

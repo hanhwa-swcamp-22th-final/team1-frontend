@@ -6,8 +6,9 @@ import {
   getSellerOrderChannelMeta,
   getSellerOrderProgressStep,
   getSellerOrderStatusMeta,
+  normalizeSellerOrderDetail,
   SELLER_ORDER_LIST_ROWS,
-} from '@/utils/orderList.utils.js'
+} from '@/utils/seller/orderList.utils.js'
 
 describe('orderList utils', () => {
   it('상태 필터를 적용해 주문 목록을 반환한다', () => {
@@ -66,6 +67,25 @@ describe('orderList utils', () => {
           expect.objectContaining({
             sku: 'LB-AMP-30',
             amount: 34,
+          }),
+        ],
+      }),
+    )
+  })
+
+  it('API 상세 응답을 amount가 포함된 구조로 정규화한다', () => {
+    expect(
+      normalizeSellerOrderDetail({
+        memo: 'API 응답',
+        items: [{ sku: 'LB-AMP-30', quantity: 2, unitPrice: 34 }],
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        memo: 'API 응답',
+        items: [
+          expect.objectContaining({
+            sku: 'LB-AMP-30',
+            amount: 68,
           }),
         ],
       }),

@@ -12,7 +12,7 @@ import {
   SELLER_DASHBOARD_KPI_CARDS,
   SELLER_DASHBOARD_STOCK_RATIO,
   SELLER_DASHBOARD_TREND_SERIES,
-} from '@/utils/sellerDashboard.utils.js'
+} from '@/utils/seller/sellerDashboard.utils.js'
 
 describe('sellerDashboard utils', () => {
   it('기존 Seller 화면 데이터로 KPI 카드를 계산한다', () => {
@@ -215,6 +215,86 @@ describe('sellerDashboard utils', () => {
         period: '3월 19일',
         expectedQty: '100',
         etaLabel: '도착 예정',
+      }),
+    )
+  })
+
+  it('API row detail이 있으면 대시보드 상세 fallback 대신 그 값을 우선 사용한다', () => {
+    const recentRows = buildSellerDashboardRecentActivityRows({
+      orderRows: [
+        {
+          id: 'seller-order-api',
+          orderNo: 'ORD-API-001',
+          channel: 'Amazon',
+          recipient: 'API User',
+          address: 'Texas, Austin',
+          itemsSummary: 'LB-AMP-30 × 2',
+          orderedAt: '2026-03-19 10:00',
+          status: 'RECEIVED',
+          trackingNo: '',
+          detail: {
+            receiverPhone: '+1-512-555-0100',
+            state: 'Texas',
+            city: 'Austin',
+            zipCode: '73301',
+            addressLine: '100 Congress Ave',
+            shippingMethod: 'UPS Ground',
+            carrier: 'UPS',
+            memo: 'API detail',
+            items: [{ sku: 'LB-AMP-30', productName: '루미에르 앰플 30ml', quantity: 2, unitPrice: 34 }],
+          },
+        },
+      ],
+      channelOrderRows: [],
+      asnRows: [],
+      inventoryRows: [],
+    })
+
+    expect(recentRows[0].orderDetail).toEqual(
+      expect.objectContaining({
+        receiverPhone: '+1-512-555-0100',
+        memo: 'API detail',
+      }),
+    )
+
+    const inboundRows = buildSellerDashboardInboundRows({
+      asnRows: [
+        {
+          id: 'seller-asn-api',
+          asnNo: 'ASN-API-001',
+          expectedDate: '2026-03-21',
+          status: 'SUBMITTED',
+          detail: {
+            items: [{ sku: 'LB-AMP-30', quantity: 120, cartons: 12 }],
+          },
+        },
+      ],
+      inventoryRows: [
+        {
+          id: 'seller-inventory-api',
+          sku: 'LB-AMP-30',
+          productName: '루미에르 앰플 30ml',
+          warehouseName: 'ICN-A',
+          inboundExpected: 40,
+          availableStock: 100,
+          allocatedStock: 10,
+          totalStock: 110,
+          lastInboundDate: '2026-03-10',
+          detail: {
+            nextInboundAsnNo: 'ASN-OLD-001',
+            memo: 'inventory api detail',
+          },
+        },
+      ],
+    })
+
+    expect(inboundRows[0]).toEqual(
+      expect.objectContaining({
+        expectedQty: '120',
+        inventoryDetail: expect.objectContaining({
+          nextInboundAsnNo: 'ASN-API-001',
+          memo: 'inventory api detail',
+        }),
       }),
     )
   })

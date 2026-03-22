@@ -1,10 +1,11 @@
 <script setup>
 /**
  * 셀러 상품 목록 화면.
- * Pigma 상품 목록 시안을 기준으로 상태/카테고리 필터와 테이블 UI를 로컬 mock 데이터로 먼저 구성한다.
+ * mock-server seller 상품 목록 API를 기준으로 상태/카테고리 필터와 테이블 UI를 구성한다.
  */
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
+import { getSellerProductList } from '@/api/product.js'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import SellerConfirmDialog from '@/components/seller/SellerConfirmDialog.vue'
@@ -12,13 +13,12 @@ import SellerProductDetailModal from '@/components/seller/SellerProductDetailMod
 import { ROUTE_NAMES } from '@/constants'
 import {
   filterSellerProductRows,
-  getSellerProductDetailById,
   getSellerProductStatusMeta,
+  normalizeSellerProductDetail,
   SELLER_PRODUCT_CATEGORY_OPTIONS,
   SELLER_PRODUCT_LIST_COLUMNS,
-  SELLER_PRODUCT_LIST_ROWS,
   SELLER_PRODUCT_STATUS_OPTIONS,
-} from '@/utils/productList.utils.js'
+} from '@/utils/seller/productList.utils.js'
 
 const breadcrumb = [{ label: 'Seller' }, { label: '상품 목록' }]
 
@@ -27,7 +27,9 @@ const activeStatus = ref('all')
 const activeCategory = ref('all')
 const searchKeyword = ref('')
 const toolbarMessage = ref('')
-const productRows = ref(SELLER_PRODUCT_LIST_ROWS.map((row) => ({ ...row })))
+const loadErrorMessage = ref('')
+const isLoading = ref(false)
+const productRows = ref([])
 const selectedProductId = ref('')
 const pendingStatusProductId = ref('')
 const pendingStatusMode = ref('')
@@ -68,13 +70,33 @@ function handlePageChange(page) {
   currentPage.value = page
 }
 
+async function fetchSellerProducts() {
+  isLoading.value = true
+  loadErrorMessage.value = ''
+
+  try {
+    const res = await getSellerProductList()
+    productRows.value = Array.isArray(res.data?.data)
+      ? res.data.data.map((row) => ({ ...row }))
+      : []
+  } catch (error) {
+    console.error('[SellerProductListView] fetch error:', error)
+    loadErrorMessage.value = '상품 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
+    productRows.value = []
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(fetchSellerProducts)
+
 const selectedProduct = computed(() => {
   return productRows.value.find((row) => row.id === selectedProductId.value) ?? null
 })
 
 const selectedProductDetail = computed(() => {
   if (!selectedProduct.value) return null
-  return getSellerProductDetailById(selectedProduct.value.id, selectedProduct.value)
+  return normalizeSellerProductDetail(selectedProduct.value.detail ?? null, selectedProduct.value)
 })
 
 const pendingStatusProduct = computed(() => {
@@ -221,11 +243,13 @@ function handleConfirmStatusChange() {
         </div>
 
         <p v-if="toolbarMessage" class="toolbar-message">{{ toolbarMessage }}</p>
+        <p v-if="loadErrorMessage" class="toolbar-message toolbar-message--error">{{ loadErrorMessage }}</p>
 
         <BaseTable
           :columns="SELLER_PRODUCT_LIST_COLUMNS"
           :rows="pagedRows"
           :pagination="pagination"
+          :loading="isLoading"
           row-key="id"
           @page-change="handlePageChange"
         >
@@ -452,6 +476,10 @@ function handleConfirmStatusChange() {
   color: var(--t3);
   font-size: var(--font-size-sm);
   font-weight: 600;
+}
+
+.toolbar-message--error {
+  color: var(--danger);
 }
 
 .image-thumb {

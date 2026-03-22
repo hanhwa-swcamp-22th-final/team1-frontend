@@ -16,7 +16,7 @@ import {
   SELLER_MARGIN_CHANNEL_OPTIONS,
   SELLER_MARGIN_PRODUCT_OPTIONS,
   SELLER_MARGIN_SHIPPING_OPTIONS,
-} from '@/utils/marginSimulator.utils.js'
+} from '@/utils/seller/marginSimulator.utils.js'
 
 const breadcrumb = [{ label: 'Seller' }, { label: '마진 시뮬레이터' }]
 

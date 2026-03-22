@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import instance from '@/api/instance'
-import { createSellerBulkOrders, createSellerOrder, getOutboundStats } from '@/api/order'
+import { createSellerBulkOrders, createSellerOrder, getOutboundStats, getSellerOrderList } from '@/api/order'
 
 vi.mock('@/api/instance', () => ({
   default: {
@@ -39,5 +39,12 @@ describe('order API', () => {
 
     expect(instance.post).toHaveBeenCalledOnce()
     expect(instance.post).toHaveBeenCalledWith('/orders/seller/bulk', { orders })
+  })
+
+  it('getSellerOrderList는 GET /orders/seller/list를 호출한다', async () => {
+    await getSellerOrderList()
+
+    expect(instance.get).toHaveBeenCalledOnce()
+    expect(instance.get).toHaveBeenCalledWith('/orders/seller/list')
   })
 })

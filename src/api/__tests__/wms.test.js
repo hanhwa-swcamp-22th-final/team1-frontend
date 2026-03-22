@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import instance from '@/api/instance'
-import { getAsnStats, getInventoryStats, getWarehouseStatus, getAsnList, getAsnKpi } from '@/api/wms'
+import {
+  getAsnStats,
+  getInventoryStats,
+  getWarehouseStatus,
+  getAsnList,
+  getAsnKpi,
+  getSellerAsnList,
+  getSellerInventoryList,
+} from '@/api/wms'
 
 vi.mock('@/api/instance', () => ({
   default: {
@@ -32,16 +40,27 @@ describe('wms API', () => {
     expect(instance.get).toHaveBeenCalledWith('/wms/warehouses/status')
   })
 
-  it('getAsnList는 GET /asns를 호출한다', async () => {
+  it('getAsnList는 GET /wms/asns를 호출한다', async () => {
     await getAsnList()
     expect(instance.get).toHaveBeenCalledOnce()
-    expect(instance.get).toHaveBeenCalledWith('/asns', { params: {} })
+    expect(instance.get).toHaveBeenCalledWith('/wms/asns', { params: {} })
   })
 
-  it('getAsnKpi는 GET /asns/kpi를 호출한다', async () => {
+  it('getAsnKpi는 GET /wms/asns/kpi를 호출한다', async () => {
     await getAsnKpi()
     expect(instance.get).toHaveBeenCalledOnce()
-    expect(instance.get).toHaveBeenCalledWith('/asns/kpi')
+    expect(instance.get).toHaveBeenCalledWith('/wms/asns/kpi')
+  })
+
+  it('getSellerAsnList는 GET /wms/seller/asns를 호출한다', async () => {
+    await getSellerAsnList()
+    expect(instance.get).toHaveBeenCalledOnce()
+    expect(instance.get).toHaveBeenCalledWith('/wms/seller/asns')
+  })
+
+  it('getSellerInventoryList는 GET /wms/seller/inventories를 호출한다', async () => {
+    await getSellerInventoryList()
+    expect(instance.get).toHaveBeenCalledOnce()
+    expect(instance.get).toHaveBeenCalledWith('/wms/seller/inventories')
   })
 })
-
