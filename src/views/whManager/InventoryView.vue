@@ -3,8 +3,15 @@ import { ref, computed, watch, onMounted } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import InventoryDetailModal from '@/components/whManager/InventoryDetailModal.vue'
-import { getInventories } from '@/api/inventory'
-import { INVENTORY_STATUS } from '@/constants'
+import { useRouter } from 'vue-router'
+import { getWhmInventories } from '@/api/wh-manager'
+import { INVENTORY_STATUS, ROUTE_NAMES } from '@/constants'
+
+const router = useRouter()
+
+function goToWarehouseMap(bin) {
+  router.push({ name: ROUTE_NAMES.WH_MANAGER_WAREHOUSE_MAP, query: { bin } })
+}
 
 // ── 필터 상태
 const searchText   = ref('')
@@ -20,7 +27,7 @@ const inventories = ref([])
 
 async function fetchInventories() {
   try {
-    const { data } = await getInventories()
+    const { data } = await getWhmInventories()
     inventories.value = data
   } catch (e) {
     console.error('재고 데이터 로드 실패:', e)
@@ -217,9 +224,23 @@ const breadcrumb = [
             <span class="fw-600">{{ row.totalQty.toLocaleString() }}</span>
           </template>
 
-          <!-- 보관 위치: location-tag -->
+          <!-- 보관 위치: hover tooltip + click 라우팅 -->
           <template #cell-locations="{ row }">
-            <span v-for="loc in row.locations" :key="loc.bin" class="location-tag">{{ loc.bin }}</span>
+            <div class="loc-wrap">
+              <div
+                v-for="loc in row.locations"
+                :key="loc.bin"
+                class="location-tag location-tag--link"
+              >
+                <span class="loc-code" @click="goToWarehouseMap(loc.bin)">{{ loc.bin }}</span>
+                <div class="loc-tooltip">
+                  <div class="lt-row"><span class="lt-label">보관 수량</span><span class="lt-val">{{ loc.qty.toLocaleString() }}개</span></div>
+                  <div class="lt-row"><span class="lt-label">ASN</span><span class="lt-val mono">{{ loc.asnId }}</span></div>
+                  <div class="lt-row"><span class="lt-label">입고일</span><span class="lt-val">{{ loc.receivedDate }}</span></div>
+                  <div class="lt-hint">클릭 시 배치도에서 확인</div>
+                </div>
+              </div>
+            </div>
           </template>
 
           <!-- 임계값: 회색 -->
@@ -356,6 +377,48 @@ const breadcrumb = [
   font-family: var(--font-mono);
   margin-right: 4px;
 }
+
+/* ── 위치 태그 — hover tooltip + click */
+.loc-wrap { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.location-tag--link { position: relative; cursor: default; }
+
+.loc-code {
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+
+.loc-code:hover { filter: brightness(0.8); }
+
+.loc-tooltip {
+  display: none;
+  position: absolute;
+  z-index: 200;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 200px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  padding: var(--space-3);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.location-tag--link:hover .loc-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lt-row   { display: flex; gap: var(--space-2); font-size: var(--font-size-xs); }
+.lt-label { color: var(--t3); min-width: 56px; flex-shrink: 0; }
+.lt-val   { color: var(--t1); font-weight: 500; }
+.lt-hint  { margin-top: var(--space-1); font-size: 10px; color: var(--blue); font-weight: 600; }
 
 /* ── Status Badge ──────────────────────────────── */
 .badge {

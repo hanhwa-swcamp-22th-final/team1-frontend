@@ -26,7 +26,8 @@ export const WH_MANAGER_MENU_GROUPS = [
   {
     label: '재고 관리',
     items: [
-      { name: ROUTE_NAMES.WH_MANAGER_INVENTORY, label: '재고 현황', icon: '📦' },
+      { name: ROUTE_NAMES.WH_MANAGER_INVENTORY,     label: '재고 현황',  icon: '📦' },
+      { name: ROUTE_NAMES.WH_MANAGER_WAREHOUSE_MAP, label: '창고 배치도', icon: '🗺' },
     ],
   },
   {
