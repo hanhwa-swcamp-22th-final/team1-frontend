@@ -75,6 +75,57 @@ module.exports = function (BASE_URL) {
     res.json({ success: true, data })
   })
 
+  // POST /wms/seller/asns — 셀러 ASN 등록
+  router.post('/seller/asns', async (req, res) => {
+    try {
+      const payload = req.body || {}
+
+      if (!payload.asnNo || !payload.warehouseName || !payload.expectedDate || !payload.skuCount) {
+        return res.status(400).json({
+          success: false,
+          message: '필수 ASN 정보가 누락되었습니다.',
+        })
+      }
+
+      const { data: list } = await http.get('/seller_asns')
+      const normalizedAsnNo = String(payload.asnNo ?? '').trim().toUpperCase()
+
+      if (list.some((item) => String(item.asnNo ?? '').trim().toUpperCase() === normalizedAsnNo)) {
+        return res.status(409).json({
+          success: false,
+          message: '이미 등록된 ASN 번호입니다.',
+        })
+      }
+
+      const createdAsn = {
+        id: `seller-asn-${list.length + 1}`,
+        asnNo: String(payload.asnNo ?? '').trim(),
+        warehouseName: String(payload.warehouseName ?? '').trim(),
+        expectedDate: String(payload.expectedDate ?? '').trim(),
+        createdAt: new Date().toISOString().slice(0, 10),
+        skuCount: Number(payload.skuCount ?? 0),
+        totalQuantity: Number(payload.totalQuantity ?? 0),
+        status: payload.status || 'SUBMITTED',
+        referenceNo: String(payload.referenceNo ?? '').trim() || `REF-${String(payload.asnNo ?? '').trim().slice(-6)}`,
+        note: String(payload.note ?? '').trim(),
+        detail: payload.detail ?? null,
+      }
+
+      const { data: created } = await http.post('/seller_asns', createdAsn)
+
+      return res.status(201).json({
+        success: true,
+        message: 'ASN이 등록되었습니다.',
+        data: created,
+      })
+    } catch {
+      return res.status(500).json({
+        success: false,
+        message: 'ASN 등록 중 오류가 발생했습니다.',
+      })
+    }
+  })
+
   // GET /wms/seller/inventories — 셀러 재고 목록 조회
   router.get('/seller/inventories', async (req, res) => {
     const { data } = await http.get('/seller_inventories')

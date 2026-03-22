@@ -1,12 +1,15 @@
 <script setup>
 /**
  * 셀러 ASN 등록 화면.
- * 피그마 스크린샷 기준으로 섹션형 입력 화면을 맞추고, 저장은 UI 메시지로만 처리한다.
+ * 피그마 스크린샷 기준으로 섹션형 입력 화면을 맞추고 mock 저장까지 연결한다.
  */
 import { computed, reactive, ref } from 'vue'
+import { createSellerAsn } from '@/api/wms.js'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import {
+  buildAsnDraftPendingMessage,
+  buildSellerAsnPayload,
   calculateAsnSummary,
   createInitialAsnFieldErrors,
   createInitialAsnForm,
@@ -16,7 +19,7 @@ import {
   SELLER_ASN_PRODUCT_OPTIONS,
   SELLER_ASN_WAREHOUSE_OPTIONS,
   validateAsnForm,
-} from '../../utils/asnCreate.utils.js'
+} from '@/utils/seller/asnCreate.utils.js'
 
 /** Header 브레드크럼 표시용 */
 const breadcrumb = [{ label: 'Seller' }, { label: 'ASN 등록' }]
@@ -39,6 +42,7 @@ const lineErrors = ref([createInitialAsnLineError()])
 const draftMessage = ref('')
 const submitMessage = ref('')
 const submitErrorMessage = ref('')
+const isSubmitting = ref(false)
 
 // 우측 요약 카드에 표시할 값을 현재 입력 상태로 계산한다.
 const summary = computed(() => calculateAsnSummary(lineItems.value))
@@ -110,11 +114,11 @@ function handleAttachmentChange(event) {
 // 임시저장은 실제 저장 대신 초안 메시지만 보여준다.
 function handleDraftSave() {
   clearMessages()
-  draftMessage.value = `${asnForm.value.asnNo} 임시저장 초안이 준비되었습니다.`
+  draftMessage.value = buildAsnDraftPendingMessage(asnForm.value.asnNo)
 }
 
-// 최종 등록 버튼은 필수 입력을 확인한 뒤 완료 메시지를 보여준다.
-function handleSubmit() {
+// 최종 등록 버튼은 필수 입력을 확인한 뒤 mock-server ASN 등록 API를 호출한다.
+async function handleSubmit() {
   clearMessages()
   clearFieldErrors()
   resetLineErrors()
@@ -134,7 +138,20 @@ function handleSubmit() {
     return
   }
 
-  submitMessage.value = `${asnForm.value.asnNo} ASN 등록 준비가 완료되었습니다. 실제 저장은 다음 단계에서 연결합니다.`
+  try {
+    isSubmitting.value = true
+    const payload = buildSellerAsnPayload(asnForm.value, lineItems.value, {
+      attachmentName: selectedAttachmentName.value,
+    })
+    const response = await createSellerAsn(payload)
+
+    resetAsnDraft()
+    submitMessage.value = response.data?.message ?? `${payload.asnNo} ASN이 등록되었습니다.`
+  } catch (error) {
+    submitErrorMessage.value = error.response?.data?.message ?? 'ASN 등록 중 오류가 발생했습니다.'
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 
@@ -292,13 +309,13 @@ function handleSubmit() {
 
           <div class="page-actions">
             <button class="ui-btn ui-btn--ghost" type="button" @click="resetAsnDraft">
-              취소
+              초기화
             </button>
             <button class="ui-btn ui-btn--ghost" type="button" @click="handleDraftSave">
-              임시저장
+              임시저장 (준비중)
             </button>
-            <button class="ui-btn ui-btn--primary" type="button" @click="handleSubmit">
-              ASN 등록
+            <button class="ui-btn ui-btn--primary" type="button" :disabled="isSubmitting" @click="handleSubmit">
+              {{ isSubmitting ? '등록 중...' : 'ASN 등록' }}
             </button>
           </div>
 

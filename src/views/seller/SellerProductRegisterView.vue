@@ -1,13 +1,15 @@
 <script setup>
 /**
  * 셀러 상품 등록 화면.
- * Pigma 상품 등록 시안을 기준으로 입력 섹션과 우측 설정 카드를 로컬 상태로 먼저 구성한다.
+ * Pigma 상품 등록 시안을 기준으로 입력 섹션과 우측 설정 카드를 구성하고 mock 저장까지 연결한다.
  */
 import { computed, reactive, ref } from 'vue'
+import { createSellerProduct } from '@/api/product.js'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import FileUpload from '@/components/common/FileUpload.vue'
 import {
+  buildSellerProductPayload,
   buildVolumeWeight,
   createInitialProductErrors,
   createInitialProductForm,
@@ -25,6 +27,7 @@ const fieldErrors = reactive(createInitialProductErrors())
 
 // 이미지 업로드는 현재 단계에서 파일명만 미리보기한다.
 const selectedImages = ref([])
+const isSubmitting = ref(false)
 
 // 버튼 클릭 후 사용자에게 보여줄 안내 문구를 구분해서 관리한다.
 const infoMessage = ref('')
@@ -110,8 +113,8 @@ function handleDraftSave() {
   infoMessage.value = `${productLabel} 초안을 임시저장했습니다. 실제 저장은 다음 단계에서 연결합니다.`
 }
 
-// 최종 등록은 필수 입력을 검증한 뒤 성공 메시지를 보여준다.
-function handleSubmit() {
+// 최종 등록은 필수 입력을 검증한 뒤 mock-server 상품 등록 API를 호출한다.
+async function handleSubmit() {
   clearMessages()
   clearFieldErrors()
 
@@ -126,8 +129,21 @@ function handleSubmit() {
   }
 
   const productLabel = productForm.value.productName || productForm.value.sku
-  // TODO(frontend): 상품 등록 API와 저장 후 후속 이동을 연결한다.
-  successMessage.value = `${productLabel} 상품 등록 준비가 완료되었습니다. 실제 저장은 다음 단계에서 연결합니다.`
+
+  try {
+    isSubmitting.value = true
+    const payload = buildSellerProductPayload(productForm.value, {
+      imageNames: selectedImages.value.map((image) => image.name),
+    })
+    const response = await createSellerProduct(payload)
+
+    resetProductForm()
+    successMessage.value = response.data?.message ?? `${productLabel} 상품이 등록되었습니다.`
+  } catch (error) {
+    errorMessage.value = error.response?.data?.message ?? '상품 등록 중 오류가 발생했습니다.'
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 
@@ -304,7 +320,9 @@ function handleSubmit() {
           <div class="action-row">
             <button class="ui-btn ui-btn--ghost" type="button" @click="handleCancel">취소</button>
             <button class="ui-btn ui-btn--ghost" type="button" @click="handleDraftSave">임시저장</button>
-            <button class="ui-btn ui-btn--primary" type="submit">상품 등록</button>
+            <button class="ui-btn ui-btn--primary" type="submit" :disabled="isSubmitting">
+              {{ isSubmitting ? '등록 중...' : '상품 등록' }}
+            </button>
           </div>
 
           <p v-if="infoMessage" class="page-message page-message--info">{{ infoMessage }}</p>
