@@ -32,7 +32,7 @@ import {
   SELLER_BULK_ORDER_REGISTER_TABS,
   SELLER_ORDER_REGISTER_TABS,
   validateOrderForm,
-} from '@/utils/orderRegister.utils.js'
+} from '@/utils/seller/orderRegister.utils.js'
 
 const breadcrumb = [{ label: 'Seller' }, { label: '주문 등록' }]
 

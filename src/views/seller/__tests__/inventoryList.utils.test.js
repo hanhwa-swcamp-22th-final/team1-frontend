@@ -6,7 +6,7 @@ import {
   getSellerInventoryStatusMeta,
   normalizeSellerInventoryDetail,
   SELLER_INVENTORY_LIST_ROWS,
-} from '@/utils/inventoryList.utils.js'
+} from '@/utils/seller/inventoryList.utils.js'
 
 describe('inventoryList utils', () => {
   it('재고 상태 메타를 반환한다', () => {

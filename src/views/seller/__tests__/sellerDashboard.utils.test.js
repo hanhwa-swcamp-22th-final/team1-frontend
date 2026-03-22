@@ -12,7 +12,7 @@ import {
   SELLER_DASHBOARD_KPI_CARDS,
   SELLER_DASHBOARD_STOCK_RATIO,
   SELLER_DASHBOARD_TREND_SERIES,
-} from '@/utils/sellerDashboard.utils.js'
+} from '@/utils/seller/sellerDashboard.utils.js'
 
 describe('sellerDashboard utils', () => {
   it('기존 Seller 화면 데이터로 KPI 카드를 계산한다', () => {

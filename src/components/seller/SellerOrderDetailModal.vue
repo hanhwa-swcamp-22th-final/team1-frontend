@@ -12,7 +12,7 @@ import {
   getSellerOrderProgressStep,
   getSellerOrderStatusMeta,
   SELLER_ORDER_PROGRESS_STEPS,
-} from '@/utils/orderList.utils.js'
+} from '@/utils/seller/orderList.utils.js'
 
 const props = defineProps({
   isOpen: { type: Boolean, required: true },

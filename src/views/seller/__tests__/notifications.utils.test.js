@@ -6,7 +6,7 @@ import {
   filterSellerNotifications,
   markAllNotificationsRead,
   SELLER_NOTIFICATION_ROWS,
-} from '@/utils/notifications.utils.js'
+} from '@/utils/seller/notifications.utils.js'
 
 describe('notifications utils', () => {
   it('안읽음 개수를 계산한다', () => {

@@ -4,7 +4,7 @@
  * 상품 기본 정보와 가격, 재고, 운영 메모를 한 번에 확인한다.
  */
 import SellerBaseModal from '@/components/seller/SellerBaseModal.vue'
-import { getSellerProductStatusMeta } from '@/utils/productList.utils.js'
+import { getSellerProductStatusMeta } from '@/utils/seller/productList.utils.js'
 
 defineProps({
   isOpen: { type: Boolean, required: true },

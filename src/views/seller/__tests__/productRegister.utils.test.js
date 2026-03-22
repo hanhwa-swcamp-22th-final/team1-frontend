@@ -4,7 +4,7 @@ import {
   buildVolumeWeight,
   createInitialProductForm,
   validateProductForm,
-} from '@/utils/productRegister.utils.js'
+} from '@/utils/seller/productRegister.utils.js'
 
 describe('productRegister utils', () => {
   it('길이, 너비, 높이로 부피중량을 계산한다', () => {

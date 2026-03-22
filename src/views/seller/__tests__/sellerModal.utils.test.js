@@ -4,7 +4,7 @@ import {
   SELLER_MODAL_SIZE_PRESETS,
   buildSellerModalPanelStyle,
   getSellerModalSizePreset,
-} from '@/utils/sellerModal.utils.js'
+} from '@/utils/seller/sellerModal.utils.js'
 
 describe('sellerModal utils', () => {
   it('기본 size 프리셋을 반환한다', () => {

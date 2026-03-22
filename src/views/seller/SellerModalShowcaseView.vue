@@ -16,7 +16,7 @@ import {
   createSellerModalShowcaseChannelForm,
   createSellerModalShowcaseSamples,
   SELLER_MODAL_SHOWCASE_GROUPS,
-} from '@/utils/sellerModalShowcase.utils.js'
+} from '@/utils/seller/sellerModalShowcase.utils.js'
 
 const breadcrumb = [{ label: 'Seller' }, { label: '모달 쇼케이스' }]
 const activeModal = ref('')

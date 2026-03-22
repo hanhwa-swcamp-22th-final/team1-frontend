@@ -13,7 +13,7 @@ import {
   getSellerNotificationTypeMeta,
   markAllNotificationsRead,
   SELLER_NOTIFICATION_FILTER_OPTIONS,
-} from '@/utils/notifications.utils.js'
+} from '@/utils/seller/notifications.utils.js'
 
 const breadcrumb = [{ label: 'Seller' }, { label: '알림' }]
 

@@ -4,7 +4,7 @@ import {
   buildMarginScenarioCards,
   calculateMarginResult,
   createInitialMarginForm,
-} from '@/utils/marginSimulator.utils.js'
+} from '@/utils/seller/marginSimulator.utils.js'
 
 describe('marginSimulator utils', () => {
   it('초기 폼 기본값을 만든다', () => {

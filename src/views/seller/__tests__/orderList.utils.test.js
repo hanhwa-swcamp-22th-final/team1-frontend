@@ -8,7 +8,7 @@ import {
   getSellerOrderStatusMeta,
   normalizeSellerOrderDetail,
   SELLER_ORDER_LIST_ROWS,
-} from '@/utils/orderList.utils.js'
+} from '@/utils/seller/orderList.utils.js'
 
 describe('orderList utils', () => {
   it('상태 필터를 적용해 주문 목록을 반환한다', () => {

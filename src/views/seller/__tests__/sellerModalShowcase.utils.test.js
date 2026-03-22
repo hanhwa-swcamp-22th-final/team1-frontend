@@ -4,7 +4,7 @@ import {
   createSellerModalShowcaseChannelForm,
   createSellerModalShowcaseSamples,
   SELLER_MODAL_SHOWCASE_GROUPS,
-} from '@/utils/sellerModalShowcase.utils.js'
+} from '@/utils/seller/sellerModalShowcase.utils.js'
 
 describe('sellerModalShowcase utils', () => {
   it('쇼케이스 그룹 구성에 필요한 모달 키를 모두 포함한다', () => {

@@ -6,7 +6,7 @@ import {
   getSellerProductStatusMeta,
   normalizeSellerProductDetail,
   SELLER_PRODUCT_LIST_ROWS,
-} from '@/utils/productList.utils.js'
+} from '@/utils/seller/productList.utils.js'
 
 describe('productList utils', () => {
   it('상품 상태 메타를 반환한다', () => {

@@ -15,7 +15,7 @@ import {
   SELLER_INVENTORY_LIST_COLUMNS,
   SELLER_INVENTORY_STATUS_OPTIONS,
   SELLER_INVENTORY_WAREHOUSE_OPTIONS,
-} from '@/utils/inventoryList.utils.js'
+} from '@/utils/seller/inventoryList.utils.js'
 
 const breadcrumb = [{ label: 'Seller' }, { label: '재고 목록' }]
 

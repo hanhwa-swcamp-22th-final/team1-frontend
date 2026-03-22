@@ -6,7 +6,7 @@ import {
   getSellerAsnKpi,
   normalizeSellerAsnDetail,
   SELLER_ASN_LIST_ROWS,
-} from '@/utils/asnList.utils.js'
+} from '@/utils/seller/asnList.utils.js'
 import { ASN_STATUS } from '@/constants'
 
 describe('asnList utils', () => {

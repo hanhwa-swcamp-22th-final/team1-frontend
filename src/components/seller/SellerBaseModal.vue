@@ -5,7 +5,7 @@
  */
 import { computed } from 'vue'
 
-import { buildSellerModalPanelStyle } from '@/utils/sellerModal.utils.js'
+import { buildSellerModalPanelStyle } from '@/utils/seller/sellerModal.utils.js'
 
 const props = defineProps({
   title: { type: String, required: true },
