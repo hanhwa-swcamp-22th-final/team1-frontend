@@ -57,3 +57,19 @@ export function getOrderKpi() {
 export async function getWhmOrders() {
   return instance.get('/orders/whm')
 }
+
+/**
+ * 대시보드용 당월 총 매출 조회
+ * @returns {Promise<AxiosResponse>} { success, data: { totalRevenue, trend, trendLabel, trendType } }
+ */
+export function getCurrentRevenue() {
+  return instance.get('/orders/revenue/current')
+}
+
+/**
+ * 월별 매출 추이 조회 (최근 6개월)
+ * @returns {Promise<AxiosResponse>} { success, data: Array<{ month, label, revenue }> }
+ */
+export function getMonthlyRevenue() {
+  return instance.get('/orders/revenue/monthly')
+}

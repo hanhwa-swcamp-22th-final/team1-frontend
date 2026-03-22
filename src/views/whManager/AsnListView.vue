@@ -1,6 +1,5 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import { ROUTE_NAMES } from '@/constants'
@@ -8,10 +7,9 @@ import AsnDetailModal from '@/components/whManager/AsnDetailModal.vue'
 import AsnMismatchModal from '@/components/whManager/AsnMismatchModal.vue'
 import { useUiStore } from '@/stores/ui'
 
-const router = useRouter()
 const ui = useUiStore()
 
-// ── 탭 상태 ('asn' | 'tasks' | 'bin')
+// ── 탭 상태 ('asn' | 'bin')
 const activeTab = ref('asn')
 
 // ── ASN 목록 서브 상태 필터
@@ -27,6 +25,7 @@ const PAGE_SIZE   = 6
 
 // ────────────────────────────────────────────
 // 하드코딩 Mock 데이터 (추후 API 연동 시 교체)
+// newSkus: 아직 Bin이 배정되지 않은 신규 SKU 목록
 // ────────────────────────────────────────────
 const ASN_LIST = [
   {
@@ -39,6 +38,7 @@ const ASN_LIST = [
     expectedDate: '2026-03-14',
     registeredDate: '2026-03-10',
     status: 'pending',
+    newSkus: [{ code: 'SKU-GB-002', name: '마스크팩 10매입' }],
   },
   {
     id: 'ASN-2024-0311-005',
@@ -50,6 +50,7 @@ const ASN_LIST = [
     expectedDate: '2026-03-13',
     registeredDate: '2026-03-09',
     status: 'transit',
+    newSkus: [],
   },
   {
     id: 'ASN-2024-0310-003',
@@ -61,6 +62,7 @@ const ASN_LIST = [
     expectedDate: '2026-03-12',
     registeredDate: '2026-03-08',
     status: 'mismatch',
+    newSkus: [],
   },
   {
     id: 'ASN-2024-0309-002',
@@ -72,6 +74,7 @@ const ASN_LIST = [
     expectedDate: '2026-03-12',
     registeredDate: '2026-03-07',
     status: 'received',
+    newSkus: [{ code: 'SKU-GB-003', name: '마스크팩 10매입 (신상)' }],
   },
   {
     id: 'ASN-2024-0308-001',
@@ -83,6 +86,7 @@ const ASN_LIST = [
     expectedDate: '2026-03-11',
     registeredDate: '2026-03-06',
     status: 'received',
+    newSkus: [],
   },
   {
     id: 'ASN-2024-0307-004',
@@ -94,10 +98,11 @@ const ASN_LIST = [
     expectedDate: '2026-03-16',
     registeredDate: '2026-03-05',
     status: 'pending',
+    newSkus: [{ code: 'SKU-BL-002', name: '파운데이션 SPF50' }],
   },
 ]
 
-// 상태 → 라벨/배지색 매핑 (HTML 목업 기준)
+// 상태 → 라벨/배지색 매핑
 const STATUS_MAP = {
   pending:  { label: '입고 대기',   color: 'amber' },
   transit:  { label: '운송 중',     color: 'blue'  },
@@ -105,7 +110,7 @@ const STATUS_MAP = {
   mismatch: { label: '수량 불일치', color: 'red'   },
 }
 
-// KPI 집계 — 하드코딩 데이터에서 상태별 카운트 계산
+// KPI 집계
 const kpi = computed(() => ({
   total:    ASN_LIST.length,
   pending:  ASN_LIST.filter(a => a.status === 'pending').length,
@@ -114,7 +119,6 @@ const kpi = computed(() => ({
   mismatch: ASN_LIST.filter(a => a.status === 'mismatch').length,
 }))
 
-// 서브 탭 목록 (카운트는 전체 데이터 기준 고정값)
 const statusTabs = computed(() => [
   { key: 'all',      label: '전체',        count: kpi.value.total,    color: 'gray'  },
   { key: 'pending',  label: '입고 대기',   count: kpi.value.pending,  color: 'amber' },
@@ -123,12 +127,10 @@ const statusTabs = computed(() => [
   { key: 'mismatch', label: '수량 불일치', count: kpi.value.mismatch, color: 'red'   },
 ])
 
-// 필터가 바뀔 때마다 페이지를 1로 초기화
 watch([activeStatus, filterSeller, searchText], () => {
   currentPage.value = 1
 })
 
-// 클라이언트 사이드 필터링
 const filteredAsns = computed(() => {
   let list = ASN_LIST
 
@@ -151,7 +153,6 @@ const filteredAsns = computed(() => {
   return list
 })
 
-// 클라이언트 사이드 페이지네이션 — 필터된 결과에서 현재 페이지 슬라이스
 const pagedAsns = computed(() => {
   const start = (currentPage.value - 1) * PAGE_SIZE
   return filteredAsns.value.slice(start, start + PAGE_SIZE)
@@ -163,7 +164,6 @@ const pagination = computed(() => ({
   total:    filteredAsns.value.length,
 }))
 
-// BaseTable 컬럼 정의
 const asnColumns = [
   { key: 'id',             label: 'ASN ID',      width: '175px' },
   { key: 'seller',         label: '셀러 / 회사',  width: '170px' },
@@ -194,9 +194,19 @@ const breadcrumb = [
 const showDetailModal   = ref(false)
 const showMismatchModal = ref(false)
 const selectedAsn       = ref(null)
+const detailCanAssign   = ref(false) // true = Bin 배정 편집 모드
 
+// ASN 목록 탭 → 읽기 전용으로 열기
 function openDetailModal(asn) {
   selectedAsn.value     = asn
+  detailCanAssign.value = false
+  showDetailModal.value = true
+}
+
+// Bin 미배정 ASN 탭 → 배정 편집 모드로 열기
+function openAssignModal(asn) {
+  selectedAsn.value     = asn
+  detailCanAssign.value = true
   showDetailModal.value = true
 }
 
@@ -205,81 +215,32 @@ function openMismatchModal(asn) {
   showMismatchModal.value = true
 }
 
-/** 태스크 목록 탭에서 asnId로 원본 ASN 데이터를 찾아 모달 오픈 */
-function openModalForTask(task) {
-  const asn = ASN_LIST.find(a => a.id === task.asnId) ?? null
-  if (task.action === 'mismatch') openMismatchModal(asn)
-  else openDetailModal(asn)
+// ────────────────────────────────────────────
+// Bin 미배정 ASN 탭
+// ────────────────────────────────────────────
+
+// 배정 완료 처리된 ASN ID 세트 (모달에서 '입고 확인' 클릭 시 추가됨)
+const resolvedAsnIds = ref(new Set())
+
+// 신규 SKU가 있고 아직 배정 완료되지 않은 ASN 목록
+const unassignedAsns = computed(() =>
+  ASN_LIST.filter(a => a.newSkus.length > 0 && !resolvedAsnIds.value.has(a.id))
+)
+
+// AsnDetailModal에서 '입고 확인' 완료 시 호출
+function handleDetailConfirm({ asnId }) {
+  const next = new Set(resolvedAsnIds.value)
+  next.add(asnId)
+  resolvedAsnIds.value = next
+  showDetailModal.value = false
 }
 
-// ────────────────────────────────────────────
-// 전체 작업 목록 탭 — 하드코딩 Mock 데이터
-// ────────────────────────────────────────────
-const taskList = [
-  { id: 'INB-TASK-024', type: '검수',        typeColor: 'blue',   asnId: 'ASN-2024-0312-001', bin: 'A-3-2', worker: '박민준',          status: '대기',     statusColor: 'amber', action: 'detail'   },
-  { id: 'INB-TASK-023', type: '수량 대조',   typeColor: 'green',  asnId: 'ASN-2024-0311-005', bin: 'C-1-4', worker: '이서윤',          status: '진행중',   statusColor: 'blue',  action: 'track'    },
-  { id: 'INB-TASK-022', type: '불일치 검토', typeColor: 'red',    asnId: 'ASN-2024-0310-003', bin: '검토',  worker: '관리자 확인 필요', status: '검토 필요', statusColor: 'red',   action: 'mismatch' },
-  { id: 'INB-TASK-021', type: '적재',        typeColor: 'amber',  asnId: 'ASN-2024-0309-002', bin: 'A-3-3', worker: '이서윤',          status: '완료',     statusColor: 'green', action: 'history'  },
-]
-
-const priorities = [
-  { asnId: 'ASN-2024-0310-003', sub: '실입고 185개 / 예정 200개 · 파손 사진 2건 첨부됨', level: '긴급', color: 'red'   },
-  { asnId: 'ASN-2024-0312-001', sub: '입고 예정 1,000개 · 고회전 SKU라 Bin 선점 필요',    level: '우선', color: 'amber' },
-]
-
-const opMemos = [
-  { title: '검수 대기 8건',     sub: '도착 예정일이 오늘인 ASN 3건 우선 처리' },
-  { title: '자동 Bin 추천 91%', sub: '예외 2건만 수동 조정 필요' },
-  { title: '적재 완료 9건',      sub: '완료 ASN은 재고현황으로 자동 반영됨' },
-]
-
-const taskColumns = [
-  { key: 'id',     label: '작업 ID',   width: '130px' },
-  { key: 'type',   label: '유형',       width: '100px' },
-  { key: 'asnId',  label: '기준 문서', width: '160px' },
-  { key: 'bin',    label: '추천 Bin',  width: '90px'  },
-  { key: 'worker', label: '담당 작업자' },
-  { key: 'status', label: '상태',       width: '90px'  },
-  { key: 'action', label: '작업',       width: '70px', align: 'center' },
-]
-
-// ────────────────────────────────────────────
-// Bin 사전 배정 탭 — 하드코딩 Mock 데이터
-// ────────────────────────────────────────────
-const binKpi = [
-  { label: '사전 배정 ASN', value: 11,    color: ''      },
-  { label: '즉시 검토 Bin', value: 2,     color: 'amber' },
-  { label: '여유 적재율',   value: '78%', color: 'blue'  },
-]
-
-const binRecommendations = [
-  { asnId: 'ASN-2024-0312-001', company: 'Glow Beauty', sku: '앰플 세럼 30ml', bins: ['A-3-2', 'A-3-3'], worker: '박민준', avail: '1,220개', memo: '고회전 SKU 존 우선' },
-  { asnId: 'ASN-2024-0311-005', company: 'K-Style',     sku: '티셔츠 L',       bins: ['C-1-4'],           worker: '이서윤', avail: '640개',   memo: '혼적 방지 위해 단일 Bin 유지' },
-  { asnId: 'ASN-2024-0310-003', company: 'Eco Pure',    sku: '텀블러 350ml',   bins: [],                  worker: '관리자', avail: '-',       memo: '불일치 처리 후 Bin 재추천' },
-]
-
-const zonePolicy = [
-  { zone: 'A Zone', worker: '박민준', category: '뷰티, 고회전 SKU', fallback: '최현우', status: '안정',   statusColor: 'green' },
-  { zone: 'C Zone', worker: '이서윤', category: '패션, 박스 입고',  fallback: '박민준', status: '운영중', statusColor: 'blue'  },
-  { zone: 'D Zone', worker: '최현우', category: '일반 적재',        fallback: '이서윤', status: '재점검', statusColor: 'amber' },
-]
-
-const binColumns = [
-  { key: 'asnId',   label: 'ASN ID',      width: '160px' },
-  { key: 'company', label: '셀러사' },
-  { key: 'sku',     label: '주요 SKU' },
-  { key: 'bins',    label: '추천 Bin',    width: '140px' },
-  { key: 'worker',  label: '담당 작업자', width: '100px' },
-  { key: 'avail',   label: '가용 수량',   width: '90px', align: 'right' },
-  { key: 'memo',    label: '메모' },
-]
-
-const zoneColumns = [
-  { key: 'zone',     label: '존',               width: '100px' },
-  { key: 'worker',   label: '전담 작업자',      width: '100px' },
-  { key: 'category', label: '주요 취급 카테고리' },
-  { key: 'fallback', label: 'Fallback',          width: '100px' },
-  { key: 'status',   label: '상태',              width: '90px'  },
+const binPendingColumns = [
+  { key: 'id',          label: 'ASN ID',    width: '175px' },
+  { key: 'company',     label: '셀러사',     width: '130px' },
+  { key: 'newSkus',     label: '미배정 SKU' },
+  { key: 'status',      label: 'ASN 상태',  width: '120px' },
+  { key: 'actions',     label: '배정',       width: '90px', align: 'center' },
 ]
 </script>
 
@@ -322,7 +283,7 @@ const zoneColumns = [
         <path d="M7 5v4M7 3.5v.5" stroke-linecap="round"/>
       </svg>
       <p>
-        <strong>ASN 운영 화면</strong> — ASN 목록, 전체 작업 목록, Bin 사전 배정을 탭으로 전환하며 관리합니다.
+        <strong>ASN 운영 화면</strong> — ASN 목록 조회와 Bin 미배정 ASN 처리를 탭으로 전환하며 관리합니다.
       </p>
     </div>
 
@@ -330,9 +291,8 @@ const zoneColumns = [
     <div class="main-tabs">
       <button
         v-for="tab in [
-          { key: 'asn',   label: 'ASN 목록' },
-          { key: 'tasks', label: '전체 작업 목록' },
-          { key: 'bin',   label: 'Bin 사전 배정' },
+          { key: 'asn', label: 'ASN 목록' },
+          { key: 'bin', label: 'Bin 미배정 ASN' },
         ]"
         :key="tab.key"
         class="main-tab-btn"
@@ -340,6 +300,9 @@ const zoneColumns = [
         @click="activeTab = tab.key"
       >
         {{ tab.label }}
+        <span v-if="tab.key === 'bin' && unassignedAsns.length" class="tab-badge">
+          {{ unassignedAsns.length }}
+        </span>
       </button>
     </div>
 
@@ -400,7 +363,8 @@ const zoneColumns = [
             <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13">
               <path d="M2 3h9M2 6.5h9M2 10h5" stroke-linecap="round"/>
             </svg>
-            Bin 배정 보기
+            Bin 미배정 ASN
+            <span v-if="unassignedAsns.length" class="btn-badge">{{ unassignedAsns.length }}</span>
           </button>
         </div>
 
@@ -413,22 +377,18 @@ const zoneColumns = [
             row-key="id"
             @page-change="onPageChange"
           >
-            <!-- ASN ID: 파란색 링크 스타일 -->
             <template #cell-id="{ row }">
               <span class="asn-link" @click="openDetailModal(row)">{{ row.id }}</span>
             </template>
 
-            <!-- 셀러 / 회사: 두 필드 합쳐서 표시 -->
             <template #cell-seller="{ row }">
               {{ row.seller }} / {{ row.company }}
             </template>
 
-            <!-- 예정 수량: 천단위 콤마 -->
             <template #cell-plannedQty="{ row }">
               <span class="fw-600">{{ row.plannedQty.toLocaleString() }}개</span>
             </template>
 
-            <!-- 실입고 수량: null이면 '-', 불일치면 빨간색 + diff 배지 -->
             <template #cell-actualQty="{ row }">
               <span v-if="row.actualQty === null" class="text-muted">-</span>
               <span
@@ -443,14 +403,12 @@ const zoneColumns = [
               </span>
             </template>
 
-            <!-- 상태 배지 -->
             <template #cell-status="{ row }">
               <span class="badge" :class="`badge--${STATUS_MAP[row.status]?.color}`">
                 {{ STATUS_MAP[row.status]?.label ?? row.status }}
               </span>
             </template>
 
-            <!-- 작업 버튼: 수량 불일치는 '처리', 나머지는 '상세' -->
             <template #cell-actions="{ row }">
               <button
                 class="ui-btn ui-btn--ghost ui-btn--sm"
@@ -464,129 +422,74 @@ const zoneColumns = [
 
       </section>
 
-      <!-- ▶ 전체 작업 목록 탭 ────────────────────── -->
-      <section v-else-if="activeTab === 'tasks'">
-        <!-- 헤더 -->
-        <div class="matrix-note">
-          <div>
-            <strong>입고 작업 전체 큐</strong>
-            <p class="matrix-sub">ASN 검수, 수량 대조, Bin 추천, 적재 완료까지 이어지는 전체 작업 흐름을 한 화면에서 관리합니다.</p>
-          </div>
-          <button class="ui-btn ui-btn--primary ui-btn--sm">우선순위 갱신</button>
-        </div>
-
-        <!-- 2컬럼 그리드 -->
-        <div class="queue-grid">
-          <!-- 왼쪽: 작업 테이블 -->
-          <div class="summary-box">
-            <div class="summary-title">전체 작업 목록</div>
-            <BaseTable :columns="taskColumns" :rows="taskList" row-key="id">
-              <template #cell-type="{ row }">
-                <span class="badge" :class="`badge--${row.typeColor}`">{{ row.type }}</span>
-              </template>
-              <template #cell-asnId="{ row }">
-                <span class="mono-sm">{{ row.asnId }}</span>
-              </template>
-              <template #cell-bin="{ row }">
-                <span class="location-tag">{{ row.bin }}</span>
-              </template>
-              <template #cell-status="{ row }">
-                <span class="badge" :class="`badge--${row.statusColor}`">{{ row.status }}</span>
-              </template>
-              <template #cell-action="{ row }">
-                <button
-                  class="ui-btn ui-btn--sm"
-                  :class="row.action === 'mismatch' ? 'ui-btn--primary' : 'ui-btn--ghost'"
-                  @click="openModalForTask(row)"
-                >
-                  {{ row.action === 'track' ? '추적' : row.action === 'history' ? '이력' : row.action === 'mismatch' ? '처리' : '상세' }}
-                </button>
-              </template>
-            </BaseTable>
-          </div>
-
-          <!-- 오른쪽: 우선순위 + 메모 -->
-          <div class="card-stack">
-            <!-- 검토 우선순위 -->
-            <div class="summary-box">
-              <div class="summary-title">검토 우선순위</div>
-              <div class="priority-list">
-                <div v-for="item in priorities" :key="item.asnId" class="priority-item">
-                  <div class="priority-copy">
-                    <div class="priority-main">{{ item.asnId }}</div>
-                    <div class="priority-sub">{{ item.sub }}</div>
-                  </div>
-                  <span class="badge" :class="`badge--${item.color}`">{{ item.level }}</span>
-                </div>
-              </div>
-            </div>
-            <!-- 오늘 운영 메모 -->
-            <div class="summary-box">
-              <div class="summary-title">오늘 운영 메모</div>
-              <div class="priority-list">
-                <div v-for="memo in opMemos" :key="memo.title" class="priority-item">
-                  <div class="priority-copy">
-                    <div class="priority-main">{{ memo.title }}</div>
-                    <div class="priority-sub">{{ memo.sub }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ▶ Bin 사전 배정 탭 ───────────────────────── -->
+      <!-- ▶ Bin 미배정 ASN 탭 ───────────────────── -->
       <section v-else-if="activeTab === 'bin'">
-        <div class="matrix-note">
-          <div>
-            <strong>Bin 사전 배정 기준</strong>
-            <p class="matrix-sub">입고 예정 ASN 기준으로 검수 존과 적재 Bin을 선배정해 작업자와 공간 충돌을 줄입니다.</p>
-          </div>
-          <button class="ui-btn ui-btn--primary ui-btn--sm">배정 기준 저장</button>
-        </div>
 
-        <div class="bin-body">
-          <!-- 미니 KPI -->
-          <div class="mini-kpis">
-            <div v-for="item in binKpi" :key="item.label" class="mini-kpi">
-              <div class="mini-kpi-label">{{ item.label }}</div>
-              <div
-                class="mini-kpi-value"
-                :class="item.color ? `kpi--${item.color}` : ''"
-              >{{ item.value }}</div>
+        <!-- 탭 헤더 -->
+        <div class="bin-header">
+          <div>
+            <div class="bin-header-title">Bin 배정 필요 ASN</div>
+            <div class="bin-header-sub">
+              신규 SKU가 포함된 ASN입니다. <strong>배정하기</strong>를 클릭해 ASN 상세에서 Bin을 직접 배정하세요.
+              배정 완료 후 동일 SKU 재입고 시 자동으로 매핑됩니다.
             </div>
           </div>
-
-          <!-- ASN별 추천 Bin 테이블 -->
-          <div class="summary-box" style="margin-top: var(--space-4);">
-            <div class="summary-title">ASN별 추천 Bin</div>
-            <BaseTable :columns="binColumns" :rows="binRecommendations" row-key="asnId">
-              <template #cell-bins="{ row }">
-                <template v-if="row.bins.length">
-                  <span v-for="b in row.bins" :key="b" class="location-tag" style="margin-right:4px;">{{ b }}</span>
-                </template>
-                <span v-else class="location-tag location-tag--warn">검토 필요</span>
-              </template>
-              <template #cell-memo="{ row }">
-                <span class="memo-text">{{ row.memo }}</span>
-              </template>
-            </BaseTable>
-          </div>
-
-          <!-- 검수 존 운영 정책 테이블 -->
-          <div class="summary-box" style="margin-top: var(--space-4);">
-            <div class="summary-title">검수 존 운영 정책</div>
-            <BaseTable :columns="zoneColumns" :rows="zonePolicy" row-key="zone">
-              <template #cell-zone="{ row }">
-                <span class="location-tag">{{ row.zone }}</span>
-              </template>
-              <template #cell-status="{ row }">
-                <span class="badge" :class="`badge--${row.statusColor}`">{{ row.status }}</span>
-              </template>
-            </BaseTable>
-          </div>
+          <span v-if="unassignedAsns.length" class="badge badge--amber">
+            {{ unassignedAsns.length }}건 배정 필요
+          </span>
+          <span v-else class="badge badge--green">모두 배정 완료</span>
         </div>
+
+        <!-- 빈 상태 -->
+        <div v-if="!unassignedAsns.length" class="bin-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40" class="bin-empty-icon">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M8 12l3 3 5-5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="bin-empty-title">모든 ASN의 Bin이 배정되었습니다</div>
+          <div class="bin-empty-sub">신규 SKU가 포함된 미처리 ASN이 없습니다.</div>
+        </div>
+
+        <!-- 미배정 ASN 테이블 -->
+        <div v-else class="table-section">
+          <BaseTable
+            :columns="binPendingColumns"
+            :rows="unassignedAsns"
+            row-key="id"
+          >
+            <!-- ASN ID -->
+            <template #cell-id="{ row }">
+              <span class="asn-link" @click="openAssignModal(row)">{{ row.id }}</span>
+            </template>
+
+            <!-- 미배정 SKU 목록 -->
+            <template #cell-newSkus="{ row }">
+              <span
+                v-for="sku in row.newSkus"
+                :key="sku.code"
+                class="sku-tag"
+              >
+                {{ sku.code }}
+                <span class="sku-tag-name">{{ sku.name }}</span>
+              </span>
+            </template>
+
+            <!-- ASN 상태 배지 -->
+            <template #cell-status="{ row }">
+              <span class="badge" :class="`badge--${STATUS_MAP[row.status]?.color}`">
+                {{ STATUS_MAP[row.status]?.label ?? row.status }}
+              </span>
+            </template>
+
+            <!-- 배정하기 버튼 -->
+            <template #cell-actions="{ row }">
+              <button class="ui-btn ui-btn--primary ui-btn--sm" @click="openAssignModal(row)">
+                배정하기
+              </button>
+            </template>
+          </BaseTable>
+        </div>
+
       </section>
 
     </div>
@@ -595,7 +498,9 @@ const zoneColumns = [
     <AsnDetailModal
       :is-open="showDetailModal"
       :asn="selectedAsn"
+      :can-assign="detailCanAssign"
       @cancel="showDetailModal = false"
+      @confirm="handleDetailConfirm"
     />
     <AsnMismatchModal
       :is-open="showMismatchModal"
@@ -667,6 +572,9 @@ const zoneColumns = [
 }
 
 .main-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: var(--space-3) var(--space-5);
   border: none;
   background: transparent;
@@ -680,6 +588,21 @@ const zoneColumns = [
 }
 .main-tab-btn:hover { color: var(--t1); }
 .main-tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+/* 탭 버튼 내 카운트 배지 */
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--amber-pale);
+  color: #b45309;
+  font-size: 11px;
+  font-weight: 700;
+}
 
 /* ── Tab Panel ─────────────────────────────────── */
 .tab-panel {
@@ -822,8 +745,8 @@ const zoneColumns = [
 .badge--green { background: var(--green-pale); color: var(--green); }
 .badge--red   { background: var(--red-pale);   color: var(--red); }
 
-/* ── Matrix Note (탭 헤더) ─────────────────────── */
-.matrix-note {
+/* ── Bin 미배정 탭 헤더 ──────────────────────── */
+.bin-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -832,81 +755,97 @@ const zoneColumns = [
   background: var(--surface-2);
   border-bottom: 1px solid var(--border);
 }
-.matrix-note strong { color: var(--t1); font-size: var(--font-size-md); }
-.matrix-sub { font-size: var(--font-size-xs); color: var(--t3); margin: 4px 0 0; }
-
-/* ── Queue Grid (전체 작업 목록 탭) ─────────────── */
-.queue-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: var(--space-4);
-  padding: var(--space-5);
-}
-
-/* ── Summary Box / Card Stack ──────────────────── */
-.summary-box {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  padding: var(--space-4);
-}
-.summary-title {
-  font-size: var(--font-size-sm);
+.bin-header-title {
+  font-size: var(--font-size-md);
   font-weight: 700;
   color: var(--t1);
-  margin-bottom: var(--space-3);
+  margin-bottom: 4px;
 }
-.card-stack { display: flex; flex-direction: column; gap: var(--space-4); }
-
-/* ── Priority List ─────────────────────────────── */
-.priority-list { display: flex; flex-direction: column; gap: var(--space-3); }
-.priority-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-}
-.priority-copy { flex: 1; min-width: 0; }
-.priority-main { font-size: var(--font-size-xs); font-weight: 600; color: var(--t1); }
-.priority-sub  { font-size: 11px; color: var(--t3); margin-top: 2px; line-height: 1.45; }
-
-/* ── Table Cell Helpers (탭 공용) ──────────────── */
-.mono-sm { font-family: var(--font-mono); font-size: 11px; color: var(--t3); }
-.location-tag {
-  display: inline-block;
-  padding: 2px 8px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+.bin-header-sub {
   font-size: var(--font-size-xs);
-  font-weight: 600;
-  color: var(--t2);
+  color: var(--t3);
+  line-height: 1.5;
 }
-.location-tag--warn { border-color: var(--amber); color: #b45309; background: var(--amber-pale); }
-.memo-text { color: var(--t3); font-size: var(--font-size-xs); }
 
-/* ── Bin Tab ────────────────────────────────────── */
-.bin-body { padding: var(--space-5); }
-.mini-kpis {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-3);
+/* ── 빈 상태 ──────────────────────────────────── */
+.bin-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px var(--space-5);
+  gap: var(--space-2);
 }
-.mini-kpi {
-  padding: var(--space-4);
-  border: 1px solid var(--border);
+.bin-empty-icon { color: var(--green); margin-bottom: var(--space-2); }
+.bin-empty-title { font-size: var(--font-size-md); font-weight: 600; color: var(--t2); }
+.bin-empty-sub { font-size: var(--font-size-sm); color: var(--t3); }
+
+/* ── 신규 SKU 태그 ────────────────────────────── */
+.sku-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  background: var(--amber-pale);
+  border: 1px solid #d97706;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: #92400e;
+  margin-right: 4px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+.sku-tag-name {
+  font-family: var(--font-sans, sans-serif);
+  font-size: var(--font-size-xs);
+  color: #b45309;
+  font-weight: 400;
+}
+
+/* ── 버튼 ─────────────────────────────────────── */
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   border-radius: var(--radius-md);
-  background: var(--surface);
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: background var(--ease-fast), opacity var(--ease-fast);
 }
-.mini-kpi-label { font-size: 11px; color: var(--t3); margin-bottom: var(--space-1); }
-.mini-kpi-value {
-  font-size: 22px;
+.ui-btn--ghost {
+  border-color: var(--border);
+  background: transparent;
+  color: var(--t2);
+  padding: 0 var(--space-3);
+  height: 36px;
+  font-size: var(--font-size-sm);
+}
+.ui-btn--ghost:hover { background: var(--surface-2); color: var(--t1); }
+.ui-btn--primary {
+  background: var(--blue);
+  color: #fff;
+  padding: 0 var(--space-3);
+  height: 36px;
+  font-size: var(--font-size-sm);
+}
+.ui-btn--primary:hover { opacity: 0.9; }
+.ui-btn--sm { height: 30px; font-size: var(--font-size-xs); padding: 0 var(--space-3); }
+
+/* 필터바 내 버튼 카운트 배지 */
+.btn-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background: #b45309;
+  color: #fff;
+  font-size: 10px;
   font-weight: 700;
-  color: var(--t1);
-  font-family: var(--font-condensed);
 }
 </style>

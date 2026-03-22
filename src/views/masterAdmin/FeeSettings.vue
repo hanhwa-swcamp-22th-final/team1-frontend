@@ -37,21 +37,6 @@ const form = reactive({
     UPS:   ['5.50', '6.80', '8.20', '10.40', '14.60', '19.90'],
     FedEx: ['5.90', '7.30', '8.80', '11.20', '15.80', '21.50'],
   },
-  seaSurcharge: {
-    mpfRate: '0.3464',
-    mpfMin: '32.71',
-    mpfMax: '634.62',
-    hmfRate: '0.125',
-    isfFee: '35.00',
-    drayage: '320.00',
-  },
-  airSurcharge: {
-    securityFee: '0.18',
-    airportTransport: '180.00',
-    documentFee: '45.00',
-    hazmatSurcharge: '60.00',
-    temperatureSurcharge: '120.00',
-  },
 })
 
 const WEIGHT_BANDS = ['0–1 lb', '1–2 lb', '2–3 lb', '3–5 lb', '5–10 lb', '10 lb+']
@@ -260,86 +245,6 @@ onMounted(fetchFee)
           </div>
         </div>
 
-        <!-- 해상/항공 서차지 -->
-        <div class="surcharge-grid">
-
-          <!-- 해상 -->
-          <div class="rate-card">
-            <div class="rate-card-header">
-              <div class="rate-icon rate-icon--blue">
-                <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
-                  <path d="M2 9c3-1.5 5 1.5 8 0s4-1.5 6 0M2 13c3-1.5 5 1.5 8 0s4-1.5 6 0M4 9V3h10v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-              </div>
-              <span class="rate-card-title" style="font-size:15px;">해상 수입 부가비용</span>
-            </div>
-            <div class="rate-card-body rate-card-body--compact">
-              <div class="sc-row">
-                <div class="sc-label">MPF 요율</div>
-                <div class="sc-input-wrap"><input v-model="form.seaSurcharge.mpfRate" type="text" class="sc-input" /><span class="sc-unit">%</span></div>
-              </div>
-              <div class="sc-row">
-                <div class="sc-label">MPF Min / Max</div>
-                <div class="sc-input-wrap">
-                  <input v-model="form.seaSurcharge.mpfMin" type="text" class="sc-input sc-input--sm" />
-                  <span class="sc-sep">~</span>
-                  <input v-model="form.seaSurcharge.mpfMax" type="text" class="sc-input sc-input--sm" />
-                  <span class="sc-unit">$</span>
-                </div>
-              </div>
-              <div class="divider"></div>
-              <div class="sc-row">
-                <div class="sc-label">HMF 요율</div>
-                <div class="sc-input-wrap"><input v-model="form.seaSurcharge.hmfRate" type="text" class="sc-input" /><span class="sc-unit">%</span></div>
-              </div>
-              <div class="sc-row">
-                <div class="sc-label">ISF 수수료</div>
-                <div class="sc-input-wrap"><input v-model="form.seaSurcharge.isfFee" type="text" class="sc-input" /><span class="sc-unit">$ / 선적</span></div>
-              </div>
-              <div class="sc-row">
-                <div class="sc-label">드레이지</div>
-                <div class="sc-input-wrap"><input v-model="form.seaSurcharge.drayage" type="text" class="sc-input" /><span class="sc-unit">$ / 컨테이너</span></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 항공 -->
-          <div class="rate-card">
-            <div class="rate-card-header">
-              <div class="rate-icon rate-icon--purple">
-                <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
-                  <path d="M14 11.5l1.5-1.5c1.5-1.5 1.5-3.5 0-5s-3.5-1.5-5 0L9 6.5M3.5 13.5L8 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                  <path d="M7 14L2.5 15.5 4 11l4.5-4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-              <span class="rate-card-title" style="font-size:15px;">항공 수입 부가비용</span>
-            </div>
-            <div class="rate-card-body rate-card-body--compact">
-              <div class="sc-row">
-                <div class="sc-label">보안 수수료</div>
-                <div class="sc-input-wrap"><input v-model="form.airSurcharge.securityFee" type="text" class="sc-input" /><span class="sc-unit">$ / kg</span></div>
-              </div>
-              <div class="sc-row">
-                <div class="sc-label">공항 내륙 운송비</div>
-                <div class="sc-input-wrap"><input v-model="form.airSurcharge.airportTransport" type="text" class="sc-input" /><span class="sc-unit">$ / 편</span></div>
-              </div>
-              <div class="sc-row">
-                <div class="sc-label">서류 처리비 (DO)</div>
-                <div class="sc-input-wrap"><input v-model="form.airSurcharge.documentFee" type="text" class="sc-input" /><span class="sc-unit">$ / 건</span></div>
-              </div>
-              <div class="divider"></div>
-              <div class="sc-row">
-                <div class="sc-label">위험물 취급 할증</div>
-                <div class="sc-input-wrap"><input v-model="form.airSurcharge.hazmatSurcharge" type="text" class="sc-input" /><span class="sc-unit">$ / 건</span></div>
-              </div>
-              <div class="sc-row">
-                <div class="sc-label">온도 관리 할증</div>
-                <div class="sc-input-wrap"><input v-model="form.airSurcharge.temperatureSurcharge" type="text" class="sc-input" /><span class="sc-unit">$ / 편</span></div>
-              </div>
-            </div>
-          </div>
-
-        </div><!-- /surcharge-grid -->
 
       </div><!-- /right-col -->
     </div>
@@ -408,7 +313,6 @@ onMounted(fetchFee)
 
 .rate-icon--gold   { background: var(--gold-pale);   color: #92400E; }
 .rate-icon--blue   { background: var(--blue-pale);   color: var(--blue); }
-.rate-icon--purple { background: var(--purple-pale); color: var(--purple); }
 
 .rate-card-title {
   font-family: 'Barlow Condensed', sans-serif;
@@ -571,62 +475,4 @@ onMounted(fetchFee)
 .rt-input:hover { border-color: var(--border); }
 .rt-input:focus { border-color: var(--gold); background: var(--surface); box-shadow: 0 0 0 2px var(--gold-pale); }
 
-/* ── 서차지 그리드 ── */
-.surcharge-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)); /* 카드가 grid 셀을 초과하지 않도록 */
-  gap: 24px;
-}
-
-.sc-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-.sc-row:last-child { margin-bottom: 0; }
-
-.sc-label {
-  font-family: 'Barlow', sans-serif;
-  font-weight: 600;
-  font-size: 12px;
-  color: var(--t2);
-  width: 110px;
-  flex-shrink: 0;
-}
-
-.sc-input-wrap {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 1;
-  min-width: 0;
-}
-
-.sc-input {
-  flex: 1;
-  min-width: 0; /* input 기본 min-width:auto가 flex 레이아웃을 깨는 것 방지 */
-  padding: 6px 10px;
-  text-align: right;
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--t1);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--surface);
-  outline: none;
-  transition: all 0.2s;
-}
-.sc-input--sm { flex: 1 1 50px; min-width: 40px; }
-.sc-sep { font-size: 13px; color: var(--t4); }
-.sc-input:focus { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-pale); }
-
-.sc-unit {
-  font-family: 'Barlow', sans-serif;
-  font-size: 11px;
-  color: var(--t3);
-  flex-shrink: 0; /* 단위 텍스트가 찌그러지지 않도록 */
-  word-break: keep-all; /* 줄바꿈 허용하되 단어 단위로 */
-}
 </style>

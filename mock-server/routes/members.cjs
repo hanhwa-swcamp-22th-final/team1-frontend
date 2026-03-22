@@ -13,6 +13,18 @@ module.exports = function (BASE_URL) {
     res.json({ success: true, data })
   })
 
+  // GET /members/sellers/revenue — 셀러별 당월 매출
+  router.get('/sellers/revenue', async (req, res) => {
+    const { data } = await http.get('/seller_revenue')
+    res.json({ success: true, data })
+  })
+
+  // GET /members/sellers/fee-summary — 대시보드용 셀러별 3PL 비용 요약
+  router.get('/sellers/fee-summary', async (req, res) => {
+    const { data } = await http.get('/seller_fee_summary')
+    res.json({ success: true, data })
+  })
+
   // GET /members/sellers — 셀러 목록 (AccountInvite.vue 드롭다운, SellerList.vue)
   router.get('/sellers', async (req, res) => {
     const { data } = await http.get('/sellers')

@@ -3,20 +3,19 @@
  * UserList — 총괄관리자 소속 사용자 목록 페이지
  *
  * 레이아웃:
- *   상태 필터 탭 + 검색 + 창고 select
+ *   역할 탭 + 검색 + 상태/소속 select
  *   BaseTable (클라이언트 사이드 필터링 + 페이지네이션)
- *
- * 탭 색상:
- *   탭 클릭 시 상태에 맞는 색상으로 변경 (AsnList.vue 패턴 동일)
  */
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getUserList, resetUserPassword, deactivateUser, reactivateUser, inviteAccount } from '@/api/member'
-import { ROUTE_NAMES, ACCOUNT_STATUS } from '@/constants'
+import { ROUTE_NAMES, ACCOUNT_STATUS, ROLES } from '@/constants'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import MasterListToolbar from '@/components/masterAdmin/MasterListToolbar.vue'
+import MasterStatusTabs from '@/components/masterAdmin/MasterStatusTabs.vue'
 
 const breadcrumb = [{ label: '사용자 관리' }, { label: '소속 사용자 목록' }]
 const router = useRouter()
@@ -33,14 +32,36 @@ const COLUMNS = [
   { key: 'actions',   label: '액션',               width: '180px' },
 ]
 
+const ROLE_LABELS = {
+  [ROLES.WH_MANAGER]: '창고 관리자',
+  [ROLES.WH_WORKER]: '창고 작업자',
+  [ROLES.SELLER]: '셀러 담당자',
+}
+
+const STATUS_LABELS = {
+  [ACCOUNT_STATUS.ACTIVE]: '정상',
+  [ACCOUNT_STATUS.TEMP_PASSWORD]: '임시비밀번호',
+  [ACCOUNT_STATUS.INACTIVE]: '비활성',
+}
+
 // ── 탭 정의 ───────────────────────────────────────────────────────────────────
 const TABS = [
-  { key: 'ALL',        label: '전체',         color: null },
-  { key: 'WH_MANAGER', label: 'WH_MANAGER',  color: { bg: 'var(--blue-pale)',   border: 'var(--blue)',   text: 'var(--blue)'   } },
-  { key: 'WH_WORKER',  label: 'WH_WORKER',   color: { bg: 'var(--purple-pale)', border: 'var(--purple)', text: 'var(--purple)' } },
-  { key: 'SELLER',     label: 'SELLER',       color: { bg: 'var(--gold-pale)',   border: 'var(--gold)',   text: '#92400E'       } },
-  { key: 'TEMP',       label: '임시비밀번호', color: { bg: 'var(--amber-pale)',  border: 'var(--amber)',  text: '#b45309'       } },
-  { key: 'INACTIVE',   label: '비활성',       color: { bg: 'var(--border)',      border: 'var(--t4)',     text: 'var(--t3)'     } },
+  { key: 'ALL', label: '전체', color: null },
+  {
+    key: ROLES.WH_MANAGER,
+    label: ROLE_LABELS[ROLES.WH_MANAGER],
+    color: { bg: 'var(--blue-pale)', border: 'var(--blue)', text: 'var(--blue)' },
+  },
+  {
+    key: ROLES.WH_WORKER,
+    label: ROLE_LABELS[ROLES.WH_WORKER],
+    color: { bg: 'var(--purple-pale)', border: 'var(--purple)', text: 'var(--purple)' },
+  },
+  {
+    key: ROLES.SELLER,
+    label: ROLE_LABELS[ROLES.SELLER],
+    color: { bg: 'var(--gold-pale)', border: 'var(--gold)', text: '#92400E' },
+  },
 ]
 
 // ── 상태 ─────────────────────────────────────────────────────────────────────
@@ -48,60 +69,60 @@ const allUsers  = ref([])
 const isLoading = ref(false)
 const activeTab = ref('ALL')
 const searchQ   = ref('')
-const filterWh  = ref('')
+const filterStatus = ref('')
+const filterOrg  = ref('')
 const page      = ref(1)
 const PAGE_SIZE = 10
 
-// ── 창고 목록 (동적 셀렉트) ───────────────────────────────────────────────────
-const warehouseOptions = computed(() => [
+// ── 툴바 옵션 ─────────────────────────────────────────────────────────────────
+const statusOptions = computed(() => [
+  { label: STATUS_LABELS[ACCOUNT_STATUS.ACTIVE], value: ACCOUNT_STATUS.ACTIVE },
+  { label: STATUS_LABELS[ACCOUNT_STATUS.TEMP_PASSWORD], value: ACCOUNT_STATUS.TEMP_PASSWORD },
+  { label: STATUS_LABELS[ACCOUNT_STATUS.INACTIVE], value: ACCOUNT_STATUS.INACTIVE },
+])
+
+function userOrganization(user) {
+  return user.warehouse || user.seller || ''
+}
+
+const organizationOptions = computed(() => [
   ...new Set(
     allUsers.value
-      .filter(u => u.warehouse)
-      .map(u => u.warehouse)
+      .map(userOrganization)
+      .filter(Boolean),
   ),
+])
+
+const toolbarFilters = computed(() => [
+  { key: 'status', value: filterStatus.value, placeholder: '전체 상태', options: statusOptions.value },
+  { key: 'organization', value: filterOrg.value, placeholder: '소속 전체', options: organizationOptions.value },
 ])
 
 // ── 탭 카운트 ─────────────────────────────────────────────────────────────────
 const TAB_COUNT = computed(() => {
   const base = { ALL: allUsers.value.length }
-  base['WH_MANAGER'] = allUsers.value.filter(u => u.role === 'WH_MANAGER').length
-  base['WH_WORKER']  = allUsers.value.filter(u => u.role === 'WH_WORKER').length
-  base['SELLER']     = allUsers.value.filter(u => u.role === 'SELLER').length
-  base['TEMP']       = allUsers.value.filter(u => u.accountStatus === ACCOUNT_STATUS.TEMP_PASSWORD).length
-  base['INACTIVE']   = allUsers.value.filter(u => u.accountStatus === ACCOUNT_STATUS.INACTIVE).length
+  for (const tab of TABS) {
+    if (tab.key !== 'ALL') {
+      base[tab.key] = allUsers.value.filter(user => user.role === tab.key).length
+    }
+  }
   return base
 })
-
-// ── 탭 색상 ──────────────────────────────────────────────────────────────────
-function tabActiveStyle(tab) {
-  if (activeTab.value !== tab.key) return {}
-  if (!tab.color) return { background: 'rgba(245,166,35,0.12)', borderColor: 'var(--gold)', color: 'var(--gold)' }
-  return { background: tab.color.bg, borderColor: tab.color.border, color: tab.color.text }
-}
-
-function tabCountStyle(tab) {
-  if (activeTab.value !== tab.key) return {}
-  if (!tab.color) return { background: 'var(--gold)', color: '#fff' }
-  return { background: tab.color.border, color: '#fff' }
-}
 
 // ── 클라이언트 사이드 필터링 ──────────────────────────────────────────────────
 const filteredUsers = computed(() => {
   return allUsers.value
-    .filter(u => {
-      if (activeTab.value === 'ALL')        return true
-      if (activeTab.value === 'TEMP')       return u.accountStatus === ACCOUNT_STATUS.TEMP_PASSWORD
-      if (activeTab.value === 'INACTIVE')   return u.accountStatus === ACCOUNT_STATUS.INACTIVE
-      return u.role === activeTab.value
-    })
-    .filter(u => !filterWh.value || u.warehouse === filterWh.value)
+    .filter(user => activeTab.value === 'ALL' || user.role === activeTab.value)
+    .filter(user => !filterStatus.value || user.accountStatus === filterStatus.value)
+    .filter(user => !filterOrg.value || userOrganization(user) === filterOrg.value)
     .filter(u => {
       if (!searchQ.value) return true
       const q = searchQ.value.toLowerCase()
       return (
         u.name?.toLowerCase().includes(q) ||
         u.email?.toLowerCase().includes(q) ||
-        u.workerCode?.toLowerCase().includes(q)
+        u.workerCode?.toLowerCase().includes(q) ||
+        userOrganization(u).toLowerCase().includes(q)
       )
     })
 })
@@ -117,7 +138,7 @@ const pagination = computed(() => ({
   total: filteredUsers.value.length,
 }))
 
-watch([activeTab, searchQ, filterWh], () => { page.value = 1 })
+watch([activeTab, searchQ, filterStatus, filterOrg], () => { page.value = 1 })
 
 // ── 데이터 로드 ───────────────────────────────────────────────────────────────
 async function fetchAll() {
@@ -220,13 +241,22 @@ function userInitials(name) {
 }
 
 function roleBadgeClass(role) {
-  if (role === 'WH_MANAGER') return 'role-manager'
-  if (role === 'WH_WORKER')  return 'role-worker'
-  if (role === 'SELLER')     return 'role-seller'
+  if (role === ROLES.WH_MANAGER) return 'role-manager'
+  if (role === ROLES.WH_WORKER)  return 'role-worker'
+  if (role === ROLES.SELLER)     return 'role-seller'
   return ''
 }
 
-function isWorker(user) { return user.role === 'WH_WORKER' }
+function handleToolbarFilter({ key, value }) {
+  if (key === 'status') filterStatus.value = value
+  if (key === 'organization') filterOrg.value = value
+}
+
+function roleLabel(role) {
+  return ROLE_LABELS[role] ?? role
+}
+
+function isWorker(user) { return user.role === ROLES.WH_WORKER }
 function isInactive(user) { return user.accountStatus === ACCOUNT_STATUS.INACTIVE }
 </script>
 
@@ -243,40 +273,21 @@ function isInactive(user) { return user.accountStatus === ACCOUNT_STATUS.INACTIV
 
     <!-- ── 툴바 ── -->
     <div class="toolbar">
-      <!-- 탭 필터 -->
-      <div class="filter-tabs">
-        <button
-          v-for="tab in TABS"
-          :key="tab.key"
-          class="filter-tab"
-          :class="{ active: activeTab === tab.key }"
-          :style="tabActiveStyle(tab)"
-          @click="activeTab = tab.key"
-        >
-          {{ tab.label }}
-          <span class="filter-count" :style="tabCountStyle(tab)">{{ TAB_COUNT[tab.key] ?? 0 }}</span>
-        </button>
-      </div>
+      <MasterStatusTabs
+        :tabs="TABS"
+        :active-key="activeTab"
+        :counts="TAB_COUNT"
+        @change="activeTab = $event"
+      />
 
-      <!-- 검색 + 창고 필터 -->
-      <div class="toolbar-right">
-        <div class="search-box">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#B0B8CC" stroke-width="1.6">
-            <circle cx="6" cy="6" r="4.5"/>
-            <path d="M10 10l2.5 2.5" stroke-linecap="round"/>
-          </svg>
-          <input
-            v-model="searchQ"
-            class="search-input"
-            type="text"
-            placeholder="이름, 이메일, 작업자 코드 검색"
-          />
-        </div>
-        <select v-model="filterWh" class="select-filter">
-          <option value="">창고 전체</option>
-          <option v-for="wh in warehouseOptions" :key="wh" :value="wh">{{ wh }}</option>
-        </select>
-      </div>
+      <MasterListToolbar
+        :search-value="searchQ"
+        search-placeholder="이름, 이메일, 작업자 코드, 소속 검색"
+        search-width="300px"
+        :filters="toolbarFilters"
+        @update:search-value="searchQ = $event"
+        @update:filter="handleToolbarFilter"
+      />
     </div>
 
     <!-- ── 확인 다이얼로그 ── -->
@@ -313,12 +324,12 @@ function isInactive(user) { return user.accountStatus === ACCOUNT_STATUS.INACTIV
 
       <!-- 역할 배지 -->
       <template #cell-role="{ value }">
-        <span class="role-badge" :class="roleBadgeClass(value)">{{ value }}</span>
+        <span class="role-badge" :class="roleBadgeClass(value)">{{ roleLabel(value) }}</span>
       </template>
 
       <!-- 소속 -->
       <template #cell-org="{ row }">
-        <span class="cell-org">{{ row.warehouse || row.seller || '-' }}</span>
+        <span class="cell-org">{{ userOrganization(row) || '-' }}</span>
       </template>
 
       <!-- 이메일 / 작업자 코드 -->
@@ -390,89 +401,6 @@ function isInactive(user) { return user.accountStatus === ACCOUNT_STATUS.INACTIV
   flex-wrap: wrap;
   gap: 10px;
 }
-
-.filter-tabs {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.filter-tab {
-  padding: 8px 14px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  font-family: 'Barlow', sans-serif;
-  font-weight: 500;
-  font-size: 12px;
-  color: var(--t2);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background var(--ease-fast), border-color var(--ease-fast), color var(--ease-fast);
-}
-
-.filter-tab.active { font-weight: 700; }
-
-.filter-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 16px;
-  padding: 0 4px;
-  margin-left: 5px;
-  background: var(--border);
-  border-radius: 8px;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--t2);
-  transition: background var(--ease-fast), color var(--ease-fast);
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.search-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 14px;
-  width: 280px;
-  height: 36px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--surface);
-  transition: border-color var(--ease-fast);
-}
-.search-box:focus-within { border-color: var(--blue); }
-
-.search-input {
-  border: none;
-  outline: none;
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  color: var(--t1);
-  background: transparent;
-  flex: 1;
-}
-.search-input::placeholder { color: var(--t4); }
-
-.select-filter {
-  height: 36px;
-  padding: 0 12px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--surface);
-  font-family: 'Barlow', sans-serif;
-  font-size: 13px;
-  color: var(--t2);
-  outline: none;
-  cursor: pointer;
-}
-.select-filter:focus { border-color: var(--blue); }
 
 /* ── 셀 스타일 ── */
 .user-name-cell {

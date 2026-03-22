@@ -86,15 +86,7 @@ onMounted(fetchWarehouseList)
 
 <template>
   <AppLayout :breadcrumb="breadcrumb" title="창고 목록" :loading="ui.isLoading">
-    <!-- 헤더 액션 버튼 (AppLayout #header-action 슬롯) -->
     <template #header-action>
-      <button class="ui-btn ui-btn--ghost btn-report">
-        <svg fill="none" height="14" viewBox="0 0 14 14" width="14">
-          <path d="M7 1v8M3.5 6.5L7 10l3.5-3.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
-          <path d="M1.5 11v1.5h11V11" stroke="currentColor" stroke-linecap="round" stroke-width="1.5"/>
-        </svg>
-        리포트 다운로드
-      </button>
       <button class="ui-btn btn-wh-register" @click="goRegister">
         <svg fill="none" height="14" viewBox="0 0 14 14" width="14">
           <line stroke="currentColor" stroke-linecap="round" stroke-width="2" x1="7" x2="7" y1="2" y2="12"/>
@@ -412,19 +404,6 @@ onMounted(fetchWarehouseList)
 </template>
 
 <style scoped>
-/* ── 헤더 슬롯 버튼 오버라이드 (AppLayout ui-btn 기반) ───────────────────── */
-/* Dashboard.vue의 .btn-export / .btn-gold 패턴과 동일 */
-.btn-report {
-  border-radius: var(--radius-sm);
-  font-family: var(--font-barlow);
-  font-weight: 500;
-}
-.btn-report svg {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-}
-
 .btn-wh-register {
   border-radius: var(--radius-sm);
   background: var(--gold);

@@ -77,3 +77,19 @@ export async function deactivateUser(userId) {
 export async function reactivateUser(userId) {
   return instance.post(`/members/users/${userId}/reactivate`)
 }
+
+/**
+ * 셀러별 당월 매출 조회
+ * @returns {Promise<AxiosResponse>} { success, data: Array<{ sellerCode, sellerName, monthRevenue, totalOrders, avgOrderValue }> }
+ */
+export function getSellerRevenue() {
+  return instance.get('/members/sellers/revenue')
+}
+
+/**
+ * 대시보드용 셀러별 3PL 비용 요약 조회
+ * @returns {Promise<AxiosResponse>} { success, data: Array<{ sellerCode, sellerName, estimatedCost, momGrowth, turnoverRate }> }
+ */
+export function getSellerFeeSummary() {
+  return instance.get('/members/sellers/fee-summary')
+}
