@@ -1,33 +1,39 @@
 <script setup>
 /**
  * 셀러 대시보드 화면.
- * Figma export 기준으로 KPI, 추이 차트, 도넛 차트, 하단 테이블 레이아웃을 먼저 맞춘다.
+ * mock-server seller API를 기준으로 KPI, 추이 차트, 도넛 차트, 하단 테이블 레이아웃을 구성한다.
  */
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import { getSellerChannelOrders } from '@/api/integration.js'
+import { getSellerOrderList } from '@/api/order.js'
+import { getSellerAsnList, getSellerInventoryList } from '@/api/wms.js'
 import { ROUTE_NAMES } from '@/constants'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import SellerInventoryDetailModal from '@/components/seller/SellerInventoryDetailModal.vue'
 import SellerOrderDetailModal from '@/components/seller/SellerOrderDetailModal.vue'
 import {
+  buildSellerDashboardInboundRows,
+  buildSellerDashboardKpiCards,
+  buildSellerDashboardRecentActivityRows,
+  buildSellerDashboardStockRatio,
+  buildSellerDashboardTrendSeries,
   buildSellerDashboardDonutSegments,
   buildSellerDashboardTrendChart,
   buildSellerDashboardViewState,
-  getSellerDashboardTrendSeries,
-  SELLER_DASHBOARD_INBOUND_ROWS,
-  SELLER_DASHBOARD_KPI_CARDS,
   SELLER_DASHBOARD_PERIOD_OPTIONS,
-  SELLER_DASHBOARD_RECENT_ACTIVITY_ROWS,
-  SELLER_DASHBOARD_STOCK_RATIO,
 } from '@/utils/sellerDashboard.utils.js'
 
 const breadcrumb = [{ label: 'Seller' }, { label: '대시보드' }]
 const activePeriod = ref('month')
 const router = useRouter()
-// TODO(owner): Replace mock state flags with dashboard API request state once backend contract is ready.
 const isDashboardLoading = ref(false)
 const dashboardErrorMessage = ref('')
+const sellerOrderRows = ref([])
+const sellerAsnRows = ref([])
+const sellerInventoryRows = ref([])
+const sellerChannelOrderRows = ref([])
 const selectedRecentOrder = ref(null)
 const selectedRecentOrderDetail = ref(null)
 const isRecentOrderDetailOpen = ref(false)
@@ -35,7 +41,13 @@ const selectedInboundInventory = ref(null)
 const selectedInboundInventoryDetail = ref(null)
 const isInboundInventoryDetailOpen = ref(false)
 
-const dashboardKpiCards = computed(() => SELLER_DASHBOARD_KPI_CARDS)
+const dashboardKpiCards = computed(() => {
+  return buildSellerDashboardKpiCards({
+    inventoryRows: sellerInventoryRows.value,
+    orderRows: sellerOrderRows.value,
+    channelOrderRows: sellerChannelOrderRows.value,
+  })
+})
 const newOrdersCard = computed(() => {
   return dashboardKpiCards.value.find((card) => card.key === 'new-orders') ?? null
 })
@@ -51,15 +63,39 @@ const lowStockCard = computed(() => {
 const inventorySummaryRouteName = computed(() => {
   return lowStockCard.value?.routeName ?? availableStockCard.value?.routeName ?? null
 })
-const currentTrendSeries = computed(() => getSellerDashboardTrendSeries(activePeriod.value))
+const dashboardTrendSeries = computed(() => {
+  return buildSellerDashboardTrendSeries({
+    orderRows: sellerOrderRows.value,
+    channelOrderRows: sellerChannelOrderRows.value,
+  })
+})
+const currentTrendSeries = computed(() => {
+  return dashboardTrendSeries.value[activePeriod.value] ?? dashboardTrendSeries.value.month
+})
 const trendChart = computed(() => {
   return buildSellerDashboardTrendChart(currentTrendSeries.value.points, {
     maxValue: currentTrendSeries.value.maxValue,
   })
 })
-const stockRatio = computed(() => SELLER_DASHBOARD_STOCK_RATIO)
-const recentActivityRows = computed(() => SELLER_DASHBOARD_RECENT_ACTIVITY_ROWS)
-const inboundRows = computed(() => SELLER_DASHBOARD_INBOUND_ROWS)
+const stockRatio = computed(() => {
+  return buildSellerDashboardStockRatio({
+    inventoryRows: sellerInventoryRows.value,
+  })
+})
+const recentActivityRows = computed(() => {
+  return buildSellerDashboardRecentActivityRows({
+    orderRows: sellerOrderRows.value,
+    channelOrderRows: sellerChannelOrderRows.value,
+    asnRows: sellerAsnRows.value,
+    inventoryRows: sellerInventoryRows.value,
+  })
+})
+const inboundRows = computed(() => {
+  return buildSellerDashboardInboundRows({
+    asnRows: sellerAsnRows.value,
+    inventoryRows: sellerInventoryRows.value,
+  })
+})
 const dashboardViewState = computed(() => {
   return buildSellerDashboardViewState({
     kpiCards: dashboardKpiCards.value,
@@ -74,6 +110,44 @@ const donutSegments = computed(() => buildSellerDashboardDonutSegments(stockRati
 const donutTotal = computed(() => {
   return stockRatio.value.reduce((sum, item) => sum + Number(item.value || 0), 0)
 })
+
+async function fetchSellerDashboardData() {
+  isDashboardLoading.value = true
+  dashboardErrorMessage.value = ''
+
+  try {
+    const [ordersRes, asnsRes, inventoriesRes, channelOrdersRes] = await Promise.all([
+      getSellerOrderList(),
+      getSellerAsnList(),
+      getSellerInventoryList(),
+      getSellerChannelOrders(),
+    ])
+
+    sellerOrderRows.value = Array.isArray(ordersRes.data?.data)
+      ? ordersRes.data.data.map((row) => ({ ...row }))
+      : []
+    sellerAsnRows.value = Array.isArray(asnsRes.data?.data)
+      ? asnsRes.data.data.map((row) => ({ ...row }))
+      : []
+    sellerInventoryRows.value = Array.isArray(inventoriesRes.data?.data)
+      ? inventoriesRes.data.data.map((row) => ({ ...row }))
+      : []
+    sellerChannelOrderRows.value = Array.isArray(channelOrdersRes.data?.data)
+      ? channelOrdersRes.data.data.map((row) => ({ ...row }))
+      : []
+  } catch (error) {
+    console.error('[SellerDashboardView] fetch error:', error)
+    dashboardErrorMessage.value = '대시보드 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
+    sellerOrderRows.value = []
+    sellerAsnRows.value = []
+    sellerInventoryRows.value = []
+    sellerChannelOrderRows.value = []
+  } finally {
+    isDashboardLoading.value = false
+  }
+}
+
+onMounted(fetchSellerDashboardData)
 
 function navigateToRoute(name) {
   if (!name) return
@@ -115,7 +189,7 @@ function handleCloseInboundInventoryDetail() {
 }
 
 function handleRetryDashboard() {
-  dashboardErrorMessage.value = ''
+  fetchSellerDashboardData()
 }
 </script>
 

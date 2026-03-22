@@ -1,10 +1,11 @@
 <script setup>
 /**
  * 셀러 ASN 목록 화면.
- * 로컬 mock 데이터를 기준으로 KPI, 상태 필터, 검색, 테이블 UI를 먼저 구성한다.
+ * mock-server seller ASN 목록 API를 기준으로 KPI, 상태 필터, 검색, 테이블 UI를 구성한다.
  */
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
+import { getSellerAsnList } from '@/api/wms.js'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
@@ -13,10 +14,9 @@ import SellerAsnDetailModal from '@/components/seller/SellerAsnDetailModal.vue'
 import { ASN_STATUS, ROUTE_NAMES } from '@/constants'
 import {
   filterSellerAsnRows,
-  getSellerAsnDetailById,
   getSellerAsnKpi,
+  normalizeSellerAsnDetail,
   SELLER_ASN_LIST_COLUMNS,
-  SELLER_ASN_LIST_ROWS,
 } from '../../utils/asnList.utils.js'
 
 /** Header 브레드크럼 표시용 */
@@ -26,14 +26,16 @@ const breadcrumb = [{ label: 'Seller' }, { label: 'ASN 목록' }]
 const activeStatus = ref('all')
 const searchKeyword = ref('')
 const toolbarMessage = ref('')
-const asnRows = ref(SELLER_ASN_LIST_ROWS.map((row) => ({ ...row })))
+const loadErrorMessage = ref('')
+const isLoading = ref(false)
+const asnRows = ref([])
 const selectedAsnId = ref('')
 const pendingCancelAsnId = ref('')
 const isDetailModalOpen = ref(false)
 const isCancelDialogOpen = ref(false)
 const isCsvDialogOpen = ref(false)
 
-// 페이지네이션은 클라이언트 기준으로 단순 처리한다.
+// 페이지네이션은 조회된 ASN 기준으로 단순 처리한다.
 const currentPage = ref(1)
 const PAGE_SIZE = 6
 
@@ -77,13 +79,33 @@ function handlePageChange(page) {
   currentPage.value = page
 }
 
+async function fetchSellerAsns() {
+  isLoading.value = true
+  loadErrorMessage.value = ''
+
+  try {
+    const res = await getSellerAsnList()
+    asnRows.value = Array.isArray(res.data?.data)
+      ? res.data.data.map((row) => ({ ...row }))
+      : []
+  } catch (error) {
+    console.error('[SellerAsnListView] fetch error:', error)
+    loadErrorMessage.value = 'ASN 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
+    asnRows.value = []
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(fetchSellerAsns)
+
 const selectedAsn = computed(() => {
   return asnRows.value.find((row) => row.id === selectedAsnId.value) ?? null
 })
 
 const selectedAsnDetail = computed(() => {
   if (!selectedAsn.value) return null
-  return getSellerAsnDetailById(selectedAsn.value.id, selectedAsn.value)
+  return normalizeSellerAsnDetail(selectedAsn.value.detail ?? null, selectedAsn.value)
 })
 
 const pendingCancelAsn = computed(() => {
@@ -222,10 +244,12 @@ function handleConfirmCsv() {
           </button>
         </div>
 
-        <p v-if="toolbarMessage" class="toolbar-message">{{ toolbarMessage }}</p>
+        <p v-if="loadErrorMessage" class="toolbar-message toolbar-message--error">{{ loadErrorMessage }}</p>
+        <p v-else-if="toolbarMessage" class="toolbar-message">{{ toolbarMessage }}</p>
 
         <BaseTable
           :columns="SELLER_ASN_LIST_COLUMNS"
+          :loading="isLoading"
           :rows="pagedRows"
           :pagination="pagination"
           row-key="id"
@@ -454,6 +478,10 @@ function handleConfirmCsv() {
   margin: 0 0 var(--space-4);
   color: var(--t3);
   font-size: var(--font-size-sm);
+}
+
+.toolbar-message--error {
+  color: var(--red);
 }
 
 .cell-trigger {

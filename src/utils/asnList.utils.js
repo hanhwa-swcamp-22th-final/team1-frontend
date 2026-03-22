@@ -132,14 +132,14 @@ export const SELLER_ASN_LIST_COLUMNS = [
   { key: 'actions', label: '관리', width: '150px', align: 'center' },
 ]
 
-// ASN 상세 모달에 필요한 로컬 mock 정보를 반환한다.
-export function getSellerAsnDetailById(asnId, row = {}) {
-  const detail = SELLER_ASN_DETAIL_MAP[asnId]
-
+// ASN 상세 응답을 화면에서 바로 사용할 수 있게 정규화한다.
+export function normalizeSellerAsnDetail(detail = null, row = {}) {
   if (detail) {
     return {
       ...detail,
-      totalCartons: detail.items.reduce((sum, item) => sum + Number(item.cartons ?? 0), 0),
+      totalCartons: Array.isArray(detail.items)
+        ? detail.items.reduce((sum, item) => sum + Number(item.cartons ?? 0), 0)
+        : 0,
     }
   }
 
@@ -163,6 +163,11 @@ export function getSellerAsnDetailById(asnId, row = {}) {
       },
     ],
   }
+}
+
+// ASN 상세 모달에 필요한 로컬 mock 정보를 반환한다.
+export function getSellerAsnDetailById(asnId, row = {}) {
+  return normalizeSellerAsnDetail(SELLER_ASN_DETAIL_MAP[asnId] ?? null, row)
 }
 
 // 상단 요약 카드에서 사용하는 KPI 값을 계산한다.
