@@ -4,6 +4,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import BulkOutboundModal from '@/components/whManager/BulkOutboundModal.vue'
+import OrderDetailModal from '@/components/whManager/OrderDetailModal.vue'
 import { getWhmOrders } from '@/api/order'
 import { ORDER_STATUS } from '@/constants'
 
@@ -136,6 +137,15 @@ const allChecked = computed(() =>
 )
 const selectedOrders = computed(() => orders.value.filter(o => selectedIds.value.has(o.id)))
 
+// ── 주문 상세 모달
+const isDetailModalOpen = ref(false)
+const selectedOrder      = ref(null)
+
+function openDetailModal(order) {
+  selectedOrder.value    = order
+  isDetailModalOpen.value = true
+}
+
 // ── 일괄 출고 지시 모달
 const isBulkModalOpen = ref(false)
 
@@ -163,7 +173,7 @@ const columns = [
   { key: 'orderedAt', label: '주문일',    width: '100px', align: 'center' },
   { key: 'warehouse', label: '창고',      width: '80px',  align: 'center' },
   { key: 'status',    label: '상태',      width: '100px', align: 'center' },
-  { key: 'actions',   label: '작업',      width: '70px',  align: 'center' },
+  { key: 'actions',   label: '작업',      width: '90px',  align: 'center' },
 ]
 
 // ── 브레드크럼
@@ -315,13 +325,20 @@ const breadcrumb = [
           </template>
 
           <!-- 작업 버튼 -->
-          <template #cell-actions>
-            <button class="ui-btn ui-btn--ghost ui-btn--sm">상세</button>
+          <template #cell-actions="{ row }">
+            <button class="ui-btn ui-btn--ghost ui-btn--sm" @click="openDetailModal(row)">상세</button>
           </template>
         </BaseTable>
       </div>
 
     </div>
+
+    <!-- ── 주문 상세 모달 ─────────────────────── -->
+    <OrderDetailModal
+      :isOpen="isDetailModalOpen"
+      :order="selectedOrder"
+      @cancel="isDetailModalOpen = false"
+    />
 
     <!-- ── 일괄 출고 지시 모달 ───────────────── -->
     <BulkOutboundModal
@@ -525,5 +542,5 @@ const breadcrumb = [
 .ui-btn--primary                        { background: var(--blue); color: #fff; border-color: var(--blue); }
 .ui-btn--primary:hover:not(:disabled)   { background: #3a5fd8; }
 .ui-btn--primary:disabled               { opacity: 0.4; cursor: not-allowed; }
-.ui-btn--sm { height: 28px; padding: 0 10px; font-size: 12px; }
+.ui-btn--sm { height: 28px; padding: 0 10px; font-size: 12px; white-space: nowrap; }
 </style>

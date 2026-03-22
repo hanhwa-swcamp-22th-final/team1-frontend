@@ -55,10 +55,4 @@ export default [
     component: () => import('@/views/whManager/WorkerAccountView.vue'),
     meta: { role: ROLES.WH_MANAGER },
   },
-  {
-    path: '/whm/worker-task',
-    name: ROUTE_NAMES.WH_MANAGER_WORKER_TASK,
-    component: () => import('@/views/whManager/WorkerTaskView.vue'),
-    meta: { role: ROLES.WH_MANAGER },
-  },
 ]

@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 import { ROUTE_NAMES } from '@/constants'
 import { getWhmDashboard } from '@/api/wh-manager'
 
@@ -15,7 +16,6 @@ const today = computed(() =>
 
 const kpi            = ref({ todayAsn: 0, pendingAsn: 0, availableSku: 0, shortageCount: 0, pendingOrders: 0, picking: 0, todayShipped: 0, shippedDiff: '0' })
 const todoItems      = ref([])
-const outboundLegend = ref([])
 const recentAsns     = ref([])
 const lowStockAlerts = ref([])
 
@@ -24,7 +24,6 @@ onMounted(async () => {
     const { data } = await getWhmDashboard()
     kpi.value            = data.kpi
     todoItems.value      = data.todoItems
-    outboundLegend.value = data.outboundSummary
     recentAsns.value     = data.recentAsns
     lowStockAlerts.value = data.lowStockAlerts
   } catch (e) {
@@ -100,64 +99,24 @@ function go(name) {
 
     </div>
 
-    <!-- ── 중간: 작업 현황 + 출고 요약 ───────────────── -->
-    <div class="dash-grid">
-
-      <!-- 오늘의 작업 현황 -->
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">오늘의 작업 현황</span>
-          <span class="card-sub">{{ today }}</span>
-        </div>
-        <div class="card-body">
-          <ul class="todo-list">
-            <li v-for="item in todoItems" :key="item.time" class="todo-item">
-              <span class="dot" :class="`dot--${item.color}`"></span>
-              <span class="todo-text">
-                {{ item.text }}
-                <span v-if="item.badge" class="badge badge--red">{{ item.badge }}</span>
-              </span>
-              <span class="todo-time">{{ item.time }}</span>
-            </li>
-          </ul>
-        </div>
+    <!-- ── 중간: 작업 현황 ──────────────────────────── -->
+    <div class="card" style="margin-bottom: var(--space-4);">
+      <div class="card-header">
+        <span class="card-title">오늘의 작업 현황</span>
+        <span class="card-sub">{{ today }}</span>
       </div>
-
-      <!-- 출고 현황 요약 -->
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">출고 현황 요약</span>
-          <span class="card-sub">오늘 기준</span>
-        </div>
-        <div class="card-body">
-          <div class="donut-wrap">
-            <svg width="100" height="100" viewBox="0 0 100 100" aria-label="출고 현황 요약">
-              <circle cx="50" cy="50" r="38" fill="none" stroke="#F4F6FA" stroke-width="16"/>
-              <path d="M 50 12 A 38 38 0 0 1 69.4187 82.6636"  fill="none" stroke="#4C74FF" stroke-width="16" stroke-linecap="butt"/>
-              <path d="M 69.4187 82.6636 A 38 38 0 0 1 35.795 85.2451" fill="none" stroke="#F5A623" stroke-width="16" stroke-linecap="butt"/>
-              <path d="M 35.795 85.2451 A 38 38 0 0 1 18.1041 70.6556" fill="none" stroke="#2ECC87" stroke-width="16" stroke-linecap="butt"/>
-              <path d="M 18.1041 70.6556 A 38 38 0 0 1 50 12"          fill="none" stroke="#E4E8F0" stroke-width="16" stroke-linecap="butt"/>
-              <circle cx="50" cy="50" r="22" fill="#FFFFFF"/>
-              <text x="50" y="46" text-anchor="middle" font-family="Barlow Condensed" font-size="16" font-weight="700" fill="#1A1A2E">82</text>
-              <text x="50" y="58" text-anchor="middle" font-family="Barlow" font-size="9" fill="#7B859A">총 주문</text>
-            </svg>
-            <div class="donut-legend">
-              <div v-for="item in outboundLegend" :key="item.label" class="donut-item">
-                <span
-                  class="donut-dot"
-                  :style="{ background: item.color, outline: item.border ? '1px solid #C8D0E0' : 'none' }"
-                ></span>
-                {{ item.label }} <strong>{{ item.count }}</strong>
-              </div>
-            </div>
-          </div>
-          <div class="quick-actions">
-            <button class="ui-btn ui-btn--gold" @click="go(ROUTE_NAMES.WH_MANAGER_OUTBOUND)">출고 지시 발행</button>
-            <button class="ui-btn ui-btn--ghost"   @click="go(ROUTE_NAMES.WH_MANAGER_PICKING_LIST)">피킹 리스트</button>
-          </div>
-        </div>
+      <div class="card-body">
+        <ul class="todo-list">
+          <li v-for="item in todoItems" :key="item.time" class="todo-item">
+            <span class="dot" :class="`dot--${item.color}`"></span>
+            <span class="todo-text">
+              {{ item.text }}
+              <span v-if="item.badge" class="badge badge--red">{{ item.badge }}</span>
+            </span>
+            <span class="todo-time">{{ item.time }}</span>
+          </li>
+        </ul>
       </div>
-
     </div>
 
     <!-- ── 하단: ASN 목록 + 재고 부족 경고 ──────────── -->
@@ -186,7 +145,7 @@ function go(name) {
                 <td>{{ asn.seller }}</td>
                 <td>{{ asn.sku }} / <strong>{{ asn.qty }}</strong></td>
                 <td class="nowrap">{{ asn.date }}</td>
-                <td><span class="badge" :class="`badge--${asn.color}`">{{ asn.status }}</span></td>
+                <td><StatusBadge :status="asn.status" type="asn" /></td>
               </tr>
             </tbody>
           </table>
@@ -271,13 +230,6 @@ function go(name) {
 .acc--green { color: var(--green); }
 
 /* ── Grids ────────────────────────────────────────────── */
-.dash-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-4);
-  margin-bottom: var(--space-4);
-  align-items: start;
-}
 .dash-grid-3 {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -370,31 +322,6 @@ tbody tr:hover td { background: var(--surface-2); }
   flex-wrap: wrap;
 }
 .todo-time { font-size: var(--font-size-xs); color: var(--t3); white-space: nowrap; }
-
-/* ── Donut ────────────────────────────────────────────── */
-.donut-wrap {
-  display: flex;
-  align-items: center;
-  gap: var(--space-5);
-  padding: var(--space-2) 0;
-}
-.donut-legend { display: flex; flex-direction: column; gap: var(--space-2); }
-.donut-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--font-size-xs);
-  color: var(--t2);
-}
-.donut-item strong { margin-left: var(--space-1); }
-.donut-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
-
-.quick-actions {
-  display: flex;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
-  flex-wrap: wrap;
-}
 
 /* ── Buttons ──────────────────────────────────────────── */
 .ui-btn--gold { background: var(--gold); color: #0d0d0d; border-color: var(--gold); font-weight: 700; }

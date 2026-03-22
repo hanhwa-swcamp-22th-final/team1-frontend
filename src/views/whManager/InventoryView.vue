@@ -4,6 +4,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import InventoryDetailModal from '@/components/whManager/InventoryDetailModal.vue'
 import { getInventories } from '@/api/inventory'
+import { INVENTORY_STATUS } from '@/constants'
 
 // ── 필터 상태
 const searchText   = ref('')
@@ -35,10 +36,9 @@ watch([searchText, filterSeller, filterStatus], () => {
 
 // ── 상태 매핑
 const STATUS_MAP = {
-  normal:   { label: '정상',      color: 'green' },
-  caution:  { label: '주의',      color: 'amber' },
-  shortage: { label: '재고 부족', color: 'red'   },
-  damaged:  { label: '불량',      color: 'red'   },
+  [INVENTORY_STATUS.NORMAL]:   { label: '정상',      color: 'green' },
+  [INVENTORY_STATUS.CAUTION]:  { label: '주의',      color: 'amber' },
+  [INVENTORY_STATUS.SHORTAGE]: { label: '재고 부족', color: 'red'   },
 }
 
 // ── KPI 집계
@@ -47,9 +47,7 @@ const kpi = computed(() => ({
   availableTotalQty: inventories.value.reduce((s, i) => s + i.availableQty, 0),
   allocatedSkuCount: inventories.value.filter(i => i.allocatedQty > 0).length,
   allocatedTotalQty: inventories.value.reduce((s, i) => s + i.allocatedQty, 0),
-  shortageCount:     inventories.value.filter(i => i.status === 'shortage').length,
-  damagedCount:      inventories.value.filter(i => i.damagedQty > 0).length,
-  damagedTotalQty:   inventories.value.reduce((s, i) => s + i.damagedQty, 0),
+  shortageCount:     inventories.value.filter(i => i.status === INVENTORY_STATUS.SHORTAGE).length,
 }))
 
 // ── 클라이언트 필터링
@@ -98,7 +96,6 @@ const columns = [
   { key: 'seller',       label: '셀러',     width: '150px' },
   { key: 'availableQty', label: '가용 수량', align: 'right', width: '100px' },
   { key: 'allocatedQty', label: '할당 수량', align: 'right', width: '100px' },
-  { key: 'damagedQty',   label: '불량 수량', align: 'right', width: '100px' },
   { key: 'totalQty',     label: '총 수량',   align: 'right', width: '100px' },
   { key: 'locations',    label: '보관 위치', width: '130px' },
   { key: 'threshold',    label: '임계값',    align: 'right', width: '80px' },
@@ -148,12 +145,6 @@ const breadcrumb = [
         <div class="kpi-sub">임계값 이하 SKU</div>
       </div>
 
-      <div class="kpi-card" style="border-left: 3px solid #d97706;">
-        <div class="kpi-label">불량 재고</div>
-        <div class="kpi-value kpi--amber">{{ kpi.damagedCount }}</div>
-        <div class="kpi-sub">DAMAGED 격리 중</div>
-      </div>
-
     </div>
 
     <!-- ── 필터 + 테이블 카드 ─────────────────────── -->
@@ -181,10 +172,9 @@ const breadcrumb = [
 
         <select v-model="filterStatus" class="select-filter">
           <option value="all">전체 상태</option>
-          <option value="normal">정상</option>
-          <option value="caution">주의</option>
-          <option value="shortage">재고 부족</option>
-          <option value="damaged">불량</option>
+          <option :value="INVENTORY_STATUS.NORMAL">정상</option>
+          <option :value="INVENTORY_STATUS.CAUTION">주의</option>
+          <option :value="INVENTORY_STATUS.SHORTAGE">재고 부족</option>
         </select>
       </div>
 
@@ -211,7 +201,7 @@ const breadcrumb = [
           <template #cell-availableQty="{ row }">
             <span
               class="fw-600"
-              :class="row.status === 'shortage' ? 'text-red' : row.status === 'caution' ? 'text-amber' : 'text-green'"
+              :class="row.status === INVENTORY_STATUS.SHORTAGE ? 'text-red' : row.status === INVENTORY_STATUS.CAUTION ? 'text-amber' : 'text-green'"
             >
               {{ row.availableQty.toLocaleString() }}
             </span>
@@ -220,13 +210,6 @@ const breadcrumb = [
           <!-- 할당 수량 -->
           <template #cell-allocatedQty="{ row }">
             {{ row.allocatedQty.toLocaleString() }}
-          </template>
-
-          <!-- 불량 수량 -->
-          <template #cell-damagedQty="{ row }">
-            <span :class="row.damagedQty > 0 ? 'text-red' : ''">
-              {{ row.damagedQty.toLocaleString() }}
-            </span>
           </template>
 
           <!-- 총 수량: 볼드 -->

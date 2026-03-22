@@ -220,3 +220,16 @@ export const TASK_ASSIGN_TYPE = {
   AUTO:   'AUTO',   // 자동 배정
   MANUAL: 'MANUAL', // 수동 배정
 }
+
+/**
+ * INVENTORY_STATUS — 재고 상태 3단계
+ *
+ * NORMAL:   재고 수량이 임계값 이상인 정상 상태
+ * CAUTION:  재고 수량이 임계값에 근접한 주의 상태
+ * SHORTAGE: 재고 수량이 임계값 이하인 부족 상태
+ */
+export const INVENTORY_STATUS = {
+  NORMAL:   'normal',
+  CAUTION:  'caution',
+  SHORTAGE: 'shortage',
+}

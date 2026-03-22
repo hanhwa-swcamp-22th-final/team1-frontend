@@ -235,8 +235,7 @@
         "sku": "앰플 세럼 30ml",
         "qty": "1,000개",
         "date": "2026-03-19",
-        "status": "입고 대기",
-        "color": "amber"
+        "status": "SUBMITTED"
       },
       {
         "id": "ASN-2026-0311-007",
@@ -244,8 +243,7 @@
         "sku": "에센스 외 4종",
         "qty": "1,200개",
         "date": "2026-03-20",
-        "status": "운송 중",
-        "color": "blue"
+        "status": "SUBMITTED"
       },
       {
         "id": "ASN-2026-0310-003",
@@ -253,8 +251,7 @@
         "sku": "텀블러 350ml",
         "qty": "360개",
         "date": "2026-03-18",
-        "status": "수량 불일치",
-        "color": "red"
+        "status": "SUBMITTED"
       },
       {
         "id": "ASN-2026-0308-012",
@@ -262,8 +259,7 @@
         "sku": "마스크팩 외 3종",
         "qty": "720개",
         "date": "2026-03-09",
-        "status": "입고 완료",
-        "color": "green"
+        "status": "RECEIVED"
       },
       {
         "id": "ASN-2026-0303-006",
@@ -271,8 +267,7 @@
         "sku": "특산 진액 30팩",
         "qty": "300개",
         "date": "2026-03-04",
-        "status": "입고 완료",
-        "color": "green"
+        "status": "RECEIVED"
       }
     ],
     "lowStockAlerts": [
@@ -843,7 +838,7 @@
       "region": "CA, USA",
       "orderedAt": "2026-03-13",
       "warehouse": "창고 A",
-      "status": "received"
+      "status": "PENDING"
     },
     {
       "id": "ORD-20260313-098",
@@ -854,7 +849,7 @@
       "region": "NY, USA",
       "orderedAt": "2026-03-13",
       "warehouse": "창고 A",
-      "status": "picking"
+      "status": "PREPARING_ITEM"
     },
     {
       "id": "ORD-20260313-095",
@@ -865,7 +860,7 @@
       "region": "TX, USA",
       "orderedAt": "2026-03-13",
       "warehouse": "창고 A",
-      "status": "picking"
+      "status": "PREPARING_ITEM"
     },
     {
       "id": "ORD-20260312-084",
@@ -876,7 +871,7 @@
       "region": "WA, USA",
       "orderedAt": "2026-03-12",
       "warehouse": "창고 A",
-      "status": "packed"
+      "status": "CONFIRMED"
     },
     {
       "id": "ORD-20260312-072",
@@ -887,7 +882,7 @@
       "region": "IL, USA",
       "orderedAt": "2026-03-12",
       "warehouse": "창고 A",
-      "status": "shipped"
+      "status": "SHIPPED"
     },
     {
       "id": "ORD-20260311-055",
@@ -898,7 +893,7 @@
       "region": "FL, USA",
       "orderedAt": "2026-03-11",
       "warehouse": "창고 A",
-      "status": "transit"
+      "status": "SHIPPED"
     },
     {
       "id": "ORD-20260311-051",
@@ -909,7 +904,7 @@
       "region": "CA, USA",
       "orderedAt": "2026-03-11",
       "warehouse": "창고 A",
-      "status": "received"
+      "status": "CONFIRMED"
     },
     {
       "id": "ORD-20260310-043",
@@ -920,7 +915,7 @@
       "region": "TX, USA",
       "orderedAt": "2026-03-10",
       "warehouse": "창고 A",
-      "status": "shipped"
+      "status": "SHIPPED"
     },
     {
       "id": "ORD-20260310-039",
@@ -931,7 +926,7 @@
       "region": "NY, USA",
       "orderedAt": "2026-03-10",
       "warehouse": "창고 A",
-      "status": "picking"
+      "status": "PREPARING_ITEM"
     },
     {
       "id": "ORD-20260309-027",
@@ -942,7 +937,7 @@
       "region": "WA, USA",
       "orderedAt": "2026-03-09",
       "warehouse": "창고 A",
-      "status": "transit"
+      "status": "SHIPPED"
     },
     {
       "id": "ORD-20260309-021",
@@ -953,7 +948,7 @@
       "region": "IL, USA",
       "orderedAt": "2026-03-09",
       "warehouse": "창고 A",
-      "status": "packed"
+      "status": "PREPARING_ITEM"
     },
     {
       "id": "ORD-20260308-015",
@@ -964,7 +959,7 @@
       "region": "CA, USA",
       "orderedAt": "2026-03-08",
       "warehouse": "창고 A",
-      "status": "shipped"
+      "status": "SHIPPED"
     }
   ],
 
