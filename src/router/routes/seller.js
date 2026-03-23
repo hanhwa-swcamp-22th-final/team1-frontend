@@ -85,10 +85,4 @@ export default [
     component: () => import('@/views/seller/SellerMarginSimulatorView.vue'),
     meta: { role: ROLES.SELLER },
   },
-  {
-    path: '/seller/notifications',
-    name: ROUTE_NAMES.SELLER_NOTIFICATIONS,
-    component: () => import('@/views/seller/SellerNotificationsView.vue'),
-    meta: { role: ROLES.SELLER },
-  },
 ]

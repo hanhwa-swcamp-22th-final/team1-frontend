@@ -38,7 +38,6 @@ export const ROUTE_NAMES = {
   SELLER_ORDER_REGISTER: 'seller-order-register',
   SELLER_AMAZON_CONNECT: 'seller-amazon-connect',
   SELLER_MARGIN_SIMULATOR: 'seller-margin-simulator',
-  SELLER_NOTIFICATIONS: 'seller-notifications',
 
   // ── Master Admin — 창고사 관리 (views/masterAdmin/)
   MASTER_DASHBOARD: 'master-dashboard',

@@ -8,8 +8,13 @@ import { getSellerChannelCards, getSellerChannelOrders } from '@/api/integration
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import SellerChannelConnectModal from '@/components/seller/SellerChannelConnectModal.vue'
+import { downloadExcel } from '@/utils/excel.js'
 import {
   buildSellerConnectedChannelCard,
+  buildSellerImportedChannelCard,
+  buildSellerImportedChannelOrder,
+  buildSellerChannelOrderExportRows,
+  buildSellerSyncedChannelCard,
   filterSellerChannelOrderRows,
   getSellerChannelMeta,
   getSellerChannelOrderStatusMeta,
@@ -139,10 +144,60 @@ function handleConfirmChannelConnect() {
   handleCloseConnectModal()
 }
 
-// UI 단계라 버튼 클릭은 동기화/가져오기/내보내기 안내 메시지로 처리한다.
-// TODO(frontend): 채널 동기화, 주문 가져오기, 내보내기 실동작을 연결한다.
 function showToolbarMessage(message) {
   toolbarMessage.value = message
+}
+
+function buildTimestampLabel(date = new Date()) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+
+  return `${year}-${month}-${day} ${hours}:${minutes}`
+}
+
+function handleSyncChannel(card) {
+  const syncedAt = buildTimestampLabel()
+
+  channelCards.value = channelCards.value.map((currentCard) => {
+    if (currentCard.key !== card.key) return currentCard
+
+    return buildSellerSyncedChannelCard(currentCard, { syncedAt })
+  })
+
+  showToolbarMessage(`${card.label} 채널 동기화를 완료했습니다.`)
+}
+
+function handleImportChannelOrders(card) {
+  const importedAt = buildTimestampLabel()
+  const nextSequence = channelOrderRows.value.filter((row) => row.channel === card.key).length + 1
+  const nextOrder = buildSellerImportedChannelOrder(card, {
+    sequence: nextSequence,
+    importedAt,
+  })
+
+  channelOrderRows.value = [nextOrder, ...channelOrderRows.value]
+  channelCards.value = channelCards.value.map((currentCard) => {
+    if (currentCard.key !== card.key) return currentCard
+
+    return buildSellerImportedChannelCard(currentCard, {
+      importedAt,
+      importedCount: 1,
+    })
+  })
+  currentPage.value = 1
+  showToolbarMessage(`${card.label} 주문 1건을 가져왔습니다.`)
+}
+
+function handleExportChannelOrders() {
+  downloadExcel(
+    buildSellerChannelOrderExportRows(filteredRows.value),
+    `seller-channel-orders-${buildTimestampLabel().slice(0, 10)}`,
+  )
+
+  showToolbarMessage(`통합 주문 ${filteredRows.value.length}건을 내보냈습니다.`)
 }
 
 function handleCardAction(card, action) {
@@ -151,7 +206,15 @@ function handleCardAction(card, action) {
     return
   }
 
-  showToolbarMessage(`${card.label} ${action.label} UI는 다음 단계에서 연결합니다.`)
+  if (action.key === 'sync') {
+    handleSyncChannel(card)
+    return
+  }
+
+  if (action.key === 'import') {
+    handleImportChannelOrders(card)
+    return
+  }
 }
 </script>
 
@@ -229,11 +292,10 @@ function handleCardAction(card, action) {
               />
             </label>
 
-            <!-- TODO(frontend): 통합 주문 내보내기 기능을 연결한다. -->
             <button
               class="ui-btn ui-btn--ghost toolbar-btn"
               type="button"
-              @click="showToolbarMessage('통합 주문 내보내기 UI는 다음 단계에서 연결합니다.')"
+              @click="handleExportChannelOrders"
             >
               내보내기
             </button>
