@@ -680,7 +680,6 @@
       ]
     }
   ],
-
   "wh_pending_orders": [
     {
       "id": "ORD-20240312-085",
@@ -763,18 +762,28 @@
       "status": "CONFIRMED"
     }
   ],
-
   "wh_workers": [
-    { "id": "WORKER-001", "name": "박민준" },
-    { "id": "WORKER-002", "name": "이서윤" },
-    { "id": "WORKER-003", "name": "최현우" }
+    {
+      "id": "WORKER-001",
+      "name": "박민준"
+    },
+    {
+      "id": "WORKER-002",
+      "name": "이서윤"
+    },
+    {
+      "id": "WORKER-003",
+      "name": "최현우"
+    }
   ],
-
   "wh_worker_accounts": [
     {
       "id": "WK-A-001",
       "name": "박민준",
-      "zones": ["A", "B"],
+      "zones": [
+        "A",
+        "B"
+      ],
       "presenceStatus": "PICKING",
       "accountStatus": "ACTIVE",
       "lastWorkAt": "2026-03-12T10:28:00",
@@ -785,7 +794,10 @@
     {
       "id": "WK-A-002",
       "name": "이서윤",
-      "zones": ["C", "D"],
+      "zones": [
+        "C",
+        "D"
+      ],
       "presenceStatus": "IDLE",
       "accountStatus": "ACTIVE",
       "lastWorkAt": "2026-03-12T09:58:00",
@@ -796,7 +808,10 @@
     {
       "id": "WK-A-003",
       "name": "최현우",
-      "zones": ["A", "C"],
+      "zones": [
+        "A",
+        "C"
+      ],
       "presenceStatus": "PUTAWAY",
       "accountStatus": "ACTIVE",
       "lastWorkAt": "2026-03-11T16:45:00",
@@ -807,7 +822,9 @@
     {
       "id": "WK-A-004",
       "name": "김비활",
-      "zones": ["B"],
+      "zones": [
+        "B"
+      ],
       "presenceStatus": "OFFLINE",
       "accountStatus": "INACTIVE",
       "lastWorkAt": "2026-02-28T18:00:00",
@@ -818,7 +835,9 @@
     {
       "id": "WK-A-005",
       "name": "정임시",
-      "zones": ["D"],
+      "zones": [
+        "D"
+      ],
       "presenceStatus": "IDLE",
       "accountStatus": "TEMP_PASSWORD",
       "lastWorkAt": null,
@@ -827,7 +846,6 @@
       "memo": "신규 채용"
     }
   ],
-
   "wh_orders": [
     {
       "id": "ORD-20260313-101",
@@ -962,7 +980,6 @@
       "status": "SHIPPED"
     }
   ],
-
   "wh_picking_lists": [
     {
       "id": "PICK-20240312-003",
@@ -975,11 +992,46 @@
       "completedBins": 3,
       "totalBins": 5,
       "items": [
-        { "sequence": 1, "bin": "A-3-2", "sku": "SKU-GB-001", "productName": "앰플 세럼 30ml",  "qty": 2, "status": "COMPLETED"  },
-        { "sequence": 2, "bin": "A-3-3", "sku": "SKU-GB-002", "productName": "마스크팩 10매입", "qty": 5, "status": "COMPLETED"  },
-        { "sequence": 3, "bin": "B-1-2", "sku": "SKU-GB-003", "productName": "토너 100ml",      "qty": 1, "status": "COMPLETED"  },
-        { "sequence": 4, "bin": "C-1-4", "sku": "SKU-KS-001", "productName": "티셔츠 L사이즈",  "qty": 3, "status": "IN_PROGRESS"},
-        { "sequence": 5, "bin": "D-2-1", "sku": "SKU-EP-001", "productName": "텀블러 350ml",    "qty": 1, "status": "WAITING"    }
+        {
+          "sequence": 1,
+          "bin": "A-3-2",
+          "sku": "SKU-GB-001",
+          "productName": "앰플 세럼 30ml",
+          "qty": 2,
+          "status": "COMPLETED"
+        },
+        {
+          "sequence": 2,
+          "bin": "A-3-3",
+          "sku": "SKU-GB-002",
+          "productName": "마스크팩 10매입",
+          "qty": 5,
+          "status": "COMPLETED"
+        },
+        {
+          "sequence": 3,
+          "bin": "B-1-2",
+          "sku": "SKU-GB-003",
+          "productName": "토너 100ml",
+          "qty": 1,
+          "status": "COMPLETED"
+        },
+        {
+          "sequence": 4,
+          "bin": "C-1-4",
+          "sku": "SKU-KS-001",
+          "productName": "티셔츠 L사이즈",
+          "qty": 3,
+          "status": "IN_PROGRESS"
+        },
+        {
+          "sequence": 5,
+          "bin": "D-2-1",
+          "sku": "SKU-EP-001",
+          "productName": "텀블러 350ml",
+          "qty": 1,
+          "status": "WAITING"
+        }
       ]
     },
     {
@@ -993,11 +1045,46 @@
       "completedBins": 8,
       "totalBins": 8,
       "items": [
-        { "sequence": 1, "bin": "A-1-1", "sku": "SKU-AM-001", "productName": "에센스 50ml",   "qty": 3, "status": "COMPLETED" },
-        { "sequence": 2, "bin": "A-1-3", "sku": "SKU-AM-002", "productName": "선크림 30g",    "qty": 6, "status": "COMPLETED" },
-        { "sequence": 3, "bin": "A-2-1", "sku": "SKU-GB-001", "productName": "앰플 세럼 30ml","qty": 4, "status": "COMPLETED" },
-        { "sequence": 4, "bin": "B-2-2", "sku": "SKU-KF-001", "productName": "홍삼 진액 30포","qty": 2, "status": "COMPLETED" },
-        { "sequence": 5, "bin": "B-3-1", "sku": "SKU-EP-002", "productName": "에코백",         "qty": 6, "status": "COMPLETED" }
+        {
+          "sequence": 1,
+          "bin": "A-1-1",
+          "sku": "SKU-AM-001",
+          "productName": "에센스 50ml",
+          "qty": 3,
+          "status": "COMPLETED"
+        },
+        {
+          "sequence": 2,
+          "bin": "A-1-3",
+          "sku": "SKU-AM-002",
+          "productName": "선크림 30g",
+          "qty": 6,
+          "status": "COMPLETED"
+        },
+        {
+          "sequence": 3,
+          "bin": "A-2-1",
+          "sku": "SKU-GB-001",
+          "productName": "앰플 세럼 30ml",
+          "qty": 4,
+          "status": "COMPLETED"
+        },
+        {
+          "sequence": 4,
+          "bin": "B-2-2",
+          "sku": "SKU-KF-001",
+          "productName": "홍삼 진액 30포",
+          "qty": 2,
+          "status": "COMPLETED"
+        },
+        {
+          "sequence": 5,
+          "bin": "B-3-1",
+          "sku": "SKU-EP-002",
+          "productName": "에코백",
+          "qty": 6,
+          "status": "COMPLETED"
+        }
       ]
     },
     {
@@ -1011,9 +1098,30 @@
       "completedBins": 0,
       "totalBins": 3,
       "items": [
-        { "sequence": 1, "bin": "C-2-1", "sku": "SKU-KS-002", "productName": "후드티 M",      "qty": 2, "status": "WAITING" },
-        { "sequence": 2, "bin": "C-3-2", "sku": "SKU-SN-001", "productName": "한과 선물세트", "qty": 4, "status": "WAITING" },
-        { "sequence": 3, "bin": "D-1-3", "sku": "SKU-BB-001", "productName": "BB크림",        "qty": 1, "status": "WAITING" }
+        {
+          "sequence": 1,
+          "bin": "C-2-1",
+          "sku": "SKU-KS-002",
+          "productName": "후드티 M",
+          "qty": 2,
+          "status": "WAITING"
+        },
+        {
+          "sequence": 2,
+          "bin": "C-3-2",
+          "sku": "SKU-SN-001",
+          "productName": "한과 선물세트",
+          "qty": 4,
+          "status": "WAITING"
+        },
+        {
+          "sequence": 3,
+          "bin": "D-1-3",
+          "sku": "SKU-BB-001",
+          "productName": "BB크림",
+          "qty": 1,
+          "status": "WAITING"
+        }
       ]
     }
   ],
@@ -1030,7 +1138,11 @@
       "labelIssuedAt": "2026-03-12",
       "status": "PENDING_CONFIRM",
       "skuDeductions": [
-        { "sku": "SKU-GB-001", "productName": "앰플 세럼 30ml", "qty": 2 }
+        {
+          "sku": "SKU-GB-001",
+          "productName": "앰플 세럼 30ml",
+          "qty": 2
+        }
       ]
     },
     {
@@ -1045,7 +1157,11 @@
       "labelIssuedAt": "2026-03-12",
       "status": "PENDING_CONFIRM",
       "skuDeductions": [
-        { "sku": "SKU-KS-001", "productName": "티셔츠 L사이즈", "qty": 3 }
+        {
+          "sku": "SKU-KS-001",
+          "productName": "티셔츠 L사이즈",
+          "qty": 3
+        }
       ]
     },
     {
@@ -1060,7 +1176,11 @@
       "labelIssuedAt": "2026-03-11",
       "status": "PENDING_CONFIRM",
       "skuDeductions": [
-        { "sku": "SKU-EP-001", "productName": "텀블러 350ml", "qty": 2 }
+        {
+          "sku": "SKU-EP-001",
+          "productName": "텀블러 350ml",
+          "qty": 2
+        }
       ]
     },
     {
@@ -1075,7 +1195,11 @@
       "labelIssuedAt": "2026-03-11",
       "status": "CONFIRMED",
       "skuDeductions": [
-        { "sku": "SKU-KF-001", "productName": "홍삼 진액 30포", "qty": 1 }
+        {
+          "sku": "SKU-KF-001",
+          "productName": "홍삼 진액 30포",
+          "qty": 1
+        }
       ]
     }
   ],
@@ -1085,7 +1209,9 @@
       "type": "INSPECTION_LOADING",
       "sellerCompany": "K-Style",
       "refDoc": "ASN-20240312-009",
-      "bins": ["C-1-4"],
+      "bins": [
+        "C-1-4"
+      ],
       "workerName": "이서윤",
       "workerId": "WK-A-002",
       "status": "IN_PROGRESS",
@@ -1096,7 +1222,10 @@
       "type": "PICKING_PACKING",
       "sellerCompany": "Glow Beauty",
       "refDoc": "PICK-20240312-003",
-      "bins": ["A-3-2", "B-1-2"],
+      "bins": [
+        "A-3-2",
+        "B-1-2"
+      ],
       "workerName": "박민준",
       "workerId": "WK-A-001",
       "status": "PARTIAL_DONE",
@@ -1107,7 +1236,9 @@
       "type": "PICKING_PACKING",
       "sellerCompany": "K-Farm",
       "refDoc": "PICK-20240312-007",
-      "bins": ["D-2-1"],
+      "bins": [
+        "D-2-1"
+      ],
       "workerName": "최현우",
       "workerId": "WK-A-003",
       "status": "WAITING",
@@ -1125,7 +1256,6 @@
       "assignType": "MANUAL"
     }
   ],
-
   "wh_inbound_asns": [
     {
       "id": "ASN-2024-0312-001",
@@ -1178,108 +1308,541 @@
       "inboundStatus": "mismatch"
     }
   ],
-
   "wh_locations": [
     {
-      "id": "A", "zone": "A", "zoneName": "A Zone", "purpose": "뷰티·고회전 SKU",
+      "id": "A",
+      "zone": "A",
+      "zoneName": "A Zone",
+      "purpose": "뷰티·고회전 SKU",
       "racks": [
-        { "rack": "01", "bins": [
-          { "bin": "A-01-01", "capacity": 600, "usedQty": 0,   "sku": null,           "skuName": null,            "seller": null,         "status": "empty"    },
-          { "bin": "A-01-02", "capacity": 600, "usedQty": 0,   "sku": null,           "skuName": null,            "seller": null,         "status": "empty"    },
-          { "bin": "A-01-03", "capacity": 600, "usedQty": 200, "sku": "KR-MASK-001",  "skuName": "마스크팩 10매입", "seller": "Glow Beauty", "status": "occupied" },
-          { "bin": "A-01-04", "capacity": 600, "usedQty": 0,   "sku": null,           "skuName": null,            "seller": null,         "status": "empty"    },
-          { "bin": "A-01-05", "capacity": 600, "usedQty": 400, "sku": "KR-MOIST-050", "skuName": "수분크림 50ml",  "seller": "Glow Beauty", "status": "occupied" }
-        ]},
-        { "rack": "02", "bins": [
-          { "bin": "A-02-01", "capacity": 600, "usedQty": 148, "sku": "KR-MASK-001",  "skuName": "마스크팩 10매입", "seller": "Glow Beauty", "status": "occupied" },
-          { "bin": "A-02-02", "capacity": 600, "usedQty": 0,   "sku": null,           "skuName": null,            "seller": null,         "status": "empty"    },
-          { "bin": "A-02-03", "capacity": 600, "usedQty": 570, "sku": "KR-TONER-100", "skuName": "토너 100ml",    "seller": "아모레US",     "status": "caution"  },
-          { "bin": "A-02-04", "capacity": 600, "usedQty": 400, "sku": "KR-MOIST-050", "skuName": "수분크림 50ml",  "seller": "Glow Beauty", "status": "occupied" },
-          { "bin": "A-02-05", "capacity": 600, "usedQty": 0,   "sku": null,           "skuName": null,            "seller": null,         "status": "empty"    }
-        ]},
-        { "rack": "03", "bins": [
-          { "bin": "A-03-01", "capacity": 600, "usedQty": 0,   "sku": null,           "skuName": null,            "seller": null,         "status": "empty"    },
-          { "bin": "A-03-02", "capacity": 600, "usedQty": 33,  "sku": "KR-SERUM-030", "skuName": "앰플 세럼 30ml", "seller": "Glow Beauty", "status": "occupied" },
-          { "bin": "A-03-03", "capacity": 600, "usedQty": 0,   "sku": null,           "skuName": null,            "seller": null,         "status": "empty"    },
-          { "bin": "A-03-04", "capacity": 600, "usedQty": 600, "sku": "KR-AMPL-020",  "skuName": "앰플 20ml",     "seller": "Glow Beauty", "status": "full"     }
-        ]},
-        { "rack": "04", "bins": [
-          { "bin": "A-04-01", "capacity": 600, "usedQty": 83,  "sku": "KR-ESEN-050",  "skuName": "에센스 50ml",   "seller": "아모레US",     "status": "occupied" },
-          { "bin": "A-04-02", "capacity": 600, "usedQty": 0,   "sku": null,           "skuName": null,            "seller": null,         "status": "empty"    },
-          { "bin": "A-04-03", "capacity": 600, "usedQty": 0,   "sku": null,           "skuName": null,            "seller": null,         "status": "empty"    }
-        ]},
-        { "rack": "05", "bins": [
-          { "bin": "A-05-01", "capacity": 600, "usedQty": 398, "sku": "KR-BBCR-001",  "skuName": "BB크림",        "seller": "Beauty Lab",  "status": "occupied" },
-          { "bin": "A-05-02", "capacity": 600, "usedQty": 0,   "sku": null,           "skuName": null,            "seller": null,         "status": "empty"    },
-          { "bin": "A-05-03", "capacity": 600, "usedQty": 0,   "sku": null,           "skuName": null,            "seller": null,         "status": "empty"    }
-        ]}
+        {
+          "rack": "01",
+          "bins": [
+            {
+              "bin": "A-01-01",
+              "capacity": 600,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "A-01-02",
+              "capacity": 600,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "A-01-03",
+              "capacity": 600,
+              "usedQty": 200,
+              "sku": "KR-MASK-001",
+              "skuName": "마스크팩 10매입",
+              "seller": "Glow Beauty",
+              "status": "occupied"
+            },
+            {
+              "bin": "A-01-04",
+              "capacity": 600,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "A-01-05",
+              "capacity": 600,
+              "usedQty": 400,
+              "sku": "KR-MOIST-050",
+              "skuName": "수분크림 50ml",
+              "seller": "Glow Beauty",
+              "status": "occupied"
+            }
+          ]
+        },
+        {
+          "rack": "02",
+          "bins": [
+            {
+              "bin": "A-02-01",
+              "capacity": 600,
+              "usedQty": 148,
+              "sku": "KR-MASK-001",
+              "skuName": "마스크팩 10매입",
+              "seller": "Glow Beauty",
+              "status": "occupied"
+            },
+            {
+              "bin": "A-02-02",
+              "capacity": 600,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "A-02-03",
+              "capacity": 600,
+              "usedQty": 570,
+              "sku": "KR-TONER-100",
+              "skuName": "토너 100ml",
+              "seller": "아모레US",
+              "status": "caution"
+            },
+            {
+              "bin": "A-02-04",
+              "capacity": 600,
+              "usedQty": 400,
+              "sku": "KR-MOIST-050",
+              "skuName": "수분크림 50ml",
+              "seller": "Glow Beauty",
+              "status": "occupied"
+            },
+            {
+              "bin": "A-02-05",
+              "capacity": 600,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            }
+          ]
+        },
+        {
+          "rack": "03",
+          "bins": [
+            {
+              "bin": "A-03-01",
+              "capacity": 600,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "A-03-02",
+              "capacity": 600,
+              "usedQty": 33,
+              "sku": "KR-SERUM-030",
+              "skuName": "앰플 세럼 30ml",
+              "seller": "Glow Beauty",
+              "status": "occupied"
+            },
+            {
+              "bin": "A-03-03",
+              "capacity": 600,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "A-03-04",
+              "capacity": 600,
+              "usedQty": 600,
+              "sku": "KR-AMPL-020",
+              "skuName": "앰플 20ml",
+              "seller": "Glow Beauty",
+              "status": "full"
+            }
+          ]
+        },
+        {
+          "rack": "04",
+          "bins": [
+            {
+              "bin": "A-04-01",
+              "capacity": 600,
+              "usedQty": 83,
+              "sku": "KR-ESEN-050",
+              "skuName": "에센스 50ml",
+              "seller": "아모레US",
+              "status": "occupied"
+            },
+            {
+              "bin": "A-04-02",
+              "capacity": 600,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "A-04-03",
+              "capacity": 600,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            }
+          ]
+        },
+        {
+          "rack": "05",
+          "bins": [
+            {
+              "bin": "A-05-01",
+              "capacity": 600,
+              "usedQty": 398,
+              "sku": "KR-BBCR-001",
+              "skuName": "BB크림",
+              "seller": "Beauty Lab",
+              "status": "occupied"
+            },
+            {
+              "bin": "A-05-02",
+              "capacity": 600,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "A-05-03",
+              "capacity": 600,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            }
+          ]
+        }
       ]
     },
     {
-      "id": "B", "zone": "B", "zoneName": "B Zone", "purpose": "식품·잡화",
+      "id": "B",
+      "zone": "B",
+      "zoneName": "B Zone",
+      "purpose": "식품·잡화",
       "racks": [
-        { "rack": "01", "bins": [
-          { "bin": "B-01-01", "capacity": 400, "usedQty": 0,   "sku": null,           "skuName": null,            "seller": null,      "status": "empty"    },
-          { "bin": "B-01-02", "capacity": 400, "usedQty": 200, "sku": "KR-SNCK-012",  "skuName": "한과 선물세트",  "seller": "서울스낵", "status": "occupied" },
-          { "bin": "B-01-03", "capacity": 400, "usedQty": 0,   "sku": null,           "skuName": null,            "seller": null,      "status": "empty"    },
-          { "bin": "B-01-04", "capacity": 400, "usedQty": 0,   "sku": null,           "skuName": null,            "seller": null,      "status": "empty"    }
-        ]},
-        { "rack": "02", "bins": [
-          { "bin": "B-02-01", "capacity": 300, "usedQty": 0,   "sku": null,           "skuName": null,            "seller": null,      "status": "empty"    },
-          { "bin": "B-02-02", "capacity": 300, "usedQty": 300, "sku": "KR-NOOD-001",  "skuName": "라면 세트",     "seller": "K-Farm",  "status": "full"     },
-          { "bin": "B-02-03", "capacity": 300, "usedQty": 12,  "sku": "KR-JINJK-030", "skuName": "특산 진액 30포", "seller": "K-Farm",  "status": "occupied" },
-          { "bin": "B-02-04", "capacity": 300, "usedQty": 0,   "sku": null,           "skuName": null,            "seller": null,      "status": "empty"    }
-        ]},
-        { "rack": "03", "bins": [
-          { "bin": "B-03-01", "capacity": 300, "usedQty": 0,   "sku": null,           "skuName": null,            "seller": null,       "status": "empty"    },
-          { "bin": "B-03-02", "capacity": 300, "usedQty": 280, "sku": "KR-RICE-001",  "skuName": "쌀과자 세트",   "seller": "서울스낵",  "status": "caution"  },
-          { "bin": "B-03-03", "capacity": 300, "usedQty": 0,   "sku": null,           "skuName": null,            "seller": null,       "status": "empty"    },
-          { "bin": "B-03-04", "capacity": 300, "usedQty": 57,  "sku": "KR-TUMBL-350", "skuName": "텀블러 350ml",  "seller": "코스맥스",  "status": "occupied" }
-        ]}
+        {
+          "rack": "01",
+          "bins": [
+            {
+              "bin": "B-01-01",
+              "capacity": 400,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "B-01-02",
+              "capacity": 400,
+              "usedQty": 200,
+              "sku": "KR-SNCK-012",
+              "skuName": "한과 선물세트",
+              "seller": "서울스낵",
+              "status": "occupied"
+            },
+            {
+              "bin": "B-01-03",
+              "capacity": 400,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "B-01-04",
+              "capacity": 400,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            }
+          ]
+        },
+        {
+          "rack": "02",
+          "bins": [
+            {
+              "bin": "B-02-01",
+              "capacity": 300,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "B-02-02",
+              "capacity": 300,
+              "usedQty": 300,
+              "sku": "KR-NOOD-001",
+              "skuName": "라면 세트",
+              "seller": "K-Farm",
+              "status": "full"
+            },
+            {
+              "bin": "B-02-03",
+              "capacity": 300,
+              "usedQty": 12,
+              "sku": "KR-JINJK-030",
+              "skuName": "특산 진액 30포",
+              "seller": "K-Farm",
+              "status": "occupied"
+            },
+            {
+              "bin": "B-02-04",
+              "capacity": 300,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            }
+          ]
+        },
+        {
+          "rack": "03",
+          "bins": [
+            {
+              "bin": "B-03-01",
+              "capacity": 300,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "B-03-02",
+              "capacity": 300,
+              "usedQty": 280,
+              "sku": "KR-RICE-001",
+              "skuName": "쌀과자 세트",
+              "seller": "서울스낵",
+              "status": "caution"
+            },
+            {
+              "bin": "B-03-03",
+              "capacity": 300,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "B-03-04",
+              "capacity": 300,
+              "usedQty": 57,
+              "sku": "KR-TUMBL-350",
+              "skuName": "텀블러 350ml",
+              "seller": "코스맥스",
+              "status": "occupied"
+            }
+          ]
+        }
       ]
     },
     {
-      "id": "C", "zone": "C", "zoneName": "C Zone", "purpose": "의류·생활용품",
+      "id": "C",
+      "zone": "C",
+      "zoneName": "C Zone",
+      "purpose": "의류·생활용품",
       "racks": [
-        { "rack": "01", "bins": [
-          { "bin": "C-01-01", "capacity": 2000, "usedQty": 1200, "sku": "KR-SUNC-030", "skuName": "선크림 30g",    "seller": "아모레US", "status": "occupied" },
-          { "bin": "C-01-02", "capacity": 2000, "usedQty": 1200, "sku": "KR-SUNC-030", "skuName": "선크림 30g",    "seller": "아모레US", "status": "occupied" },
-          { "bin": "C-01-03", "capacity": 600,  "usedQty": 0,    "sku": null,           "skuName": null,           "seller": null,       "status": "empty"    },
-          { "bin": "C-01-04", "capacity": 600,  "usedQty": 0,    "sku": null,           "skuName": null,           "seller": null,       "status": "empty"    }
-        ]},
-        { "rack": "02", "bins": [
-          { "bin": "C-02-01", "capacity": 600, "usedQty": 0, "sku": null, "skuName": null, "seller": null, "status": "empty" },
-          { "bin": "C-02-02", "capacity": 600, "usedQty": 0, "sku": null, "skuName": null, "seller": null, "status": "empty" },
-          { "bin": "C-02-03", "capacity": 600, "usedQty": 0, "sku": null, "skuName": null, "seller": null, "status": "empty" }
-        ]},
-        { "rack": "03", "bins": [
-          { "bin": "C-03-01", "capacity": 600, "usedQty": 500, "sku": "KR-SHIRT-L", "skuName": "티셔츠 L사이즈", "seller": "K-Style", "status": "caution" },
-          { "bin": "C-03-02", "capacity": 600, "usedQty": 0,   "sku": null,          "skuName": null,             "seller": null,      "status": "empty"   },
-          { "bin": "C-03-03", "capacity": 600, "usedQty": 0,   "sku": null,          "skuName": null,             "seller": null,      "status": "empty"   }
-        ]}
+        {
+          "rack": "01",
+          "bins": [
+            {
+              "bin": "C-01-01",
+              "capacity": 2000,
+              "usedQty": 1200,
+              "sku": "KR-SUNC-030",
+              "skuName": "선크림 30g",
+              "seller": "아모레US",
+              "status": "occupied"
+            },
+            {
+              "bin": "C-01-02",
+              "capacity": 2000,
+              "usedQty": 1200,
+              "sku": "KR-SUNC-030",
+              "skuName": "선크림 30g",
+              "seller": "아모레US",
+              "status": "occupied"
+            },
+            {
+              "bin": "C-01-03",
+              "capacity": 600,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "C-01-04",
+              "capacity": 600,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            }
+          ]
+        },
+        {
+          "rack": "02",
+          "bins": [
+            {
+              "bin": "C-02-01",
+              "capacity": 600,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "C-02-02",
+              "capacity": 600,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "C-02-03",
+              "capacity": 600,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            }
+          ]
+        },
+        {
+          "rack": "03",
+          "bins": [
+            {
+              "bin": "C-03-01",
+              "capacity": 600,
+              "usedQty": 500,
+              "sku": "KR-SHIRT-L",
+              "skuName": "티셔츠 L사이즈",
+              "seller": "K-Style",
+              "status": "caution"
+            },
+            {
+              "bin": "C-03-02",
+              "capacity": 600,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "C-03-03",
+              "capacity": 600,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            }
+          ]
+        }
       ]
     },
     {
-      "id": "D", "zone": "D", "zoneName": "D Zone", "purpose": "대형·저회전 SKU",
+      "id": "D",
+      "zone": "D",
+      "zoneName": "D Zone",
+      "purpose": "대형·저회전 SKU",
       "racks": [
-        { "rack": "01", "bins": [
-          { "bin": "D-01-01", "capacity": 500, "usedQty": 0,   "sku": null,          "skuName": null,   "seller": null,      "status": "empty" },
-          { "bin": "D-01-02", "capacity": 500, "usedQty": 500, "sku": "KR-CANL-001", "skuName": "향초 세트", "seller": "코스맥스", "status": "full"  },
-          { "bin": "D-01-03", "capacity": 500, "usedQty": 0,   "sku": null,          "skuName": null,   "seller": null,      "status": "empty" }
-        ]},
-        { "rack": "02", "bins": [
-          { "bin": "D-02-01", "capacity": 500, "usedQty": 480, "sku": "KR-SOAP-001", "skuName": "비누 세트", "seller": "코스맥스", "status": "caution" },
-          { "bin": "D-02-02", "capacity": 500, "usedQty": 0,   "sku": null,          "skuName": null,   "seller": null,      "status": "empty"   },
-          { "bin": "D-02-03", "capacity": 500, "usedQty": 0,   "sku": null,          "skuName": null,   "seller": null,      "status": "empty"   }
-        ]}
+        {
+          "rack": "01",
+          "bins": [
+            {
+              "bin": "D-01-01",
+              "capacity": 500,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "D-01-02",
+              "capacity": 500,
+              "usedQty": 500,
+              "sku": "KR-CANL-001",
+              "skuName": "향초 세트",
+              "seller": "코스맥스",
+              "status": "full"
+            },
+            {
+              "bin": "D-01-03",
+              "capacity": 500,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            }
+          ]
+        },
+        {
+          "rack": "02",
+          "bins": [
+            {
+              "bin": "D-02-01",
+              "capacity": 500,
+              "usedQty": 480,
+              "sku": "KR-SOAP-001",
+              "skuName": "비누 세트",
+              "seller": "코스맥스",
+              "status": "caution"
+            },
+            {
+              "bin": "D-02-02",
+              "capacity": 500,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            },
+            {
+              "bin": "D-02-03",
+              "capacity": 500,
+              "usedQty": 0,
+              "sku": null,
+              "skuName": null,
+              "seller": null,
+              "status": "empty"
+            }
+          ]
+        }
       ]
     }
   ],
-
   "wh_bin_fixed_assignments": [
     {
-      "id": "A-3-2",
-      "bin": "A-3-2",
+      "id": "A-03-02",
+      "bin": "A-03-02",
       "workerName": "박민준",
       "workerId": "WK-A-001",
       "taskType": "PICKING_PACKING",
@@ -1288,8 +1851,8 @@
       "memo": "고회전 SKU 존"
     },
     {
-      "id": "C-1-4",
-      "bin": "C-1-4",
+      "id": "C-01-04",
+      "bin": "C-01-04",
       "workerName": "이서윤",
       "workerId": "WK-A-002",
       "taskType": "INSPECTION_LOADING",
@@ -1298,8 +1861,8 @@
       "memo": "신규 입고 우선 존"
     },
     {
-      "id": "D-2-1",
-      "bin": "D-2-1",
+      "id": "D-02-01",
+      "bin": "D-02-01",
       "workerName": "최현우",
       "workerId": "WK-A-003",
       "taskType": "PICKING_PACKING",
@@ -1308,7 +1871,6 @@
       "memo": "냉장 제품 제외"
     }
   ],
-
   "wh_invoice_orders": [
     {
       "id": "ORD-20240312-071",
@@ -1323,9 +1885,21 @@
       "labelStatus": "NOT_ISSUED",
       "labelIssuedAt": null,
       "rates": [
-        { "carrier": "USPS", "service": "Priority Mail",   "rate": 6.42  },
-        { "carrier": "UPS",  "service": "Ground",          "rate": 8.10  },
-        { "carrier": "FedEx","service": "Home Delivery",   "rate": 9.35  }
+        {
+          "carrier": "USPS",
+          "service": "Priority Mail",
+          "rate": 6.42
+        },
+        {
+          "carrier": "UPS",
+          "service": "Ground",
+          "rate": 8.1
+        },
+        {
+          "carrier": "FedEx",
+          "service": "Home Delivery",
+          "rate": 9.35
+        }
       ]
     },
     {
@@ -1341,9 +1915,21 @@
       "labelStatus": "NOT_ISSUED",
       "labelIssuedAt": null,
       "rates": [
-        { "carrier": "USPS", "service": "Priority Mail",   "rate": 9.80  },
-        { "carrier": "UPS",  "service": "Ground",          "rate": 8.95  },
-        { "carrier": "FedEx","service": "Home Delivery",   "rate": 10.20 }
+        {
+          "carrier": "USPS",
+          "service": "Priority Mail",
+          "rate": 9.8
+        },
+        {
+          "carrier": "UPS",
+          "service": "Ground",
+          "rate": 8.95
+        },
+        {
+          "carrier": "FedEx",
+          "service": "Home Delivery",
+          "rate": 10.2
+        }
       ]
     },
     {
@@ -1360,27 +1946,51 @@
       "labelIssuedAt": "2026-03-11",
       "trackingNumber": "9400111899223374693900",
       "rates": [
-        { "carrier": "USPS", "service": "First Class",     "rate": 5.15  },
-        { "carrier": "UPS",  "service": "Ground",          "rate": 7.40  },
-        { "carrier": "FedEx","service": "Home Delivery",   "rate": 8.60  }
+        {
+          "carrier": "USPS",
+          "service": "First Class",
+          "rate": 5.15
+        },
+        {
+          "carrier": "UPS",
+          "service": "Ground",
+          "rate": 7.4
+        },
+        {
+          "carrier": "FedEx",
+          "service": "Home Delivery",
+          "rate": 8.6
+        }
       ]
     },
     {
       "id": "ORD-20240311-065",
       "sellerName": "에코팩",
       "itemSummary": "텀블러 × 2",
-      "weightLbs": 2.0,
+      "weightLbs": 2,
       "shipState": "NY",
       "shipCountry": "USA",
       "recommendedCarrier": "FedEx",
       "recommendedService": "Home Delivery",
-      "estimatedRate": 12.30,
+      "estimatedRate": 12.3,
       "labelStatus": "NOT_ISSUED",
       "labelIssuedAt": null,
       "rates": [
-        { "carrier": "USPS", "service": "Priority Mail",   "rate": 14.50 },
-        { "carrier": "UPS",  "service": "Ground",          "rate": 13.80 },
-        { "carrier": "FedEx","service": "Home Delivery",   "rate": 12.30 }
+        {
+          "carrier": "USPS",
+          "service": "Priority Mail",
+          "rate": 14.5
+        },
+        {
+          "carrier": "UPS",
+          "service": "Ground",
+          "rate": 13.8
+        },
+        {
+          "carrier": "FedEx",
+          "service": "Home Delivery",
+          "rate": 12.3
+        }
       ]
     },
     {
@@ -1392,13 +2002,25 @@
       "shipCountry": "USA",
       "recommendedCarrier": "USPS",
       "recommendedService": "Priority Mail",
-      "estimatedRate": 7.80,
+      "estimatedRate": 7.8,
       "labelStatus": "NOT_ISSUED",
       "labelIssuedAt": null,
       "rates": [
-        { "carrier": "USPS", "service": "Priority Mail",   "rate": 7.80  },
-        { "carrier": "UPS",  "service": "Ground",          "rate": 9.20  },
-        { "carrier": "FedEx","service": "Home Delivery",   "rate": 10.05 }
+        {
+          "carrier": "USPS",
+          "service": "Priority Mail",
+          "rate": 7.8
+        },
+        {
+          "carrier": "UPS",
+          "service": "Ground",
+          "rate": 9.2
+        },
+        {
+          "carrier": "FedEx",
+          "service": "Home Delivery",
+          "rate": 10.05
+        }
       ]
     }
   ]

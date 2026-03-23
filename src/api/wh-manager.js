@@ -102,7 +102,12 @@ export function getWhmBinFixedAssignments() {
   return instance.get('/wh_bin_fixed_assignments')
 }
 
-/** Bin 고정 배정 저장 */
+/** Bin 고정 배정 신규 생성 */
+export function createBinFixedAssignment(data) {
+  return instance.post('/wh_bin_fixed_assignments', data)
+}
+
+/** Bin 고정 배정 수정 */
 export function updateBinFixedAssignment(bin, data) {
   return instance.patch(`/wh_bin_fixed_assignments/${bin}`, data)
 }

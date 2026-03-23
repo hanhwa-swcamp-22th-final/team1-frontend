@@ -53,7 +53,7 @@
  *   <StatusBadge :status="item.status" type="item" />
  */
 import { computed } from 'vue'
-import { ACCOUNT_STATUS, ASN_STATUS, ITEM_STATUS, LABEL_STATUS, ORDER_STATUS, OUTBOUND_CONFIRM_STATUS, PICKING_LIST_STATUS, TASK_ASSIGN_TYPE, TASK_STATUS, WORKER_PRESENCE_STATUS, WORKER_STATUS, SELLER_STATUS } from '@/constants'
+import { ACCOUNT_STATUS, ASN_STATUS, INVENTORY_STATUS, ITEM_STATUS, LABEL_STATUS, ORDER_STATUS, OUTBOUND_CONFIRM_STATUS, PICKING_LIST_STATUS, STOCK_STATUS, TASK_ASSIGN_TYPE, TASK_STATUS, WORKER_PRESENCE_STATUS, WORKER_STATUS, SELLER_STATUS } from '@/constants'
 
 const props = defineProps({
   status: { type: String, required: true },
@@ -131,6 +131,15 @@ const MAP = {
   taskAssignType: {
     [TASK_ASSIGN_TYPE.AUTO]:   { label: '자동', color: 'blue' },
     [TASK_ASSIGN_TYPE.MANUAL]: { label: '수동', color: 'gold' },
+  },
+  inventory: {
+    [INVENTORY_STATUS.NORMAL]:   { label: '정상',      color: 'green' },
+    [INVENTORY_STATUS.CAUTION]:  { label: '주의',      color: 'amber' },
+    [INVENTORY_STATUS.SHORTAGE]: { label: '재고 부족', color: 'red'   },
+  },
+  stockStatus: {
+    [STOCK_STATUS.SUFFICIENT]:   { label: '재고 충분', color: 'green' },
+    [STOCK_STATUS.INSUFFICIENT]: { label: '재고 부족', color: 'red'   },
   },
 }
 
