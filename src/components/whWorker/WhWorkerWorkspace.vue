@@ -125,6 +125,48 @@ function outboundActiveStage(step) {
   return '피킹'
 }
 
+function isInboundInspectDone(bin) {
+  return bin.statusInspect === '완료' || parseNumber(bin.inspectedQty) !== null
+}
+
+function isInboundPutDone(bin) {
+  return bin.statusPut === '완료' || parseNumber(bin.putQty) !== null
+}
+
+function isOutboundPickDone(bin) {
+  return bin.statusPick === '완료' || parseNumber(bin.pickedQty) !== null
+}
+
+function getOutboundOrderNo(record, bin) {
+  if (bin.orderNo) return bin.orderNo
+  const matchedOrder = record.packOrders.find((order) => {
+    if (bin.orderNo && order.orderNo) return order.orderNo === bin.orderNo
+    return order.sku === bin.sku
+  })
+  return matchedOrder?.orderNo || ''
+}
+
+function getOutboundOrderLines(record, targetOrder) {
+  return record.packOrders.filter((item) => item.orderNo === targetOrder.orderNo)
+}
+
+function getOutboundBinsForOrderLine(record, order) {
+  const orderMatchedBins = record.bins.filter((bin) => order.orderNo && bin.orderNo && bin.orderNo === order.orderNo)
+  if (orderMatchedBins.length) return orderMatchedBins
+  return record.bins.filter((bin) => bin.sku === order.sku)
+}
+
+function isOutboundOrderReadyForPack(record, targetOrder) {
+  const orderLines = getOutboundOrderLines(record, targetOrder)
+  if (!orderLines.length) return false
+
+  return orderLines.every((orderLine) => {
+    const lineBins = getOutboundBinsForOrderLine(record, orderLine)
+    if (!lineBins.length) return false
+    return lineBins.every(isOutboundPickDone)
+  })
+}
+
 function inferStageExceptionType(kind, stage, qty, actualQty, reason, targetBin = '', actualBin = '') {
   if (kind === '입고' && stage === '검수') {
     if (reason && ['파손', '누락', '오입고', '수량 불일치'].some((item) => reason.includes(item))) {
@@ -182,16 +224,17 @@ const flatTasks = computed(() => {
   const rows = []
   workerRecords.value.forEach((record) => {
     if (record.category === 'INBOUND') {
-      const activeStage = record.activeStep?.includes('적재') ? '적재' : '검수'
       record.bins.forEach((bin, index) => {
         const plannedQty = parseNumber(bin.plannedQty) ?? 0
         const inspectedQty = parseNumber(bin.inspectedQty)
         const putQty = parseNumber(bin.putQty)
-        const inspectStatus = bin.statusInspect === '완료' || (activeStage === '적재' || record.status === '완료')
+        const inspectDone = isInboundInspectDone(bin)
+        const inspectStatus = inspectDone
           ? '완료'
-          : record.status === '진행중' && activeStage === '검수'
+          : record.status === '진행중'
             ? '진행중'
             : '대기'
+
         rows.push(buildFlatTask({
           id: `${record.id}::inspect::${bin.id}`,
           parentId: record.id,
@@ -214,7 +257,7 @@ const flatTasks = computed(() => {
           actualBin: '',
           reason: toText(bin.inspectNote),
           exceptionType: toText(bin.inspectExceptionType),
-          assigned: activeStage === '검수' && inspectStatus !== '완료' && record.status !== '완료',
+          assigned: !inspectDone && record.status !== '완료',
           completedAt: toText(bin.statusInspectAt || record.completedAt),
           edited: !!bin.inspectEdited,
           note: record.notes || '',
@@ -222,12 +265,15 @@ const flatTasks = computed(() => {
         }))
 
         const putBaseQty = inspectedQty ?? plannedQty
-        const putStatus = bin.statusPut === '완료' || record.status === '완료'
+        const putDone = isInboundPutDone(bin)
+        const putReady = inspectDone
+        const putStatus = putDone
           ? '완료'
-          : activeStage === '적재' && record.status === '진행중'
+          : putReady
             ? '진행중'
             : '대기'
-        const putVisible = record.status === '완료' || activeStage === '적재' || putQty !== null || toText(bin.confirmedBinCode) || !!bin.putExceptionType || !!bin.putNote
+        const putVisible = record.status === '완료' || putReady || putDone || toText(bin.confirmedBinCode) || !!bin.putExceptionType || !!bin.putNote
+
         if (putVisible) {
           rows.push(buildFlatTask({
             id: `${record.id}::put::${bin.id}`,
@@ -251,7 +297,7 @@ const flatTasks = computed(() => {
             actualBin: toText(bin.confirmedBinCode),
             reason: toText(bin.putNote),
             exceptionType: toText(bin.putExceptionType),
-            assigned: activeStage === '적재' && putStatus !== '완료' && record.status !== '완료',
+            assigned: putReady && !putDone && record.status !== '완료',
             completedAt: toText(bin.statusPutAt || record.completedAt),
             edited: !!bin.putEdited,
             note: record.notes || '',
@@ -262,15 +308,16 @@ const flatTasks = computed(() => {
       return
     }
 
-    const activeStage = outboundActiveStage(record.activeStep)
     record.bins.forEach((bin, index) => {
       const orderedQty = parseNumber(bin.orderedQty) ?? 0
       const pickedQty = parseNumber(bin.pickedQty)
-      const pickStatus = bin.statusPick === '완료' || activeStage === '패킹' || record.status === '완료'
+      const pickDone = isOutboundPickDone(bin)
+      const pickStatus = pickDone
         ? '완료'
-        : record.status === '진행중' && activeStage === '피킹'
+        : record.status === '진행중'
           ? '진행중'
           : '대기'
+
       rows.push(buildFlatTask({
         id: `${record.id}::pick::${bin.id}`,
         parentId: record.id,
@@ -283,7 +330,7 @@ const flatTasks = computed(() => {
         warehouseName: record.warehouseName,
         docNo: record.refNo,
         pickNo: record.refNo,
-        orderNo: '',
+        orderNo: getOutboundOrderNo(record, bin),
         bin: bin.binCode || bin.location,
         sku: bin.sku,
         qty: orderedQty,
@@ -293,7 +340,7 @@ const flatTasks = computed(() => {
         actualBin: '',
         reason: toText(bin.pickReason),
         exceptionType: toText(bin.pickExceptionType),
-        assigned: activeStage === '피킹' && pickStatus !== '완료' && record.status !== '완료',
+        assigned: !pickDone && record.status !== '완료',
         completedAt: toText(bin.statusPickAt || record.completedAt),
         edited: !!bin.pickEdited,
         note: record.notes || '',
@@ -304,12 +351,15 @@ const flatTasks = computed(() => {
     record.packOrders.forEach((order, index) => {
       const packQty = parseNumber(order.actualPickedQty) ?? parseNumber(order.orderedQty) ?? 0
       const verifiedQty = parseNumber(order.verifiedQty)
-      const packStatus = order.statusPack === '완료' || record.status === '완료'
+      const packDone = order.statusPack === '완료' || verifiedQty !== null || record.status === '완료'
+      const packReady = isOutboundOrderReadyForPack(record, order)
+      const packStatus = packDone
         ? '완료'
-        : activeStage === '패킹' && record.status === '진행중'
+        : packReady
           ? '진행중'
           : '대기'
-      const packVisible = record.status === '완료' || activeStage === '패킹' || verifiedQty !== null || !!order.packReason || !!order.packExceptionType
+      const packVisible = record.status === '완료' || packReady || packDone || !!order.packReason || !!order.packExceptionType
+
       if (packVisible) {
         rows.push(buildFlatTask({
           id: `${record.id}::pack::${order.id}`,
@@ -333,7 +383,7 @@ const flatTasks = computed(() => {
           actualBin: '',
           reason: toText(order.packReason),
           exceptionType: toText(order.packExceptionType),
-          assigned: activeStage === '패킹' && packStatus !== '완료' && record.status !== '완료',
+          assigned: packReady && !packDone && record.status !== '완료',
           completedAt: toText(order.statusPackAt || record.completedAt),
           edited: !!order.packEdited,
           note: record.notes || '',
@@ -433,7 +483,7 @@ function seedLogsFromRecord(record) {
     .map((task) => ({
       area: task.kind,
       stage: task.stage,
-      kind: task.hasException ? '작업 완료(예외)' : '완료건 수정',
+      kind: task.hasException ? '예외 등록' : '완료건 수정',
       docLabel: task.kind === '입고' ? task.docNo : `${task.pickNo}${task.orderNo ? ` · ${task.orderNo}` : ''}`,
       seller: task.seller,
       target: task.stage === '패킹' ? `주문 ${task.orderNo} · ${task.sku}` : `Bin ${task.bin} · ${task.sku}`,
@@ -455,10 +505,12 @@ const historyEntries = computed(() => {
 
 const inboundHistoryRows = computed(() => historyEntries.value
   .filter((log) => log.area === '입고')
+  .filter((log) => log.kind !== '작업 완료')
   .filter((log) => matchText([log.kind, log.stage, log.docLabel, log.seller, log.target, log.message, log.reason, log.time], search.inboundHistory)))
 
 const outboundHistoryRows = computed(() => historyEntries.value
   .filter((log) => log.area === '출고')
+  .filter((log) => log.kind !== '작업 완료')
   .filter((log) => matchText([log.kind, log.stage, log.docLabel, log.seller, log.target, log.message, log.reason, log.time], search.outboundHistory)))
 
 const inboundExceptionFilters = computed(() => tabs.inboundException === '검수'
@@ -471,6 +523,12 @@ const outboundExceptionFilters = computed(() => tabs.outboundException === '피�
 
 function statusClass(status) {
   return status === '완료' ? 'done' : status === '진행중' ? 'progress' : 'wait'
+}
+
+function historyBadgeClass(kind) {
+  return ['검수 완료', '적재 완료', '피킹 완료', '패킹 완료', '예외 해제'].includes(kind)
+    ? 'done'
+    : (kind.includes('예외') ? 'exception' : 'edited')
 }
 
 function resetSearch(key) {
@@ -578,6 +636,9 @@ async function saveProcessModal() {
   const now = nowStamp()
   const hasException = qtyMismatch || binMismatch || hasManualException
 
+  let shouldSwitchInboundToPut = false
+  let shouldSwitchOutboundToPack = false
+
   if (task.kind === '입고') {
     const bin = record.bins.find((item) => item.id === task.sourceId)
     if (!bin) return
@@ -587,10 +648,12 @@ async function saveProcessModal() {
       bin.inspectExceptionType = selectedType || ''
       bin.statusInspect = '완료'
       bin.statusInspectAt = now
-      const allInspected = record.bins.every((item) => parseNumber(item.inspectedQty) !== null || item.statusInspect === '완료')
-      record.status = allInspected ? '진행중' : '진행중'
+
+      const allInspected = record.bins.every(isInboundInspectDone)
+      record.status = '진행중'
       record.activeStep = allInspected ? '적재' : '검수'
       record.asnStatus = allInspected ? '검수완료' : '입고검수중'
+      shouldSwitchInboundToPut = true
     } else {
       bin.putQty = String(actual)
       bin.confirmedBinCode = actualBin
@@ -598,7 +661,7 @@ async function saveProcessModal() {
       bin.putExceptionType = selectedType || ''
       bin.statusPut = '완료'
       bin.statusPutAt = now
-      const allPutDone = record.bins.every((item) => parseNumber(item.putQty) !== null || item.statusPut === '완료')
+      const allPutDone = record.bins.every(isInboundPutDone)
       record.status = allPutDone ? '완료' : '진행중'
       record.activeStep = allPutDone ? '적재 완료' : '적재'
       record.asnStatus = allPutDone ? '보관중' : '적재중'
@@ -616,15 +679,20 @@ async function saveProcessModal() {
       bin.pickExceptionType = selectedType || ''
       bin.statusPick = '완료'
       bin.statusPickAt = now
-      record.packOrders
-        .filter((order) => order.sku === bin.sku)
-        .forEach((order) => {
-          order.actualPickedQty = actual
-        })
-      const allPicked = record.bins.every((item) => parseNumber(item.pickedQty) !== null || item.statusPick === '완료')
+
+      const impactedOrders = record.packOrders.filter((order) => {
+        if (bin.orderNo && order.orderNo) return order.orderNo === bin.orderNo
+        return order.sku === bin.sku
+      })
+      impactedOrders.forEach((order) => {
+        order.actualPickedQty = actual
+      })
+
+      const allPicked = record.bins.every(isOutboundPickDone)
+      shouldSwitchOutboundToPack = impactedOrders.some((order) => isOutboundOrderReadyForPack(record, order))
       record.status = '진행중'
-      record.activeStep = allPicked ? '포장 검수' : '피킹'
-      record.orderStatus = allPicked ? '포장 검수' : '피킹중'
+      record.activeStep = allPicked ? '패킹' : '피킹'
+      record.orderStatus = allPicked ? '패킹대기' : '피킹중'
     } else {
       const order = record.packOrders.find((item) => item.id === task.sourceId)
       if (!order) return
@@ -635,8 +703,8 @@ async function saveProcessModal() {
       order.statusPackAt = now
       const allPacked = record.packOrders.every((item) => parseNumber(item.verifiedQty) !== null || item.statusPack === '완료')
       record.status = allPacked ? '완료' : '진행중'
-      record.activeStep = allPacked ? '작업 완료' : '포장 검수'
-      record.orderStatus = allPacked ? '출고완료' : '포장 검수'
+      record.activeStep = allPacked ? '작업 완료' : '패킹'
+      record.orderStatus = allPacked ? '출고완료' : '패킹중'
       if (allPacked) {
         record.stockDeduction = true
         record.completedAt = now
@@ -644,28 +712,80 @@ async function saveProcessModal() {
     }
   }
 
-  appendLog(record, {
-    area: task.kind,
-    stage: task.stage,
-    kind: hasException ? '작업 완료(예외)' : '작업 완료',
-    docLabel: task.kind === '입고' ? task.docNo : `${task.pickNo}${task.orderNo ? ` · ${task.orderNo}` : ''}`,
-    seller: task.seller,
-    target: task.stage === '패킹' ? `주문 ${task.orderNo} · ${task.sku}` : `Bin ${task.bin} · ${task.sku}`,
-    message: `${task.stage} 단계 ${actual}EA 처리`,
-    reason: reason || '정상 처리',
-  })
+  const nextStageLabel = shouldSwitchInboundToPut ? '적재' : (shouldSwitchOutboundToPack ? '패킹' : '')
+
+  if (hasException) {
+    const exceptionType = selectedType || inferStageExceptionType(
+      task.kind,
+      task.stage,
+      task.qty,
+      actual,
+      reason,
+      task.targetBin,
+      actualBin
+    )
+    const message = task.kind === '입고'
+      ? (task.stage === '검수'
+        ? `예정 ${task.qty} / 실검수 ${actual}`
+        : `지정 BIN ${task.targetBin || task.bin} / 실제 입력 BIN ${actualBin || '-'}${actual !== task.qty ? ` · 기준 ${task.qty} / 실제 ${actual}` : ''}`)
+      : (task.stage === '피킹'
+        ? `예정 ${task.qty} / 실제 ${actual}`
+        : `주문 ${task.qty} / 패킹 ${actual}`)
+
+    appendLog(record, {
+      area: task.kind,
+      stage: task.stage,
+      kind: '예외 등록',
+      docLabel: task.kind === '입고' ? task.docNo : `${task.pickNo}${task.orderNo ? ` · ${task.orderNo}` : ''}`,
+      seller: task.seller,
+      target: task.stage === '패킹' ? `${task.sku}` : `Bin ${task.bin} · ${task.sku}`,
+      message: exceptionType ? `${message}` : message,
+      reason: reason || '사유 미입력',
+    })
+  } else {
+    appendLog(record, {
+      area: task.kind,
+      stage: task.stage,
+      kind: `${task.stage} 완료`,
+      docLabel: task.kind === '입고' ? task.docNo : `${task.pickNo}${task.orderNo ? ` · ${task.orderNo}` : ''}`,
+      seller: task.seller,
+      target: task.stage === '패킹' ? `${task.sku}` : `Bin ${task.bin} · ${task.sku}`,
+      message: `${task.stage} 단계 ${actual}EA 처리${nextStageLabel ? ` · 다음 단계 ${nextStageLabel} 생성` : ''}`,
+      reason: reason || '정상 처리',
+    })
+  }
 
   await persistRecord(record)
+
+  if (shouldSwitchInboundToPut) {
+    tabs.inboundWork = '적재'
+    if (hasException) {
+      tabs.inboundException = '검수'
+      tabs.inboundExceptionFilter = '전체'
+    }
+  }
+
+  if (shouldSwitchOutboundToPack) {
+    tabs.outboundWork = '패킹'
+    if (hasException) {
+      tabs.outboundException = '피킹'
+      tabs.outboundExceptionFilter = '전체'
+    }
+  }
+
   closeModal()
-  toast(`${task.kind} ${task.stage} 작업이 완료되었습니다.`)
+  toast(nextStageLabel ? `${task.kind} ${task.stage} 완료 · ${nextStageLabel} 작업으로 이동되었습니다.` : `${task.kind} ${task.stage} 작업이 완료되었습니다.`)
 }
 
 function syncDownstreamAfterEdit(record, task, beforeQty, nextQty) {
   if (task.kind === '입고' && task.stage === '검수') {
     const bin = record.bins.find((item) => item.id === task.sourceId)
     if (!bin) return
+
     const currentPutQty = parseNumber(bin.putQty)
-    if (currentPutQty === null || currentPutQty === beforeQty) {
+    const putAlreadyDone = bin.statusPut === '완료' || currentPutQty !== null
+
+    if (putAlreadyDone && currentPutQty === beforeQty) {
       bin.putQty = String(nextQty)
       if (bin.statusPut === '완료') bin.putEdited = true
     }
@@ -678,11 +798,12 @@ function syncDownstreamAfterEdit(record, task, beforeQty, nextQty) {
       .forEach((order) => {
         const currentPickedQty = parseNumber(order.actualPickedQty)
         const currentVerifiedQty = parseNumber(order.verifiedQty)
+        const packAlreadyDone = order.statusPack === '완료' || currentVerifiedQty !== null
 
         if (currentPickedQty === null || currentPickedQty === beforeQty) {
           order.actualPickedQty = nextQty
         }
-        if (currentVerifiedQty === null || currentVerifiedQty === beforeQty) {
+        if (packAlreadyDone && currentVerifiedQty === beforeQty) {
           order.verifiedQty = String(nextQty)
           if (order.statusPack === '완료') order.packEdited = true
         }
@@ -977,7 +1098,7 @@ async function saveEditModal() {
                     <td><button class="btn" @click="openEditModal(task)">수정</button></td>
                   </tr>
                 </tbody>
-              </table>
+                </table>
             </div>
           </div>
 
@@ -1038,7 +1159,7 @@ async function saveEditModal() {
               <div v-for="log in inboundHistoryRows" :key="`${log.time}-${log.docLabel}-${log.kind}`" class="history-card">
                 <div class="history-head">
                   <div class="title-row">
-                    <span class="badge" :class="log.kind === '예외 해제' ? 'done' : (log.kind.includes('예외') ? 'exception' : 'edited')">{{ log.kind }}</span>
+                    <span class="badge" :class="historyBadgeClass(log.kind)">{{ log.kind }}</span>
                     <strong>[{{ log.stage }}] {{ log.docLabel }}</strong>
                   </div>
                   <div class="history-sub">{{ log.time }}</div>
@@ -1073,7 +1194,8 @@ async function saveEditModal() {
                 <button class="btn" @click="resetSearch('outboundManage')">초기화</button>
               </div>
               <div class="helper">패킹은 주문 기준 최종 확인 단계입니다. 완료건도 단계별로 다시 찾아 수정할 수 있습니다.</div>
-              <table>
+              <div class="table-scroll">
+                <table class="completed-outbound-table">
                 <thead>
                   <tr>
                     <th>상태</th>
@@ -1116,6 +1238,7 @@ async function saveEditModal() {
               </table>
             </div>
           </div>
+        </div>
 
           <div class="panel">
             <div class="panel-head">
@@ -1180,7 +1303,7 @@ async function saveEditModal() {
               <div v-for="log in outboundHistoryRows" :key="`${log.time}-${log.docLabel}-${log.kind}`" class="history-card">
                 <div class="history-head">
                   <div class="title-row">
-                    <span class="badge" :class="log.kind === '예외 해제' ? 'done' : (log.kind.includes('예외') ? 'exception' : 'edited')">{{ log.kind }}</span>
+                    <span class="badge" :class="historyBadgeClass(log.kind)">{{ log.kind }}</span>
                     <strong>[{{ log.stage }}] {{ log.docLabel }}</strong>
                   </div>
                   <div class="history-sub">{{ log.time }}</div>
@@ -1293,14 +1416,14 @@ async function saveEditModal() {
             </div>
             <div class="field">
               <label>{{ modal.mode === 'edit' ? '수정 사유' : '사유' }}</label>
-              <textarea v-model="modal.reason" :placeholder="modal.mode === 'edit' ? '왜 수정하는지 입력하세요' : '예외 유형을 선택하면 사유를 입력하세요'" rows="3" />
+              <textarea v-model="modal.reason" :placeholder="modal.mode === 'edit' ? '왜 수정하는지 입력하세요' : '예외 유형을 선택하면 사유를 입력하세요'" rows="3"></textarea>
               <small>{{ modal.mode === 'edit' ? '' : '예외 유형을 선택하거나 실제 수량이 다르면 사유 입력이 필요합니다.' }}</small>
             </div>
           </div>
 
           <div v-else class="field">
             <label>{{ modal.mode === 'edit' ? '수정 사유' : '사유' }}</label>
-            <textarea v-model="modal.reason" :placeholder="modal.mode === 'edit' ? '왜 수정하는지 입력하세요' : '불일치 또는 수정이 있을 때 사유를 입력하세요'" rows="4" />
+            <textarea v-model="modal.reason" :placeholder="modal.mode === 'edit' ? '왜 수정하는지 입력하세요' : '불일치 또는 수정이 있을 때 사유를 입력하세요'" rows="4"></textarea>
             <small v-if="modal.mode !== 'edit'">수량 불일치나 완료 후 수정 시 사유는 필수입니다.</small>
           </div>
         </div>
@@ -1587,6 +1710,17 @@ async function saveEditModal() {
   border-radius: 999px;
   padding: 7px 11px;
   font-size: 12px;
+}
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+.completed-outbound-table th,
+.completed-outbound-table td,
+.completed-outbound-table .exception-sub,
+.completed-outbound-table .badge,
+.completed-outbound-table button {
+  white-space: nowrap;
 }
 table {
   width: 100%;
