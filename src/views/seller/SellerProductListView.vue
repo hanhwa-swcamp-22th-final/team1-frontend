@@ -4,14 +4,16 @@
  * mock-server seller 상품 목록 API를 기준으로 상태/카테고리 필터와 테이블 UI를 구성한다.
  */
 import { computed, onMounted, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { getSellerProductList } from '@/api/product.js'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import SellerConfirmDialog from '@/components/seller/SellerConfirmDialog.vue'
 import SellerProductDetailModal from '@/components/seller/SellerProductDetailModal.vue'
 import { ROUTE_NAMES } from '@/constants'
+import { downloadExcel } from '@/utils/excel.js'
 import {
+  buildSellerProductExportRows,
   filterSellerProductRows,
   getSellerProductStatusMeta,
   normalizeSellerProductDetail,
@@ -21,6 +23,7 @@ import {
 } from '@/utils/seller/productList.utils.js'
 
 const breadcrumb = [{ label: 'Seller' }, { label: '상품 목록' }]
+const router = useRouter()
 
 // 상품 목록은 상태, 카테고리, 검색어 조합으로 먼저 필터링한다.
 const activeStatus = ref('all')
@@ -121,9 +124,28 @@ const statusDialogMessage = computed(() => {
     : `${pendingStatusProduct.value.sku} 상품을 비활성 처리하시겠습니까?`
 })
 
-// UI 범위만 구현하므로 CSV와 수정은 안내 메시지로 남겨 둔다.
 function showToolbarMessage(message) {
   toolbarMessage.value = message
+}
+
+function handleDownloadCsv() {
+  if (!filteredRows.value.length) {
+    showToolbarMessage('내보낼 상품이 없습니다.')
+    return
+  }
+
+  downloadExcel(
+    buildSellerProductExportRows(filteredRows.value),
+    `seller-products-${new Date().toISOString().slice(0, 10)}`,
+  )
+  showToolbarMessage('현재 필터 기준 상품 목록을 다운로드했습니다.')
+}
+
+function handleEditProduct(row) {
+  router.push({
+    name: ROUTE_NAMES.SELLER_PRODUCT_REGISTER,
+    query: { productId: row.id, mode: 'edit' },
+  })
 }
 
 function handleOpenProductDetail(row) {
@@ -231,11 +253,10 @@ function handleConfirmStatusChange() {
               />
             </label>
 
-            <!-- TODO(frontend): 상품 목록 CSV 내보내기 기능을 연결한다. -->
             <button
               class="ui-btn ui-btn--ghost toolbar-btn"
               type="button"
-              @click="showToolbarMessage('CSV 내보내기 UI는 다음 단계에서 연결합니다.')"
+              @click="handleDownloadCsv"
             >
               CSV 내보내기
             </button>
@@ -311,12 +332,11 @@ function handleConfirmStatusChange() {
           </template>
 
           <template #cell-actions="{ row }">
-            <!-- TODO(frontend): 상품 수정과 비활성/재활성 동작을 연결한다. -->
             <div class="action-group">
               <button
                 class="action-btn action-btn--edit"
                 type="button"
-                @click="showToolbarMessage(`${row.sku} 수정 UI는 다음 단계에서 연결합니다.`)"
+                @click="handleEditProduct(row)"
               >
                 수정
               </button>

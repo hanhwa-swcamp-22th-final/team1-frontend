@@ -1,6 +1,5 @@
 /**
- * 셀러 상품 등록 화면에서 사용하는 로컬 mock 데이터와 검증 유틸.
- * UI 우선 단계라 저장 없이도 입력 흐름과 자동 계산을 확인할 수 있게 한다.
+ * 셀러 상품 등록 화면에서 사용하는 선택 옵션, 검증, payload 가공 유틸.
  */
 
 // 상품 등록 화면에서 선택할 수 있는 카테고리 mock 옵션.
@@ -26,6 +25,22 @@ export const SELLER_PRODUCT_ORIGIN_OPTIONS = [
   { value: 'JP', label: '일본 (JP)' },
   { value: 'US', label: '미국 (US)' },
 ]
+
+const PRODUCT_CATEGORY_LABEL_MAP = Object.fromEntries(
+  SELLER_PRODUCT_CATEGORY_OPTIONS.map((option) => [option.value, option.label])
+)
+
+const PRODUCT_CATEGORY_VALUE_MAP = Object.fromEntries(
+  SELLER_PRODUCT_CATEGORY_OPTIONS.map((option) => [option.label, option.value])
+)
+
+const PRODUCT_ORIGIN_LABEL_MAP = Object.fromEntries(
+  SELLER_PRODUCT_ORIGIN_OPTIONS.map((option) => [option.value, option.label])
+)
+
+const PRODUCT_ORIGIN_VALUE_MAP = Object.fromEntries(
+  SELLER_PRODUCT_ORIGIN_OPTIONS.map((option) => [option.label, option.value])
+)
 
 // 상품 등록 폼의 초기 상태를 만든다.
 export function createInitialProductForm() {
@@ -74,6 +89,25 @@ export function createInitialProductErrors() {
 function toPositiveNumber(value) {
   const numeric = Number(value)
   return Number.isFinite(numeric) && numeric > 0 ? numeric : 0
+}
+
+function toNonNegativeNumber(value) {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) && numeric >= 0 ? numeric : 0
+}
+
+function parseProductDimensions(dimensions = '') {
+  const matches = String(dimensions ?? '').match(/(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)/i)
+
+  if (!matches) {
+    return { length: '', width: '', height: '' }
+  }
+
+  return {
+    length: matches[1],
+    width: matches[2],
+    height: matches[3],
+  }
 }
 
 /**
@@ -138,4 +172,85 @@ export function validateProductForm(form = {}) {
   }
 
   return errors
+}
+
+/**
+ * 상품 목록 row/detail을 등록 화면 form 구조로 되돌린다.
+ * 등록 화면 재사용으로 수정 모드를 구성할 때 사용한다.
+ */
+export function buildProductFormFromProduct(product = {}) {
+  const dimensions = parseProductDimensions(product.detail?.dimensions)
+  const normalizedCategory = String(product.category ?? '').trim()
+  const normalizedOrigin = String(product.detail?.originCountry ?? '').trim()
+
+  return {
+    sku: String(product.sku ?? '').trim(),
+    productName: String(product.productName ?? '').trim(),
+    category: PRODUCT_CATEGORY_VALUE_MAP[normalizedCategory] ?? normalizedCategory,
+    brand: String(product.detail?.brand ?? '').trim() || 'LUMIERE BEAUTY',
+    description: String(product.detail?.description ?? '').trim(),
+    salePrice: String(product.salePrice ?? ''),
+    costPrice: String(product.costPrice ?? ''),
+    weight: String(product.detail?.unitWeightLbs ?? ''),
+    length: dimensions.length,
+    width: dimensions.width,
+    height: dimensions.height,
+    hsCode: String(product.detail?.hsCode ?? '').trim(),
+    originCountry: PRODUCT_ORIGIN_VALUE_MAP[normalizedOrigin] ?? normalizedOrigin,
+    customsValue: String(product.detail?.customsValue ?? ''),
+    barcode: String(product.detail?.barcode ?? '').trim() === '미등록'
+      ? ''
+      : String(product.detail?.barcode ?? '').trim(),
+    asin: String(product.detail?.asin ?? '').trim(),
+    isActive: product.status !== 'INACTIVE',
+    lowStockAlert: Boolean(product.detail?.lowStockAlert ?? true),
+    amazonSync: Boolean(product.detail?.amazonSync ?? false),
+    stockAlertThreshold: Number(product.detail?.stockAlertThreshold ?? 10),
+    minOrderQuantity: Number(product.detail?.minOrderQuantity ?? 1),
+  }
+}
+
+/**
+ * 상품 등록 폼을 seller product 저장 payload로 정규화한다.
+ * mock-server 저장 단계라 화면 입력값과 목록 row/detail이 모두 만들어지도록 가공한다.
+ */
+export function buildSellerProductPayload(form = {}, { imageNames = [] } = {}) {
+  const normalizedLength = toPositiveNumber(form.length)
+  const normalizedWidth = toPositiveNumber(form.width)
+  const normalizedHeight = toPositiveNumber(form.height)
+  const normalizedCategory = String(form.category ?? '').trim()
+  const normalizedOrigin = String(form.originCountry ?? '').trim()
+
+  return {
+    sku: String(form.sku ?? '').trim(),
+    productName: String(form.productName ?? '').trim(),
+    category: normalizedCategory,
+    categoryLabel: PRODUCT_CATEGORY_LABEL_MAP[normalizedCategory] ?? normalizedCategory ?? '미분류',
+    brand: String(form.brand ?? '').trim() || 'LUMIERE BEAUTY',
+    description: String(form.description ?? '').trim(),
+    salePrice: toPositiveNumber(form.salePrice),
+    costPrice: toNonNegativeNumber(form.costPrice),
+    weight: toPositiveNumber(form.weight),
+    length: normalizedLength,
+    width: normalizedWidth,
+    height: normalizedHeight,
+    dimensions: `${normalizedLength} x ${normalizedWidth} x ${normalizedHeight} in`,
+    hsCode: String(form.hsCode ?? '').trim() || '3304.99.9000',
+    originCountry: normalizedOrigin,
+    originCountryLabel: PRODUCT_ORIGIN_LABEL_MAP[normalizedOrigin] ?? normalizedOrigin ?? '미등록',
+    customsValue: toPositiveNumber(form.customsValue),
+    barcode: String(form.barcode ?? '').trim(),
+    asin: String(form.asin ?? '').trim(),
+    isActive: Boolean(form.isActive),
+    lowStockAlert: Boolean(form.lowStockAlert),
+    amazonSync: Boolean(form.amazonSync),
+    stockAlertThreshold: Math.max(0, Math.trunc(toNonNegativeNumber(form.stockAlertThreshold))),
+    minOrderQuantity: Math.max(1, Math.trunc(toPositiveNumber(form.minOrderQuantity) || 1)),
+    imageNames: Array.isArray(imageNames)
+      ? imageNames
+          .map((name) => String(name ?? '').trim())
+          .filter(Boolean)
+          .slice(0, 3)
+      : [],
+  }
 }

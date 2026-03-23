@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  buildSellerProductExportRows,
   filterSellerProductRows,
   getSellerProductDetailById,
   getSellerProductStatusMeta,
@@ -23,6 +24,22 @@ describe('productList utils', () => {
 
     expect(result).toHaveLength(1)
     expect(result[0].sku).toBe('LB-TNR-150')
+  })
+
+  it('현재 목록을 CSV 다운로드용 행으로 정규화한다', () => {
+    expect(buildSellerProductExportRows([SELLER_PRODUCT_LIST_ROWS[0]])).toEqual([
+      {
+        SKU: 'LB-AMP-30',
+        상품명: '루미에르 앰플 30ml',
+        카테고리: '세럼/앰플',
+        보관창고: 'ICN-A',
+        판매가USD: 30,
+        원가USD: 8,
+        가용재고: 248,
+        할당재고: 42,
+        상태: '판매중',
+      },
+    ])
   })
 
   it('카테고리와 검색어를 함께 적용한다', () => {

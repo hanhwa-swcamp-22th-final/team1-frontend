@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  buildAsnDraftPendingMessage,
+  buildSellerAsnPayload,
   buildMockAsnNumber,
   calculateAsnSummary,
   createInitialAsnLine,
@@ -22,6 +24,12 @@ describe('asnCreate utils', () => {
       unit: 'EA',
       availableStock: 348,
     })
+  })
+
+  it('임시저장 준비중 안내 문구를 ASN 번호와 함께 만든다', () => {
+    expect(buildAsnDraftPendingMessage('ASN-20260322-001')).toBe(
+      'ASN-20260322-001 임시저장 기능은 준비 중입니다.',
+    )
   })
 
   it('품목 라인으로 ASN 요약 수치를 계산한다', () => {
@@ -87,5 +95,63 @@ describe('asnCreate utils', () => {
 
     expect(Object.values(result.fieldErrors).every((value) => value === '')).toBe(true)
     expect(result.lineErrors).toEqual([{ sku: '', quantity: '', cartonCount: '' }])
+  })
+
+  it('ASN 등록 payload를 목록/상세 저장 형태로 정규화한다', () => {
+    const result = buildSellerAsnPayload(
+      {
+        asnNo: 'ASN-20260322-001',
+        warehouseId: '1',
+        expectedDate: '2026-03-25',
+        shippingMethod: '해상 입고',
+        senderName: 'LUMIERE BEAUTY',
+        originCountry: '대한민국',
+        senderAddress: 'Busan Port',
+        senderPhone: '010-1234-5678',
+        note: '온도 민감 상품',
+      },
+      [
+        {
+          id: 'asn-line-1',
+          sku: 'KR-MASK-001',
+          productName: '리페어 마스크팩 10입',
+          availableStock: 348,
+          quantity: 12,
+          cartonCount: 3,
+        },
+      ],
+      { attachmentName: 'packing-list.pdf' },
+    )
+
+    expect(result).toEqual({
+      asnNo: 'ASN-20260322-001',
+      warehouseId: '1',
+      warehouseName: 'NJ Warehouse',
+      expectedDate: '2026-03-25',
+      shippingMethod: '해상 입고',
+      senderName: 'LUMIERE BEAUTY',
+      originCountry: '대한민국',
+      senderAddress: 'Busan Port',
+      senderPhone: '010-1234-5678',
+      note: '온도 민감 상품',
+      referenceNo: 'REF-22-001',
+      skuCount: 1,
+      totalQuantity: 12,
+      status: 'SUBMITTED',
+      detail: {
+        supplierName: 'LUMIERE BEAUTY',
+        originCountry: '대한민국',
+        originPort: 'Busan Port',
+        transportMode: '해상 입고',
+        incoterms: 'EXW',
+        bookingNo: 'BK-22-001',
+        carrier: '배차 정보 준비중',
+        arrivalWindow: '2026-03-25',
+        documents: ['Packing List', 'packing-list.pdf'],
+        items: [
+          { sku: 'KR-MASK-001', productName: '리페어 마스크팩 10입', quantity: 12, cartons: 3 },
+        ],
+      },
+    })
   })
 })

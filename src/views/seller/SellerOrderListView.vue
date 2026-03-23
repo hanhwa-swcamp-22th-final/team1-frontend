@@ -11,7 +11,9 @@ import BaseTable from '@/components/common/BaseTable.vue'
 import SellerConfirmDialog from '@/components/seller/SellerConfirmDialog.vue'
 import SellerOrderDetailModal from '@/components/seller/SellerOrderDetailModal.vue'
 import { ROUTE_NAMES } from '@/constants'
+import { downloadExcel } from '@/utils/excel.js'
 import {
+  buildSellerOrderExportRows,
   filterSellerOrderRows,
   getSellerOrderChannelMeta,
   getSellerOrderStatusMeta,
@@ -108,6 +110,19 @@ function showToolbarMessage(message) {
   toolbarMessage.value = message
 }
 
+function handleDownloadCsv() {
+  if (!filteredRows.value.length) {
+    showToolbarMessage('내보낼 주문이 없습니다.')
+    return
+  }
+
+  downloadExcel(
+    buildSellerOrderExportRows(filteredRows.value),
+    `seller-orders-${new Date().toISOString().slice(0, 10)}`,
+  )
+  showToolbarMessage('현재 필터 기준 주문 목록을 다운로드했습니다.')
+}
+
 function handleOpenOrderDetail(row) {
   selectedOrderId.value = row.id
   isDetailModalOpen.value = true
@@ -200,17 +215,9 @@ function handleConfirmCancel() {
             </label>
 
             <button
-              class="ui-btn ui-btn--ghost toolbar-btn toolbar-btn--compact"
-              type="button"
-              @click="showToolbarMessage('세부 필터 UI는 다음 단계에서 연결합니다.')"
-            >
-              필터
-            </button>
-
-            <button
               class="ui-btn ui-btn--ghost toolbar-btn"
               type="button"
-              @click="showToolbarMessage('CSV 내보내기 UI는 다음 단계에서 연결합니다.')"
+              @click="handleDownloadCsv"
             >
               CSV 내보내기
             </button>

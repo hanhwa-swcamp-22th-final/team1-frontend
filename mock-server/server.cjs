@@ -5,7 +5,7 @@
 //   routes/wms.cjs     — GET  /wms/*         (masterAdmin + 대시보드 공용) ← /wms/asns/* 포함
 //   routes/orders.cjs  — GET  /orders/*      (whManager + seller order)
 //   routes/members.cjs — GET  /members/*     (systemAdmin)
-//   routes/products.cjs — GET /products/*    (seller product)
+//   routes/products.cjs — GET/POST /products/*    (seller product)
 //   routes/integrations.cjs — GET /integrations/* (seller channel)
 //   routes/notifications.cjs — GET /notifications/* (seller notifications)
 //

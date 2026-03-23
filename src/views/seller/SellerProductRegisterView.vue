@@ -1,13 +1,17 @@
 <script setup>
 /**
  * 셀러 상품 등록 화면.
- * Pigma 상품 등록 시안을 기준으로 입력 섹션과 우측 설정 카드를 로컬 상태로 먼저 구성한다.
+ * Pigma 상품 등록 시안을 기준으로 입력 섹션과 우측 설정 카드를 구성하고 mock 저장까지 연결한다.
  */
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { createSellerProduct, getSellerProductDetail, updateSellerProduct } from '@/api/product.js'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import FileUpload from '@/components/common/FileUpload.vue'
 import {
+  buildProductFormFromProduct,
+  buildSellerProductPayload,
   buildVolumeWeight,
   createInitialProductErrors,
   createInitialProductForm,
@@ -17,7 +21,15 @@ import {
   validateProductForm,
 } from '@/utils/seller/productRegister.utils.js'
 
-const breadcrumb = [{ label: 'Seller' }, { label: '상품 등록' }]
+const route = useRoute()
+const editingProductId = computed(() => String(route.query.productId ?? '').trim())
+const isEditMode = computed(() => Boolean(editingProductId.value))
+const pageTitle = computed(() => (isEditMode.value ? '상품 수정' : '상품 등록'))
+const submitButtonLabel = computed(() => {
+  if (isSubmitting.value) return isEditMode.value ? '수정 중...' : '등록 중...'
+  return isEditMode.value ? '상품 수정' : '상품 등록'
+})
+const breadcrumb = computed(() => [{ label: 'Seller' }, { label: pageTitle.value }])
 
 // 상품 등록 입력값과 에러를 화면에 직접 바인딩한다.
 const productForm = ref(createInitialProductForm())
@@ -25,6 +37,8 @@ const fieldErrors = reactive(createInitialProductErrors())
 
 // 이미지 업로드는 현재 단계에서 파일명만 미리보기한다.
 const selectedImages = ref([])
+const isSubmitting = ref(false)
+const isLoadingEditProduct = ref(false)
 
 // 버튼 클릭 후 사용자에게 보여줄 안내 문구를 구분해서 관리한다.
 const infoMessage = ref('')
@@ -63,9 +77,27 @@ function resetProductForm() {
   clearFieldErrors()
 }
 
+function applyEditableProduct(product) {
+  productForm.value = buildProductFormFromProduct(product)
+  selectedImages.value = Array.isArray(product.detail?.imageNames)
+    ? product.detail.imageNames.slice(0, 3).map((name, index) => ({
+        id: `product-image-${index + 1}`,
+        name,
+      }))
+    : []
+  clearFieldErrors()
+}
+
 // 취소 버튼은 로컬 상태만 초기화하고 안내 메시지를 남긴다.
 function handleCancel() {
   clearMessages()
+
+  if (isEditMode.value) {
+    void loadEditableProduct()
+    infoMessage.value = '상품 수정 입력을 초기화했습니다.'
+    return
+  }
+
   resetProductForm()
   infoMessage.value = '작성 중인 상품 입력을 초기화했습니다.'
 }
@@ -110,8 +142,8 @@ function handleDraftSave() {
   infoMessage.value = `${productLabel} 초안을 임시저장했습니다. 실제 저장은 다음 단계에서 연결합니다.`
 }
 
-// 최종 등록은 필수 입력을 검증한 뒤 성공 메시지를 보여준다.
-function handleSubmit() {
+// 최종 등록은 필수 입력을 검증한 뒤 mock-server 상품 등록 API를 호출한다.
+async function handleSubmit() {
   clearMessages()
   clearFieldErrors()
 
@@ -126,13 +158,62 @@ function handleSubmit() {
   }
 
   const productLabel = productForm.value.productName || productForm.value.sku
-  // TODO(frontend): 상품 등록 API와 저장 후 후속 이동을 연결한다.
-  successMessage.value = `${productLabel} 상품 등록 준비가 완료되었습니다. 실제 저장은 다음 단계에서 연결합니다.`
+
+  try {
+    isSubmitting.value = true
+    const payload = buildSellerProductPayload(productForm.value, {
+      imageNames: selectedImages.value.map((image) => image.name),
+    })
+    const response = isEditMode.value
+      ? await updateSellerProduct(editingProductId.value, payload)
+      : await createSellerProduct(payload)
+
+    if (isEditMode.value) {
+      applyEditableProduct(response.data?.data ?? { ...payload, detail: payload })
+      successMessage.value = response.data?.message ?? `${productLabel} 상품 정보가 수정되었습니다.`
+      return
+    }
+
+    resetProductForm()
+    successMessage.value = response.data?.message ?? `${productLabel} 상품이 등록되었습니다.`
+  } catch (error) {
+    errorMessage.value = error.response?.data?.message ?? (
+      isEditMode.value
+        ? '상품 수정 중 오류가 발생했습니다.'
+        : '상품 등록 중 오류가 발생했습니다.'
+    )
+  } finally {
+    isSubmitting.value = false
+  }
 }
+
+async function loadEditableProduct() {
+  clearMessages()
+
+  if (!isEditMode.value) {
+    resetProductForm()
+    return
+  }
+
+  try {
+    isLoadingEditProduct.value = true
+    const response = await getSellerProductDetail(editingProductId.value)
+    applyEditableProduct(response.data?.data ?? {})
+  } catch (error) {
+    resetProductForm()
+    errorMessage.value = error.response?.data?.message ?? '상품 정보를 불러오는 중 오류가 발생했습니다.'
+  } finally {
+    isLoadingEditProduct.value = false
+  }
+}
+
+watch(() => editingProductId.value, () => {
+  void loadEditableProduct()
+}, { immediate: true })
 </script>
 
 <template>
-  <AppLayout title="상품 등록" :breadcrumb="breadcrumb">
+  <AppLayout :title="pageTitle" :breadcrumb="breadcrumb">
     <section class="seller-product-register-page">
       <form class="product-layout" @submit.prevent="handleSubmit">
         <div class="product-main">
@@ -304,9 +385,12 @@ function handleSubmit() {
           <div class="action-row">
             <button class="ui-btn ui-btn--ghost" type="button" @click="handleCancel">취소</button>
             <button class="ui-btn ui-btn--ghost" type="button" @click="handleDraftSave">임시저장</button>
-            <button class="ui-btn ui-btn--primary" type="submit">상품 등록</button>
+            <button class="ui-btn ui-btn--primary" type="submit" :disabled="isSubmitting">
+              {{ submitButtonLabel }}
+            </button>
           </div>
 
+          <p v-if="isLoadingEditProduct" class="page-message page-message--info">상품 정보를 불러오는 중입니다.</p>
           <p v-if="infoMessage" class="page-message page-message--info">{{ infoMessage }}</p>
           <p v-if="successMessage" class="page-message page-message--success">{{ successMessage }}</p>
           <p v-if="errorMessage" class="page-message page-message--error">{{ errorMessage }}</p>

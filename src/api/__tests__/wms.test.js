@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import instance from '@/api/instance'
 import {
+  createSellerAsn,
   getAsnStats,
   getInventoryStats,
   getWarehouseStatus,
@@ -56,6 +57,15 @@ describe('wms API', () => {
     await getSellerAsnList()
     expect(instance.get).toHaveBeenCalledOnce()
     expect(instance.get).toHaveBeenCalledWith('/wms/seller/asns')
+  })
+
+  it('createSellerAsn는 POST /wms/seller/asns를 호출한다', async () => {
+    const payload = { asnNo: 'ASN-20260322-001' }
+
+    await createSellerAsn(payload)
+
+    expect(instance.post).toHaveBeenCalledOnce()
+    expect(instance.post).toHaveBeenCalledWith('/wms/seller/asns', payload)
   })
 
   it('getSellerInventoryList는 GET /wms/seller/inventories를 호출한다', async () => {

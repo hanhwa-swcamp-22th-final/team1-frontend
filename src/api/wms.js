@@ -96,6 +96,15 @@ export function getSellerAsnList() {
 }
 
 /**
+ * 셀러 ASN 등록
+ * @param {object} payload
+ * @returns {Promise<AxiosResponse>}
+ */
+export function createSellerAsn(payload) {
+  return instance.post('/wms/seller/asns', payload)
+}
+
+/**
  * 셀러 재고 목록 조회
  * @returns {Promise<AxiosResponse>} { success, data: SellerInventory[] }
  */
