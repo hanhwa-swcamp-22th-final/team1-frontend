@@ -111,3 +111,18 @@ export function updateBinFixedAssignment(bin, data) {
 export function updateWorkerZones(id, zones) {
   return instance.patch(`/wh_worker_accounts/${id}`, { zones })
 }
+
+/** 창고 로케이션 전체 조회 (Zone/Rack/Bin 구조) */
+export function getWhmLocations() {
+  return instance.get('/wh_locations')
+}
+
+/** 재고 현황 목록 조회 */
+export function getWhmInventories() {
+  return instance.get('/wh_inventories')
+}
+
+/** 재고 단건 상세 조회 */
+export function getWhmInventoryDetail(id) {
+  return instance.get(`/wh_inventories/${id}`)
+}
