@@ -2,10 +2,12 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 import ToastMessage from '@/components/common/ToastMessage.vue'
 import SingleDispatchModal from '@/components/whManager/SingleDispatchModal.vue'
 import BulkDispatchModal from '@/components/whManager/BulkDispatchModal.vue'
 import { getWhmPendingOrders, dispatchSingleOrder, bulkDispatchOrders, getWhmWorkers } from '@/api/wh-manager'
+import { ORDER_STATUS, STOCK_STATUS } from '@/constants'
 
 // ── 데이터
 const orders   = ref([])
@@ -109,27 +111,27 @@ const sellerOptions = computed(() =>
 const validSelectedCount = computed(() =>
   [...selectedIds.value].filter(id => {
     const o = orders.value.find(o => o.id === id)
-    return o?.stockStatus !== 'INSUFFICIENT'
+    return o?.stockStatus !== STOCK_STATUS.INSUFFICIENT
   }).length,
 )
 
-// ── 전체 선택 여부
+// ── 전체 선택 여부 (필터된 전체 목록 기준)
 const isAllChecked = computed(() => {
-  const dispatchable = paged.value.filter(o => o.stockStatus !== 'INSUFFICIENT')
+  const dispatchable = filtered.value.filter(o => o.stockStatus !== STOCK_STATUS.INSUFFICIENT)
   return dispatchable.length > 0 && dispatchable.every(o => selectedIds.value.has(o.id))
 })
 
 const isIndeterminate = computed(() => {
-  const dispatchable = paged.value.filter(o => o.stockStatus !== 'INSUFFICIENT')
+  const dispatchable = filtered.value.filter(o => o.stockStatus !== STOCK_STATUS.INSUFFICIENT)
   return dispatchable.some(o => selectedIds.value.has(o.id)) && !isAllChecked.value
 })
 
-function toggleAll(e) {
-  const dispatchable = paged.value.filter(o => o.stockStatus !== 'INSUFFICIENT')
-  if (e.target.checked) {
-    dispatchable.forEach(o => selectedIds.value.add(o.id))
-  } else {
+function toggleAll() {
+  const dispatchable = filtered.value.filter(o => o.stockStatus !== STOCK_STATUS.INSUFFICIENT)
+  if (isAllChecked.value) {
     dispatchable.forEach(o => selectedIds.value.delete(o.id))
+  } else {
+    dispatchable.forEach(o => selectedIds.value.add(o.id))
   }
   selectedIds.value = new Set(selectedIds.value)
 }
@@ -152,7 +154,7 @@ function openSingle(order) {
 // ── 개별 출고 지시 확정
 async function handleSingleConfirm(payload) {
   try {
-    await dispatchSingleOrder(payload.orderId, { workerId: payload.workerId, status: 'PREPARING_ITEM' })
+    await dispatchSingleOrder(payload.orderId, { workerId: payload.workerId, status: ORDER_STATUS.PREPARING_ITEM })
     orders.value = orders.value.filter(o => o.id !== payload.orderId)
     selectedIds.value.delete(payload.orderId)
     selectedIds.value = new Set(selectedIds.value)
@@ -167,7 +169,7 @@ async function handleSingleConfirm(payload) {
 async function handleBulkConfirm(payload) {
   const ids = [...selectedIds.value].filter(id => {
     const o = orders.value.find(o => o.id === id)
-    return o?.stockStatus !== 'INSUFFICIENT'
+    return o?.stockStatus !== STOCK_STATUS.INSUFFICIENT
   })
   try {
     await bulkDispatchOrders({ orderIds: ids, ...payload })
@@ -205,6 +207,9 @@ const breadcrumb = [
 
     <!-- ── 상단 액션 슬롯 ─────────────────────────── -->
     <template #header-action>
+      <button class="ui-btn ui-btn--ghost" @click="toggleAll">
+        {{ isAllChecked ? '전체 해제' : '전체 선택' }}
+      </button>
       <button
         class="ui-btn ui-btn--primary"
         :disabled="validSelectedCount === 0"
@@ -274,6 +279,7 @@ const breadcrumb = [
               :checked="isAllChecked"
               :indeterminate="isIndeterminate"
               @change="toggleAll"
+              style="cursor:pointer"
             />
           </template>
 
@@ -282,7 +288,7 @@ const breadcrumb = [
             <input
               type="checkbox"
               :checked="selectedIds.has(row.id)"
-              :disabled="row.stockStatus === 'INSUFFICIENT'"
+              :disabled="row.stockStatus === STOCK_STATUS.INSUFFICIENT"
               @change="toggleRow(row.id)"
             />
           </template>
@@ -309,22 +315,17 @@ const breadcrumb = [
 
           <!-- 재고 상태 배지 -->
           <template #cell-stockStatus="{ row }">
-            <span
-              class="badge"
-              :class="row.stockStatus === 'SUFFICIENT' ? 'badge--green' : 'badge--red'"
-            >
-              {{ row.stockStatus === 'SUFFICIENT' ? '재고 충분' : '재고 부족' }}
-            </span>
+            <StatusBadge :status="row.stockStatus" type="stockStatus" />
           </template>
 
           <!-- 작업 버튼 -->
           <template #cell-actions="{ row }">
             <button
               class="ui-btn ui-btn--ghost ui-btn--sm"
-              :disabled="row.stockStatus === 'INSUFFICIENT'"
+              :disabled="row.stockStatus === STOCK_STATUS.INSUFFICIENT"
               @click="openSingle(row)"
             >
-              {{ row.stockStatus === 'INSUFFICIENT' ? '지시불가' : '지시' }}
+              {{ row.stockStatus === STOCK_STATUS.INSUFFICIENT ? '지시불가' : '지시' }}
             </button>
           </template>
         </BaseTable>
@@ -459,8 +460,6 @@ const breadcrumb = [
   white-space: nowrap;
 }
 .badge--blue  { background: var(--blue-pale);  color: var(--blue); }
-.badge--green { background: var(--green-pale); color: var(--green); }
-.badge--red   { background: var(--red-pale);   color: var(--red); }
 .badge--gray  { background: var(--surface-2);  color: var(--t3); }
 
 /* ── 버튼 ──────────────────────────────────────── */
@@ -495,5 +494,5 @@ const breadcrumb = [
   color: var(--t2);
 }
 .ui-btn--ghost:not(:disabled):hover { background: var(--surface-2); color: var(--t1); }
-.ui-btn--sm { height: 28px; font-size: var(--font-size-xs); }
+.ui-btn--sm { height: 28px; font-size: var(--font-size-xs); white-space: nowrap; }
 </style>

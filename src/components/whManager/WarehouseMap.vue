@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { BIN_STATUS } from '@/constants'
 
 const props = defineProps({
   locations:    { type: Array,  default: () => [] },
@@ -29,22 +30,22 @@ const currentZone = computed(() =>
 
 // ── 색상 매핑
 const STATUS_COLOR = {
-  empty:    'var(--green)',
-  occupied: 'var(--blue)',
-  caution:  '#d97706',
-  full:     'var(--red)',
+  [BIN_STATUS.EMPTY]:    'var(--green)',
+  [BIN_STATUS.OCCUPIED]: 'var(--blue)',
+  [BIN_STATUS.CAUTION]:  '#d97706',
+  [BIN_STATUS.FULL]:     'var(--red)',
 }
 const STATUS_BG = {
-  empty:    'var(--green-pale)',
-  occupied: 'var(--blue-pale)',
-  caution:  '#fef3c7',
-  full:     'var(--red-pale)',
+  [BIN_STATUS.EMPTY]:    'var(--green-pale)',
+  [BIN_STATUS.OCCUPIED]: 'var(--blue-pale)',
+  [BIN_STATUS.CAUTION]:  '#fef3c7',
+  [BIN_STATUS.FULL]:     'var(--red-pale)',
 }
 const STATUS_LABEL = {
-  empty:    '비어있음',
-  occupied: '사용 중',
-  caution:  '주의 (70%↑)',
-  full:     '포화',
+  [BIN_STATUS.EMPTY]:    '비어있음',
+  [BIN_STATUS.OCCUPIED]: '사용 중',
+  [BIN_STATUS.CAUTION]:  '주의 (70%↑)',
+  [BIN_STATUS.FULL]:     '포화',
 }
 
 // ── 팝오버 상태
@@ -94,25 +95,28 @@ function occupancyPct(bin) {
     <!-- 그리드 -->
     <div class="map-container" @click.self="closePopover" v-if="currentZone">
 
-      <div v-for="rack in currentZone.racks" :key="rack.rack" class="rack-row">
-        <div class="rack-label">Rack {{ rack.rack }}</div>
-        <div class="bin-row">
-          <button
-            v-for="bin in rack.bins"
-            :key="bin.bin"
-            class="bin-cell"
-            :class="{ 'bin-cell--highlight': highlightBin === bin.bin }"
-            :style="{
-              borderColor:     STATUS_COLOR[bin.status] ?? 'var(--border)',
-              backgroundColor: STATUS_BG[bin.status]   ?? 'var(--surface-2)',
-            }"
-            @click.stop="openPopover(bin, $event)"
-          >
-            <span class="bin-code">{{ bin.bin }}</span>
-            <span class="bin-pct" :style="{ color: STATUS_COLOR[bin.status] ?? 'var(--t3)' }">
-              {{ bin.status === 'empty' ? '빈 공간' : `${occupancyPct(bin)}%` }}
-            </span>
-          </button>
+      <!-- Rack을 가로로 나열, Bin은 아래→위 (실제 창고 랙 구조) -->
+      <div class="racks-container">
+        <div v-for="rack in currentZone.racks" :key="rack.rack" class="rack-col">
+          <div class="bin-stack">
+            <button
+              v-for="bin in rack.bins"
+              :key="bin.bin"
+              class="bin-cell"
+              :class="{ 'bin-cell--highlight': highlightBin === bin.bin }"
+              :style="{
+                borderColor:     STATUS_COLOR[bin.status] ?? 'var(--border)',
+                backgroundColor: STATUS_BG[bin.status]   ?? 'var(--surface-2)',
+              }"
+              @click.stop="openPopover(bin, $event)"
+            >
+              <span class="bin-code">{{ bin.bin }}</span>
+              <span class="bin-pct" :style="{ color: STATUS_COLOR[bin.status] ?? 'var(--t3)' }">
+                {{ bin.status === BIN_STATUS.EMPTY ? '빈 공간' : `${occupancyPct(bin)}%` }}
+              </span>
+            </button>
+          </div>
+          <div class="rack-label">R-{{ rack.rack }}</div>
         </div>
       </div>
 
@@ -205,26 +209,38 @@ function occupancyPct(bin) {
   border-radius: var(--radius-lg);
 }
 
-/* ── Rack 행 */
-.rack-row {
+/* ── Rack 열 (세로 배치) */
+.racks-container {
   display: flex;
-  align-items: center;
+  flex-direction: row;
+  align-items: flex-end;
   gap: var(--space-3);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+}
+
+.rack-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.bin-stack {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-2);
 }
 
 .rack-label {
-  width: 56px;
-  flex-shrink: 0;
   font-size: var(--font-size-xs);
   font-weight: 700;
   color: var(--t3);
-  text-align: right;
-}
-
-.bin-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+  text-align: center;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+  width: 100%;
 }
 
 /* ── Bin 셀 */

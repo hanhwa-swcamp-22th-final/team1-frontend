@@ -7,14 +7,17 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import CreateWorkerModal from '@/components/whManager/CreateWorkerModal.vue'
 import EditWorkerModal from '@/components/whManager/EditWorkerModal.vue'
 import DeactivateWorkerModal from '@/components/whManager/DeactivateWorkerModal.vue'
+import WorkerBinAssignModal from '@/components/whManager/WorkerBinAssignModal.vue'
 import {
   getWhmWorkerAccounts,
   createWhmWorkerAccount,
   updateWhmWorkerAccount,
   getWhmBinFixedAssignments,
+  createBinFixedAssignment,
   updateBinFixedAssignment,
+  getWhmLocations,
 } from '@/api/wh-manager'
-import { ACCOUNT_STATUS, WORKER_STATUS, WORKER_PRESENCE_STATUS } from '@/constants'
+import { ACCOUNT_STATUS, WORKER_PRESENCE_STATUS } from '@/constants'
 
 // ── 탭
 const activeTab = ref('accounts')
@@ -43,8 +46,30 @@ const targetWorker        = ref(null)
 
 // ── Bin 배정 탭 데이터
 const binFixed    = ref([])
+const locations   = ref([])
 const binLoading  = ref(false)
-const editedBins  = ref({})   // { [binId]: { workerId, taskType, fallbackWorkerId, memo } }
+
+// ── Bin 배정 모달
+const showBinAssignModal  = ref(false)
+const targetWorkerForBin  = ref(null)
+
+// ── +N 배지 툴팁 (Teleport — overflow:hidden 카드 클리핑 방지)
+const binTooltipBins  = ref([])
+const binTooltipStyle = ref({})
+
+function showBinTooltip(bins, event) {
+  binTooltipBins.value = bins
+  const rect = event.currentTarget.getBoundingClientRect()
+  binTooltipStyle.value = {
+    top:       `${rect.top - 8}px`,
+    left:      `${rect.left + rect.width / 2}px`,
+    transform: 'translate(-50%, -100%)',
+  }
+}
+
+function hideBinTooltip() {
+  binTooltipBins.value = []
+}
 
 // ── 토스트
 const toast = ref({ visible: false, message: '', type: 'success' })
@@ -52,12 +77,16 @@ function showToast(message, type = 'success') {
   toast.value = { visible: true, message, type }
 }
 
-// ── 계정 탭: 데이터 로드
+// ── 계정 탭: 데이터 로드 (binFixed도 함께 로드해 Bin 개수 표시)
 async function fetchWorkers() {
   loading.value = true
   try {
-    const { data } = await getWhmWorkerAccounts()
-    workers.value = data
+    const [workerRes, binRes] = await Promise.all([
+      getWhmWorkerAccounts(),
+      getWhmBinFixedAssignments(),
+    ])
+    workers.value  = workerRes.data
+    binFixed.value = binRes.data
   } catch {
     showToast('목록을 불러오지 못했습니다.', 'error')
   } finally {
@@ -65,26 +94,18 @@ async function fetchWorkers() {
   }
 }
 
-// ── Bin 탭: 데이터 로드 (작업자 목록도 같이 가져와야 select 옵션 구성 가능)
+// ── Bin 탭: 데이터 로드 (locations 포함)
 async function fetchBinTab() {
   binLoading.value = true
   try {
-    const [binRes, workerRes] = await Promise.all([
+    const [binRes, locRes, workerRes] = await Promise.all([
       getWhmBinFixedAssignments(),
+      getWhmLocations(),
       getWhmWorkerAccounts(),
     ])
-    binFixed.value  = binRes.data
-    workers.value   = workerRes.data
-    // 편집 상태 초기화
-    editedBins.value = {}
-    binRes.data.forEach(b => {
-      editedBins.value[b.id] = {
-        workerId:         b.workerId ?? '',
-        taskType:         b.taskType ?? '',
-        fallbackWorkerId: b.fallbackWorkerId ?? '',
-        memo:             b.memo ?? '',
-      }
-    })
+    binFixed.value   = binRes.data
+    locations.value  = locRes.data
+    workers.value    = workerRes.data
   } catch {
     showToast('Bin 배정 정보를 불러오지 못했습니다.', 'error')
   } finally {
@@ -104,9 +125,49 @@ watch([searchText, filterAccountStatus], () => {
   currentPage.value = 1
 })
 
-// ── 활성 작업자 목록 (Bin 배정 select 옵션용)
+// ── 활성 작업자 목록
 const activeWorkers = computed(() =>
   workers.value.filter(w => w.accountStatus === ACCOUNT_STATUS.ACTIVE)
+)
+
+// ── 작업자별 배정 Bin 개수 (accounts 탭 표시용)
+const workerBinCount = computed(() => {
+  const map = {}
+  binFixed.value.forEach(b => {
+    if (b.workerId) map[b.workerId] = (map[b.workerId] ?? 0) + 1
+  })
+  return map
+})
+
+// ── 창고 배치도 기반 전체 Bin 목록 + 배정 정보 overlay
+const locBins = computed(() =>
+  locations.value.flatMap(z =>
+    z.racks.flatMap(r =>
+      r.bins.map(b => {
+        const asgn = binFixed.value.find(a => a.bin === b.bin)
+        return {
+          id:        b.bin,
+          bin:       b.bin,
+          zone:      z.zone,
+          capacity:  b.capacity,
+          usedQty:   b.usedQty,
+          status:    b.status,
+          workerId:  asgn?.workerId  ?? '',
+          workerName: asgn?.workerName ?? '',
+          taskType:  asgn?.taskType  ?? '',
+          hasRecord: !!asgn,
+        }
+      })
+    )
+  )
+)
+
+// ── 작업자별 배정 Bin 목록 (Bin 탭 표시용, locBins 기반)
+const workerBins = computed(() =>
+  activeWorkers.value.map(w => ({
+    ...w,
+    bins: locBins.value.filter(b => b.workerId === w.id),
+  }))
 )
 
 // ── KPI
@@ -215,38 +276,33 @@ async function handleDeactivate(payload) {
   }
 }
 
+// ── Bin 배정 모달 열기
+function openBinAssignModal(worker) {
+  targetWorkerForBin.value = worker
+  showBinAssignModal.value = true
+}
+
 // ── Bin 배정 저장
-async function saveBin(bin) {
-  const edited = editedBins.value[bin.id]
-  if (!edited) return
-  const selectedWorker = workers.value.find(w => w.id === edited.workerId)
-  const fallbackWorker = workers.value.find(w => w.id === edited.fallbackWorkerId)
+async function handleBinAssign({ workerId, added, removed }) {
+  const worker = workers.value.find(w => w.id === workerId)
   try {
-    await updateBinFixedAssignment(bin.id, {
-      workerId:           edited.workerId,
-      workerName:         selectedWorker?.name ?? '',
-      taskType:           edited.taskType,
-      fallbackWorkerId:   edited.fallbackWorkerId,
-      fallbackWorkerName: fallbackWorker?.name ?? '',
-      memo:               edited.memo,
-    })
-    // 로컬 데이터 반영
-    binFixed.value = binFixed.value.map(b =>
-      b.id === bin.id
-        ? {
-            ...b,
-            workerId:           edited.workerId,
-            workerName:         selectedWorker?.name ?? b.workerName,
-            taskType:           edited.taskType,
-            fallbackWorkerId:   edited.fallbackWorkerId,
-            fallbackWorkerName: fallbackWorker?.name ?? '',
-            memo:               edited.memo,
-          }
-        : b
-    )
-    showToast(`Bin ${bin.bin} 배정이 저장되었습니다.`)
+    await Promise.all([
+      ...removed.map(binId =>
+        updateBinFixedAssignment(binId, { workerId: '', workerName: '', taskType: '' }),
+      ),
+      ...added.map(({ binId, taskType }) => {
+        const binInfo = locBins.value.find(b => b.id === binId)
+        const payload = { workerId, workerName: worker?.name ?? '', taskType }
+        return binInfo?.hasRecord
+          ? updateBinFixedAssignment(binId, payload)
+          : createBinFixedAssignment({ id: binId, bin: binId, ...payload })
+      }),
+    ])
+    await fetchBinTab()
+    showBinAssignModal.value = false
+    showToast(`${worker?.name} 작업자의 Bin 배정이 저장되었습니다.`)
   } catch {
-    showToast('저장 중 오류가 발생했습니다.', 'error')
+    showToast('Bin 배정 저장 중 오류가 발생했습니다.', 'error')
   }
 }
 
@@ -255,6 +311,7 @@ const columns = [
   { key: 'id',            label: '작업자 코드', width: '130px' },
   { key: 'name',          label: '이름',        width: '100px' },
   { key: 'accountStatus', label: '계정 상태',   width: '110px', align: 'center' },
+  { key: 'binCount',      label: '배정 Bin',    width: '90px',  align: 'center' },
   { key: 'registeredAt',  label: '등록일',      width: '110px' },
   { key: 'actions',       label: '관리',        width: '130px', align: 'center' },
 ]
@@ -367,6 +424,13 @@ const breadcrumb = [
             <StatusBadge :status="row.accountStatus" type="account" />
           </template>
 
+          <template #cell-binCount="{ row }">
+            <span v-if="workerBinCount[row.id]" class="bin-count-badge">
+              {{ workerBinCount[row.id] }}
+            </span>
+            <span v-else class="text-muted">—</span>
+          </template>
+
           <template #cell-registeredAt="{ row }">
             <span class="text-muted">{{ row.registeredAt }}</span>
           </template>
@@ -400,86 +464,59 @@ const breadcrumb = [
           <circle cx="7" cy="7" r="5.5"/><path d="M7 5v4M7 3.5v.5" stroke-linecap="round"/>
         </svg>
         <p>
-          각 Bin에 담당 작업자를 고정 배정합니다.
-          ASN 입고 시 해당 Bin의 작업자에게 <strong>검수&amp;적재</strong> 작업이,
-          출고 지시 시 <strong>피킹&amp;패킹</strong> 작업이 자동으로 배정됩니다.
-          작업자를 비활성화하면 해당 Bin의 배정이 해제되니 반드시 재배정하세요.
+          작업자별로 담당 Bin을 배정합니다. 한 작업자에게 여러 Bin을 배정할 수 있습니다.
+          배정된 Bin에서 작업이 발생하면 해당 작업자에게 자동으로 배정됩니다.
+          작업자를 비활성화하면 해당 작업자의 모든 Bin 배정이 해제되니 반드시 재배정하세요.
         </p>
       </div>
 
-      <!-- Bin 배정 테이블 -->
+      <!-- Worker-Bin 배정 현황 -->
       <div class="card">
         <div class="card-header">
-          <span class="card-title">Bin-작업자 고정 배정 현황</span>
+          <span class="card-title">작업자별 Bin 배정 현황</span>
         </div>
         <div class="table-wrap">
           <table class="bin-table">
             <thead>
               <tr>
-                <th>Bin 위치</th>
-                <th>담당 작업자</th>
-                <th>작업 유형</th>
-                <th>Fallback 작업자</th>
-                <th>메모</th>
-                <th>저장</th>
+                <th>작업자 코드</th>
+                <th>이름</th>
+                <th>배정된 Bin</th>
+                <th>편집</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="binLoading">
-                <td colspan="6" class="empty-cell">불러오는 중...</td>
+                <td colspan="4" class="empty-cell">불러오는 중...</td>
               </tr>
-              <tr v-else-if="!binFixed.length">
-                <td colspan="6" class="empty-cell">배정된 Bin이 없습니다.</td>
+              <tr v-else-if="!workerBins.length">
+                <td colspan="4" class="empty-cell">활성 작업자가 없습니다.</td>
               </tr>
               <template v-else>
-                <tr
-                  v-for="bin in binFixed"
-                  :key="bin.id"
-                  :class="{ 'row--warn': !editedBins[bin.id]?.workerId }"
-                >
-                  <td><span class="bin-tag">{{ bin.bin }}</span></td>
+                <tr v-for="w in workerBins" :key="w.id">
+                  <td><span class="mono">{{ w.id }}</span></td>
+                  <td><span class="worker-name">{{ w.name }}</span></td>
                   <td>
-                    <select
-                      v-model="editedBins[bin.id].workerId"
-                      class="cell-select"
-                      :class="{ 'cell-select--warn': !editedBins[bin.id]?.workerId }"
-                    >
-                      <option value="">— 미배정 —</option>
-                      <option
-                        v-for="w in activeWorkers"
-                        :key="w.id"
-                        :value="w.id"
-                      >{{ w.name }} ({{ w.id }})</option>
-                    </select>
+                    <div class="bin-tags">
+                      <span
+                        v-for="b in w.bins.slice(0, 3)"
+                        :key="b.id"
+                        class="bin-tag"
+                      >{{ b.bin }}</span>
+                      <span
+                        v-if="w.bins.length > 3"
+                        class="bin-tag-more"
+                        @mouseenter="showBinTooltip(w.bins.slice(3), $event)"
+                        @mouseleave="hideBinTooltip"
+                      >+{{ w.bins.length - 3 }}</span>
+                      <span v-if="!w.bins.length" class="no-bin">미배정</span>
+                    </div>
                   </td>
                   <td>
-                    <select v-model="editedBins[bin.id].taskType" class="cell-select">
-                      <option value="">— 선택 —</option>
-                      <option :value="WORKER_STATUS.INSPECTION_LOADING">검수&amp;적재</option>
-                      <option :value="WORKER_STATUS.PICKING_PACKING">피킹&amp;패킹</option>
-                    </select>
-                  </td>
-                  <td>
-                    <select v-model="editedBins[bin.id].fallbackWorkerId" class="cell-select">
-                      <option value="">— 없음 —</option>
-                      <option
-                        v-for="w in activeWorkers"
-                        :key="w.id"
-                        :value="w.id"
-                        :disabled="w.id === editedBins[bin.id]?.workerId"
-                      >{{ w.name }}</option>
-                    </select>
-                  </td>
-                  <td>
-                    <input
-                      v-model="editedBins[bin.id].memo"
-                      class="cell-input"
-                      type="text"
-                      placeholder="메모 입력"
-                    />
-                  </td>
-                  <td>
-                    <button class="ui-btn ui-btn--primary ui-btn--sm" @click="saveBin(bin)">저장</button>
+                    <button
+                      class="ui-btn ui-btn--ghost ui-btn--sm"
+                      @click="openBinAssignModal(w)"
+                    >Bin 편집</button>
                   </td>
                 </tr>
               </template>
@@ -509,11 +546,29 @@ const breadcrumb = [
       @cancel="showDeactivateModal = false"
     />
 
+    <WorkerBinAssignModal
+      :isOpen="showBinAssignModal"
+      :worker="targetWorkerForBin"
+      :allBins="locBins"
+      @confirm="handleBinAssign"
+      @cancel="showBinAssignModal = false"
+    />
+
     <ToastMessage
       v-model:visible="toast.visible"
       :message="toast.message"
       :type="toast.type"
     />
+
+    <!-- ── +N 배지 툴팁 (body Teleport) ── -->
+    <Teleport to="body">
+      <div v-if="binTooltipBins.length" class="bin-more-tooltip" :style="binTooltipStyle">
+        <div class="bmt-title">나머지 배정 Bin</div>
+        <div class="bmt-list">
+          <span v-for="b in binTooltipBins" :key="b.id" class="bmt-tag">{{ b.bin }}</span>
+        </div>
+      </div>
+    </Teleport>
   </AppLayout>
 </template>
 
@@ -662,6 +717,19 @@ const breadcrumb = [
 
 .action-row { display: flex; gap: var(--space-1); justify-content: center; }
 
+.bin-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: 2px 8px;
+  background: var(--blue-pale);
+  color: var(--blue);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
 /* ── 안내 배너 ── */
 .info-banner {
   display: flex;
@@ -704,46 +772,81 @@ const breadcrumb = [
 
 .bin-table tbody tr:hover { background: var(--surface-2); }
 
-.row--warn { background: rgba(245, 166, 35, 0.05); }
+.bin-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
 
 .bin-tag {
   display: inline-block;
   padding: 2px 10px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: var(--blue-pale);
+  border: 1px solid var(--blue);
   border-radius: var(--radius-md);
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
   font-weight: 600;
-  color: var(--t2);
+  color: var(--blue);
 }
 
-.cell-select {
-  width: 100%;
-  min-width: 160px;
-  height: 32px;
-  padding: 0 8px;
+.bin-tag-more {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: var(--surface);
-  color: var(--t1);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--t3);
+  cursor: default;
+  user-select: none;
 }
-.cell-select--warn { border-color: var(--amber); }
 
-.cell-input {
-  width: 100%;
-  min-width: 140px;
-  height: 32px;
-  padding: 0 8px;
+/* ── +N 툴팁 (body Teleport — scoped 불가하므로 :global 사용) */
+:global(.bin-more-tooltip) {
+  position: fixed;
+  z-index: 9999;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: var(--surface);
-  color: var(--t1);
-  font-size: var(--font-size-sm);
-  outline: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  padding: var(--space-3);
+  pointer-events: none;
+  min-width: 120px;
+  max-width: 260px;
 }
-.cell-input:focus { border-color: var(--blue); }
+
+:global(.bin-more-tooltip .bmt-title) {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-2);
+}
+
+:global(.bin-more-tooltip .bmt-list) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+:global(.bin-more-tooltip .bmt-tag) {
+  padding: 2px 8px;
+  background: var(--blue-pale);
+  border: 1px solid var(--blue);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--blue);
+}
+
+.no-bin {
+  font-size: var(--font-size-xs);
+  color: var(--t3);
+}
 
 .empty-cell {
   text-align: center;

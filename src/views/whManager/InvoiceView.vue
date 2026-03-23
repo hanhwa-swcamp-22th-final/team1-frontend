@@ -81,9 +81,9 @@ const pagination = computed(() => ({
   total:    filtered.value.length,
 }))
 
-// ── 미발행 주문만 선택 가능
+// ── 미발행 주문만 선택 가능 (필터된 전체 목록 기준)
 const selectableIds = computed(() =>
-  paged.value
+  filtered.value
     .filter(o => o.labelStatus === LABEL_STATUS.NOT_ISSUED)
     .map(o => o.id),
 )
@@ -97,11 +97,11 @@ const isIndeterminate = computed(() =>
   selectableIds.value.some(id => selectedIds.value.has(id)) && !isAllChecked.value,
 )
 
-function toggleAll(e) {
-  if (e.target.checked) {
-    selectableIds.value.forEach(id => selectedIds.value.add(id))
-  } else {
+function toggleAll() {
+  if (isAllChecked.value) {
     selectableIds.value.forEach(id => selectedIds.value.delete(id))
+  } else {
+    selectableIds.value.forEach(id => selectedIds.value.add(id))
   }
   selectedIds.value = new Set(selectedIds.value)
 }
@@ -185,6 +185,9 @@ const breadcrumb = [
 
     <!-- ── 상단 액션 ───────────────────────────────── -->
     <template #header-action>
+      <button class="ui-btn ui-btn--ghost" @click="toggleAll">
+        {{ isAllChecked ? '전체 해제' : '전체 선택' }}
+      </button>
       <button
         class="ui-btn ui-btn--primary"
         :disabled="selectedIds.size === 0"
@@ -455,5 +458,5 @@ const breadcrumb = [
 .ui-btn--ghost { border-color: var(--border); background: transparent; color: var(--t2); }
 .ui-btn--ghost:not(:disabled):hover { background: var(--surface-2); color: var(--t1); }
 
-.ui-btn--sm { height: 28px; font-size: var(--font-size-xs); }
+.ui-btn--sm { height: 28px; font-size: var(--font-size-xs); white-space: nowrap; }
 </style>

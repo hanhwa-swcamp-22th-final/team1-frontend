@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 import InventoryDetailModal from '@/components/whManager/InventoryDetailModal.vue'
 import { useRouter } from 'vue-router'
 import { getWhmInventories } from '@/api/wh-manager'
@@ -40,13 +41,6 @@ onMounted(fetchInventories)
 watch([searchText, filterSeller, filterStatus], () => {
   currentPage.value = 1
 })
-
-// ── 상태 매핑
-const STATUS_MAP = {
-  [INVENTORY_STATUS.NORMAL]:   { label: '정상',      color: 'green' },
-  [INVENTORY_STATUS.CAUTION]:  { label: '주의',      color: 'amber' },
-  [INVENTORY_STATUS.SHORTAGE]: { label: '재고 부족', color: 'red'   },
-}
 
 // ── KPI 집계
 const kpi = computed(() => ({
@@ -118,6 +112,24 @@ function openDetail(item) {
 }
 function closeDetail() {
   selectedItem.value = null
+}
+
+// ── 위치 태그 툴팁 (Teleport 사용 — overflow:hidden 카드 내부 클리핑 방지)
+const hoveredLoc   = ref(null)
+const tooltipStyle = ref({})
+
+function showTooltip(loc, event) {
+  hoveredLoc.value = loc
+  const rect = event.currentTarget.getBoundingClientRect()
+  tooltipStyle.value = {
+    top:       `${rect.top - 8}px`,
+    left:      `${rect.left + rect.width / 2}px`,
+    transform: 'translate(-50%, -100%)',
+  }
+}
+
+function hideTooltip() {
+  hoveredLoc.value = null
 }
 
 // ── 브레드크럼
@@ -231,14 +243,10 @@ const breadcrumb = [
                 v-for="loc in row.locations"
                 :key="loc.bin"
                 class="location-tag location-tag--link"
+                @mouseenter="showTooltip(loc, $event)"
+                @mouseleave="hideTooltip"
               >
                 <span class="loc-code" @click="goToWarehouseMap(loc.bin)">{{ loc.bin }}</span>
-                <div class="loc-tooltip">
-                  <div class="lt-row"><span class="lt-label">보관 수량</span><span class="lt-val">{{ loc.qty.toLocaleString() }}개</span></div>
-                  <div class="lt-row"><span class="lt-label">ASN</span><span class="lt-val mono">{{ loc.asnId }}</span></div>
-                  <div class="lt-row"><span class="lt-label">입고일</span><span class="lt-val">{{ loc.receivedDate }}</span></div>
-                  <div class="lt-hint">클릭 시 배치도에서 확인</div>
-                </div>
               </div>
             </div>
           </template>
@@ -250,9 +258,7 @@ const breadcrumb = [
 
           <!-- 상태 배지 -->
           <template #cell-status="{ row }">
-            <span class="badge" :class="`badge--${STATUS_MAP[row.status]?.color}`">
-              {{ STATUS_MAP[row.status]?.label ?? row.status }}
-            </span>
+            <StatusBadge :status="row.status" type="inventory" />
           </template>
 
           <!-- 작업 버튼 -->
@@ -267,6 +273,16 @@ const breadcrumb = [
     <!-- ── 상세 모달 ──────────────────────────────── -->
     <InventoryDetailModal :item="selectedItem" @close="closeDetail" />
 
+    <!-- ── 위치 툴팁 (body에 렌더링 — overflow 클리핑 방지) ── -->
+    <Teleport to="body">
+      <div v-if="hoveredLoc" class="loc-tooltip-body" :style="tooltipStyle">
+        <div class="lt-row"><span class="lt-label">보관 수량</span><span class="lt-val">{{ hoveredLoc.qty.toLocaleString() }}개</span></div>
+        <div class="lt-row"><span class="lt-label">ASN</span><span class="lt-val lt-mono">{{ hoveredLoc.asnId }}</span></div>
+        <div class="lt-row"><span class="lt-label">입고일</span><span class="lt-val">{{ hoveredLoc.receivedDate }}</span></div>
+        <div class="lt-hint">클릭 시 배치도에서 확인</div>
+      </div>
+    </Teleport>
+
   </AppLayout>
 </template>
 
@@ -274,7 +290,7 @@ const breadcrumb = [
 /* ── KPI Grid ──────────────────────────────────── */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--space-4);
   margin-bottom: var(--space-4);
 }
@@ -378,10 +394,10 @@ const breadcrumb = [
   margin-right: 4px;
 }
 
-/* ── 위치 태그 — hover tooltip + click */
+/* ── 위치 태그 */
 .loc-wrap { display: flex; flex-wrap: wrap; gap: 4px; }
 
-.location-tag--link { position: relative; cursor: default; }
+.location-tag--link { cursor: default; }
 
 .loc-code {
   cursor: pointer;
@@ -392,48 +408,30 @@ const breadcrumb = [
 
 .loc-code:hover { filter: brightness(0.8); }
 
-.loc-tooltip {
-  display: none;
-  position: absolute;
-  z-index: 200;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
+/* ── 위치 툴팁 (body Teleport — scoped 불가하므로 :global 사용) */
+:global(.loc-tooltip-body) {
+  position: fixed;
+  z-index: 9999;
   min-width: 200px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
   padding: var(--space-3);
   pointer-events: none;
   white-space: nowrap;
-}
-
-.location-tag--link:hover .loc-tooltip {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.lt-row   { display: flex; gap: var(--space-2); font-size: var(--font-size-xs); }
-.lt-label { color: var(--t3); min-width: 56px; flex-shrink: 0; }
-.lt-val   { color: var(--t1); font-weight: 500; }
-.lt-hint  { margin-top: var(--space-1); font-size: 10px; color: var(--blue); font-weight: 600; }
+:global(.loc-tooltip-body .lt-row)   { display: flex; gap: var(--space-2); font-size: var(--font-size-xs); }
+:global(.loc-tooltip-body .lt-label) { color: var(--t3); min-width: 56px; flex-shrink: 0; }
+:global(.loc-tooltip-body .lt-val)   { color: var(--t1); font-weight: 500; }
+:global(.loc-tooltip-body .lt-mono)  { font-family: var(--font-mono); font-size: var(--font-size-xs); }
+:global(.loc-tooltip-body .lt-hint)  { margin-top: var(--space-1); font-size: 10px; color: var(--blue); font-weight: 600; }
 
 /* ── Status Badge ──────────────────────────────── */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 10px;
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  white-space: nowrap;
-}
-.badge--green { background: var(--green-pale); color: var(--green); }
-.badge--amber { background: var(--amber-pale); color: #b45309; }
-.badge--red   { background: var(--red-pale);   color: var(--red);   }
-
 /* ── Buttons ───────────────────────────────────── */
 .ui-btn {
   display: inline-flex;
@@ -451,5 +449,5 @@ const breadcrumb = [
   transition: background var(--ease-fast), color var(--ease-fast);
 }
 .ui-btn--ghost:hover { background: var(--surface-2); color: var(--t1); }
-.ui-btn--sm { height: 28px; padding: 0 var(--space-3); }
+.ui-btn--sm { height: 28px; padding: 0 var(--space-3); white-space: nowrap; }
 </style>

@@ -6,6 +6,7 @@ import BaseTable from '@/components/common/BaseTable.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import WarehouseMap from '@/components/whManager/WarehouseMap.vue'
 import { getWhmLocations } from '@/api/wh-manager'
+import { BIN_STATUS } from '@/constants'
 
 const route = useRoute()
 
@@ -34,12 +35,12 @@ const allBins = computed(() =>
 
 const kpi = computed(() => {
   const bins = allBins.value
-  const used = bins.filter(b => b.status !== 'empty').length
+  const used = bins.filter(b => b.status !== BIN_STATUS.EMPTY).length
   return {
     total:   bins.length,
     used,
-    caution: bins.filter(b => b.status === 'caution').length,
-    full:    bins.filter(b => b.status === 'full').length,
+    caution: bins.filter(b => b.status === BIN_STATUS.CAUTION).length,
+    full:    bins.filter(b => b.status === BIN_STATUS.FULL).length,
     usePct:  bins.length ? Math.round(used / bins.length * 100) : 0,
   }
 })
@@ -47,7 +48,7 @@ const kpi = computed(() => {
 // 포화 임박 Bin (caution + full), 사용률 내림차순
 const warningBins = computed(() =>
   allBins.value
-    .filter(b => b.status === 'caution' || b.status === 'full')
+    .filter(b => b.status === BIN_STATUS.CAUTION || b.status === BIN_STATUS.FULL)
     .map(b => ({ ...b, pct: Math.round((b.usedQty / b.capacity) * 100) }))
     .sort((a, b) => b.pct - a.pct)
 )
@@ -132,7 +133,7 @@ const warningCols = [
           </template>
           <template #cell-status="{ row }">
             <span class="badge" :class="`badge--${row.status}`">
-              {{ row.status === 'full' ? '포화' : '주의' }}
+              {{ row.status === BIN_STATUS.FULL ? '포화' : '주의' }}
             </span>
           </template>
           <template #cell-sku="{ value }">
@@ -142,7 +143,7 @@ const warningCols = [
             {{ row.usedQty.toLocaleString() }} / {{ row.capacity.toLocaleString() }}
           </template>
           <template #cell-pct="{ row }">
-            <span :class="row.status === 'full' ? 'text-red' : 'text-amber'">{{ row.pct }}%</span>
+            <span :class="row.status === BIN_STATUS.FULL ? 'text-red' : 'text-amber'">{{ row.pct }}%</span>
           </template>
         </BaseTable>
       </div>

@@ -227,9 +227,41 @@ export const TASK_ASSIGN_TYPE = {
  * NORMAL:   재고 수량이 임계값 이상인 정상 상태
  * CAUTION:  재고 수량이 임계값에 근접한 주의 상태
  * SHORTAGE: 재고 수량이 임계값 이하인 부족 상태
+ *
+ * StatusBadge.vue의 MAP.inventory와 연동됨.
  */
 export const INVENTORY_STATUS = {
   NORMAL:   'normal',
   CAUTION:  'caution',
   SHORTAGE: 'shortage',
+}
+
+/**
+ * STOCK_STATUS — 출고 지시용 재고 가용 여부 2단계
+ *
+ * SUFFICIENT:   주문 수량을 충족하는 가용 재고 보유
+ * INSUFFICIENT: 주문 수량 대비 재고 부족 → 출고 지시 불가
+ *
+ * StatusBadge.vue의 MAP.stockStatus와 연동됨.
+ */
+export const STOCK_STATUS = {
+  SUFFICIENT:   'SUFFICIENT',
+  INSUFFICIENT: 'INSUFFICIENT',
+}
+
+/**
+ * BIN_STATUS — 창고 Bin 점유 상태 4단계
+ *
+ * EMPTY:    비어 있음 (적재 가능)
+ * OCCUPIED: SKU 적재 중 (70% 미만)
+ * CAUTION:  적재율 70% 이상 주의
+ * FULL:     포화 (추가 적재 불가)
+ *
+ * WarehouseMap.vue, WorkerBinAssignModal.vue와 연동됨.
+ */
+export const BIN_STATUS = {
+  EMPTY:    'empty',
+  OCCUPIED: 'occupied',
+  CAUTION:  'caution',
+  FULL:     'full',
 }
