@@ -216,6 +216,22 @@ export const SELLER_INVENTORY_LIST_COLUMNS = [
   { key: 'status', label: '상태', width: '120px' },
 ]
 
+// 재고 목록의 현재 필터 결과를 CSV/Excel 다운로드용 행으로 정규화한다.
+export function buildSellerInventoryExportRows(rows = []) {
+  return rows.map((row) => ({
+    SKU: row.sku ?? '',
+    상품명: row.productName ?? '',
+    창고: row.warehouseName ?? '',
+    가용재고: Number(row.availableStock ?? 0),
+    할당재고: Number(row.allocatedStock ?? 0),
+    총재고: Number(row.totalStock ?? 0),
+    입고예정: Number(row.inboundExpected ?? 0),
+    최근입고일: row.lastInboundDate ?? '',
+    경고임계치: Number(row.warningThreshold ?? 0),
+    상태: getSellerInventoryStatusMeta(row.status).label,
+  }))
+}
+
 // 재고 상태 라벨과 배지 색상을 반환한다.
 export function getSellerInventoryStatusMeta(status) {
   return SELLER_INVENTORY_STATUS_META[status] ?? { label: status ?? '-', tone: 'default' }

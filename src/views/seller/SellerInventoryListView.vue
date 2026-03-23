@@ -8,7 +8,9 @@ import { getSellerInventoryList } from '@/api/wms.js'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import SellerInventoryDetailModal from '@/components/seller/SellerInventoryDetailModal.vue'
+import { downloadExcel } from '@/utils/excel.js'
 import {
+  buildSellerInventoryExportRows,
   filterSellerInventoryRows,
   getSellerInventoryStatusMeta,
   normalizeSellerInventoryDetail,
@@ -102,9 +104,21 @@ function handleCloseInventoryDetail() {
   isDetailModalOpen.value = false
 }
 
-// UI 범위만 구현하므로 CSV는 안내 메시지로 처리한다.
 function showToolbarMessage(message) {
   toolbarMessage.value = message
+}
+
+function handleDownloadCsv() {
+  if (!filteredRows.value.length) {
+    showToolbarMessage('내보낼 재고가 없습니다.')
+    return
+  }
+
+  downloadExcel(
+    buildSellerInventoryExportRows(filteredRows.value),
+    `seller-inventories-${new Date().toISOString().slice(0, 10)}`,
+  )
+  showToolbarMessage('현재 필터 기준 재고 목록을 다운로드했습니다.')
 }
 </script>
 
@@ -154,11 +168,10 @@ function showToolbarMessage(message) {
               />
             </label>
 
-            <!-- TODO(frontend): 재고 목록 CSV 내보내기 기능을 연결한다. -->
             <button
               class="ui-btn ui-btn--ghost toolbar-btn"
               type="button"
-              @click="showToolbarMessage('CSV 내보내기 UI는 다음 단계에서 연결합니다.')"
+              @click="handleDownloadCsv"
             >
               CSV 내보내기
             </button>
