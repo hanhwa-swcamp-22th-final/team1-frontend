@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  buildSellerOrderExportRows,
   filterSellerOrderRows,
   getSellerOrderDetailById,
   getSellerOrderChannelMeta,
@@ -38,6 +39,21 @@ describe('orderList utils', () => {
       expect.objectContaining({
         orderNo: 'ORD-2026-0310-044',
       }),
+    ])
+  })
+
+  it('현재 주문 목록을 CSV 다운로드용 행으로 정규화한다', () => {
+    expect(buildSellerOrderExportRows([SELLER_ORDER_LIST_ROWS[0]])).toEqual([
+      {
+        주문번호: 'ORD-2026-0311-001',
+        채널: 'Amazon',
+        수령자: 'Sarah Johnson',
+        배송지: 'California, Los Angeles',
+        주문상품: 'LB-AMP-30 × 2, LB-MSK-5P × 1',
+        주문일시: '2026-03-11 09:12',
+        상태: '출고완료',
+        송장번호: '1Z999AA10123456784',
+      },
     ])
   })
 

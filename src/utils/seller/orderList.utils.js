@@ -184,6 +184,20 @@ export const SELLER_ORDER_LIST_COLUMNS = [
   { key: 'actions', label: '관리', width: '90px', align: 'center' },
 ]
 
+// 주문 목록의 현재 필터 결과를 CSV/Excel 다운로드용 행으로 정규화한다.
+export function buildSellerOrderExportRows(rows = []) {
+  return rows.map((row) => ({
+    주문번호: row.orderNo ?? '',
+    채널: getSellerOrderChannelMeta(row.channel).label,
+    수령자: row.recipient ?? '',
+    배송지: row.address ?? '',
+    주문상품: row.itemsSummary ?? '',
+    주문일시: row.orderedAt ?? '',
+    상태: getSellerOrderStatusMeta(row.status).label,
+    송장번호: row.trackingNo ?? '',
+  }))
+}
+
 const SELLER_ORDER_DETAIL_MAP = {
   'seller-order-1': {
     receiverPhone: '+1-213-555-0101',
