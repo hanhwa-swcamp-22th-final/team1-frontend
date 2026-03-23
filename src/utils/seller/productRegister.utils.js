@@ -30,8 +30,16 @@ const PRODUCT_CATEGORY_LABEL_MAP = Object.fromEntries(
   SELLER_PRODUCT_CATEGORY_OPTIONS.map((option) => [option.value, option.label])
 )
 
+const PRODUCT_CATEGORY_VALUE_MAP = Object.fromEntries(
+  SELLER_PRODUCT_CATEGORY_OPTIONS.map((option) => [option.label, option.value])
+)
+
 const PRODUCT_ORIGIN_LABEL_MAP = Object.fromEntries(
   SELLER_PRODUCT_ORIGIN_OPTIONS.map((option) => [option.value, option.label])
+)
+
+const PRODUCT_ORIGIN_VALUE_MAP = Object.fromEntries(
+  SELLER_PRODUCT_ORIGIN_OPTIONS.map((option) => [option.label, option.value])
 )
 
 // 상품 등록 폼의 초기 상태를 만든다.
@@ -86,6 +94,20 @@ function toPositiveNumber(value) {
 function toNonNegativeNumber(value) {
   const numeric = Number(value)
   return Number.isFinite(numeric) && numeric >= 0 ? numeric : 0
+}
+
+function parseProductDimensions(dimensions = '') {
+  const matches = String(dimensions ?? '').match(/(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)/i)
+
+  if (!matches) {
+    return { length: '', width: '', height: '' }
+  }
+
+  return {
+    length: matches[1],
+    width: matches[2],
+    height: matches[3],
+  }
 }
 
 /**
@@ -150,6 +172,42 @@ export function validateProductForm(form = {}) {
   }
 
   return errors
+}
+
+/**
+ * 상품 목록 row/detail을 등록 화면 form 구조로 되돌린다.
+ * 등록 화면 재사용으로 수정 모드를 구성할 때 사용한다.
+ */
+export function buildProductFormFromProduct(product = {}) {
+  const dimensions = parseProductDimensions(product.detail?.dimensions)
+  const normalizedCategory = String(product.category ?? '').trim()
+  const normalizedOrigin = String(product.detail?.originCountry ?? '').trim()
+
+  return {
+    sku: String(product.sku ?? '').trim(),
+    productName: String(product.productName ?? '').trim(),
+    category: PRODUCT_CATEGORY_VALUE_MAP[normalizedCategory] ?? normalizedCategory,
+    brand: String(product.detail?.brand ?? '').trim() || 'LUMIERE BEAUTY',
+    description: String(product.detail?.description ?? '').trim(),
+    salePrice: String(product.salePrice ?? ''),
+    costPrice: String(product.costPrice ?? ''),
+    weight: String(product.detail?.unitWeightLbs ?? ''),
+    length: dimensions.length,
+    width: dimensions.width,
+    height: dimensions.height,
+    hsCode: String(product.detail?.hsCode ?? '').trim(),
+    originCountry: PRODUCT_ORIGIN_VALUE_MAP[normalizedOrigin] ?? normalizedOrigin,
+    customsValue: String(product.detail?.customsValue ?? ''),
+    barcode: String(product.detail?.barcode ?? '').trim() === '미등록'
+      ? ''
+      : String(product.detail?.barcode ?? '').trim(),
+    asin: String(product.detail?.asin ?? '').trim(),
+    isActive: product.status !== 'INACTIVE',
+    lowStockAlert: Boolean(product.detail?.lowStockAlert ?? true),
+    amazonSync: Boolean(product.detail?.amazonSync ?? false),
+    stockAlertThreshold: Number(product.detail?.stockAlertThreshold ?? 10),
+    minOrderQuantity: Number(product.detail?.minOrderQuantity ?? 1),
+  }
 }
 
 /**

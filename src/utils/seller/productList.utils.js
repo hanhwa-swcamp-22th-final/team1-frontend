@@ -240,6 +240,21 @@ export const SELLER_PRODUCT_LIST_COLUMNS = [
   { key: 'actions', label: '관리', width: '140px', align: 'center' },
 ]
 
+// 상품 목록의 현재 필터 결과를 CSV/Excel 다운로드용 행으로 정규화한다.
+export function buildSellerProductExportRows(rows = []) {
+  return rows.map((row) => ({
+    SKU: row.sku ?? '',
+    상품명: row.productName ?? '',
+    카테고리: row.category ?? '',
+    보관창고: row.warehouseName ?? '',
+    판매가USD: Number(row.salePrice ?? 0),
+    원가USD: Number(row.costPrice ?? 0),
+    가용재고: Number(row.availableStock ?? 0),
+    할당재고: Number(row.allocatedStock ?? 0),
+    상태: getSellerProductStatusMeta(row.status).label,
+  }))
+}
+
 // 상품 상태 라벨과 배지 색상을 반환한다.
 export function getSellerProductStatusMeta(status) {
   return SELLER_PRODUCT_STATUS_META[status] ?? { label: status ?? '-', tone: 'default' }

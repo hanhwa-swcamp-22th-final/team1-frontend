@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  buildProductFormFromProduct,
   buildSellerProductPayload,
   buildVolumeWeight,
   createInitialProductForm,
@@ -97,6 +98,56 @@ describe('productRegister utils', () => {
       stockAlertThreshold: 12,
       minOrderQuantity: 2,
       imageNames: ['front.png', 'detail.png', 'extra.png'],
+    })
+  })
+
+  it('상품 row/detail을 등록 폼 구조로 역정규화한다', () => {
+    const result = buildProductFormFromProduct({
+      sku: 'LB-AMP-30',
+      productName: '루미에르 앰플 30ml',
+      category: '세럼/앰플',
+      salePrice: 30,
+      costPrice: 8,
+      status: 'ACTIVE',
+      detail: {
+        brand: 'LUMIERE BEAUTY',
+        description: '흡수가 빠른 브라이트닝 앰플',
+        unitWeightLbs: 0.32,
+        dimensions: '5.8 x 1.9 x 1.9 in',
+        hsCode: '3304.99.5000',
+        originCountry: '대한민국 (KR)',
+        customsValue: 8,
+        barcode: '8809812300011',
+        asin: 'B00TEST001',
+        lowStockAlert: true,
+        amazonSync: true,
+        stockAlertThreshold: 12,
+        minOrderQuantity: 2,
+      },
+    })
+
+    expect(result).toEqual({
+      sku: 'LB-AMP-30',
+      productName: '루미에르 앰플 30ml',
+      category: 'SERUM',
+      brand: 'LUMIERE BEAUTY',
+      description: '흡수가 빠른 브라이트닝 앰플',
+      salePrice: '30',
+      costPrice: '8',
+      weight: '0.32',
+      length: '5.8',
+      width: '1.9',
+      height: '1.9',
+      hsCode: '3304.99.5000',
+      originCountry: 'KR',
+      customsValue: '8',
+      barcode: '8809812300011',
+      asin: 'B00TEST001',
+      isActive: true,
+      lowStockAlert: true,
+      amazonSync: true,
+      stockAlertThreshold: 12,
+      minOrderQuantity: 2,
     })
   })
 })
