@@ -38,6 +38,7 @@ const pendingStatusProductId = ref('')
 const pendingStatusMode = ref('')
 const isDetailModalOpen = ref(false)
 const isStatusDialogOpen = ref(false)
+const isCsvDialogOpen = ref(false)
 
 // 페이지네이션은 로컬 mock 기준으로 단순 처리한다.
 const currentPage = ref(1)
@@ -124,12 +125,30 @@ const statusDialogMessage = computed(() => {
     : `${pendingStatusProduct.value.sku} 상품을 비활성 처리하시겠습니까?`
 })
 
+const csvDialogMessage = computed(() => {
+  return `${filteredRows.value.length}건 상품 목록을 CSV로 내보내시겠습니까?`
+})
+
 function showToolbarMessage(message) {
   toolbarMessage.value = message
 }
 
-function handleDownloadCsv() {
+function handleOpenCsvDialog() {
   if (!filteredRows.value.length) {
+    showToolbarMessage('내보낼 상품이 없습니다.')
+    return
+  }
+
+  isCsvDialogOpen.value = true
+}
+
+function handleCloseCsvDialog() {
+  isCsvDialogOpen.value = false
+}
+
+function handleConfirmCsv() {
+  if (!filteredRows.value.length) {
+    handleCloseCsvDialog()
     showToolbarMessage('내보낼 상품이 없습니다.')
     return
   }
@@ -139,6 +158,7 @@ function handleDownloadCsv() {
     `seller-products-${new Date().toISOString().slice(0, 10)}`,
   )
   showToolbarMessage('현재 필터 기준 상품 목록을 다운로드했습니다.')
+  handleCloseCsvDialog()
 }
 
 function handleEditProduct(row) {
@@ -256,7 +276,7 @@ function handleConfirmStatusChange() {
             <button
               class="ui-btn ui-btn--ghost toolbar-btn"
               type="button"
-              @click="handleDownloadCsv"
+              @click="handleOpenCsvDialog"
             >
               CSV 내보내기
             </button>
@@ -379,6 +399,15 @@ function handleConfirmStatusChange() {
       :danger="!isReactivateAction"
       @cancel="handleCloseStatusDialog"
       @confirm="handleConfirmStatusChange"
+    />
+
+    <SellerConfirmDialog
+      :isOpen="isCsvDialogOpen"
+      title="CSV 내보내기"
+      :message="csvDialogMessage"
+      confirmLabel="내보내기"
+      @cancel="handleCloseCsvDialog"
+      @confirm="handleConfirmCsv"
     />
   </AppLayout>
 </template>

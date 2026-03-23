@@ -11,8 +11,10 @@ import BaseTable from '@/components/common/BaseTable.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import SellerConfirmDialog from '@/components/seller/SellerConfirmDialog.vue'
 import SellerAsnDetailModal from '@/components/seller/SellerAsnDetailModal.vue'
+import { downloadExcel } from '@/utils/excel.js'
 import { ASN_STATUS, ROUTE_NAMES } from '@/constants'
 import {
+  buildSellerAsnExportRows,
   filterSellerAsnRows,
   getSellerAsnKpi,
   normalizeSellerAsnDetail,
@@ -162,7 +164,11 @@ function handleCloseCsvDialog() {
 }
 
 function handleConfirmCsv() {
-  toolbarMessage.value = `${filteredRows.value.length}건 ASN CSV 내보내기 요청을 접수했습니다.`
+  downloadExcel(
+    buildSellerAsnExportRows(filteredRows.value),
+    `seller-asn-list-${new Date().toISOString().slice(0, 10)}`,
+  )
+  toolbarMessage.value = `${filteredRows.value.length}건 ASN 목록을 내보냈습니다.`
   handleCloseCsvDialog()
 }
 </script>
@@ -325,7 +331,7 @@ function handleConfirmCsv() {
       :isOpen="isCsvDialogOpen"
       :message="csvDialogMessage"
       confirmLabel="내보내기"
-      title="ASN CSV 내보내기"
+      title="CSV 내보내기"
       @cancel="handleCloseCsvDialog"
       @confirm="handleConfirmCsv"
     />
