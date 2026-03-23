@@ -217,7 +217,7 @@ function defaultOutboundTasks() {
       status: '진행중',
       notes: '피킹이 완료되어 현재 포장 단계로 넘어간 작업입니다.',
       flow: ['피킹', '포장'],
-      activeStep: '포장',
+      activeStep: '패킹',
       orderStatus: '피킹완료',
       stockDeduction: false,
       completedAt: '',
