@@ -11,7 +11,7 @@
  *   SELLER_ASN_LIST, SELLER_ASN_CREATE, SELLER_ASN_DETAIL,
  *   SELLER_INVENTORY, SELLER_ORDER_LIST, SELLER_ORDER_DETAIL,
  *   SELLER_ORDER_REGISTER, SELLER_AMAZON_CONNECT, SELLER_MARGIN_SIMULATOR,
- *   SELLER_NOTIFICATIONS, SELLER_MODAL_SHOWCASE
+ *   SELLER_NOTIFICATIONS
  */
 import { ROUTE_NAMES } from '@/constants'
 
@@ -50,7 +50,6 @@ export const SELLER_MENU_GROUPS = [
     label: '도구',
     items: [
       { name: ROUTE_NAMES.SELLER_AMAZON_CONNECT, label: '주문 연동 및 조회', icon: '⇄' },
-      { name: ROUTE_NAMES.SELLER_MODAL_SHOWCASE, label: '모달 쇼케이스', icon: '◫' },
       { name: ROUTE_NAMES.SELLER_MARGIN_SIMULATOR, label: '마진 시뮬레이터', icon: '◔' },
       { name: ROUTE_NAMES.SELLER_NOTIFICATIONS, label: '알림', icon: '•' },
     ],
