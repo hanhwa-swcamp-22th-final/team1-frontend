@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  buildSellerInventoryExportRows,
   filterSellerInventoryRows,
   getSellerInventoryDetailById,
   getSellerInventoryStatusMeta,
@@ -23,6 +24,23 @@ describe('inventoryList utils', () => {
 
     expect(result).toHaveLength(1)
     expect(result[0].sku).toBe('LB-TNR-150')
+  })
+
+  it('현재 재고 목록을 CSV 다운로드용 행으로 정규화한다', () => {
+    expect(buildSellerInventoryExportRows([SELLER_INVENTORY_LIST_ROWS[0]])).toEqual([
+      {
+        SKU: 'LB-AMP-30',
+        상품명: '루미에르 앰플 30ml',
+        창고: 'ICN-A',
+        가용재고: 248,
+        할당재고: 32,
+        총재고: 280,
+        입고예정: 50,
+        최근입고일: '2026-03-08',
+        경고임계치: 10,
+        상태: '정상',
+      },
+    ])
   })
 
   it('창고와 검색어를 함께 적용한다', () => {

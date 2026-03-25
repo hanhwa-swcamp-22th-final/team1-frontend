@@ -159,6 +159,13 @@ export const SELLER_CHANNEL_ORDER_COLUMNS = [
   { key: 'status', label: '처리 상태', width: '120px', align: 'center' },
 ]
 
+const CHANNEL_ORDER_PREFIX_MAP = {
+  AMAZON: 'AMZ',
+  SHOPIFY: 'SHP',
+  QOO10: 'Q10',
+  MANUAL: 'MAN',
+}
+
 // 채널 연결 카드 배지 표현을 반환한다.
 export function getSellerChannelSyncStatusMeta(status) {
   return SELLER_CHANNEL_SYNC_STATUS_META[status] ?? { label: status ?? '-', tone: 'default' }
@@ -189,6 +196,64 @@ export function buildSellerConnectedChannelCard(card = {}, connection = {}) {
       { key: 'import', label: '주문 가져오기', variant: 'primary', disabled: false },
     ],
   }
+}
+
+// 동기화 완료 후 카드 상태를 최신 동기화 시각 기준으로 갱신한다.
+export function buildSellerSyncedChannelCard(card = {}, sync = {}) {
+  return {
+    ...card,
+    syncStatus: 'CONNECTED',
+    lastSyncedAt: sync.syncedAt ?? card.lastSyncedAt ?? '-',
+    description: card.syncStatus === 'CONNECTED'
+      ? card.description
+      : `${card.label ?? '채널'} 주문 동기화를 다시 시작했습니다.`,
+  }
+}
+
+// 주문 가져오기 후 카드 수치를 증가시키고 연결 상태를 유지한다.
+export function buildSellerImportedChannelCard(card = {}, imported = {}) {
+  const importedCount = Math.max(1, Number(imported.importedCount ?? 1))
+
+  return {
+    ...card,
+    syncStatus: 'CONNECTED',
+    pendingOrders: Number(card.pendingOrders ?? 0) + importedCount,
+    todayImported: Number(card.todayImported ?? 0) + importedCount,
+    lastSyncedAt: imported.importedAt ?? card.lastSyncedAt ?? '-',
+  }
+}
+
+// 주문 가져오기 후 통합 주문 목록에 추가할 새 주문 row를 만든다.
+export function buildSellerImportedChannelOrder(card = {}, options = {}) {
+  const prefix = CHANNEL_ORDER_PREFIX_MAP[card.key] ?? 'EXT'
+  const sequence = String(options.sequence ?? 1).padStart(3, '0')
+  const importedAt = options.importedAt ?? '2026-03-23 10:00'
+
+  return {
+    id: `channel-order-${card.key ?? 'EXT'}-${sequence}`,
+    channel: card.key ?? 'AMAZON',
+    channelOrderNo: `${prefix}-IMPORT-${sequence}`,
+    conkOrderNo: `ORD-IMPORT-${sequence}`,
+    recipient: `${card.label ?? '채널'} 주문 ${sequence}`,
+    itemsSummary: `${card.label ?? '채널'} 자동 수집 주문`,
+    orderAmount: Number(options.orderAmount ?? 24.5),
+    orderedAt: importedAt,
+    status: 'NEW',
+  }
+}
+
+// 현재 필터 결과를 CSV/Excel 다운로드용 행으로 정규화한다.
+export function buildSellerChannelOrderExportRows(rows = []) {
+  return rows.map((row) => ({
+    채널: getSellerChannelMeta(row.channel).label,
+    채널주문번호: row.channelOrderNo ?? '',
+    CONK주문번호: row.conkOrderNo ?? '',
+    수령자: row.recipient ?? '',
+    주문상품: row.itemsSummary ?? '',
+    주문금액USD: Number(row.orderAmount ?? 0),
+    주문일시: row.orderedAt ?? '',
+    처리상태: getSellerChannelOrderStatusMeta(row.status).label,
+  }))
 }
 
 /**

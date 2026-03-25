@@ -180,6 +180,21 @@ export function getSellerAsnKpi(rows = []) {
   }
 }
 
+// 현재 필터 결과를 CSV/Excel 다운로드용 행으로 정규화한다.
+export function buildSellerAsnExportRows(rows = []) {
+  return rows.map((row) => ({
+    ASN번호: row.asnNo ?? '',
+    목적창고: row.warehouseName ?? '',
+    입고예정일: row.expectedDate ?? '',
+    SKU수: Number(row.skuCount ?? 0),
+    총입고수량: Number(row.totalQuantity ?? 0),
+    참조번호: row.referenceNo ?? '',
+    등록일: row.createdAt ?? '',
+    상태: row.status ?? '',
+    메모: row.note ?? '',
+  }))
+}
+
 /**
  * 상태 필터와 검색어를 적용해 화면에 표시할 ASN 목록을 만든다.
  * 검색어는 ASN 번호, 창고명, 참조 번호, 메모를 함께 조회한다.

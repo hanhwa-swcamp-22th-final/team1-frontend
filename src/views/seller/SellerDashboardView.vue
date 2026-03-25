@@ -428,13 +428,6 @@ function handleRetryDashboard() {
               <p class="section-eyebrow">Recent Feed</p>
               <h2 class="section-title">최근 활동</h2>
             </div>
-            <button
-              type="button"
-              class="table-more"
-              @click="navigateToRoute(ROUTE_NAMES.SELLER_NOTIFICATIONS)"
-            >
-              전체보기 →
-            </button>
           </div>
 
           <div class="table-wrap">

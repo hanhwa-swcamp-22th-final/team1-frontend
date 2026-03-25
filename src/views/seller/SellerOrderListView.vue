@@ -38,6 +38,7 @@ const selectedOrderId = ref('')
 const pendingCancelOrderId = ref('')
 const isDetailModalOpen = ref(false)
 const isCancelDialogOpen = ref(false)
+const isCsvDialogOpen = ref(false)
 
 // 페이지네이션은 조회된 주문 목록 기준으로 단순 처리한다.
 const currentPage = ref(1)
@@ -106,12 +107,30 @@ const pendingCancelOrder = computed(() => {
   return orderRows.value.find((row) => row.id === pendingCancelOrderId.value) ?? null
 })
 
+const csvDialogMessage = computed(() => {
+  return `${filteredRows.value.length}건 주문 목록을 CSV로 내보내시겠습니까?`
+})
+
 function showToolbarMessage(message) {
   toolbarMessage.value = message
 }
 
-function handleDownloadCsv() {
+function handleOpenCsvDialog() {
   if (!filteredRows.value.length) {
+    showToolbarMessage('내보낼 주문이 없습니다.')
+    return
+  }
+
+  isCsvDialogOpen.value = true
+}
+
+function handleCloseCsvDialog() {
+  isCsvDialogOpen.value = false
+}
+
+function handleConfirmCsv() {
+  if (!filteredRows.value.length) {
+    handleCloseCsvDialog()
     showToolbarMessage('내보낼 주문이 없습니다.')
     return
   }
@@ -121,6 +140,7 @@ function handleDownloadCsv() {
     `seller-orders-${new Date().toISOString().slice(0, 10)}`,
   )
   showToolbarMessage('현재 필터 기준 주문 목록을 다운로드했습니다.')
+  handleCloseCsvDialog()
 }
 
 function handleOpenOrderDetail(row) {
@@ -217,7 +237,7 @@ function handleConfirmCancel() {
             <button
               class="ui-btn ui-btn--ghost toolbar-btn"
               type="button"
-              @click="handleDownloadCsv"
+              @click="handleOpenCsvDialog"
             >
               CSV 내보내기
             </button>
@@ -323,6 +343,15 @@ function handleConfirmCancel() {
       :danger="true"
       @cancel="handleCloseCancelDialog"
       @confirm="handleConfirmCancel"
+    />
+
+    <SellerConfirmDialog
+      :isOpen="isCsvDialogOpen"
+      title="CSV 내보내기"
+      :message="csvDialogMessage"
+      confirmLabel="내보내기"
+      @cancel="handleCloseCsvDialog"
+      @confirm="handleConfirmCsv"
     />
   </AppLayout>
 </template>

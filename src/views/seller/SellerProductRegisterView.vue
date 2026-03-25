@@ -350,32 +350,14 @@ watch(() => editingProductId.value, () => {
             </div>
           </section>
 
-          <!-- 바코드와 ASIN 은 입력만 받을 수 있게 먼저 열어 둔다. -->
+          <!-- Amazon 연동 코드는 ASIN만 입력할 수 있게 유지한다. -->
           <section class="panel-card">
             <header class="panel-header">
               <span class="panel-accent" aria-hidden="true" />
-              <h2 class="panel-title">바코드</h2>
+              <h2 class="panel-title">Amazon 연동</h2>
             </header>
 
-            <div class="form-grid form-grid--2">
-              <BaseForm label="EAN-13 / UPC">
-                <div class="field-with-action">
-                  <input
-                    v-model="productForm.barcode"
-                    type="text"
-                    placeholder="바코드 번호 입력 또는 스캔"
-                  />
-
-                  <button
-                    class="ui-btn ui-btn--ghost inline-btn"
-                    type="button"
-                    @click="showHelperMessage('바코드 스캔 기능은 다음 단계에서 연결합니다.')"
-                  >
-                    스캔
-                  </button>
-                </div>
-              </BaseForm>
-
+            <div class="form-grid">
               <BaseForm label="ASIN (Amazon)">
                 <input v-model="productForm.asin" type="text" placeholder="Amazon ASIN 코드" />
               </BaseForm>

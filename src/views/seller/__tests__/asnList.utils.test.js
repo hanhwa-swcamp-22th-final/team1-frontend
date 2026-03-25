@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  buildSellerAsnExportRows,
   filterSellerAsnRows,
   getSellerAsnDetailById,
   getSellerAsnKpi,
@@ -87,5 +88,21 @@ describe('asnList utils', () => {
         ],
       }),
     )
+  })
+
+  it('ASN 목록을 CSV 다운로드용 row로 변환한다', () => {
+    expect(buildSellerAsnExportRows([SELLER_ASN_LIST_ROWS[0]])).toEqual([
+      {
+        ASN번호: 'ASN-20260318-001',
+        목적창고: 'NJ Warehouse',
+        입고예정일: '2026-03-21',
+        SKU수: 3,
+        총입고수량: 420,
+        참조번호: 'BL-240318-01',
+        등록일: '2026-03-18',
+        상태: ASN_STATUS.SUBMITTED,
+        메모: '온도 민감 상품 포함',
+      },
+    ])
   })
 })

@@ -7,8 +7,11 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { getSellerInventoryList } from '@/api/wms.js'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
+import SellerConfirmDialog from '@/components/seller/SellerConfirmDialog.vue'
 import SellerInventoryDetailModal from '@/components/seller/SellerInventoryDetailModal.vue'
+import { downloadExcel } from '@/utils/excel.js'
 import {
+  buildSellerInventoryExportRows,
   filterSellerInventoryRows,
   getSellerInventoryStatusMeta,
   normalizeSellerInventoryDetail,
@@ -29,6 +32,7 @@ const isLoading = ref(false)
 const inventoryRows = ref([])
 const selectedInventoryId = ref('')
 const isDetailModalOpen = ref(false)
+const isCsvDialogOpen = ref(false)
 
 // 페이지네이션은 조회된 재고 목록 기준으로 단순 처리한다.
 const currentPage = ref(1)
@@ -93,6 +97,10 @@ const selectedInventoryDetail = computed(() => {
   return normalizeSellerInventoryDetail(selectedInventory.value.detail ?? null, selectedInventory.value)
 })
 
+const csvDialogMessage = computed(() => {
+  return `${filteredRows.value.length}건 재고 목록을 CSV로 내보내시겠습니까?`
+})
+
 function handleOpenInventoryDetail(row) {
   selectedInventoryId.value = row.id
   isDetailModalOpen.value = true
@@ -102,9 +110,36 @@ function handleCloseInventoryDetail() {
   isDetailModalOpen.value = false
 }
 
-// UI 범위만 구현하므로 CSV는 안내 메시지로 처리한다.
 function showToolbarMessage(message) {
   toolbarMessage.value = message
+}
+
+function handleOpenCsvDialog() {
+  if (!filteredRows.value.length) {
+    showToolbarMessage('내보낼 재고가 없습니다.')
+    return
+  }
+
+  isCsvDialogOpen.value = true
+}
+
+function handleCloseCsvDialog() {
+  isCsvDialogOpen.value = false
+}
+
+function handleConfirmCsv() {
+  if (!filteredRows.value.length) {
+    handleCloseCsvDialog()
+    showToolbarMessage('내보낼 재고가 없습니다.')
+    return
+  }
+
+  downloadExcel(
+    buildSellerInventoryExportRows(filteredRows.value),
+    `seller-inventories-${new Date().toISOString().slice(0, 10)}`,
+  )
+  showToolbarMessage('현재 필터 기준 재고 목록을 다운로드했습니다.')
+  handleCloseCsvDialog()
 }
 </script>
 
@@ -154,11 +189,10 @@ function showToolbarMessage(message) {
               />
             </label>
 
-            <!-- TODO(frontend): 재고 목록 CSV 내보내기 기능을 연결한다. -->
             <button
               class="ui-btn ui-btn--ghost toolbar-btn"
               type="button"
-              @click="showToolbarMessage('CSV 내보내기 UI는 다음 단계에서 연결합니다.')"
+              @click="handleOpenCsvDialog"
             >
               CSV 내보내기
             </button>
@@ -239,6 +273,15 @@ function showToolbarMessage(message) {
       :inventory="selectedInventory"
       :isOpen="isDetailModalOpen"
       @cancel="handleCloseInventoryDetail"
+    />
+
+    <SellerConfirmDialog
+      :isOpen="isCsvDialogOpen"
+      title="CSV 내보내기"
+      :message="csvDialogMessage"
+      confirmLabel="내보내기"
+      @cancel="handleCloseCsvDialog"
+      @confirm="handleConfirmCsv"
     />
   </AppLayout>
 </template>
