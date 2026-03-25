@@ -85,6 +85,15 @@ export function createInitialProductErrors() {
   }
 }
 
+// 임시저장 준비중 상태에서 공통으로 보여줄 안내 문구를 만든다.
+export function buildProductDraftPendingMessage(productLabel = '') {
+  const normalizedProductLabel = String(productLabel ?? '').trim()
+
+  return normalizedProductLabel
+    ? `${normalizedProductLabel} 임시저장 기능은 준비 중입니다.`
+    : '임시저장 기능은 준비 중입니다.'
+}
+
 // 숫자 필드를 양수로만 인정한다.
 function toPositiveNumber(value) {
   const numeric = Number(value)

@@ -10,6 +10,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import FileUpload from '@/components/common/FileUpload.vue'
 import {
+  buildProductDraftPendingMessage,
   buildProductFormFromProduct,
   buildSellerProductPayload,
   buildVolumeWeight,
@@ -133,13 +134,12 @@ function showHelperMessage(message) {
   infoMessage.value = message
 }
 
-// 임시저장은 실제 저장 없이 현재 상품 초안이 준비되었다는 메시지만 보여준다.
+// 임시저장은 실제 저장 대신 준비중 안내만 보여준다.
 function handleDraftSave() {
   clearMessages()
 
   const productLabel = productForm.value.productName || productForm.value.sku || '신규 상품'
-  // TODO(frontend): 상품 임시저장 API를 연결한다.
-  infoMessage.value = `${productLabel} 초안을 임시저장했습니다. 실제 저장은 다음 단계에서 연결합니다.`
+  infoMessage.value = buildProductDraftPendingMessage(productLabel)
 }
 
 // 최종 등록은 필수 입력을 검증한 뒤 mock-server 상품 등록 API를 호출한다.
@@ -366,7 +366,7 @@ watch(() => editingProductId.value, () => {
 
           <div class="action-row">
             <button class="ui-btn ui-btn--ghost" type="button" @click="handleCancel">취소</button>
-            <button class="ui-btn ui-btn--ghost" type="button" @click="handleDraftSave">임시저장</button>
+            <button class="ui-btn ui-btn--ghost" type="button" @click="handleDraftSave">임시저장 (준비중)</button>
             <button class="ui-btn ui-btn--primary" type="submit" :disabled="isSubmitting">
               {{ submitButtonLabel }}
             </button>

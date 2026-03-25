@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  buildProductDraftPendingMessage,
   buildProductFormFromProduct,
   buildSellerProductPayload,
   buildVolumeWeight,
@@ -9,6 +10,12 @@ import {
 } from '@/utils/seller/productRegister.utils.js'
 
 describe('productRegister utils', () => {
+  it('임시저장 준비중 안내 문구를 상품명과 함께 만든다', () => {
+    expect(buildProductDraftPendingMessage('루미에르 앰플 30ml')).toBe(
+      '루미에르 앰플 30ml 임시저장 기능은 준비 중입니다.',
+    )
+  })
+
   it('길이, 너비, 높이로 부피중량을 계산한다', () => {
     expect(buildVolumeWeight(12, 8, 6)).toBe(4.144)
   })
