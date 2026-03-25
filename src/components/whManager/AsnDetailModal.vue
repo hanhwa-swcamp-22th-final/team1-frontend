@@ -2,6 +2,7 @@
 import { ref, reactive, computed, watch } from 'vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import TimelineStepper from '@/components/common/TimelineStepper.vue'
+import { INBOUND_STATUS } from '@/constants/status'
 
 const props = defineProps({
   isOpen:    { type: Boolean, required: true },
@@ -13,16 +14,16 @@ const emit = defineEmits(['cancel', 'confirm'])
 
 // ── 상태 매핑
 const STATUS_MAP = {
-  pending:  { label: '입고 대기',   badge: 'amber' },
-  transit:  { label: '운송 중',     badge: 'blue'  },
-  mismatch: { label: '수량 불일치', badge: 'red'   },
-  received: { label: '검수 완료',   badge: 'green' },
+  [INBOUND_STATUS.PENDING]:  { label: '입고 대기',   badge: 'amber' },
+  [INBOUND_STATUS.TRANSIT]:  { label: '운송 중',     badge: 'blue'  },
+  [INBOUND_STATUS.MISMATCH]: { label: '수량 불일치', badge: 'red'   },
+  [INBOUND_STATUS.RECEIVED]: { label: '검수 완료',   badge: 'green' },
 }
 const STATUS_STEP_LABEL = {
-  pending:  '등록됨',
-  transit:  '입고됨',
-  mismatch: '검수&적재중',
-  received: '보관중',
+  [INBOUND_STATUS.PENDING]:  '등록됨',
+  [INBOUND_STATUS.TRANSIT]:  '입고됨',
+  [INBOUND_STATUS.MISMATCH]: '검수&적재중',
+  [INBOUND_STATUS.RECEIVED]: '보관중',
 }
 
 // ── SKU-Bin 레지스트리 (세션 내 유지 — 실제 환경에서는 API 저장)
@@ -140,14 +141,14 @@ function handleConfirm() {
 }
 
 // ── 타임라인
-const asnStatus  = computed(() => props.asn?.inboundStatus ?? props.asn?.status ?? '')
+const asnStatus  = computed(() => props.asn?.status ?? '')
 const statusInfo = computed(() => STATUS_MAP[asnStatus.value] ?? { label: '-', badge: 'gray' })
 
 const ASN_STEPS = [
-  { key: 'pending',  label: '등록됨' },
-  { key: 'transit',  label: '입고됨' },
-  { key: 'mismatch', label: '검수&적재중' },
-  { key: 'received', label: '보관중' },
+  { key: INBOUND_STATUS.PENDING,  label: '등록됨' },
+  { key: INBOUND_STATUS.TRANSIT,  label: '입고됨' },
+  { key: INBOUND_STATUS.MISMATCH, label: '검수&적재중' },
+  { key: INBOUND_STATUS.RECEIVED, label: '보관중' },
 ]
 </script>
 

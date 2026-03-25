@@ -28,6 +28,27 @@ export const ORDER_STATUS = {
 }
 
 /**
+ * INBOUND_STATUS — ASN 입고 진행 단계 (WH_MANAGER 입고 관리 화면)
+ *
+ * 상태 전이 흐름:
+ *
+ *   PENDING → TRANSIT → MISMATCH | RECEIVED
+ *
+ * PENDING:  ASN 등록됨 (입고 대기)
+ * TRANSIT:  운송 중 (입고됨)
+ * MISMATCH: 검수 수량 불일치 (검수&적재중)
+ * RECEIVED: 검수 완료 (보관중)
+ *
+ * AsnListView.vue, AsnDetailModal.vue와 연동됨.
+ */
+export const INBOUND_STATUS = {
+  PENDING:  'PENDING',   // 입고 대기 (등록됨)
+  TRANSIT:  'TRANSIT',   // 운송 중 (입고됨)
+  MISMATCH: 'MISMATCH',  // 수량 불일치 (검수&적재중)
+  RECEIVED: 'RECEIVED',  // 검수 완료 (보관중)
+}
+
+/**
  * ASN_STATUS — 입고 예정 통보서(Advance Shipping Notice) 2단계
  *
  * 상태 전이 흐름:
