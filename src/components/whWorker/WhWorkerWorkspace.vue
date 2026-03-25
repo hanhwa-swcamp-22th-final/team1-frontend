@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import AppLayout from '@/components/layout/AppLayout.vue'
-import { getWhWorkerTasks, updateWhWorkerTask } from '@/api/whWorker'
+import { getWhWorkerTasks, updateWhWorkerTask } from '@/api/wms'
 
 const props = defineProps({
   view: {

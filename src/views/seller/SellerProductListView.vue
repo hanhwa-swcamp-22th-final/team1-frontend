@@ -5,7 +5,7 @@
  */
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { getSellerProductList } from '@/api/product.js'
+import { getSellerProductList } from '@/api/wms'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import SellerConfirmDialog from '@/components/seller/SellerConfirmDialog.vue'

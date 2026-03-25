@@ -14,16 +14,16 @@ describe('member API', () => {
     vi.clearAllMocks()
   })
 
-  it('login은 POST /auth/login을 호출한다', async () => {
+  it('login은 POST /member/auth/login을 호출한다', async () => {
     const payload = { email: 'test@test.com', password: '1234' }
     await login(payload)
     expect(instance.post).toHaveBeenCalledOnce()
-    expect(instance.post).toHaveBeenCalledWith('/auth/login', payload)
+    expect(instance.post).toHaveBeenCalledWith('/member/auth/login', payload)
   })
 
-  it('getSellerStats는 GET /members/sellers/stats를 호출한다', async () => {
+  it('getSellerStats는 GET /member/sellers/stats를 호출한다', async () => {
     await getSellerStats()
     expect(instance.get).toHaveBeenCalledOnce()
-    expect(instance.get).toHaveBeenCalledWith('/members/sellers/stats')
+    expect(instance.get).toHaveBeenCalledWith('/member/sellers/stats')
   })
 })

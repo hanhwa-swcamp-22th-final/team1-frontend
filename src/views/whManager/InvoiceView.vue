@@ -6,7 +6,7 @@ import ToastMessage from '@/components/common/ToastMessage.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import LabelPrintModal from '@/components/whManager/LabelPrintModal.vue'
 import BulkLabelModal from '@/components/whManager/BulkLabelModal.vue'
-import { getWhmInvoiceOrders, issueLabel, bulkIssueLabels } from '@/api/wh-manager'
+import { getWhmInvoiceOrders, issueLabel, bulkIssueLabels } from '@/api/wms'
 import { LABEL_STATUS } from '@/constants'
 
 // ── 데이터

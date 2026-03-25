@@ -6,7 +6,7 @@ import BaseModal from '@/components/common/BaseModal.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import { formatDate } from '@/utils/format'
-import { getFeeProfiles, updateFeeProfile } from '@/api/systemAdmin'
+import { getFeeProfiles, updateFeeProfile } from '@/api/member'
 import { useUiStore } from '@/stores/ui'
 
 const ui = useUiStore()

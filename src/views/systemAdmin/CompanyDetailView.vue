@@ -7,7 +7,7 @@ import BaseTable from '@/components/common/BaseTable.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import { formatDate } from '@/utils/format'
-import { createCompanyLog, createUser, getCompanies, getCompanyLogs, getUsers, updateCompany } from '@/api/systemAdmin'
+import { createCompanyLog, createUser, getCompanies, getCompanyLogs, getUsers, updateCompany } from '@/api/member'
 import { useUiStore } from '@/stores/ui'
 
 const route = useRoute()

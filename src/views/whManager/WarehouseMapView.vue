@@ -5,7 +5,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import WarehouseMap from '@/components/whManager/WarehouseMap.vue'
-import { getWhmLocations } from '@/api/wh-manager'
+import { getWhmLocations } from '@/api/wms'
 import { BIN_STATUS } from '@/constants'
 
 const route = useRoute()

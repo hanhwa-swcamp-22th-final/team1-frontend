@@ -6,7 +6,7 @@ import { ROUTE_NAMES } from '@/constants'
 import AsnDetailModal from '@/components/whManager/AsnDetailModal.vue'
 import AsnMismatchModal from '@/components/whManager/AsnMismatchModal.vue'
 import { useUiStore } from '@/stores/ui'
-import { getWhmInboundAsns } from '@/api/wh-manager'
+import { getWhmInboundAsns } from '@/api/wms'
 import { INBOUND_STATUS } from '@/constants/status'
 
 const ui = useUiStore()

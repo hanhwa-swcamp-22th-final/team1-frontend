@@ -48,6 +48,38 @@ function generateAsnHistory(sku) {
   ]
 }
 
+function toQuery(params = {}) {
+  const search = new URLSearchParams()
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      if (Array.isArray(value)) {
+        value.forEach((item) => search.append(key, item))
+      } else {
+        search.append(key, value)
+      }
+    }
+  })
+  const query = search.toString()
+  return query ? `?${query}` : ''
+}
+
+async function getCollection(http, collection, params = {}) {
+  const { data } = await http.get(`/${collection}${toQuery(params)}`)
+  return data
+}
+
+async function getOne(http, collection, id) {
+  const data = await getCollection(http, collection, { id })
+  return data[0] ?? null
+}
+
+async function patchOne(http, collection, id, payload) {
+  const current = await getOne(http, collection, id)
+  if (!current) return null
+  const { data } = await http.patch(`/${collection}/${encodeURIComponent(id)}`, payload)
+  return data
+}
+
 module.exports = function (BASE_URL) {
   const http = axios.create({ baseURL: BASE_URL })
   const router = Router()
@@ -334,6 +366,257 @@ module.exports = function (BASE_URL) {
   router.put('/fee-settings', async (req, res) => {
     await http.put('/fee_settings', req.body)
     res.json({ success: true, message: '요금 설정이 저장되었습니다.' })
+  })
+
+  // ── 재고 목록 (/wms/inventories/*) ──────────────────────────────────────────
+
+  router.get('/inventories', async (req, res) => {
+    const data = await getCollection(http, 'wh_inventories', req.query)
+    res.json({ success: true, data })
+  })
+
+  router.get('/inventories/:id', async (req, res) => {
+    const inventory = await getOne(http, 'wh_inventories', req.params.id)
+    if (!inventory) return res.status(404).json({ success: false, message: '재고 정보를 찾을 수 없습니다.' })
+    return res.json({ success: true, data: inventory })
+  })
+
+  // ── 창고 관리자 (/wms/manager/*) ───────────────────────────────────────────
+
+  router.get('/manager/dashboard', async (req, res) => {
+    const { data } = await http.get('/whm_dashboard')
+    res.json(data)
+  })
+
+  router.get('/manager/pending-orders', async (req, res) => {
+    const data = await getCollection(http, 'wh_pending_orders', req.query)
+    const filtered = req.query.status ? data : data.filter((item) => item.status === 'CONFIRMED')
+    res.json(filtered)
+  })
+
+  router.patch('/manager/pending-orders/:id', async (req, res) => {
+    try {
+      const worker = req.body?.workerId
+        ? await getOne(http, 'wh_workers', req.body.workerId)
+        : null
+      const payload = worker ? { ...req.body, workerName: worker.name } : req.body
+      const data = await patchOne(http, 'wh_pending_orders', req.params.id, payload)
+      if (!data) return res.status(404).json({ success: false, message: '주문을 찾을 수 없습니다.' })
+      return res.json(data)
+    } catch {
+      return res.status(500).json({ success: false, message: '출고 지시 처리 중 오류가 발생했습니다.' })
+    }
+  })
+
+  router.post('/manager/pending-orders/bulk', async (req, res) => {
+    try {
+      const orderIds = Array.isArray(req.body?.orderIds) ? req.body.orderIds : []
+      const worker = req.body?.workerId
+        ? await getOne(http, 'wh_workers', req.body.workerId)
+        : null
+      const payload = worker ? { ...req.body, workerName: worker.name } : req.body
+      const updated = await Promise.all(
+        orderIds.map((id) => patchOne(http, 'wh_pending_orders', id, payload))
+      )
+      return res.json(updated.filter(Boolean))
+    } catch {
+      return res.status(500).json({ success: false, message: '일괄 출고 지시 처리 중 오류가 발생했습니다.' })
+    }
+  })
+
+  router.get('/manager/workers', async (req, res) => {
+    const data = await getCollection(http, 'wh_workers', req.query)
+    res.json(data)
+  })
+
+  router.get('/manager/picking-lists', async (req, res) => {
+    const data = await getCollection(http, 'wh_picking_lists', req.query)
+    res.json(data)
+  })
+
+  router.get('/manager/picking-lists/:id', async (req, res) => {
+    const pickingList = await getOne(http, 'wh_picking_lists', req.params.id)
+    if (!pickingList) return res.status(404).json({ success: false, message: '피킹 리스트를 찾을 수 없습니다.' })
+    return res.json(pickingList)
+  })
+
+  router.get('/manager/invoice-orders', async (req, res) => {
+    const data = await getCollection(http, 'wh_invoice_orders', req.query)
+    res.json(data)
+  })
+
+  router.patch('/manager/invoice-orders/:id', async (req, res) => {
+    try {
+      const data = await patchOne(http, 'wh_invoice_orders', req.params.id, req.body)
+      if (!data) return res.status(404).json({ success: false, message: '송장 발행 대상을 찾을 수 없습니다.' })
+      return res.json(data)
+    } catch {
+      return res.status(500).json({ success: false, message: '송장 정보 저장 중 오류가 발생했습니다.' })
+    }
+  })
+
+  router.post('/manager/invoice-orders/bulk-label', async (req, res) => {
+    try {
+      const orderIds = Array.isArray(req.body?.orderIds) ? req.body.orderIds : []
+      const labelIssuedAt = new Date().toISOString().slice(0, 10)
+      const updated = await Promise.all(
+        orderIds.map((id) => patchOne(http, 'wh_invoice_orders', id, { labelStatus: 'ISSUED', labelIssuedAt }))
+      )
+      return res.json(updated.filter(Boolean))
+    } catch {
+      return res.status(500).json({ success: false, message: '일괄 라벨 발행 중 오류가 발생했습니다.' })
+    }
+  })
+
+  router.get('/manager/outbound-confirm-orders', async (req, res) => {
+    const data = await getCollection(http, 'wh_outbound_confirm_orders', req.query)
+    res.json(data)
+  })
+
+  router.patch('/manager/outbound-confirm-orders/:id', async (req, res) => {
+    try {
+      const data = await patchOne(http, 'wh_outbound_confirm_orders', req.params.id, req.body)
+      if (!data) return res.status(404).json({ success: false, message: '출고 확정 대상을 찾을 수 없습니다.' })
+      return res.json(data)
+    } catch {
+      return res.status(500).json({ success: false, message: '출고 확정 처리 중 오류가 발생했습니다.' })
+    }
+  })
+
+  router.post('/manager/outbound-confirm-orders/bulk-confirm', async (req, res) => {
+    try {
+      const orderIds = Array.isArray(req.body?.orderIds) ? req.body.orderIds : []
+      const status = req.body?.status ?? 'CONFIRMED'
+      const updated = await Promise.all(
+        orderIds.map((id) => patchOne(http, 'wh_outbound_confirm_orders', id, { status }))
+      )
+      return res.json(updated.filter(Boolean))
+    } catch {
+      return res.status(500).json({ success: false, message: '일괄 출고 확정 중 오류가 발생했습니다.' })
+    }
+  })
+
+  router.get('/manager/worker-accounts', async (req, res) => {
+    const data = await getCollection(http, 'wh_worker_accounts', req.query)
+    res.json(data)
+  })
+
+  router.post('/manager/worker-accounts', async (req, res) => {
+    try {
+      const list = await getCollection(http, 'wh_worker_accounts')
+      const nextSeq = String(list.length + 1).padStart(3, '0')
+      const payload = {
+        id: req.body?.id ?? `WK-A-${nextSeq}`,
+        presenceStatus: req.body?.presenceStatus ?? 'IDLE',
+        accountStatus: req.body?.accountStatus ?? 'ACTIVE',
+        lastWorkAt: req.body?.lastWorkAt ?? null,
+        registeredAt: req.body?.registeredAt ?? new Date().toISOString().slice(0, 10),
+        zones: req.body?.zones ?? [],
+        memo: req.body?.memo ?? '',
+        ...req.body,
+      }
+      const { data } = await http.post('/wh_worker_accounts', payload)
+      return res.status(201).json(data)
+    } catch {
+      return res.status(500).json({ success: false, message: '작업자 계정 생성 중 오류가 발생했습니다.' })
+    }
+  })
+
+  router.patch('/manager/worker-accounts/:id', async (req, res) => {
+    try {
+      const data = await patchOne(http, 'wh_worker_accounts', req.params.id, req.body)
+      if (!data) return res.status(404).json({ success: false, message: '작업자 계정을 찾을 수 없습니다.' })
+      return res.json(data)
+    } catch {
+      return res.status(500).json({ success: false, message: '작업자 계정 수정 중 오류가 발생했습니다.' })
+    }
+  })
+
+  router.get('/manager/tasks', async (req, res) => {
+    const data = await getCollection(http, 'wh_tasks', req.query)
+    res.json(data)
+  })
+
+  router.patch('/manager/tasks/:id', async (req, res) => {
+    try {
+      const data = await patchOne(http, 'wh_tasks', req.params.id, req.body)
+      if (!data) return res.status(404).json({ success: false, message: '작업을 찾을 수 없습니다.' })
+      return res.json(data)
+    } catch {
+      return res.status(500).json({ success: false, message: '작업 배정 저장 중 오류가 발생했습니다.' })
+    }
+  })
+
+  router.get('/manager/inbound-asns', async (req, res) => {
+    const data = await getCollection(http, 'wh_inbound_asns', req.query)
+    res.json(data)
+  })
+
+  router.get('/manager/bin-fixed-assignments', async (req, res) => {
+    const data = await getCollection(http, 'wh_bin_fixed_assignments', req.query)
+    res.json(data)
+  })
+
+  router.post('/manager/bin-fixed-assignments', async (req, res) => {
+    try {
+      const payload = {
+        memo: '',
+        latestRefDoc: '',
+        fallbackWorkerName: '',
+        ...req.body,
+      }
+      const { data } = await http.post('/wh_bin_fixed_assignments', payload)
+      return res.status(201).json(data)
+    } catch {
+      return res.status(500).json({ success: false, message: 'Bin 고정 배정 생성 중 오류가 발생했습니다.' })
+    }
+  })
+
+  router.patch('/manager/bin-fixed-assignments/:bin', async (req, res) => {
+    try {
+      const data = await patchOne(http, 'wh_bin_fixed_assignments', req.params.bin, req.body)
+      if (!data) return res.status(404).json({ success: false, message: 'Bin 고정 배정을 찾을 수 없습니다.' })
+      return res.json(data)
+    } catch {
+      return res.status(500).json({ success: false, message: 'Bin 고정 배정 수정 중 오류가 발생했습니다.' })
+    }
+  })
+
+  router.get('/manager/locations', async (req, res) => {
+    const data = await getCollection(http, 'wh_locations', req.query)
+    res.json(data)
+  })
+
+  router.get('/manager/inventories', async (req, res) => {
+    const data = await getCollection(http, 'wh_inventories', req.query)
+    res.json(data)
+  })
+
+  router.get('/manager/inventories/:id', async (req, res) => {
+    const inventory = await getOne(http, 'wh_inventories', req.params.id)
+    if (!inventory) return res.status(404).json({ success: false, message: '재고 정보를 찾을 수 없습니다.' })
+    return res.json(inventory)
+  })
+
+  // ── 창고 작업자 (/wms/worker/*) ────────────────────────────────────────────
+
+  router.get('/worker/tasks', async (req, res) => {
+    const data = await getCollection(http, 'wh_worker_tasks', req.query)
+    res.json(data)
+  })
+
+  router.patch('/worker/tasks/:id', async (req, res) => {
+    try {
+      const current = await getOne(http, 'wh_worker_tasks', req.params.id)
+      if (!current) return res.status(404).json({ success: false, message: '작업을 찾을 수 없습니다.' })
+      const payload = { ...req.body }
+      if (Object.prototype.hasOwnProperty.call(req.body, 'bins')) payload.bins = req.body.bins
+      if (Object.prototype.hasOwnProperty.call(req.body, 'packOrders')) payload.packOrders = req.body.packOrders
+      const { data } = await http.patch(`/wh_worker_tasks/${encodeURIComponent(req.params.id)}`, payload)
+      return res.json(data)
+    } catch {
+      return res.status(500).json({ success: false, message: '작업 정보 저장 중 오류가 발생했습니다.' })
+    }
   })
 
   return router

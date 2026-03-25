@@ -179,3 +179,147 @@ export function getFeeSettings() {
 export function saveFeeSettings(payload) {
   return instance.put('/wms/fee-settings', payload)
 }
+
+// ── 재고 (Inventory) ──────────────────────────────────────────────────
+
+export function getInventories() {
+  return instance.get('/wms/inventories')
+}
+
+export function getInventoryDetail(id) {
+  return instance.get(`/wms/inventories/${id}`)
+}
+
+// ── 상품 (Product) ────────────────────────────────────────────────────
+
+export function createSellerProduct(payload) {
+  return instance.post('/wms/products/seller/register', payload)
+}
+
+export function getSellerProductDetail(productId) {
+  return instance.get(`/wms/products/seller/${productId}`)
+}
+
+export function getSellerProductList() {
+  return instance.get('/wms/products/seller/list')
+}
+
+export function updateSellerProduct(productId, payload) {
+  return instance.put(`/wms/products/seller/${productId}`, payload)
+}
+
+// ── 창고 관리자 (WH Manager) ──────────────────────────────────────────
+
+export function getWhmDashboard() {
+  return instance.get('/wms/manager/dashboard')
+}
+
+export function getWhmPendingOrders(params) {
+  return instance.get('/wms/manager/pending-orders', { params })
+}
+
+export function dispatchSingleOrder(id, data) {
+  return instance.patch(`/wms/manager/pending-orders/${id}`, data)
+}
+
+export function bulkDispatchOrders(data) {
+  return instance.post('/wms/manager/pending-orders/bulk', data)
+}
+
+export function getWhmWorkers() {
+  return instance.get('/wms/manager/workers')
+}
+
+export function getWhmPickingLists(params) {
+  return instance.get('/wms/manager/picking-lists', { params })
+}
+
+export function getWhmPickingListDetail(id) {
+  return instance.get(`/wms/manager/picking-lists/${id}`)
+}
+
+export function getWhmInvoiceOrders(params) {
+  return instance.get('/wms/manager/invoice-orders', { params })
+}
+
+export function issueLabel(id, data) {
+  return instance.patch(`/wms/manager/invoice-orders/${id}`, data)
+}
+
+export function bulkIssueLabels(data) {
+  return instance.post('/wms/manager/invoice-orders/bulk-label', data)
+}
+
+export function getWhmOutboundConfirmOrders(params) {
+  return instance.get('/wms/manager/outbound-confirm-orders', { params })
+}
+
+export function confirmSingleOutbound(id, data) {
+  return instance.patch(`/wms/manager/outbound-confirm-orders/${id}`, data)
+}
+
+export function bulkConfirmOutbound(data) {
+  return instance.post('/wms/manager/outbound-confirm-orders/bulk-confirm', data)
+}
+
+export function getWhmWorkerAccounts(params) {
+  return instance.get('/wms/manager/worker-accounts', { params })
+}
+
+export function createWhmWorkerAccount(data) {
+  return instance.post('/wms/manager/worker-accounts', data)
+}
+
+export function updateWhmWorkerAccount(id, data) {
+  return instance.patch(`/wms/manager/worker-accounts/${id}`, data)
+}
+
+export function getWhmTasks(params) {
+  return instance.get('/wms/manager/tasks', { params })
+}
+
+export function assignTask(id, data) {
+  return instance.patch(`/wms/manager/tasks/${id}`, data)
+}
+
+export function getWhmInboundAsns(params) {
+  return instance.get('/wms/manager/inbound-asns', { params })
+}
+
+export function getWhmBinFixedAssignments() {
+  return instance.get('/wms/manager/bin-fixed-assignments')
+}
+
+export function createBinFixedAssignment(data) {
+  return instance.post('/wms/manager/bin-fixed-assignments', data)
+}
+
+export function updateBinFixedAssignment(bin, data) {
+  return instance.patch(`/wms/manager/bin-fixed-assignments/${bin}`, data)
+}
+
+export function updateWorkerZones(id, zones) {
+  return instance.patch(`/wms/manager/worker-accounts/${id}`, { zones })
+}
+
+export function getWhmLocations() {
+  return instance.get('/wms/manager/locations')
+}
+
+export function getWhmInventories() {
+  return instance.get('/wms/manager/inventories')
+}
+
+export function getWhmInventoryDetail(id) {
+  return instance.get(`/wms/manager/inventories/${id}`)
+}
+
+// ── 창고 작업자 (WH Worker) ───────────────────────────────────────────
+
+export async function getWhWorkerTasks(params = {}) {
+  return instance.get('/wms/worker/tasks', { params })
+}
+
+export async function updateWhWorkerTask(id, payload) {
+  return instance.patch(`/wms/worker/tasks/${id}`, payload)
+}

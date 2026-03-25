@@ -6,7 +6,7 @@ import instance from './instance.js'
  * @returns {Promise<AxiosResponse>}
  */
 export async function login(payload) {
-  return instance.post('/auth/login', payload)
+  return instance.post('/member/auth/login', payload)
 }
 
 /**
@@ -14,7 +14,7 @@ export async function login(payload) {
  * @returns {Promise<AxiosResponse>}
  */
 export async function getSellerStats() {
-  return instance.get('/members/sellers/stats')
+  return instance.get('/member/sellers/stats')
 }
 
 /**
@@ -22,7 +22,7 @@ export async function getSellerStats() {
  * @returns {Promise<AxiosResponse>} { success, data: Seller[] }
  */
 export async function getSellerList() {
-  return instance.get('/members/sellers')
+  return instance.get('/member/sellers')
 }
 
 /**
@@ -31,7 +31,7 @@ export async function getSellerList() {
  * @returns {Promise<AxiosResponse>}
  */
 export async function registerSeller(payload) {
-  return instance.post('/members/sellers', payload)
+  return instance.post('/member/sellers', payload)
 }
 
 /**
@@ -40,7 +40,7 @@ export async function registerSeller(payload) {
  * @returns {Promise<AxiosResponse>}
  */
 export async function inviteAccount(payload) {
-  return instance.post('/auth/invite', payload)
+  return instance.post('/member/auth/invite', payload)
 }
 
 /**
@@ -48,7 +48,7 @@ export async function inviteAccount(payload) {
  * @returns {Promise<AxiosResponse>} { success, data: User[] }
  */
 export async function getUserList() {
-  return instance.get('/members/users')
+  return instance.get('/member/users')
 }
 
 /**
@@ -57,7 +57,7 @@ export async function getUserList() {
  * @returns {Promise<AxiosResponse>}
  */
 export async function resetUserPassword(userId) {
-  return instance.post(`/members/users/${userId}/reset-password`)
+  return instance.post(`/member/users/${userId}/reset-password`)
 }
 
 /**
@@ -66,7 +66,7 @@ export async function resetUserPassword(userId) {
  * @returns {Promise<AxiosResponse>}
  */
 export async function deactivateUser(userId) {
-  return instance.post(`/members/users/${userId}/deactivate`)
+  return instance.post(`/member/users/${userId}/deactivate`)
 }
 
 /**
@@ -75,7 +75,7 @@ export async function deactivateUser(userId) {
  * @returns {Promise<AxiosResponse>}
  */
 export async function reactivateUser(userId) {
-  return instance.post(`/members/users/${userId}/reactivate`)
+  return instance.post(`/member/users/${userId}/reactivate`)
 }
 
 /**
@@ -83,7 +83,7 @@ export async function reactivateUser(userId) {
  * @returns {Promise<AxiosResponse>} { success, data: Array<{ sellerCode, sellerName, monthRevenue, totalOrders, avgOrderValue }> }
  */
 export function getSellerRevenue() {
-  return instance.get('/members/sellers/revenue')
+  return instance.get('/member/sellers/revenue')
 }
 
 /**
@@ -91,5 +91,51 @@ export function getSellerRevenue() {
  * @returns {Promise<AxiosResponse>} { success, data: Array<{ sellerCode, sellerName, estimatedCost, momGrowth, turnoverRate }> }
  */
 export function getSellerFeeSummary() {
-  return instance.get('/members/sellers/fee-summary')
+  return instance.get('/member/sellers/fee-summary')
+}
+
+// ── 시스템 관리자 (System Admin) ──────────────────────────────────────
+
+export async function getCompanies(params = {}) {
+  return instance.get('/member/admin/companies', { params })
+}
+
+export async function getCompany(id) {
+  return instance.get(`/member/admin/companies/${id}`)
+}
+
+export async function createCompany(payload) {
+  return instance.post('/member/admin/companies', payload)
+}
+
+export async function updateCompany(id, payload) {
+  return instance.patch(`/member/admin/companies/${id}`, payload)
+}
+
+export async function getUsers(params = {}) {
+  return instance.get('/member/admin/users', { params })
+}
+
+export async function createUser(payload) {
+  return instance.post('/member/admin/users', payload)
+}
+
+export async function updateUser(id, payload) {
+  return instance.patch(`/member/admin/users/${id}`, payload)
+}
+
+export async function getCompanyLogs(params = {}) {
+  return instance.get('/member/admin/company-logs', { params })
+}
+
+export async function createCompanyLog(payload) {
+  return instance.post('/member/admin/company-logs', payload)
+}
+
+export async function getFeeProfiles(params = {}) {
+  return instance.get('/member/admin/fee-profiles', { params })
+}
+
+export async function updateFeeProfile(id, payload) {
+  return instance.patch(`/member/admin/fee-profiles/${id}`, payload)
 }

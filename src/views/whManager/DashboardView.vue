@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import { ROUTE_NAMES } from '@/constants'
-import { getWhmDashboard } from '@/api/wh-manager'
+import { getWhmDashboard } from '@/api/wms'
 
 const router = useRouter()
 

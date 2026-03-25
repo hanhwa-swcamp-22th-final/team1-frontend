@@ -16,7 +16,7 @@ import {
   createBinFixedAssignment,
   updateBinFixedAssignment,
   getWhmLocations,
-} from '@/api/wh-manager'
+} from '@/api/wms'
 import { ACCOUNT_STATUS, WORKER_PRESENCE_STATUS } from '@/constants'
 
 // ── 탭
