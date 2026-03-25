@@ -1,11 +1,13 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import { ROUTE_NAMES } from '@/constants'
 import AsnDetailModal from '@/components/whManager/AsnDetailModal.vue'
 import AsnMismatchModal from '@/components/whManager/AsnMismatchModal.vue'
 import { useUiStore } from '@/stores/ui'
+import { getWhmInboundAsns } from '@/api/wh-manager'
+import { INBOUND_STATUS } from '@/constants/status'
 
 const ui = useUiStore()
 
@@ -23,116 +25,55 @@ const filterSeller = ref('')
 const currentPage = ref(1)
 const PAGE_SIZE   = 6
 
-// ────────────────────────────────────────────
-// 하드코딩 Mock 데이터 (추후 API 연동 시 교체)
-// newSkus: 아직 Bin이 배정되지 않은 신규 SKU 목록
-// ────────────────────────────────────────────
-const ASN_LIST = [
-  {
-    id: 'ASN-2024-0312-001',
-    seller: '이수빈',
-    company: 'Glow Beauty',
-    sku: '앰플 세럼 30ml 외 2종',
-    plannedQty: 1000,
-    actualQty: null,
-    expectedDate: '2026-03-14',
-    registeredDate: '2026-03-10',
-    status: 'pending',
-    newSkus: [{ code: 'SKU-GB-002', name: '마스크팩 10매입' }],
-  },
-  {
-    id: 'ASN-2024-0311-005',
-    seller: '박정호',
-    company: 'K-Style',
-    sku: '티셔츠 L 외 3종',
-    plannedQty: 500,
-    actualQty: null,
-    expectedDate: '2026-03-13',
-    registeredDate: '2026-03-09',
-    status: 'transit',
-    newSkus: [],
-  },
-  {
-    id: 'ASN-2024-0310-003',
-    seller: '최민수',
-    company: 'Eco Pure',
-    sku: '텀블러 350ml',
-    plannedQty: 200,
-    actualQty: 185,
-    expectedDate: '2026-03-12',
-    registeredDate: '2026-03-08',
-    status: 'mismatch',
-    newSkus: [],
-  },
-  {
-    id: 'ASN-2024-0309-002',
-    seller: '이수빈',
-    company: 'Glow Beauty',
-    sku: '마스크팩 10매입',
-    plannedQty: 800,
-    actualQty: 800,
-    expectedDate: '2026-03-12',
-    registeredDate: '2026-03-07',
-    status: 'received',
-    newSkus: [{ code: 'SKU-GB-003', name: '마스크팩 10매입 (신상)' }],
-  },
-  {
-    id: 'ASN-2024-0308-001',
-    seller: '강은채',
-    company: 'K-Farm',
-    sku: '특산 진액 30팩',
-    plannedQty: 300,
-    actualQty: 298,
-    expectedDate: '2026-03-11',
-    registeredDate: '2026-03-06',
-    status: 'received',
-    newSkus: [],
-  },
-  {
-    id: 'ASN-2024-0307-004',
-    seller: '김지훈',
-    company: 'Beauty Lab',
-    sku: 'BB크림 외 1종',
-    plannedQty: 400,
-    actualQty: null,
-    expectedDate: '2026-03-16',
-    registeredDate: '2026-03-05',
-    status: 'pending',
-    newSkus: [{ code: 'SKU-BL-002', name: '파운데이션 SPF50' }],
-  },
-]
+// ── ASN 목록 (API 연동)
+const asnList = ref([])
+const loading = ref(false)
+
+async function fetchAsns() {
+  loading.value = true
+  try {
+    const res = await getWhmInboundAsns()
+    asnList.value = res.data
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchAsns)
 
 // 상태 → 라벨/배지색 매핑
 const STATUS_MAP = {
-  pending:  { label: '입고 대기',   color: 'amber' },
-  transit:  { label: '운송 중',     color: 'blue'  },
-  received: { label: '검수 완료',   color: 'green' },
-  mismatch: { label: '수량 불일치', color: 'red'   },
+  [INBOUND_STATUS.PENDING]:  { label: '입고 대기',   color: 'amber' },
+  [INBOUND_STATUS.TRANSIT]:  { label: '운송 중',     color: 'blue'  },
+  [INBOUND_STATUS.RECEIVED]: { label: '검수 완료',   color: 'green' },
+  [INBOUND_STATUS.MISMATCH]: { label: '수량 불일치', color: 'red'   },
 }
 
 // KPI 집계
 const kpi = computed(() => ({
-  total:    ASN_LIST.length,
-  pending:  ASN_LIST.filter(a => a.status === 'pending').length,
-  transit:  ASN_LIST.filter(a => a.status === 'transit').length,
-  received: ASN_LIST.filter(a => a.status === 'received').length,
-  mismatch: ASN_LIST.filter(a => a.status === 'mismatch').length,
+  total:    asnList.value.length,
+  pending:  asnList.value.filter(a => a.status === INBOUND_STATUS.PENDING).length,
+  transit:  asnList.value.filter(a => a.status === INBOUND_STATUS.TRANSIT).length,
+  received: asnList.value.filter(a => a.status === INBOUND_STATUS.RECEIVED).length,
+  mismatch: asnList.value.filter(a => a.status === INBOUND_STATUS.MISMATCH).length,
 }))
 
 const statusTabs = computed(() => [
-  { key: 'all',      label: '전체',        count: kpi.value.total,    color: 'gray'  },
-  { key: 'pending',  label: '입고 대기',   count: kpi.value.pending,  color: 'amber' },
-  { key: 'transit',  label: '운송 중',     count: kpi.value.transit,  color: 'blue'  },
-  { key: 'received', label: '검수 완료',   count: kpi.value.received, color: 'green' },
-  { key: 'mismatch', label: '수량 불일치', count: kpi.value.mismatch, color: 'red'   },
+  { key: 'all',                        label: '전체',        count: kpi.value.total,    color: 'gray'  },
+  { key: INBOUND_STATUS.PENDING,       label: '입고 대기',   count: kpi.value.pending,  color: 'amber' },
+  { key: INBOUND_STATUS.TRANSIT,       label: '운송 중',     count: kpi.value.transit,  color: 'blue'  },
+  { key: INBOUND_STATUS.RECEIVED,      label: '검수 완료',   count: kpi.value.received, color: 'green' },
+  { key: INBOUND_STATUS.MISMATCH,      label: '수량 불일치', count: kpi.value.mismatch, color: 'red'   },
 ])
 
 watch([activeStatus, filterSeller, searchText], () => {
   currentPage.value = 1
 })
 
+const sellerOptions = computed(() => [...new Set(asnList.value.map(a => a.company))].sort())
+
 const filteredAsns = computed(() => {
-  let list = ASN_LIST
+  let list = asnList.value
 
   if (activeStatus.value !== 'all') {
     list = list.filter(a => a.status === activeStatus.value)
@@ -224,7 +165,7 @@ const resolvedAsnIds = ref(new Set())
 
 // 신규 SKU가 있고 아직 배정 완료되지 않은 ASN 목록
 const unassignedAsns = computed(() =>
-  ASN_LIST.filter(a => a.newSkus.length > 0 && !resolvedAsnIds.value.has(a.id))
+  asnList.value.filter(a => a.newSkus?.length > 0 && !resolvedAsnIds.value.has(a.id))
 )
 
 // AsnDetailModal에서 '입고 확인' 완료 시 호출
@@ -245,7 +186,7 @@ const binPendingColumns = [
 </script>
 
 <template>
-  <AppLayout title="ASN 목록" :breadcrumb="breadcrumb" :loading="ui.isLoading">
+  <AppLayout title="ASN 목록" :breadcrumb="breadcrumb" :loading="loading || ui.isLoading">
 
     <!-- ── KPI 카드 4개 ─────────────────────────── -->
     <div class="kpi-grid">
@@ -256,19 +197,19 @@ const binPendingColumns = [
         <div class="kpi-sub">오늘 기준 등록 문서</div>
       </div>
 
-      <div class="kpi-card" @click="onStatusTab('pending')">
+      <div class="kpi-card" @click="onStatusTab(INBOUND_STATUS.PENDING)">
         <div class="kpi-label">입고 대기</div>
         <div class="kpi-value kpi--amber">{{ kpi.pending }}</div>
         <div class="kpi-sub">예정 입고 포함</div>
       </div>
 
-      <div class="kpi-card" @click="onStatusTab('transit')">
+      <div class="kpi-card" @click="onStatusTab(INBOUND_STATUS.TRANSIT)">
         <div class="kpi-label">운송 중</div>
         <div class="kpi-value kpi--blue">{{ kpi.transit }}</div>
         <div class="kpi-sub">도착 예정 48시간 이내</div>
       </div>
 
-      <div class="kpi-card" @click="onStatusTab('mismatch')">
+      <div class="kpi-card" @click="onStatusTab(INBOUND_STATUS.MISMATCH)">
         <div class="kpi-label">수량 불일치</div>
         <div class="kpi-value kpi--red">{{ kpi.mismatch }}</div>
         <div class="kpi-sub">즉시 검토 필요</div>
@@ -343,11 +284,7 @@ const binPendingColumns = [
 
           <select v-model="filterSeller" class="select-filter">
             <option value="">전체 셀러</option>
-            <option>Glow Beauty</option>
-            <option>K-Style</option>
-            <option>Eco Pure</option>
-            <option>K-Farm</option>
-            <option>Beauty Lab</option>
+            <option v-for="company in sellerOptions" :key="company" :value="company">{{ company }}</option>
           </select>
 
           <select class="select-filter">
@@ -412,9 +349,9 @@ const binPendingColumns = [
             <template #cell-actions="{ row }">
               <button
                 class="ui-btn ui-btn--ghost ui-btn--sm"
-                @click="row.status === 'mismatch' ? openMismatchModal(row) : openDetailModal(row)"
+                @click="row.status === INBOUND_STATUS.MISMATCH ? openMismatchModal(row) : openDetailModal(row)"
               >
-                {{ row.status === 'mismatch' ? '처리' : '상세' }}
+                {{ row.status === INBOUND_STATUS.MISMATCH ? '처리' : '상세' }}
               </button>
             </template>
           </BaseTable>
