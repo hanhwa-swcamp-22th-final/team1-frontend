@@ -6,7 +6,7 @@ import BaseForm from '@/components/common/BaseForm.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import { ROUTE_NAMES } from '@/constants'
-import { createCompany, createCompanyLog, createUser, getCompanies, getUsers } from '@/api/systemAdmin'
+import { createCompany, createCompanyLog, createUser, getCompanies, getUsers } from '@/api/member'
 import { useUiStore } from '@/stores/ui'
 
 const router = useRouter()

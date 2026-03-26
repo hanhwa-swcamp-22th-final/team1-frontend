@@ -1,11 +1,11 @@
 // server.cjs — 진입점: 미들웨어 등록 + 라우터 마운트 + 서버 시작
 //
 // 라우터 담당 분리
-//   routes/auth.cjs    — POST /auth/*        (공통)
-//   routes/wms.cjs     — GET  /wms/*         (masterAdmin + 대시보드 공용) ← /wms/asns/* 포함
+//   routes/auth.cjs    — POST /member/auth/* (공통)   ← /auth/* alias 유지
+//   routes/wms.cjs     — GET  /wms/*         (masterAdmin + whManager + whWorker) ← /wms/asns/* 포함
 //   routes/orders.cjs  — GET  /orders/*      (whManager + seller order)
-//   routes/members.cjs — GET  /members/*     (systemAdmin)
-//   routes/products.cjs — GET/POST /products/*    (seller product)
+//   routes/members.cjs — GET  /member/*      (masterAdmin + systemAdmin) ← /members/* alias 유지
+//   routes/products.cjs — GET/POST /wms/products/*   (seller product) ← /products/* alias 유지
 //   routes/integrations.cjs — GET /integrations/* (seller channel)
 //   routes/notifications.cjs — GET /notifications/* (seller notifications)
 //
@@ -40,13 +40,26 @@ server.use(middlewares)
 server.use(jsonServer.bodyParser)
 
 // ── 커스텀 라우터 마운트 ──────────────────────────────────────────────────────
-server.use('/auth',    require('./routes/auth.cjs')(BASE_URL))
-server.use('/wms',     require('./routes/wms.cjs')(BASE_URL))
-server.use('/orders',  require('./routes/orders.cjs')(BASE_URL))
-server.use('/members', require('./routes/members.cjs')(BASE_URL))
-server.use('/products', require('./routes/products.cjs')(BASE_URL))
-server.use('/integrations', require('./routes/integrations.cjs')(BASE_URL))
-server.use('/notifications', require('./routes/notifications.cjs')(BASE_URL))
+const authRoutes = require('./routes/auth.cjs')(BASE_URL)
+const wmsRoutes = require('./routes/wms.cjs')(BASE_URL)
+const orderRoutes = require('./routes/orders.cjs')(BASE_URL)
+const memberRoutes = require('./routes/members.cjs')(BASE_URL)
+const productRoutes = require('./routes/products.cjs')(BASE_URL)
+const integrationRoutes = require('./routes/integrations.cjs')(BASE_URL)
+const notificationRoutes = require('./routes/notifications.cjs')(BASE_URL)
+
+server.use('/member/auth', authRoutes)
+server.use('/member', memberRoutes)
+server.use('/wms/products', productRoutes)
+server.use('/wms', wmsRoutes)
+server.use('/orders', orderRoutes)
+server.use('/integrations', integrationRoutes)
+server.use('/notifications', notificationRoutes)
+
+// legacy aliases
+server.use('/auth', authRoutes)
+server.use('/members', memberRoutes)
+server.use('/products', productRoutes)
 
 // 나머지는 db.json 기반 자동 REST API
 server.use(router)

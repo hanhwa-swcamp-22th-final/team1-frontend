@@ -6,7 +6,7 @@ import BaseTable from '@/components/common/BaseTable.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import { formatDate } from '@/utils/format'
-import { getCompanies, getUsers, updateUser } from '@/api/systemAdmin'
+import { getCompanies, getUsers, updateUser } from '@/api/member'
 import { useUiStore } from '@/stores/ui'
 
 const ui = useUiStore()

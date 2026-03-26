@@ -3,6 +3,34 @@
 const { Router } = require('express')
 const axios = require('axios')
 
+function toQuery(params = {}) {
+  const search = new URLSearchParams()
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      search.append(key, value)
+    }
+  })
+  const query = search.toString()
+  return query ? `?${query}` : ''
+}
+
+async function getCollection(http, collection, params = {}) {
+  const { data } = await http.get(`/${collection}${toQuery(params)}`)
+  return data
+}
+
+async function getOne(http, collection, id) {
+  const data = await getCollection(http, collection, { id })
+  return data[0] ?? null
+}
+
+async function patchOne(http, collection, id, payload) {
+  const current = await getOne(http, collection, id)
+  if (!current) return null
+  const { data } = await http.patch(`/${collection}/${encodeURIComponent(id)}`, payload)
+  return data
+}
+
 module.exports = function (BASE_URL) {
   const http = axios.create({ baseURL: BASE_URL })
   const router = Router()
@@ -80,6 +108,103 @@ module.exports = function (BASE_URL) {
       res.json({ success: true, message: '계정이 재활성화되었습니다.' })
     } catch {
       res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' })
+    }
+  })
+
+  // ── 시스템 관리자 (/member/admin/*) ────────────────────────────────────────
+
+  router.get('/admin/companies', async (req, res) => {
+    const data = await getCollection(http, 'sys_companies', req.query)
+    res.json(data)
+  })
+
+  router.get('/admin/companies/:id', async (req, res) => {
+    const company = await getOne(http, 'sys_companies', req.params.id)
+    if (!company) return res.status(404).json({ success: false, message: '업체를 찾을 수 없습니다.' })
+    return res.json(company)
+  })
+
+  router.post('/admin/companies', async (req, res) => {
+    try {
+      const list = await getCollection(http, 'sys_companies')
+      const nextId = Math.max(0, ...list.map((item) => Number(item.id) || 0)) + 1
+      const payload = {
+        id: req.body?.id ?? nextId,
+        ...req.body,
+      }
+      const { data } = await http.post('/sys_companies', payload)
+      return res.status(201).json(data)
+    } catch {
+      return res.status(500).json({ success: false, message: '업체 등록 중 오류가 발생했습니다.' })
+    }
+  })
+
+  router.patch('/admin/companies/:id', async (req, res) => {
+    try {
+      const data = await patchOne(http, 'sys_companies', req.params.id, req.body)
+      if (!data) return res.status(404).json({ success: false, message: '업체를 찾을 수 없습니다.' })
+      return res.json(data)
+    } catch {
+      return res.status(500).json({ success: false, message: '업체 수정 중 오류가 발생했습니다.' })
+    }
+  })
+
+  router.get('/admin/users', async (req, res) => {
+    const data = await getCollection(http, 'sys_users', req.query)
+    res.json(data)
+  })
+
+  router.post('/admin/users', async (req, res) => {
+    try {
+      const list = await getCollection(http, 'sys_users')
+      const nextId = Math.max(0, ...list.map((item) => Number(item.id) || 0)) + 1
+      const payload = {
+        id: req.body?.id ?? nextId,
+        ...req.body,
+      }
+      const { data } = await http.post('/sys_users', payload)
+      return res.status(201).json(data)
+    } catch {
+      return res.status(500).json({ success: false, message: '사용자 등록 중 오류가 발생했습니다.' })
+    }
+  })
+
+  router.patch('/admin/users/:id', async (req, res) => {
+    try {
+      const data = await patchOne(http, 'sys_users', req.params.id, req.body)
+      if (!data) return res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' })
+      return res.json(data)
+    } catch {
+      return res.status(500).json({ success: false, message: '사용자 수정 중 오류가 발생했습니다.' })
+    }
+  })
+
+  router.get('/admin/company-logs', async (req, res) => {
+    const data = await getCollection(http, 'sys_company_logs', req.query)
+    res.json(data)
+  })
+
+  router.post('/admin/company-logs', async (req, res) => {
+    try {
+      const { data } = await http.post('/sys_company_logs', req.body)
+      return res.status(201).json(data)
+    } catch {
+      return res.status(500).json({ success: false, message: '업체 로그 기록 중 오류가 발생했습니다.' })
+    }
+  })
+
+  router.get('/admin/fee-profiles', async (req, res) => {
+    const data = await getCollection(http, 'sys_fee_profiles', req.query)
+    res.json(data)
+  })
+
+  router.patch('/admin/fee-profiles/:id', async (req, res) => {
+    try {
+      const data = await patchOne(http, 'sys_fee_profiles', req.params.id, req.body)
+      if (!data) return res.status(404).json({ success: false, message: '요금 프로필을 찾을 수 없습니다.' })
+      return res.json(data)
+    } catch {
+      return res.status(500).json({ success: false, message: '요금 프로필 수정 중 오류가 발생했습니다.' })
     }
   })
 

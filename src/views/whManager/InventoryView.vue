@@ -5,7 +5,7 @@ import BaseTable from '@/components/common/BaseTable.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import InventoryDetailModal from '@/components/whManager/InventoryDetailModal.vue'
 import { useRouter } from 'vue-router'
-import { getWhmInventories } from '@/api/wh-manager'
+import { getWhmInventories } from '@/api/wms'
 import { INVENTORY_STATUS, ROUTE_NAMES } from '@/constants'
 
 const router = useRouter()

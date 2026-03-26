@@ -6,7 +6,7 @@ import ToastMessage from '@/components/common/ToastMessage.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import SingleOutboundConfirmModal from '@/components/whManager/SingleOutboundConfirmModal.vue'
 import BulkOutboundConfirmModal from '@/components/whManager/BulkOutboundConfirmModal.vue'
-import { getWhmOutboundConfirmOrders, confirmSingleOutbound, bulkConfirmOutbound } from '@/api/wh-manager'
+import { getWhmOutboundConfirmOrders, confirmSingleOutbound, bulkConfirmOutbound } from '@/api/wms'
 import { OUTBOUND_CONFIRM_STATUS } from '@/constants'
 
 // ── 데이터

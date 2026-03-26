@@ -5,7 +5,7 @@
  */
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { createSellerProduct, getSellerProductDetail, updateSellerProduct } from '@/api/product.js'
+import { createSellerProduct, getSellerProductDetail, updateSellerProduct } from '@/api/wms'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import FileUpload from '@/components/common/FileUpload.vue'

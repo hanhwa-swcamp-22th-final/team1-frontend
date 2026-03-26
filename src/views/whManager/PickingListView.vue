@@ -4,7 +4,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import ToastMessage from '@/components/common/ToastMessage.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import PickingListDetailModal from '@/components/whManager/PickingListDetailModal.vue'
-import { getWhmPickingLists } from '@/api/wh-manager'
+import { getWhmPickingLists } from '@/api/wms'
 import { PICKING_LIST_STATUS } from '@/constants'
 
 // ── 데이터

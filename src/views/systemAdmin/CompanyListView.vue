@@ -8,7 +8,7 @@ import BaseModal from '@/components/common/BaseModal.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import { formatDate, formatNumber } from '@/utils/format'
 import { ROUTE_NAMES } from '@/constants'
-import { createCompanyLog, createUser, getCompanies, getUsers, updateCompany, updateUser } from '@/api/systemAdmin'
+import { createCompanyLog, createUser, getCompanies, getUsers, updateCompany, updateUser } from '@/api/member'
 import { useUiStore } from '@/stores/ui'
 
 const router = useRouter()

@@ -6,7 +6,7 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import ToastMessage from '@/components/common/ToastMessage.vue'
 import SingleDispatchModal from '@/components/whManager/SingleDispatchModal.vue'
 import BulkDispatchModal from '@/components/whManager/BulkDispatchModal.vue'
-import { getWhmPendingOrders, dispatchSingleOrder, bulkDispatchOrders, getWhmWorkers } from '@/api/wh-manager'
+import { getWhmPendingOrders, dispatchSingleOrder, bulkDispatchOrders, getWhmWorkers } from '@/api/wms'
 import { ORDER_STATUS, STOCK_STATUS } from '@/constants'
 
 // ── 데이터
