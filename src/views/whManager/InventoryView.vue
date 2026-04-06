@@ -29,7 +29,7 @@ const inventories = ref([])
 async function fetchInventories() {
   try {
     const { data } = await getWhmInventories()
-    inventories.value = data
+    inventories.value = data.data
   } catch (e) {
     console.error('재고 데이터 로드 실패:', e)
   }

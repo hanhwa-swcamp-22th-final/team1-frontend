@@ -85,8 +85,8 @@ async function fetchWorkers() {
       getWhmWorkerAccounts(),
       getWhmBinFixedAssignments(),
     ])
-    workers.value  = workerRes.data
-    binFixed.value = binRes.data
+    workers.value  = workerRes.data.data
+    binFixed.value = binRes.data.data
   } catch {
     showToast('목록을 불러오지 못했습니다.', 'error')
   } finally {
@@ -103,9 +103,9 @@ async function fetchBinTab() {
       getWhmLocations(),
       getWhmWorkerAccounts(),
     ])
-    binFixed.value   = binRes.data
-    locations.value  = locRes.data
-    workers.value    = workerRes.data
+    binFixed.value   = binRes.data.data
+    locations.value  = locRes.data.data
+    workers.value    = workerRes.data.data
   } catch {
     showToast('Bin 배정 정보를 불러오지 못했습니다.', 'error')
   } finally {
@@ -204,8 +204,8 @@ const pagination = computed(() => ({
 // ── 계정 생성
 async function handleCreate(payload) {
   try {
-    const { data } = await createWhmWorkerAccount(payload)
-    workers.value.push(data)
+    const response = await createWhmWorkerAccount(payload)
+    workers.value.push(response.data.data)
     showCreateModal.value = false
     showToast(`${payload.name} 작업자 계정이 생성되었습니다.`)
   } catch {

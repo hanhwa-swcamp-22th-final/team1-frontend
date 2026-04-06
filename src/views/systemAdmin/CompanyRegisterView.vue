@@ -55,8 +55,8 @@ async function submitRegistration() {
   ui.setLoading(true)
   try {
     const [companiesRes, usersRes] = await Promise.all([getCompanies(), getUsers()])
-    const companies = companiesRes.data
-    const users = usersRes.data
+    const companies = companiesRes.data.data
+    const users = usersRes.data.data
     const nextCompanyId = Math.max(0, ...companies.map((item) => Number(item.id) || 0)) + 1
     const nextUserId = Math.max(0, ...users.map((item) => Number(item.id) || 0)) + 1
     createdTenantCode.value = `TEN-${slug(form.name)}-${String(nextCompanyId).padStart(3, '0')}`

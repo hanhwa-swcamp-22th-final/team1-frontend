@@ -96,46 +96,90 @@ export function getSellerFeeSummary() {
 
 // ── 시스템 관리자 (System Admin) ──────────────────────────────────────
 
+/**
+ * 시스템 관리자용 업체 목록 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: Company[] }
+ */
 export async function getCompanies(params = {}) {
   return instance.get('/member/admin/companies', { params })
 }
 
+/**
+ * 시스템 관리자용 업체 단건 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: Company }
+ */
 export async function getCompany(id) {
   return instance.get(`/member/admin/companies/${id}`)
 }
 
+/**
+ * 시스템 관리자용 업체 등록
+ * @returns {Promise<AxiosResponse>} { success: true, data: Company }
+ */
 export async function createCompany(payload) {
   return instance.post('/member/admin/companies', payload)
 }
 
+/**
+ * 시스템 관리자용 업체 수정
+ * @returns {Promise<AxiosResponse>} { success: true, data: Company }
+ */
 export async function updateCompany(id, payload) {
   return instance.patch(`/member/admin/companies/${id}`, payload)
 }
 
+/**
+ * 시스템 관리자용 사용자 목록 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: User[] }
+ */
 export async function getUsers(params = {}) {
   return instance.get('/member/admin/users', { params })
 }
 
+/**
+ * 시스템 관리자용 사용자 생성
+ * @returns {Promise<AxiosResponse>} { success: true, data: User }
+ */
 export async function createUser(payload) {
   return instance.post('/member/admin/users', payload)
 }
 
+/**
+ * 시스템 관리자용 사용자 수정
+ * @returns {Promise<AxiosResponse>} { success: true, data: User }
+ */
 export async function updateUser(id, payload) {
   return instance.patch(`/member/admin/users/${id}`, payload)
 }
 
+/**
+ * 시스템 관리자용 업체 로그 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: CompanyLog[] }
+ */
 export async function getCompanyLogs(params = {}) {
   return instance.get('/member/admin/company-logs', { params })
 }
 
+/**
+ * 시스템 관리자용 업체 로그 생성
+ * @returns {Promise<AxiosResponse>} { success: true, data: CompanyLog }
+ */
 export async function createCompanyLog(payload) {
   return instance.post('/member/admin/company-logs', payload)
 }
 
+/**
+ * 시스템 관리자용 수수료 프로필 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: FeeProfile[] }
+ */
 export async function getFeeProfiles(params = {}) {
   return instance.get('/member/admin/fee-profiles', { params })
 }
 
+/**
+ * 시스템 관리자용 수수료 프로필 수정
+ * @returns {Promise<AxiosResponse>} { success: true, data: FeeProfile }
+ */
 export async function updateFeeProfile(id, payload) {
   return instance.patch(`/member/admin/fee-profiles/${id}`, payload)
 }

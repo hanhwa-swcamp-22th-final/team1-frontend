@@ -3,6 +3,14 @@
 const { Router } = require('express')
 const axios = require('axios')
 
+function success(data) {
+  return { success: true, data }
+}
+
+function failure(code, message) {
+  return { success: false, code, message }
+}
+
 /**
  * SKU 카탈로그 맵 빌드 (sku → {productName, category})
  * sku_catalog 배열을 json-server에서 로드하여 오브젝트 맵으로 변환
@@ -385,13 +393,13 @@ module.exports = function (BASE_URL) {
 
   router.get('/manager/dashboard', async (req, res) => {
     const { data } = await http.get('/whm_dashboard')
-    res.json(data)
+    res.json(success(data))
   })
 
   router.get('/manager/pending-orders', async (req, res) => {
     const data = await getCollection(http, 'wh_pending_orders', req.query)
     const filtered = req.query.status ? data : data.filter((item) => item.status === 'CONFIRMED')
-    res.json(filtered)
+    res.json(success(filtered))
   })
 
   router.patch('/manager/pending-orders/:id', async (req, res) => {
@@ -401,10 +409,10 @@ module.exports = function (BASE_URL) {
         : null
       const payload = worker ? { ...req.body, workerName: worker.name } : req.body
       const data = await patchOne(http, 'wh_pending_orders', req.params.id, payload)
-      if (!data) return res.status(404).json({ success: false, message: '주문을 찾을 수 없습니다.' })
-      return res.json(data)
+      if (!data) return res.status(404).json(failure('PENDING_ORDER_NOT_FOUND', '주문을 찾을 수 없습니다.'))
+      return res.json(success(data))
     } catch {
-      return res.status(500).json({ success: false, message: '출고 지시 처리 중 오류가 발생했습니다.' })
+      return res.status(500).json(failure('DISPATCH_UPDATE_FAILED', '출고 지시 처리 중 오류가 발생했습니다.'))
     }
   })
 
@@ -418,40 +426,40 @@ module.exports = function (BASE_URL) {
       const updated = await Promise.all(
         orderIds.map((id) => patchOne(http, 'wh_pending_orders', id, payload))
       )
-      return res.json(updated.filter(Boolean))
+      return res.json(success(updated.filter(Boolean)))
     } catch {
-      return res.status(500).json({ success: false, message: '일괄 출고 지시 처리 중 오류가 발생했습니다.' })
+      return res.status(500).json(failure('DISPATCH_BULK_FAILED', '일괄 출고 지시 처리 중 오류가 발생했습니다.'))
     }
   })
 
   router.get('/manager/workers', async (req, res) => {
     const data = await getCollection(http, 'wh_workers', req.query)
-    res.json(data)
+    res.json(success(data))
   })
 
   router.get('/manager/picking-lists', async (req, res) => {
     const data = await getCollection(http, 'wh_picking_lists', req.query)
-    res.json(data)
+    res.json(success(data))
   })
 
   router.get('/manager/picking-lists/:id', async (req, res) => {
     const pickingList = await getOne(http, 'wh_picking_lists', req.params.id)
-    if (!pickingList) return res.status(404).json({ success: false, message: '피킹 리스트를 찾을 수 없습니다.' })
-    return res.json(pickingList)
+    if (!pickingList) return res.status(404).json(failure('PICKING_LIST_NOT_FOUND', '피킹 리스트를 찾을 수 없습니다.'))
+    return res.json(success(pickingList))
   })
 
   router.get('/manager/invoice-orders', async (req, res) => {
     const data = await getCollection(http, 'wh_invoice_orders', req.query)
-    res.json(data)
+    res.json(success(data))
   })
 
   router.patch('/manager/invoice-orders/:id', async (req, res) => {
     try {
       const data = await patchOne(http, 'wh_invoice_orders', req.params.id, req.body)
-      if (!data) return res.status(404).json({ success: false, message: '송장 발행 대상을 찾을 수 없습니다.' })
-      return res.json(data)
+      if (!data) return res.status(404).json(failure('INVOICE_ORDER_NOT_FOUND', '송장 발행 대상을 찾을 수 없습니다.'))
+      return res.json(success(data))
     } catch {
-      return res.status(500).json({ success: false, message: '송장 정보 저장 중 오류가 발생했습니다.' })
+      return res.status(500).json(failure('LABEL_UPDATE_FAILED', '송장 정보 저장 중 오류가 발생했습니다.'))
     }
   })
 
@@ -462,24 +470,24 @@ module.exports = function (BASE_URL) {
       const updated = await Promise.all(
         orderIds.map((id) => patchOne(http, 'wh_invoice_orders', id, { labelStatus: 'ISSUED', labelIssuedAt }))
       )
-      return res.json(updated.filter(Boolean))
+      return res.json(success(updated.filter(Boolean)))
     } catch {
-      return res.status(500).json({ success: false, message: '일괄 라벨 발행 중 오류가 발생했습니다.' })
+      return res.status(500).json(failure('LABEL_BULK_FAILED', '일괄 라벨 발행 중 오류가 발생했습니다.'))
     }
   })
 
   router.get('/manager/outbound-confirm-orders', async (req, res) => {
     const data = await getCollection(http, 'wh_outbound_confirm_orders', req.query)
-    res.json(data)
+    res.json(success(data))
   })
 
   router.patch('/manager/outbound-confirm-orders/:id', async (req, res) => {
     try {
       const data = await patchOne(http, 'wh_outbound_confirm_orders', req.params.id, req.body)
-      if (!data) return res.status(404).json({ success: false, message: '출고 확정 대상을 찾을 수 없습니다.' })
-      return res.json(data)
+      if (!data) return res.status(404).json(failure('OUTBOUND_ORDER_NOT_FOUND', '출고 확정 대상을 찾을 수 없습니다.'))
+      return res.json(success(data))
     } catch {
-      return res.status(500).json({ success: false, message: '출고 확정 처리 중 오류가 발생했습니다.' })
+      return res.status(500).json(failure('OUTBOUND_CONFIRM_FAILED', '출고 확정 처리 중 오류가 발생했습니다.'))
     }
   })
 
@@ -490,15 +498,15 @@ module.exports = function (BASE_URL) {
       const updated = await Promise.all(
         orderIds.map((id) => patchOne(http, 'wh_outbound_confirm_orders', id, { status }))
       )
-      return res.json(updated.filter(Boolean))
+      return res.json(success(updated.filter(Boolean)))
     } catch {
-      return res.status(500).json({ success: false, message: '일괄 출고 확정 중 오류가 발생했습니다.' })
+      return res.status(500).json(failure('OUTBOUND_CONFIRM_BULK_FAILED', '일괄 출고 확정 중 오류가 발생했습니다.'))
     }
   })
 
   router.get('/manager/worker-accounts', async (req, res) => {
     const data = await getCollection(http, 'wh_worker_accounts', req.query)
-    res.json(data)
+    res.json(success(data))
   })
 
   router.post('/manager/worker-accounts', async (req, res) => {
@@ -516,45 +524,45 @@ module.exports = function (BASE_URL) {
         ...req.body,
       }
       const { data } = await http.post('/wh_worker_accounts', payload)
-      return res.status(201).json(data)
+      return res.status(201).json(success(data))
     } catch {
-      return res.status(500).json({ success: false, message: '작업자 계정 생성 중 오류가 발생했습니다.' })
+      return res.status(500).json(failure('WORKER_ACCOUNT_CREATE_FAILED', '작업자 계정 생성 중 오류가 발생했습니다.'))
     }
   })
 
   router.patch('/manager/worker-accounts/:id', async (req, res) => {
     try {
       const data = await patchOne(http, 'wh_worker_accounts', req.params.id, req.body)
-      if (!data) return res.status(404).json({ success: false, message: '작업자 계정을 찾을 수 없습니다.' })
-      return res.json(data)
+      if (!data) return res.status(404).json(failure('WORKER_ACCOUNT_NOT_FOUND', '작업자 계정을 찾을 수 없습니다.'))
+      return res.json(success(data))
     } catch {
-      return res.status(500).json({ success: false, message: '작업자 계정 수정 중 오류가 발생했습니다.' })
+      return res.status(500).json(failure('WORKER_ACCOUNT_UPDATE_FAILED', '작업자 계정 수정 중 오류가 발생했습니다.'))
     }
   })
 
   router.get('/manager/tasks', async (req, res) => {
     const data = await getCollection(http, 'wh_tasks', req.query)
-    res.json(data)
+    res.json(success(data))
   })
 
   router.patch('/manager/tasks/:id', async (req, res) => {
     try {
       const data = await patchOne(http, 'wh_tasks', req.params.id, req.body)
-      if (!data) return res.status(404).json({ success: false, message: '작업을 찾을 수 없습니다.' })
-      return res.json(data)
+      if (!data) return res.status(404).json(failure('TASK_NOT_FOUND', '작업을 찾을 수 없습니다.'))
+      return res.json(success(data))
     } catch {
-      return res.status(500).json({ success: false, message: '작업 배정 저장 중 오류가 발생했습니다.' })
+      return res.status(500).json(failure('TASK_UPDATE_FAILED', '작업 배정 저장 중 오류가 발생했습니다.'))
     }
   })
 
   router.get('/manager/inbound-asns', async (req, res) => {
     const data = await getCollection(http, 'wh_inbound_asns', req.query)
-    res.json(data)
+    res.json(success(data))
   })
 
   router.get('/manager/bin-fixed-assignments', async (req, res) => {
     const data = await getCollection(http, 'wh_bin_fixed_assignments', req.query)
-    res.json(data)
+    res.json(success(data))
   })
 
   router.post('/manager/bin-fixed-assignments', async (req, res) => {
@@ -566,56 +574,56 @@ module.exports = function (BASE_URL) {
         ...req.body,
       }
       const { data } = await http.post('/wh_bin_fixed_assignments', payload)
-      return res.status(201).json(data)
+      return res.status(201).json(success(data))
     } catch {
-      return res.status(500).json({ success: false, message: 'Bin 고정 배정 생성 중 오류가 발생했습니다.' })
+      return res.status(500).json(failure('BIN_ASSIGNMENT_CREATE_FAILED', 'Bin 고정 배정 생성 중 오류가 발생했습니다.'))
     }
   })
 
   router.patch('/manager/bin-fixed-assignments/:bin', async (req, res) => {
     try {
       const data = await patchOne(http, 'wh_bin_fixed_assignments', req.params.bin, req.body)
-      if (!data) return res.status(404).json({ success: false, message: 'Bin 고정 배정을 찾을 수 없습니다.' })
-      return res.json(data)
+      if (!data) return res.status(404).json(failure('BIN_ASSIGNMENT_NOT_FOUND', 'Bin 고정 배정을 찾을 수 없습니다.'))
+      return res.json(success(data))
     } catch {
-      return res.status(500).json({ success: false, message: 'Bin 고정 배정 수정 중 오류가 발생했습니다.' })
+      return res.status(500).json(failure('BIN_ASSIGNMENT_UPDATE_FAILED', 'Bin 고정 배정 수정 중 오류가 발생했습니다.'))
     }
   })
 
   router.get('/manager/locations', async (req, res) => {
     const data = await getCollection(http, 'wh_locations', req.query)
-    res.json(data)
+    res.json(success(data))
   })
 
   router.get('/manager/inventories', async (req, res) => {
     const data = await getCollection(http, 'wh_inventories', req.query)
-    res.json(data)
+    res.json(success(data))
   })
 
   router.get('/manager/inventories/:id', async (req, res) => {
     const inventory = await getOne(http, 'wh_inventories', req.params.id)
-    if (!inventory) return res.status(404).json({ success: false, message: '재고 정보를 찾을 수 없습니다.' })
-    return res.json(inventory)
+    if (!inventory) return res.status(404).json(failure('INVENTORY_NOT_FOUND', '재고 정보를 찾을 수 없습니다.'))
+    return res.json(success(inventory))
   })
 
   // ── 창고 작업자 (/wms/worker/*) ────────────────────────────────────────────
 
   router.get('/worker/tasks', async (req, res) => {
     const data = await getCollection(http, 'wh_worker_tasks', req.query)
-    res.json(data)
+    res.json(success(data))
   })
 
   router.patch('/worker/tasks/:id', async (req, res) => {
     try {
       const current = await getOne(http, 'wh_worker_tasks', req.params.id)
-      if (!current) return res.status(404).json({ success: false, message: '작업을 찾을 수 없습니다.' })
+      if (!current) return res.status(404).json(failure('WORKER_TASK_NOT_FOUND', '작업을 찾을 수 없습니다.'))
       const payload = { ...req.body }
       if (Object.prototype.hasOwnProperty.call(req.body, 'bins')) payload.bins = req.body.bins
       if (Object.prototype.hasOwnProperty.call(req.body, 'packOrders')) payload.packOrders = req.body.packOrders
       const { data } = await http.patch(`/wh_worker_tasks/${encodeURIComponent(req.params.id)}`, payload)
-      return res.json(data)
+      return res.json(success(data))
     } catch {
-      return res.status(500).json({ success: false, message: '작업 정보 저장 중 오류가 발생했습니다.' })
+      return res.status(500).json(failure('WORKER_TASK_UPDATE_FAILED', '작업 정보 저장 중 오류가 발생했습니다.'))
     }
   })
 

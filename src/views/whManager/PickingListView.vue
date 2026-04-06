@@ -31,7 +31,7 @@ async function fetchPickingLists() {
   loading.value = true
   try {
     const { data } = await getWhmPickingLists()
-    pickingLists.value = data
+    pickingLists.value = data.data
   } catch (e) {
     console.error('피킹 리스트 로드 실패:', e)
     showToast('피킹 리스트를 불러오지 못했습니다.', 'error')

@@ -210,90 +210,178 @@ export function updateSellerProduct(productId, payload) {
 
 // ── 창고 관리자 (WH Manager) ──────────────────────────────────────────
 
+/**
+ * 창고 관리자 대시보드 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhManagerDashboard }
+ */
 export function getWhmDashboard() {
   return instance.get('/wms/manager/dashboard')
 }
 
+/**
+ * 출고 지시 대기 주문 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhPendingOrder[] }
+ */
 export function getWhmPendingOrders(params) {
   return instance.get('/wms/manager/pending-orders', { params })
 }
 
+/**
+ * 단건 출고 지시 처리
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhPendingOrder }
+ */
 export function dispatchSingleOrder(id, data) {
   return instance.patch(`/wms/manager/pending-orders/${id}`, data)
 }
 
+/**
+ * 일괄 출고 지시 처리
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhPendingOrder[] }
+ */
 export function bulkDispatchOrders(data) {
   return instance.post('/wms/manager/pending-orders/bulk', data)
 }
 
+/**
+ * 작업자 목록 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhWorker[] }
+ */
 export function getWhmWorkers() {
   return instance.get('/wms/manager/workers')
 }
 
+/**
+ * 피킹 리스트 목록 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhPickingList[] }
+ */
 export function getWhmPickingLists(params) {
   return instance.get('/wms/manager/picking-lists', { params })
 }
 
+/**
+ * 피킹 리스트 단건 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhPickingList }
+ */
 export function getWhmPickingListDetail(id) {
   return instance.get(`/wms/manager/picking-lists/${id}`)
 }
 
+/**
+ * 송장 발행 대상 주문 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhInvoiceOrder[] }
+ */
 export function getWhmInvoiceOrders(params) {
   return instance.get('/wms/manager/invoice-orders', { params })
 }
 
+/**
+ * 단건 송장 발행 상태 저장
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhInvoiceOrder }
+ */
 export function issueLabel(id, data) {
   return instance.patch(`/wms/manager/invoice-orders/${id}`, data)
 }
 
+/**
+ * 일괄 라벨 발행 처리
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhInvoiceOrder[] }
+ */
 export function bulkIssueLabels(data) {
   return instance.post('/wms/manager/invoice-orders/bulk-label', data)
 }
 
+/**
+ * 출고 확정 대상 주문 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhOutboundConfirmOrder[] }
+ */
 export function getWhmOutboundConfirmOrders(params) {
   return instance.get('/wms/manager/outbound-confirm-orders', { params })
 }
 
+/**
+ * 단건 출고 확정 처리
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhOutboundConfirmOrder }
+ */
 export function confirmSingleOutbound(id, data) {
   return instance.patch(`/wms/manager/outbound-confirm-orders/${id}`, data)
 }
 
+/**
+ * 일괄 출고 확정 처리
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhOutboundConfirmOrder[] }
+ */
 export function bulkConfirmOutbound(data) {
   return instance.post('/wms/manager/outbound-confirm-orders/bulk-confirm', data)
 }
 
+/**
+ * 작업자 계정 목록 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhWorkerAccount[] }
+ */
 export function getWhmWorkerAccounts(params) {
   return instance.get('/wms/manager/worker-accounts', { params })
 }
 
+/**
+ * 작업자 계정 생성
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhWorkerAccount }
+ */
 export function createWhmWorkerAccount(data) {
   return instance.post('/wms/manager/worker-accounts', data)
 }
 
+/**
+ * 작업자 계정 수정
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhWorkerAccount }
+ */
 export function updateWhmWorkerAccount(id, data) {
   return instance.patch(`/wms/manager/worker-accounts/${id}`, data)
 }
 
+/**
+ * 작업 목록 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhTask[] }
+ */
 export function getWhmTasks(params) {
   return instance.get('/wms/manager/tasks', { params })
 }
 
+/**
+ * 작업 배정/상태 수정
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhTask }
+ */
 export function assignTask(id, data) {
   return instance.patch(`/wms/manager/tasks/${id}`, data)
 }
 
+/**
+ * 입고 ASN 목록 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhInboundAsn[] }
+ */
 export function getWhmInboundAsns(params) {
   return instance.get('/wms/manager/inbound-asns', { params })
 }
 
+/**
+ * Bin 고정 배정 목록 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhBinFixedAssignment[] }
+ */
 export function getWhmBinFixedAssignments() {
   return instance.get('/wms/manager/bin-fixed-assignments')
 }
 
+/**
+ * Bin 고정 배정 생성
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhBinFixedAssignment }
+ */
 export function createBinFixedAssignment(data) {
   return instance.post('/wms/manager/bin-fixed-assignments', data)
 }
 
+/**
+ * Bin 고정 배정 수정
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhBinFixedAssignment }
+ */
 export function updateBinFixedAssignment(bin, data) {
   return instance.patch(`/wms/manager/bin-fixed-assignments/${bin}`, data)
 }
@@ -306,20 +394,36 @@ export function getWhmLocations() {
   return instance.get('/wms/manager/locations')
 }
 
+/**
+ * 창고 관리자 재고 목록 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhInventory[] }
+ */
 export function getWhmInventories() {
   return instance.get('/wms/manager/inventories')
 }
 
+/**
+ * 창고 관리자 재고 단건 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhInventory }
+ */
 export function getWhmInventoryDetail(id) {
   return instance.get(`/wms/manager/inventories/${id}`)
 }
 
 // ── 창고 작업자 (WH Worker) ───────────────────────────────────────────
 
+/**
+ * 작업자 작업 목록 조회
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhWorkerTask[] }
+ */
 export async function getWhWorkerTasks(params = {}) {
   return instance.get('/wms/worker/tasks', { params })
 }
 
+/**
+ * 작업자 작업 상태 수정
+ * @returns {Promise<AxiosResponse>} { success: true, data: WhWorkerTask }
+ */
 export async function updateWhWorkerTask(id, payload) {
   return instance.patch(`/wms/worker/tasks/${id}`, payload)
 }
