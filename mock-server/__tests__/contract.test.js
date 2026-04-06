@@ -64,14 +64,15 @@ describe('mock server contract', () => {
     expect(response.status).toBe(200)
 
     const body = await response.json()
-    expect(Array.isArray(body)).toBe(true)
-    expect(body.length).toBeGreaterThan(0)
+    expect(body.success).toBe(true)
+    expect(Array.isArray(body.data)).toBe(true)
+    expect(body.data.length).toBeGreaterThan(0)
   })
 
   it('supports wh manager dispatch flow on wms/manager', async () => {
     const listResponse = await fetch(`${baseURL}/wms/manager/pending-orders`)
     const listBody = await listResponse.json()
-    const targetId = listBody[0]?.id
+    const targetId = listBody.data[0]?.id
 
     expect(targetId).toBeTruthy()
 
@@ -85,18 +86,23 @@ describe('mock server contract', () => {
     })
 
     expect(patchResponse.status).toBe(200)
+    const patchBody = await patchResponse.json()
+    expect(patchBody.success).toBe(true)
+    expect(patchBody.data.id).toBe(targetId)
 
     const refreshedResponse = await fetch(`${baseURL}/wms/manager/pending-orders`)
     const refreshedBody = await refreshedResponse.json()
-    expect(refreshedBody.some((item) => item.id === targetId)).toBe(false)
+    expect(refreshedBody.success).toBe(true)
+    expect(refreshedBody.data.some((item) => item.id === targetId)).toBe(false)
   })
 
   it('supports wh worker task read and write', async () => {
     const response = await fetch(`${baseURL}/wms/worker/tasks?workerUserId=4`)
     const body = await response.json()
-    const task = body[0]
+    const task = body.data[0]
 
     expect(response.status).toBe(200)
+    expect(body.success).toBe(true)
     expect(task).toBeTruthy()
 
     const updateResponse = await fetch(`${baseURL}/wms/worker/tasks/${task.id}`, {
@@ -109,7 +115,8 @@ describe('mock server contract', () => {
 
     expect(updateResponse.status).toBe(200)
     const updated = await updateResponse.json()
-    expect(updated.status).toBe('완료')
+    expect(updated.success).toBe(true)
+    expect(updated.data.status).toBe('완료')
   })
 
   it('supports frontend product path and legacy alias together', async () => {
