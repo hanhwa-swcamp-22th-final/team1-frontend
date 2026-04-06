@@ -39,7 +39,7 @@ async function fetchOrders() {
   loading.value = true
   try {
     const { data } = await getWhmInvoiceOrders()
-    orders.value = data
+    orders.value = data.data
   } catch (e) {
     console.error('송장 발행 목록 로드 실패:', e)
     showToast('목록을 불러오지 못했습니다.', 'error')

@@ -40,7 +40,7 @@ async function fetchOrders() {
   loading.value = true
   try {
     const { data } = await getWhmOutboundConfirmOrders()
-    orders.value = data
+    orders.value = data.data
   } catch (e) {
     console.error('출고 확정 목록 로드 실패:', e)
     showToast('목록을 불러오지 못했습니다.', 'error')

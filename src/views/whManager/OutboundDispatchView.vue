@@ -42,7 +42,7 @@ async function fetchOrders() {
   loading.value = true
   try {
     const { data } = await getWhmPendingOrders()
-    orders.value = data
+    orders.value = data.data
   } catch (e) {
     console.error('주문 목록 로드 실패:', e)
   } finally {
@@ -53,7 +53,7 @@ async function fetchOrders() {
 async function fetchWorkers() {
   try {
     const { data } = await getWhmWorkers()
-    workers.value = data
+    workers.value = data.data
   } catch (e) {
     console.error('작업자 목록 로드 실패:', e)
   }

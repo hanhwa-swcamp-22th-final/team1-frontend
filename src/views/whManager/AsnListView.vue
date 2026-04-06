@@ -33,7 +33,7 @@ async function fetchAsns() {
   loading.value = true
   try {
     const res = await getWhmInboundAsns()
-    asnList.value = res.data
+    asnList.value = res.data.data
   } finally {
     loading.value = false
   }

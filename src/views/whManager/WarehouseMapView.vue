@@ -18,7 +18,7 @@ async function fetchLocations() {
   loading.value = true
   try {
     const { data } = await getWhmLocations()
-    locations.value = data
+    locations.value = data.data
   } catch (e) {
     console.error('창고 로케이션 조회 실패:', e)
   } finally {

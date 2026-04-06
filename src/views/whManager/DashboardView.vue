@@ -22,10 +22,10 @@ const lowStockAlerts = ref([])
 onMounted(async () => {
   try {
     const { data } = await getWhmDashboard()
-    kpi.value            = data.kpi
-    todoItems.value      = data.todoItems
-    recentAsns.value     = data.recentAsns
-    lowStockAlerts.value = data.lowStockAlerts
+    kpi.value            = data.data.kpi
+    todoItems.value      = data.data.todoItems
+    recentAsns.value     = data.data.recentAsns
+    lowStockAlerts.value = data.data.lowStockAlerts
   } catch (e) {
     console.error('대시보드 데이터 로드 실패:', e)
   }
