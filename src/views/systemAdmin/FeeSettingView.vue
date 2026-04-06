@@ -28,7 +28,7 @@ async function fetchProfiles() {
   ui.setLoading(true)
   try {
     const response = await getFeeProfiles()
-    profiles.value = response.data
+    profiles.value = response.data.data
   } finally {
     ui.setLoading(false)
   }

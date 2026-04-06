@@ -33,8 +33,8 @@ async function fetchData() {
   ui.setLoading(true)
   try {
     const [companyRes, userRes] = await Promise.all([getCompanies(), getUsers()])
-    companies.value = companyRes.data
-    users.value = userRes.data
+    companies.value = companyRes.data.data
+    users.value = userRes.data.data
   } finally {
     ui.setLoading(false)
   }

@@ -46,9 +46,9 @@ async function fetchData() {
       getUsers({ companyId }),
       getCompanyLogs({ companyId }),
     ])
-    company.value = companyRes.data[0] || null
-    users.value = userRes.data
-    logs.value = logRes.data.sort((a, b) => new Date(b.at) - new Date(a.at))
+    company.value = companyRes.data.data[0] || null
+    users.value = userRes.data.data
+    logs.value = logRes.data.data.sort((a, b) => new Date(b.at) - new Date(a.at))
     if (company.value) {
       editForm.representative = company.value.representative || ''
       editForm.businessNumber = company.value.businessNumber || ''
