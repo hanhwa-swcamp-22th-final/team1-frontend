@@ -5,11 +5,11 @@ FROM node:22-alpine AS build
 
 WORKDIR /app
 
-# package.json, package-lock.json 먼저 복사 → 의존성 레이어 캐싱
+# package manifest 먼저 복사 → 의존성 레이어 캐싱
 COPY package.json package-lock.json* ./
 
-# 의존성 설치 (ci: 재현 가능한 빌드 보장)
-RUN npm ci
+# lock 파일이 있으면 npm ci, 없으면 npm install로 빌드 지속
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 # 나머지 소스 파일 복사
 COPY . .

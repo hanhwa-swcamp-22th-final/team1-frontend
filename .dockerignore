@@ -37,7 +37,6 @@ mock-server/
 # Dockerfile 자체
 Dockerfile
 .dockerignore
-nginx.conf
 
 # 로그 파일
 *.log
