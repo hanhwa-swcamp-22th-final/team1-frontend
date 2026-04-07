@@ -1,0 +1,696 @@
+<script setup>
+/**
+ * 셀러 상품 목록 화면.
+ * mock-server seller 상품 목록 API를 기준으로 상태/카테고리 필터와 테이블 UI를 구성한다.
+ */
+import { computed, onMounted, ref, watch } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { getSellerProductList } from '@/api/wms'
+import AppLayout from '@/components/layout/AppLayout.vue'
+import BaseTable from '@/components/common/BaseTable.vue'
+import SellerConfirmDialog from '@/components/seller/SellerConfirmDialog.vue'
+import SellerProductDetailModal from '@/components/seller/SellerProductDetailModal.vue'
+import { ROUTE_NAMES } from '@/constants'
+import { downloadExcel } from '@/utils/excel.js'
+import {
+  buildSellerProductExportRows,
+  filterSellerProductRows,
+  getSellerProductStatusMeta,
+  normalizeSellerProductDetail,
+  SELLER_PRODUCT_CATEGORY_OPTIONS,
+  SELLER_PRODUCT_LIST_COLUMNS,
+  SELLER_PRODUCT_STATUS_OPTIONS,
+} from '@/utils/seller/productList.utils.js'
+
+const breadcrumb = [{ label: 'Seller' }, { label: '상품 목록' }]
+const router = useRouter()
+
+// 상품 목록은 상태, 카테고리, 검색어 조합으로 먼저 필터링한다.
+const activeStatus = ref('all')
+const activeCategory = ref('all')
+const searchKeyword = ref('')
+const toolbarMessage = ref('')
+const loadErrorMessage = ref('')
+const isLoading = ref(false)
+const productRows = ref([])
+const selectedProductId = ref('')
+const pendingStatusProductId = ref('')
+const pendingStatusMode = ref('')
+const isDetailModalOpen = ref(false)
+const isStatusDialogOpen = ref(false)
+const isCsvDialogOpen = ref(false)
+
+// 페이지네이션은 로컬 mock 기준으로 단순 처리한다.
+const currentPage = ref(1)
+const PAGE_SIZE = 8
+
+// 필터가 바뀌면 첫 페이지로 되돌린다.
+watch([activeStatus, activeCategory, searchKeyword], () => {
+  currentPage.value = 1
+})
+
+// 현재 상태와 카테고리, 검색어를 기준으로 상품 목록을 필터링한다.
+const filteredRows = computed(() => {
+  return filterSellerProductRows(productRows.value, {
+    status: activeStatus.value,
+    category: activeCategory.value,
+    search: searchKeyword.value,
+  })
+})
+
+// 현재 페이지에 해당하는 구간만 잘라서 테이블에 전달한다.
+const pagedRows = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return filteredRows.value.slice(start, start + PAGE_SIZE)
+})
+
+const pagination = computed(() => ({
+  page: currentPage.value,
+  pageSize: PAGE_SIZE,
+  total: filteredRows.value.length,
+}))
+
+function handlePageChange(page) {
+  currentPage.value = page
+}
+
+async function fetchSellerProducts() {
+  isLoading.value = true
+  loadErrorMessage.value = ''
+
+  try {
+    const res = await getSellerProductList()
+    productRows.value = Array.isArray(res.data?.data)
+      ? res.data.data.map((row) => ({ ...row }))
+      : []
+  } catch (error) {
+    console.error('[SellerProductListView] fetch error:', error)
+    loadErrorMessage.value = '상품 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
+    productRows.value = []
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(fetchSellerProducts)
+
+const selectedProduct = computed(() => {
+  return productRows.value.find((row) => row.id === selectedProductId.value) ?? null
+})
+
+const selectedProductDetail = computed(() => {
+  if (!selectedProduct.value) return null
+  return normalizeSellerProductDetail(selectedProduct.value.detail ?? null, selectedProduct.value)
+})
+
+const pendingStatusProduct = computed(() => {
+  return productRows.value.find((row) => row.id === pendingStatusProductId.value) ?? null
+})
+
+const isReactivateAction = computed(() => pendingStatusMode.value === 'reactivate')
+
+const statusDialogTitle = computed(() => {
+  return isReactivateAction.value ? '상품 재활성' : '상품 비활성'
+})
+
+const statusDialogConfirmLabel = computed(() => {
+  return isReactivateAction.value ? '재활성 확정' : '비활성 확정'
+})
+
+const statusDialogMessage = computed(() => {
+  if (!pendingStatusProduct.value) return '상품 상태를 변경하시겠습니까?'
+
+  return isReactivateAction.value
+    ? `${pendingStatusProduct.value.sku} 상품을 다시 판매 상태로 전환하시겠습니까?`
+    : `${pendingStatusProduct.value.sku} 상품을 비활성 처리하시겠습니까?`
+})
+
+const csvDialogMessage = computed(() => {
+  return `${filteredRows.value.length}건 상품 목록을 CSV로 내보내시겠습니까?`
+})
+
+function showToolbarMessage(message) {
+  toolbarMessage.value = message
+}
+
+function handleOpenCsvDialog() {
+  if (!filteredRows.value.length) {
+    showToolbarMessage('내보낼 상품이 없습니다.')
+    return
+  }
+
+  isCsvDialogOpen.value = true
+}
+
+function handleCloseCsvDialog() {
+  isCsvDialogOpen.value = false
+}
+
+function handleConfirmCsv() {
+  if (!filteredRows.value.length) {
+    handleCloseCsvDialog()
+    showToolbarMessage('내보낼 상품이 없습니다.')
+    return
+  }
+
+  downloadExcel(
+    buildSellerProductExportRows(filteredRows.value),
+    `seller-products-${new Date().toISOString().slice(0, 10)}`,
+  )
+  showToolbarMessage('현재 필터 기준 상품 목록을 다운로드했습니다.')
+  handleCloseCsvDialog()
+}
+
+function handleEditProduct(row) {
+  router.push({
+    name: ROUTE_NAMES.SELLER_PRODUCT_REGISTER,
+    query: { productId: row.id, mode: 'edit' },
+  })
+}
+
+function handleOpenProductDetail(row) {
+  selectedProductId.value = row.id
+  isDetailModalOpen.value = true
+}
+
+function handleCloseProductDetail() {
+  isDetailModalOpen.value = false
+}
+
+function handleOpenStatusDialog(row, mode) {
+  pendingStatusProductId.value = row.id
+  pendingStatusMode.value = mode
+  isStatusDialogOpen.value = true
+}
+
+function handleCloseStatusDialog() {
+  isStatusDialogOpen.value = false
+  pendingStatusProductId.value = ''
+  pendingStatusMode.value = ''
+}
+
+function buildReactivatedStatus(row) {
+  if (row.previousStatus && row.previousStatus !== 'INACTIVE') return row.previousStatus
+  if (Number(row.availableStock ?? 0) <= 0) return 'OUT_OF_STOCK'
+  if (Number(row.availableStock ?? 0) <= 10) return 'LOW_STOCK'
+  return 'ACTIVE'
+}
+
+function handleConfirmStatusChange() {
+  if (!pendingStatusProduct.value) return
+
+  const nextStatus = isReactivateAction.value
+    ? buildReactivatedStatus(pendingStatusProduct.value)
+    : 'INACTIVE'
+
+  productRows.value = productRows.value.map((row) => {
+    if (row.id !== pendingStatusProduct.value.id) return row
+
+    return {
+      ...row,
+      previousStatus: isReactivateAction.value ? '' : row.status,
+      status: nextStatus,
+    }
+  })
+
+  toolbarMessage.value = isReactivateAction.value
+    ? `${pendingStatusProduct.value.sku} 상품을 ${getSellerProductStatusMeta(nextStatus).label} 상태로 전환했습니다.`
+    : `${pendingStatusProduct.value.sku} 상품을 비활성 처리했습니다.`
+
+  handleCloseStatusDialog()
+}
+</script>
+
+<template>
+  <AppLayout title="상품 목록" :breadcrumb="breadcrumb">
+    <template #header-action>
+      <RouterLink :to="{ name: ROUTE_NAMES.SELLER_PRODUCT_REGISTER }" class="ui-btn ui-btn--primary">
+        상품 등록
+      </RouterLink>
+    </template>
+
+    <section class="seller-product-list-page">
+      <section class="list-card">
+        <div class="toolbar">
+          <div class="filter-stack">
+            <div class="filter-row">
+              <span class="filter-label">상태</span>
+
+              <button
+                v-for="option in SELLER_PRODUCT_STATUS_OPTIONS"
+                :key="option.key"
+                type="button"
+                class="filter-badge"
+                :class="{ 'filter-badge--active': activeStatus === option.key }"
+                @click="activeStatus = option.key"
+              >
+                {{ option.label }}
+              </button>
+            </div>
+
+            <div class="filter-row">
+              <span class="filter-label">카테고리</span>
+
+              <button
+                v-for="option in SELLER_PRODUCT_CATEGORY_OPTIONS"
+                :key="option.key"
+                type="button"
+                class="filter-badge"
+                :class="{ 'filter-badge--active': activeCategory === option.key }"
+                @click="activeCategory = option.key"
+              >
+                {{ option.label }}
+              </button>
+            </div>
+          </div>
+
+          <div class="toolbar-right">
+            <label class="search-box">
+              <input
+                v-model="searchKeyword"
+                type="text"
+                placeholder="SKU 또는 상품명 검색"
+              />
+            </label>
+
+            <button
+              class="ui-btn ui-btn--ghost toolbar-btn"
+              type="button"
+              @click="handleOpenCsvDialog"
+            >
+              CSV 내보내기
+            </button>
+          </div>
+        </div>
+
+        <p v-if="toolbarMessage" class="toolbar-message">{{ toolbarMessage }}</p>
+        <p v-if="loadErrorMessage" class="toolbar-message toolbar-message--error">{{ loadErrorMessage }}</p>
+
+        <BaseTable
+          :columns="SELLER_PRODUCT_LIST_COLUMNS"
+          :rows="pagedRows"
+          :pagination="pagination"
+          :loading="isLoading"
+          row-key="id"
+          @page-change="handlePageChange"
+        >
+          <template #cell-image="{ row }">
+            <button class="cell-trigger cell-trigger--thumb" type="button" @click="handleOpenProductDetail(row)">
+              <div class="image-thumb" :title="row.productName">
+                <span>{{ row.sku.slice(0, 2) }}</span>
+              </div>
+            </button>
+          </template>
+
+          <template #cell-sku="{ row, value }">
+            <button class="cell-trigger cell-trigger--text" type="button" @click="handleOpenProductDetail(row)">
+              <span class="sku-code">{{ value }}</span>
+            </button>
+          </template>
+
+          <template #cell-productName="{ row, value }">
+            <button class="cell-trigger cell-trigger--text" type="button" @click="handleOpenProductDetail(row)">
+              <span class="product-name">{{ value }}</span>
+            </button>
+          </template>
+
+          <template #cell-warehouseName="{ value }">
+            <span class="warehouse-chip">{{ value }}</span>
+          </template>
+
+          <template #cell-salePrice="{ value }">
+            <span class="price-value">${{ value.toFixed(2) }}</span>
+          </template>
+
+          <template #cell-costPrice="{ value }">
+            <span class="price-value">${{ value.toFixed(2) }}</span>
+          </template>
+
+          <template #cell-stock="{ row }">
+            <span
+              class="stock-available"
+              :class="{
+                'stock-available--low': row.status === 'LOW_STOCK',
+                'stock-available--empty': row.status === 'OUT_OF_STOCK',
+              }"
+            >
+              {{ row.availableStock }}
+            </span>
+            <span class="stock-divider">/</span>
+            <span class="stock-allocated">{{ row.allocatedStock }}</span>
+          </template>
+
+          <template #cell-status="{ row, value }">
+            <button class="cell-trigger" type="button" @click="handleOpenProductDetail(row)">
+              <span
+                class="product-status-badge"
+                :class="`product-status-badge--${getSellerProductStatusMeta(value).tone}`"
+              >
+                {{ getSellerProductStatusMeta(value).label }}
+              </span>
+            </button>
+          </template>
+
+          <template #cell-actions="{ row }">
+            <div class="action-group">
+              <button
+                class="action-btn action-btn--edit"
+                type="button"
+                @click="handleEditProduct(row)"
+              >
+                수정
+              </button>
+
+              <button
+                v-if="row.status !== 'INACTIVE'"
+                class="action-btn action-btn--danger"
+                type="button"
+                @click="handleOpenStatusDialog(row, 'deactivate')"
+              >
+                비활성
+              </button>
+
+              <button
+                v-else
+                class="action-btn action-btn--success"
+                type="button"
+                @click="handleOpenStatusDialog(row, 'reactivate')"
+              >
+                재활성
+              </button>
+            </div>
+          </template>
+        </BaseTable>
+      </section>
+    </section>
+
+    <SellerProductDetailModal
+      :detail="selectedProductDetail"
+      :isOpen="isDetailModalOpen"
+      :product="selectedProduct"
+      @cancel="handleCloseProductDetail"
+    />
+
+    <SellerConfirmDialog
+      :isOpen="isStatusDialogOpen"
+      :title="statusDialogTitle"
+      :message="statusDialogMessage"
+      :confirmLabel="statusDialogConfirmLabel"
+      :danger="!isReactivateAction"
+      @cancel="handleCloseStatusDialog"
+      @confirm="handleConfirmStatusChange"
+    />
+
+    <SellerConfirmDialog
+      :isOpen="isCsvDialogOpen"
+      title="CSV 내보내기"
+      :message="csvDialogMessage"
+      confirmLabel="내보내기"
+      @cancel="handleCloseCsvDialog"
+      @confirm="handleConfirmCsv"
+    />
+  </AppLayout>
+</template>
+
+<style scoped>
+.seller-product-list-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.list-card {
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.filter-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.filter-label {
+  color: var(--t3);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.filter-badge {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--t3);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--ease-fast),
+    border-color var(--ease-fast),
+    color var(--ease-fast);
+}
+
+.filter-badge--active {
+  border-color: var(--gold);
+  background: var(--gold-pale);
+  color: var(--t1);
+}
+
+.toolbar-right {
+  display: flex;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  display: flex;
+  flex: 1 1 240px;
+  min-width: 220px;
+  max-width: 280px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--t2);
+  font-size: var(--font-size-sm);
+  outline: none;
+  transition:
+    border-color var(--ease-fast),
+    box-shadow var(--ease-fast);
+}
+
+.search-box input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-pale);
+}
+
+.search-box input::placeholder {
+  color: var(--t4);
+}
+
+.toolbar-btn {
+  min-width: 112px;
+  padding-inline: 16px;
+  flex-shrink: 0;
+}
+
+.toolbar-message {
+  margin-bottom: var(--space-3);
+  color: var(--t3);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.toolbar-message--error {
+  color: var(--danger);
+}
+
+.image-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin: 0 auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--t3);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+.cell-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cell-trigger--thumb {
+  justify-content: center;
+}
+
+.cell-trigger--text:hover .sku-code,
+.cell-trigger--text:hover .product-name {
+  color: var(--blue);
+}
+
+.sku-code {
+  color: var(--t1);
+  font-family: var(--font-condensed);
+  font-size: var(--font-size-md);
+  font-weight: 700;
+}
+
+.product-name {
+  color: var(--t2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.warehouse-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--t2);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.price-value {
+  color: var(--t1);
+  font-weight: 600;
+}
+
+.stock-available {
+  color: var(--t1);
+  font-weight: 700;
+}
+
+.stock-available--low {
+  color: var(--amber);
+}
+
+.stock-available--empty {
+  color: var(--red);
+}
+
+.stock-divider,
+.stock-allocated {
+  color: var(--t3);
+  font-size: var(--font-size-sm);
+}
+
+.product-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+.product-status-badge--green {
+  background: var(--green-pale);
+  color: var(--green);
+}
+
+.product-status-badge--amber {
+  background: var(--gold-pale);
+  color: #92400e;
+}
+
+.product-status-badge--red {
+  background: var(--red-pale);
+  color: #7f1d1d;
+}
+
+.product-status-badge--blue {
+  background: var(--blue-pale);
+  color: #3730a3;
+}
+
+.action-group {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.action-btn--edit {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--t2);
+}
+
+.action-btn--danger {
+  border: 1px solid #fca5a5;
+  background: var(--red-pale);
+  color: #991b1b;
+}
+
+.action-btn--success {
+  border: 1px solid #86efac;
+  background: var(--green-pale);
+  color: #166534;
+}
+
+@media (max-width: 1200px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar-right {
+    justify-content: flex-start;
+  }
+}
+</style>

@@ -7,21 +7,28 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "mock": "node mock-server/server.cjs"
+    "mock": "node --env-file=.env mock-server/server.cjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
+    "apexcharts": "^5.10.4",
     "axios": "^1.13.6",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
     "vue": "^3.5.29",
     "vue-router": "^4.6.4",
+    "vue3-apexcharts": "^1.11.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.4",
+    "jsdom": "^29.0.0",
     "json-server": "^0.17.4",
+    "playwright": "^1.58.2",
     "vite": "^7.3.1",
-    "vite-plugin-vue-devtools": "^8.0.6"
+    "vite-plugin-vue-devtools": "^8.0.6",
+    "vitest": "^4.1.0"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"

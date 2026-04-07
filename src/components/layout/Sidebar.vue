@@ -33,12 +33,22 @@
  *   (Header.vue의 알림 패널은 @click.stop + document listener 패턴 사용)
  */
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ROLES, ROUTE_NAMES } from '@/constants'
+import { MENU_BY_ROLE } from '@/components/layout/menus'
 
 const auth = useAuthStore()
 const route = useRoute()
+const router = useRouter()
+
+function routeExists(name) {
+  try {
+    return !!router.resolve({ name }).name
+  } catch {
+    return false
+  }
+}
 const DEV_COMPONENTS_ROUTE_NAME = 'dev-components'
 const DEV_MENU_GROUPS = [
   {
@@ -89,29 +99,12 @@ const roleLabel = computed(
 )
 
 /**
- * 메뉴 그룹 — 각 라우트 파일에서 meta.sidebar 정보로 동적 구성.
- * 현재는 auth.role 기반으로 필터링된 라우터에서 읽어온다.
- *
- * TODO (팀원 작업):
- *   아래 return [] 를 실제 메뉴 데이터로 교체.
- *
- *   방법 A (권장): 라우트 파일에 meta.sidebar 추가 후 router.getRoutes()로 수집
- *     import { useRouter } from 'vue-router'
- *     const router = useRouter()
- *     const routes = router.getRoutes().filter(r => r.meta.role === auth.role && r.meta.sidebar)
- *     // meta.sidebar = { group: '주문 관리', label: '주문 목록', icon: '📦' }
- *
- *   방법 B: Role별 하드코딩 (빠르지만 이중관리 문제)
- *     if (auth.role === ROLES.SELLER) return [ { label: '주문', items: [...] } ]
+ * 메뉴 그룹 — 역할별 메뉴는 components/layout/menus/ 에서 관리
+ * 각 팀원은 자신의 역할 파일(menus/seller.js 등)만 수정하면 됨
  */
 const menuGroups = computed(() => {
-  // TODO: router.getRoutes()를 순회하여 meta.sidebar 정보로 동적 구성
-  // 현재는 역할별 하드코딩 없이 빈 그룹 반환 (팀원이 채워넣을 영역)
-  if (route.name === DEV_COMPONENTS_ROUTE_NAME) {
-    return DEV_MENU_GROUPS
-  }
-
-  return []
+  if (route.name === DEV_COMPONENTS_ROUTE_NAME) return DEV_MENU_GROUPS
+  return MENU_BY_ROLE[auth.role] ?? []
 })
 
 /**
@@ -120,7 +113,7 @@ const menuGroups = computed(() => {
  * @returns {boolean}
  */
 function isActive(name) {
-  return route.name === name
+  return route.name === name || route.meta.activeMenu === name
 }
 </script>
 
@@ -154,35 +147,7 @@ function isActive(name) {
       <div class="profile-bottom">
         <span class="profile-email">{{ auth.user?.email ?? '익명@메일.임' }}</span>
         <div class="profile-actions">
-          <!-- 설정 아이콘 버튼 -->
-          <button aria-label="설정" class="profile-icon-btn" title="설정">
-            <svg fill="currentColor" viewBox="0 0 16 16">
-              <path
-                d="M8 5a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0 4.5A1.5 1.5 0 1 1 8 6.5a1.5 1.5 0 0 1 0 3z"
-              />
-              <path
-                d="M14.31 8c0-.16-.01-.32-.03-.47l1.02-.8a.25.25 0 0 0 .06-.31l-.97-1.68a.25.25 0 0 0-.3-.11l-1.2.48a5.03 5.03 0 0 0-.81-.47l-.18-1.27A.25.25 0 0 0 11.6 3H9.4a.25.25 0 0 0-.25.21l-.18 1.27a5.03 5.03 0 0 0-.81.47l-1.2-.48a.25.25 0 0 0-.3.11L5.69 6.42a.25.25 0 0 0 .06.31l1.02.8C6.75 7.68 6.74 7.84 6.74 8s.01.32.03.47l-1.02.8a.25.25 0 0 0-.06.31l.97 1.68c.06.11.2.15.3.11l1.2-.48c.26.17.53.33.81.47l.18 1.27c.04.13.16.21.29.21h1.94c.13 0 .25-.08.29-.21l.18-1.27a5.03 5.03 0 0 0 .81-.47l1.2.48c.11.04.24 0 .3-.11l.97-1.68a.25.25 0 0 0-.06-.31l-1.02-.8c.02-.15.03-.31.03-.47z"
-              />
-            </svg>
-          </button>
-          <!-- 로그아웃 아이콘 버튼 -->
-          <button
-            aria-label="로그아웃"
-            class="profile-icon-btn"
-            title="로그아웃"
-            @click="$router.replace({ name: ROUTE_NAMES.LOGIN })"
-          >
-            <svg
-              fill="none"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              viewBox="0 0 16 16"
-            >
-              <path d="M10 3h3v10h-3M7 11l4-3-4-3M11 8H2" />
-            </svg>
-          </button>
+
         </div>
       </div>
     </div>

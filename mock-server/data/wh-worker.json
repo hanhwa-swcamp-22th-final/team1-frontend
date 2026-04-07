@@ -1,0 +1,420 @@
+{
+  "wh_worker_tasks": [
+    {
+      "id": "IB-2026-0320-001",
+      "workerUserId": 4,
+      "assignedDate": "2026-03-20",
+      "category": "INBOUND",
+      "type": "검수&적재",
+      "warehouseName": "LA West Coast Hub",
+      "sellerCompany": "어반셀러코리아",
+      "refNo": "ASN-2026-0320-101",
+      "assignedBinCount": 3,
+      "totalQty": 150,
+      "status": "대기",
+      "activeStep": "검수",
+      "notes": "오전 도착 ASN. 작업자는 사전 배정된 Bin 범위 내 작업만 확인합니다.",
+      "asnStatus": "입고예정",
+      "stockActivation": false,
+      "completedAt": "",
+      "bins": [
+        {
+          "id": "IB-101-BIN-01",
+          "routeOrder": 1,
+          "location": "ZONE-A · RACK-01 · BIN-01",
+          "designatedBinCode": "A-01-01",
+          "sku": "SKU-UV-1001",
+          "plannedQty": 40,
+          "inspectedQty": "",
+          "inspectNote": "",
+          "statusInspect": "대기",
+          "confirmedBinCode": "",
+          "putQty": "",
+          "statusPut": "대기"
+        },
+        {
+          "id": "IB-101-BIN-02",
+          "routeOrder": 2,
+          "location": "ZONE-A · RACK-01 · BIN-02",
+          "designatedBinCode": "A-01-02",
+          "sku": "SKU-UV-1002",
+          "plannedQty": 50,
+          "inspectedQty": "",
+          "inspectNote": "",
+          "statusInspect": "대기",
+          "confirmedBinCode": "",
+          "putQty": "",
+          "statusPut": "대기"
+        },
+        {
+          "id": "IB-101-BIN-03",
+          "routeOrder": 3,
+          "location": "ZONE-A · RACK-02 · BIN-01",
+          "designatedBinCode": "A-02-01",
+          "sku": "SKU-UV-1003",
+          "plannedQty": 60,
+          "inspectedQty": "",
+          "inspectNote": "",
+          "statusInspect": "대기",
+          "confirmedBinCode": "",
+          "putQty": "",
+          "statusPut": "대기"
+        }
+      ],
+      "packOrders": []
+    },
+    {
+      "id": "IB-2026-0320-002",
+      "workerUserId": 4,
+      "assignedDate": "2026-03-20",
+      "category": "INBOUND",
+      "type": "검수&적재",
+      "warehouseName": "LA West Coast Hub",
+      "sellerCompany": "푸드라인컴퍼니",
+      "refNo": "ASN-2026-0320-102",
+      "assignedBinCount": 2,
+      "totalQty": 80,
+      "status": "진행중",
+      "activeStep": "적재",
+      "notes": "검수 완료 후 적재 단계 진행 중입니다.",
+      "asnStatus": "검수완료",
+      "stockActivation": false,
+      "completedAt": "",
+      "bins": [
+        {
+          "id": "IB-102-BIN-01",
+          "routeOrder": 1,
+          "location": "ZONE-B · RACK-03 · BIN-02",
+          "designatedBinCode": "B-03-02",
+          "sku": "SKU-FD-2001",
+          "plannedQty": 40,
+          "inspectedQty": "40",
+          "inspectNote": "",
+          "statusInspect": "완료",
+          "confirmedBinCode": "B-03-02",
+          "putQty": "40",
+          "statusPut": "완료"
+        },
+        {
+          "id": "IB-102-BIN-02",
+          "routeOrder": 2,
+          "location": "ZONE-B · RACK-03 · BIN-03",
+          "designatedBinCode": "B-03-03",
+          "sku": "SKU-FD-2002",
+          "plannedQty": 40,
+          "inspectedQty": "38",
+          "inspectNote": "박스 1개 파손 확인",
+          "statusInspect": "완료",
+          "confirmedBinCode": "",
+          "putQty": "",
+          "statusPut": "대기"
+        }
+      ],
+      "packOrders": []
+    },
+    {
+      "id": "IB-2026-0320-003",
+      "workerUserId": 4,
+      "assignedDate": "2026-03-20",
+      "category": "INBOUND",
+      "type": "검수&적재",
+      "warehouseName": "East NY Hub",
+      "sellerCompany": "리빙하우스",
+      "refNo": "ASN-2026-0320-103",
+      "assignedBinCount": 2,
+      "totalQty": 55,
+      "status": "완료",
+      "activeStep": "적재 완료",
+      "notes": "적재까지 완료되어 재고 관리에서 조회 가능합니다.",
+      "asnStatus": "보관중",
+      "stockActivation": true,
+      "completedAt": "2026-03-20 09:12",
+      "bins": [
+        {
+          "id": "IB-103-BIN-01",
+          "routeOrder": 1,
+          "location": "ZONE-C · RACK-01 · BIN-01",
+          "designatedBinCode": "C-01-01",
+          "sku": "SKU-LV-3301",
+          "plannedQty": 25,
+          "inspectedQty": "25",
+          "inspectNote": "",
+          "statusInspect": "완료",
+          "confirmedBinCode": "C-01-01",
+          "putQty": "25",
+          "statusPut": "완료"
+        },
+        {
+          "id": "IB-103-BIN-02",
+          "routeOrder": 2,
+          "location": "ZONE-C · RACK-01 · BIN-02",
+          "designatedBinCode": "C-01-02",
+          "sku": "SKU-LV-3302",
+          "plannedQty": 30,
+          "inspectedQty": "30",
+          "inspectNote": "",
+          "statusInspect": "완료",
+          "confirmedBinCode": "C-01-02",
+          "putQty": "30",
+          "statusPut": "완료"
+        }
+      ],
+      "packOrders": []
+    },
+    {
+      "id": "OB-2026-0320-001",
+      "workerUserId": 4,
+      "assignedDate": "2026-03-20",
+      "category": "OUTBOUND",
+      "type": "피킹&패킹",
+      "warehouseName": "LA West Coast Hub",
+      "sellerCompany": "어반셀러코리아",
+      "refNo": "PICK-2026-0320-701",
+      "assignedBinCount": 3,
+      "totalQty": 170,
+      "status": "대기",
+      "activeStep": "피킹",
+      "notes": "당일 마감 주문 포함 건으로 동선 순서 기준 피킹이 필요합니다.",
+      "orderStatus": "피킹&패킹중",
+      "stockDeduction": false,
+      "completedAt": "",
+      "bins": [
+        {
+          "id": "OB-701-BIN-01",
+          "routeOrder": 1,
+          "location": "ZONE-A · RACK-01 · BIN-01",
+          "binCode": "A-01-01",
+          "sku": "SKU-UV-1001",
+          "orderedQty": 60,
+          "pickedQty": "",
+          "pickReason": "",
+          "statusPick": "대기"
+        },
+        {
+          "id": "OB-701-BIN-02",
+          "routeOrder": 2,
+          "location": "ZONE-A · RACK-01 · BIN-02",
+          "binCode": "A-01-02",
+          "sku": "SKU-UV-1002",
+          "orderedQty": 50,
+          "pickedQty": "",
+          "pickReason": "",
+          "statusPick": "대기"
+        },
+        {
+          "id": "OB-701-BIN-03",
+          "routeOrder": 3,
+          "location": "ZONE-A · RACK-02 · BIN-01",
+          "binCode": "A-02-01",
+          "sku": "SKU-UV-1003",
+          "orderedQty": 60,
+          "pickedQty": "",
+          "pickReason": "",
+          "statusPick": "대기"
+        }
+      ],
+      "packOrders": [
+        {
+          "id": "PO-701-01",
+          "orderNo": "ORD-2026-32001",
+          "sku": "SKU-UV-1001",
+          "orderedQty": 60,
+          "actualPickedQty": 0,
+          "verifiedQty": "",
+          "packReason": "",
+          "statusPack": "대기"
+        },
+        {
+          "id": "PO-701-02",
+          "orderNo": "ORD-2026-32002",
+          "sku": "SKU-UV-1002",
+          "orderedQty": 50,
+          "actualPickedQty": 0,
+          "verifiedQty": "",
+          "packReason": "",
+          "statusPack": "대기"
+        },
+        {
+          "id": "PO-701-03",
+          "orderNo": "ORD-2026-32003",
+          "sku": "SKU-UV-1003",
+          "orderedQty": 60,
+          "actualPickedQty": 0,
+          "verifiedQty": "",
+          "packReason": "",
+          "statusPack": "대기"
+        }
+      ]
+    },
+    {
+      "id": "OB-2026-0320-002",
+      "workerUserId": 4,
+      "assignedDate": "2026-03-20",
+      "category": "OUTBOUND",
+      "type": "피킹&패킹",
+      "warehouseName": "Central Dallas Center",
+      "sellerCompany": "모던키친랩",
+      "refNo": "PICK-2026-0320-715",
+      "assignedBinCount": 2,
+      "totalQty": 80,
+      "status": "진행중",
+      "activeStep": "패킹",
+      "notes": "피킹 완료 후 패킹 단계 진행 중입니다.",
+      "orderStatus": "피킹&패킹중",
+      "stockDeduction": false,
+      "completedAt": "",
+      "bins": [
+        {
+          "id": "OB-715-BIN-01",
+          "routeOrder": 1,
+          "location": "ZONE-B · RACK-03 · BIN-02",
+          "binCode": "B-03-02",
+          "sku": "SKU-FD-2001",
+          "orderedQty": 40,
+          "pickedQty": "40",
+          "pickReason": "",
+          "statusPick": "완료"
+        },
+        {
+          "id": "OB-715-BIN-02",
+          "routeOrder": 2,
+          "location": "ZONE-B · RACK-03 · BIN-03",
+          "binCode": "B-03-03",
+          "sku": "SKU-FD-2002",
+          "orderedQty": 40,
+          "pickedQty": "40",
+          "pickReason": "",
+          "statusPick": "완료"
+        }
+      ],
+      "packOrders": [
+        {
+          "id": "PO-715-01",
+          "orderNo": "ORD-2026-32015",
+          "sku": "SKU-FD-2001",
+          "orderedQty": 40,
+          "actualPickedQty": 40,
+          "verifiedQty": "40",
+          "packReason": "",
+          "statusPack": "완료"
+        },
+        {
+          "id": "PO-715-02",
+          "orderNo": "ORD-2026-32016",
+          "sku": "SKU-FD-2002",
+          "orderedQty": 40,
+          "actualPickedQty": 40,
+          "verifiedQty": "",
+          "packReason": "",
+          "statusPack": "대기"
+        }
+      ]
+    },
+    {
+      "id": "OB-2026-0320-003",
+      "workerUserId": 4,
+      "assignedDate": "2026-03-20",
+      "category": "OUTBOUND",
+      "type": "피킹&패킹",
+      "warehouseName": "East NY Hub",
+      "sellerCompany": "펫프렌즈셀렉트",
+      "refNo": "PICK-2026-0320-688",
+      "assignedBinCount": 2,
+      "totalQty": 9,
+      "status": "완료",
+      "activeStep": "작업 완료",
+      "notes": "패킹 검수가 모두 끝나 출고 대기 구역으로 이동되었습니다.",
+      "orderStatus": "출고대기",
+      "stockDeduction": true,
+      "completedAt": "2026-03-20 10:40",
+      "bins": [
+        {
+          "id": "OB-688-BIN-01",
+          "routeOrder": 1,
+          "location": "ZONE-D · RACK-01 · BIN-03",
+          "binCode": "D-01-03",
+          "sku": "SKU-PF-9101",
+          "orderedQty": 4,
+          "pickedQty": "4",
+          "pickReason": "",
+          "statusPick": "완료"
+        },
+        {
+          "id": "OB-688-BIN-02",
+          "routeOrder": 2,
+          "location": "ZONE-D · RACK-01 · BIN-04",
+          "binCode": "D-01-04",
+          "sku": "SKU-PF-9102",
+          "orderedQty": 5,
+          "pickedQty": "5",
+          "pickReason": "",
+          "statusPick": "완료"
+        }
+      ],
+      "packOrders": [
+        {
+          "id": "PO-688-01",
+          "orderNo": "ORD-2026-31981",
+          "sku": "SKU-PF-9101",
+          "orderedQty": 4,
+          "actualPickedQty": 4,
+          "verifiedQty": "4",
+          "packReason": "",
+          "statusPack": "완료"
+        },
+        {
+          "id": "PO-688-02",
+          "orderNo": "ORD-2026-31982",
+          "sku": "SKU-PF-9102",
+          "orderedQty": 5,
+          "actualPickedQty": 5,
+          "verifiedQty": "5",
+          "packReason": "",
+          "statusPack": "완료"
+        }
+      ]
+    }
+  ],
+  "wh_worker_alerts": [
+    {
+      "id": "ALT-WW-001",
+      "taskId": "IB-2026-0320-002",
+      "code": "inspect-mismatch-IB-2026-0320-002-IB-102-BIN-02",
+      "level": "주의",
+      "title": "입고 검수 불일치",
+      "description": "IB-102-BIN-02 / SKU-FD-2002가 예정 40개 대비 38개로 검수되었습니다.",
+      "time": "09:18",
+      "createdAt": "2026-03-20 09:18"
+    },
+    {
+      "id": "ALT-WW-002",
+      "taskId": "OB-2026-0320-002",
+      "code": "pack-pending-OB-2026-0320-002",
+      "level": "확인",
+      "title": "패킹 대기",
+      "description": "PICK-2026-0320-715 작업에 패킹 대기 주문이 남아 있습니다.",
+      "time": "10:05",
+      "createdAt": "2026-03-20 10:05"
+    },
+    {
+      "id": "ALT-WW-003",
+      "taskId": "IB-2026-0320-001",
+      "code": "assignment-IB-2026-0320-001",
+      "level": "안내",
+      "title": "신규 입고 작업 배정",
+      "description": "ASN-2026-0320-101 입고 작업이 오늘 작업자에게 배정되었습니다.",
+      "time": "10:22",
+      "createdAt": "2026-03-20 10:22"
+    },
+    {
+      "id": "ALT-WW-004",
+      "taskId": "OB-2026-0320-001",
+      "code": "priority-OB-2026-0320-001",
+      "level": "주의",
+      "title": "출고 우선순위 높음",
+      "description": "당일 마감 주문 포함 건으로 우선 피킹이 필요합니다.",
+      "time": "11:10",
+      "createdAt": "2026-03-20 11:10"
+    }
+  ]
+}

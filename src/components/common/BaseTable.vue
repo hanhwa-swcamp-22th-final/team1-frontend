@@ -43,17 +43,19 @@
  *     </template>
  *   </BaseTable>
  */
+import { computed } from 'vue'
+
 const props = defineProps({
-  columns: { type: Array, required: true },
-  rows: { type: Array, default: () => [] },
-  loading: { type: Boolean, default: false },
-  pagination: { type: Object, default: null },
-  rowKey: { type: String, default: 'id' },
+  columns:   { type: Array,   required: true },
+  rows:      { type: Array,   default: () => [] },
+  loading:   { type: Boolean, default: false },
+  pagination:{ type: Object,  default: null },
+  rowKey:    { type: String,  default: 'id' },
+  clickable: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['sort', 'page-change'])
+const emit = defineEmits(['sort', 'page-change', 'row-click'])
 
-import { computed } from 'vue'
 
 /** 전체 페이지 수 계산. pagination이 없으면 0 */
 const totalPages = computed(() => {
@@ -104,7 +106,7 @@ function pageNumbers() {
               :style="{ width: col.width, textAlign: col.align ?? 'left' }"
               @click="col.sortable && emit('sort', col.key)"
             >
-              {{ col.label }}
+              <slot :name="`header-${col.key}`">{{ col.label }}</slot>
               <span v-if="col.sortable" class="sort-icon">⇅</span>
             </th>
           </tr>
@@ -126,7 +128,13 @@ function pageNumbers() {
           </tr>
 
           <!-- 데이터 행 -->
-          <tr v-for="row in rows" v-else :key="row[rowKey]" class="data-row">
+          <tr
+            v-for="row in rows"
+            v-else
+            :key="row[rowKey]"
+            :class="['data-row', { 'data-row--clickable': clickable }]"
+            @click="clickable && emit('row-click', row)"
+          >
             <td v-for="col in columns" :key="col.key" :style="{ textAlign: col.align ?? 'left' }">
               <!--
                 cell-{key} 슬롯이 없으면 기본값(row[col.key] ?? '-') 표시.
@@ -141,8 +149,8 @@ function pageNumbers() {
       </table>
     </div>
 
-    <!-- 페이지네이션: pagination prop이 있고 2페이지 이상일 때만 표시 -->
-    <div v-if="pagination && totalPages > 1" class="pagination">
+    <!-- 페이지네이션: pagination prop이 있고 2페이지 이상이며 로딩 중이 아닐 때만 표시 -->
+    <div v-if="pagination && totalPages > 1 && !loading" class="pagination">
       <button
         :disabled="pagination.page <= 1"
         class="page-btn"
@@ -192,6 +200,7 @@ export default { components: { LoadingSpinner, EmptyState } }
   display: flex;
   flex-direction: column;
   gap: 12px;
+  background: var(--surface);
 }
 
 .table-scroll {
@@ -208,14 +217,14 @@ export default { components: { LoadingSpinner, EmptyState } }
 
 thead tr {
   background: var(--surface-2);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border-dk);
 }
 
 th {
   padding: 12px 16px;
-  font-weight: 600;
-  color: var(--t3);
-  font-size: var(--font-size-xs);
+  font-family: var(--font-barlow);
+  font-weight: 800;
+  font-size: var(--font-size-md);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   white-space: nowrap;
@@ -247,6 +256,9 @@ tbody tr:last-child {
 }
 .data-row:hover {
   background: var(--blue-pale);
+}
+.data-row--clickable {
+  cursor: pointer;
 }
 
 td {

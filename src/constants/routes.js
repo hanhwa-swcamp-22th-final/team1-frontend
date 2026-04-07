@@ -43,12 +43,17 @@ export const ROUTE_NAMES = {
   MASTER_DASHBOARD: 'master-dashboard',
   MASTER_WAREHOUSE_LIST: 'master-warehouse-list',
   MASTER_WAREHOUSE_REGISTER: 'master-warehouse-register',
-  MASTER_ACCOUNT_LIST: 'master-account-list',
-  MASTER_ACCOUNT_INVITE: 'master-account-invite',
+  MASTER_WAREHOUSE_DETAIL: 'master-warehouse-detail',
+  MASTER_ASN_LIST: 'master-asn-list',
+  MASTER_ORDER_LIST: 'master-order-list',
+  MASTER_FEE_SETTING: 'master-fee-setting',
+  MASTER_FEE_SETTINGS: 'master-fee-settings',
   MASTER_SELLER_COMPANY_LIST: 'master-seller-company-list',
   MASTER_SELLER_COMPANY_REGISTER: 'master-seller-company-register',
+  MASTER_SELLER_REVENUE:     'master-seller-revenue',
+  MASTER_ACCOUNT_LIST: 'master-account-list',
+  MASTER_ACCOUNT_INVITE: 'master-account-invite',
   MASTER_RBAC_SETTING: 'master-rbac-setting',
-  MASTER_FEE_SETTING: 'master-fee-setting',
 
   // ── WH Manager — 창고 운영 (views/whManager/)
   // 접두어: 'whm-' (WH Manager 약자)
@@ -61,22 +66,34 @@ export const ROUTE_NAMES = {
   WH_MANAGER_ORDER_LIST: 'whm-order-list',
   WH_MANAGER_ORDER_DETAIL: 'whm-order-detail',
   WH_MANAGER_OUTBOUND: 'whm-outbound',
+  WH_MANAGER_OUTBOUND_DISPATCH: 'whm-outbound-dispatch',
+  WH_MANAGER_PICKING_LIST: 'whm-picking-list',
   WH_MANAGER_LABEL_PRINT: 'whm-label-print',
   WH_MANAGER_OUTBOUND_CONFIRM: 'whm-outbound-confirm',
   WH_MANAGER_WORKER_ACCOUNT: 'whm-worker-account',
   WH_MANAGER_BIN_ASSIGN: 'whm-bin-assign',
+  WH_MANAGER_WAREHOUSE_MAP: 'whm-warehouse-map',
 
   // ── WH Worker — 태블릿 작업 화면 (views/whWorker/)
   // 접두어: 'whw-' (WH Worker 약자)
   // ⚠️  이 라우트들은 태블릿 터치 UI 기준으로 개발할 것
-  WH_WORKER_TASK_LIST: 'whw-task-list',
-  WH_WORKER_INSPECTION: 'whw-inspection',
-  WH_WORKER_PICKING: 'whw-picking',
-  WH_WORKER_PACKING: 'whw-packing',
+  // WH_WORKER_TASK_LIST: 'whw-task-list',
+  // WH_WORKER_INSPECTION: 'whw-inspection',
+  // WH_WORKER_PICKING: 'whw-picking',
+  // WH_WORKER_PACKING: 'whw-packing',
+  // WH_WORKER_DASHBOARD: 'whw-dashboard',
+  WH_WORKER_DASHBOARD: 'whw-dashboard',
+  WH_WORKER_TASKS: 'whw-tasks',
+  WH_WORKER_INBOUND: 'whw-inbound',
+  WH_WORKER_OUTBOUND: 'whw-outbound',
+  WH_WORKER_INVENTORY: 'whw-inventory',
 
   // ── System Admin — 플랫폼 최상위 관리 (views/systemAdmin/)
   // 접두어: 'sys-'
   SYS_COMPANY_LIST: 'sys-company-list',
   SYS_COMPANY_REGISTER: 'sys-company-register',
+  SYS_COMPANY_DETAIL: 'sys-company-detail',
   SYS_FEE_SETTING: 'sys-fee-setting',
+  SYS_USER_ACCOUNT_LIST: 'sys-user-account-list',
+  SYS_IMPORT_SURCHARGE: 'sys-import-surcharge',
 }

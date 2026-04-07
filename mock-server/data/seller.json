@@ -1,0 +1,811 @@
+{
+  "seller_orders": [
+    {
+      "id": "seller-order-1",
+      "orderNo": "ORD-2026-0311-001",
+      "channel": "Amazon",
+      "recipient": "Sarah Johnson",
+      "address": "California, Los Angeles",
+      "itemsSummary": "LB-AMP-30 × 2, LB-MSK-5P × 1",
+      "orderedAt": "2026-03-11 09:12",
+      "status": "COMPLETED",
+      "trackingNo": "1Z999AA10123456784",
+      "canCancel": false,
+      "detail": {
+        "receiverPhone": "+1-213-555-0101",
+        "state": "California",
+        "city": "Los Angeles",
+        "zipCode": "90001",
+        "addressLine": "742 Spring St Apt 12",
+        "shippingMethod": "UPS Ground",
+        "carrier": "UPS",
+        "memo": "문 앞 수령 요청",
+        "items": [
+          { "sku": "LB-AMP-30", "productName": "루미에르 앰플 30ml", "quantity": 2, "unitPrice": 34 },
+          { "sku": "LB-MSK-5P", "productName": "콜라겐 마스크 5매입", "quantity": 1, "unitPrice": 18 }
+        ]
+      }
+    },
+    {
+      "id": "seller-order-2",
+      "orderNo": "ORD-2026-0311-002",
+      "channel": "수동",
+      "recipient": "Michael Kim",
+      "address": "New York, Manhattan",
+      "itemsSummary": "LB-SRM-50 × 3",
+      "orderedAt": "2026-03-11 10:30",
+      "status": "WAITING",
+      "trackingNo": "",
+      "canCancel": false
+    },
+    {
+      "id": "seller-order-3",
+      "orderNo": "ORD-2026-0311-003",
+      "channel": "엑셀",
+      "recipient": "Emma Davis",
+      "address": "Texas, Houston",
+      "itemsSummary": "LB-CRM-100 × 1, LB-AMP-30 × 1",
+      "orderedAt": "2026-03-11 11:05",
+      "status": "ALLOCATED",
+      "trackingNo": "",
+      "canCancel": true,
+      "detail": {
+        "receiverPhone": "+1-713-555-0188",
+        "state": "Texas",
+        "city": "Houston",
+        "zipCode": "77002",
+        "addressLine": "180 Main St Suite 6",
+        "shippingMethod": "FedEx Home Delivery",
+        "carrier": "FedEx",
+        "memo": "엑셀 업로드 주문, 오전 출고 우선",
+        "items": [
+          { "sku": "LB-CRM-100", "productName": "리페어 크림 100ml", "quantity": 1, "unitPrice": 29 },
+          { "sku": "LB-AMP-30", "productName": "루미에르 앰플 30ml", "quantity": 1, "unitPrice": 34 }
+        ]
+      }
+    },
+    {
+      "id": "seller-order-4",
+      "orderNo": "ORD-2026-0311-004",
+      "channel": "Amazon",
+      "recipient": "James Park",
+      "address": "Florida, Miami",
+      "itemsSummary": "LB-MSK-5P × 5",
+      "orderedAt": "2026-03-11 11:47",
+      "status": "DISPATCHED",
+      "trackingNo": "",
+      "canCancel": false
+    },
+    {
+      "id": "seller-order-5",
+      "orderNo": "ORD-2026-0311-005",
+      "channel": "수동",
+      "recipient": "Olivia Brown",
+      "address": "Washington, Seattle",
+      "itemsSummary": "LB-SRM-50 × 2, LB-CRM-100 × 2",
+      "orderedAt": "2026-03-11 12:20",
+      "status": "RECEIVED",
+      "trackingNo": "",
+      "canCancel": true,
+      "detail": {
+        "receiverPhone": "+1-206-555-0173",
+        "state": "Washington",
+        "city": "Seattle",
+        "zipCode": "98101",
+        "addressLine": "55 Pine St Floor 3",
+        "shippingMethod": "UPS Ground",
+        "carrier": "UPS",
+        "memo": "접수 후 재고 할당 대기",
+        "items": [
+          { "sku": "LB-SRM-50", "productName": "히알루론 세럼 50ml", "quantity": 2, "unitPrice": 26 },
+          { "sku": "LB-CRM-100", "productName": "리페어 크림 100ml", "quantity": 2, "unitPrice": 29 }
+        ]
+      }
+    },
+    {
+      "id": "seller-order-6",
+      "orderNo": "ORD-2026-0311-006",
+      "channel": "엑셀",
+      "recipient": "Noah Wilson",
+      "address": "Illinois, Chicago",
+      "itemsSummary": "LB-AMP-30 × 1",
+      "orderedAt": "2026-03-11 13:00",
+      "status": "CANCELLED",
+      "trackingNo": "",
+      "canCancel": false
+    },
+    {
+      "id": "seller-order-7",
+      "orderNo": "ORD-2026-0310-047",
+      "channel": "Amazon",
+      "recipient": "Sophia Lee",
+      "address": "California, San Jose",
+      "itemsSummary": "LB-MSK-5P × 10",
+      "orderedAt": "2026-03-10 16:30",
+      "status": "COMPLETED",
+      "trackingNo": "1Z999AA10123456785",
+      "canCancel": false
+    },
+    {
+      "id": "seller-order-8",
+      "orderNo": "ORD-2026-0310-046",
+      "channel": "수동",
+      "recipient": "Liam Martinez",
+      "address": "New York, Brooklyn",
+      "itemsSummary": "LB-AMP-30 × 2",
+      "orderedAt": "2026-03-10 15:12",
+      "status": "WAITING",
+      "trackingNo": "",
+      "canCancel": false
+    },
+    {
+      "id": "seller-order-9",
+      "orderNo": "ORD-2026-0310-045",
+      "channel": "Amazon",
+      "recipient": "Ava Thompson",
+      "address": "Oregon, Portland",
+      "itemsSummary": "LB-SRM-50 × 1, LB-CRM-100 × 1",
+      "orderedAt": "2026-03-10 13:55",
+      "status": "COMPLETED",
+      "trackingNo": "1Z999AA10123456786",
+      "canCancel": false
+    },
+    {
+      "id": "seller-order-10",
+      "orderNo": "ORD-2026-0310-044",
+      "channel": "엑셀",
+      "recipient": "William Chen",
+      "address": "Nevada, Las Vegas",
+      "itemsSummary": "LB-MSK-5P × 3",
+      "orderedAt": "2026-03-10 12:10",
+      "status": "RECEIVED",
+      "trackingNo": "",
+      "canCancel": true,
+      "detail": {
+        "receiverPhone": "+1-702-555-0110",
+        "state": "Nevada",
+        "city": "Las Vegas",
+        "zipCode": "89101",
+        "addressLine": "240 Fremont St Unit 8",
+        "shippingMethod": "FedEx Home Delivery",
+        "carrier": "FedEx",
+        "memo": "재고 확보 후 일괄 출고 예정",
+        "items": [
+          { "sku": "LB-MSK-5P", "productName": "콜라겐 마스크 5매입", "quantity": 3, "unitPrice": 18 }
+        ]
+      }
+    }
+  ],
+  "seller_asns": [
+    {
+      "id": "seller-asn-1",
+      "asnNo": "ASN-20260318-001",
+      "warehouseName": "NJ Warehouse",
+      "expectedDate": "2026-03-21",
+      "createdAt": "2026-03-18",
+      "skuCount": 3,
+      "totalQuantity": 420,
+      "status": "SUBMITTED",
+      "referenceNo": "BL-240318-01",
+      "note": "온도 민감 상품 포함",
+      "detail": {
+        "supplierName": "Lumiere Beauty HQ",
+        "originCountry": "대한민국",
+        "originPort": "Busan Port",
+        "transportMode": "Ocean Freight",
+        "incoterms": "FOB",
+        "bookingNo": "BK-260318-001",
+        "carrier": "Maersk",
+        "arrivalWindow": "2026-03-21 AM",
+        "documents": ["Invoice", "Packing List", "MSDS"],
+        "items": [
+          { "sku": "LB-AMP-30", "productName": "루미에르 앰플 30ml", "quantity": 180, "cartons": 18 },
+          { "sku": "LB-SRM-50", "productName": "히알루론 세럼 50ml", "quantity": 120, "cartons": 12 },
+          { "sku": "LB-CRM-100", "productName": "비타민C 크림 100ml", "quantity": 120, "cartons": 10 }
+        ]
+      }
+    },
+    {
+      "id": "seller-asn-2",
+      "asnNo": "ASN-20260317-003",
+      "warehouseName": "LA Warehouse",
+      "expectedDate": "2026-03-19",
+      "createdAt": "2026-03-17",
+      "skuCount": 2,
+      "totalQuantity": 180,
+      "status": "SUBMITTED",
+      "referenceNo": "AIR-240317-02",
+      "note": "급행 입고 요청",
+      "detail": {
+        "supplierName": "Lumiere Beauty Air Hub",
+        "originCountry": "대한민국",
+        "originPort": "ICN Air Cargo",
+        "transportMode": "Air Freight",
+        "incoterms": "FCA",
+        "bookingNo": "BK-260317-009",
+        "carrier": "Korean Air Cargo",
+        "arrivalWindow": "2026-03-19 PM",
+        "documents": ["Invoice", "Packing List"],
+        "items": [
+          { "sku": "LB-SUN-50", "productName": "UV 선크림 SPF50 50ml", "quantity": 80, "cartons": 8 },
+          { "sku": "LB-MSK-5P", "productName": "콜라겐 마스크 5매입", "quantity": 100, "cartons": 10 }
+        ]
+      }
+    },
+    {
+      "id": "seller-asn-3",
+      "asnNo": "ASN-20260316-002",
+      "warehouseName": "TX Warehouse",
+      "expectedDate": "2026-03-18",
+      "createdAt": "2026-03-16",
+      "skuCount": 4,
+      "totalQuantity": 560,
+      "status": "RECEIVED",
+      "referenceNo": "TR-240316-03",
+      "note": "검수 완료",
+      "detail": {
+        "supplierName": "Lumiere Beauty Dallas",
+        "originCountry": "미국",
+        "originPort": "Dallas FTZ",
+        "transportMode": "Ground",
+        "incoterms": "DAP",
+        "bookingNo": "BK-260316-004",
+        "carrier": "XPO Logistics",
+        "arrivalWindow": "2026-03-18 14:00",
+        "documents": ["Inbound Sheet", "Packing List"],
+        "items": [
+          { "sku": "LB-FOA-120", "productName": "약산성 폼클렌저 120ml", "quantity": 160, "cartons": 8 },
+          { "sku": "LB-TNR-150", "productName": "리파이닝 토너 150ml", "quantity": 120, "cartons": 6 },
+          { "sku": "LB-CLN-200", "productName": "젤 클렌저 200ml", "quantity": 140, "cartons": 7 },
+          { "sku": "LB-MST-100", "productName": "미스트 토닝 100ml", "quantity": 140, "cartons": 7 }
+        ]
+      }
+    },
+    {
+      "id": "seller-asn-4",
+      "asnNo": "ASN-20260314-005",
+      "warehouseName": "NJ Warehouse",
+      "expectedDate": "2026-03-17",
+      "createdAt": "2026-03-14",
+      "skuCount": 1,
+      "totalQuantity": 96,
+      "status": "CANCELLED",
+      "referenceNo": "SEA-240314-09",
+      "note": "선적 취소"
+    },
+    {
+      "id": "seller-asn-5",
+      "asnNo": "ASN-20260313-004",
+      "warehouseName": "LA Warehouse",
+      "expectedDate": "2026-03-16",
+      "createdAt": "2026-03-13",
+      "skuCount": 5,
+      "totalQuantity": 720,
+      "status": "RECEIVED",
+      "referenceNo": "BL-240313-04",
+      "note": "정상 입고"
+    }
+  ],
+  "seller_inventories": [
+    {
+      "id": "seller-inventory-1",
+      "sku": "LB-AMP-30",
+      "productName": "루미에르 앰플 30ml",
+      "warehouseName": "ICN-A",
+      "availableStock": 248,
+      "allocatedStock": 32,
+      "totalStock": 280,
+      "inboundExpected": 50,
+      "lastInboundDate": "2026-03-08",
+      "warningThreshold": 10,
+      "status": "NORMAL",
+      "detail": {
+        "locationCode": "ICN-A / A-03-02",
+        "safetyStockDays": 24,
+        "coverageDays": 31,
+        "turnoverRate": "3.8/mo",
+        "lastCycleCount": "2026-03-12",
+        "nextInboundAsnNo": "ASN-20260318-001",
+        "salesChannel": "Amazon US",
+        "memo": "광고 집행 중인 핵심 SKU. 가용 재고 안정 구간 유지."
+      }
+    },
+    {
+      "id": "seller-inventory-2",
+      "sku": "LB-SRM-50",
+      "productName": "히알루론 세럼 50ml",
+      "warehouseName": "ICN-A",
+      "availableStock": 8,
+      "allocatedStock": 12,
+      "totalStock": 20,
+      "inboundExpected": 100,
+      "lastInboundDate": "2026-02-28",
+      "warningThreshold": 20,
+      "status": "LOW",
+      "detail": {
+        "locationCode": "ICN-A / B-01-04",
+        "safetyStockDays": 6,
+        "coverageDays": 3,
+        "turnoverRate": "6.2/mo",
+        "lastCycleCount": "2026-03-11",
+        "nextInboundAsnNo": "ASN-20260318-001",
+        "salesChannel": "Amazon US",
+        "memo": "재고 부족 구간. 입고 예정 100개 반영 필요."
+      }
+    },
+    {
+      "id": "seller-inventory-3",
+      "sku": "LB-CRM-100",
+      "productName": "비타민C 크림 100ml",
+      "warehouseName": "PUS-B",
+      "availableStock": 152,
+      "allocatedStock": 18,
+      "totalStock": 170,
+      "inboundExpected": 0,
+      "lastInboundDate": "2026-03-05",
+      "warningThreshold": 15,
+      "status": "NORMAL"
+    },
+    {
+      "id": "seller-inventory-4",
+      "sku": "LB-MSK-5P",
+      "productName": "콜라겐 마스크 5매입",
+      "warehouseName": "ICN-A",
+      "availableStock": 420,
+      "allocatedStock": 60,
+      "totalStock": 480,
+      "inboundExpected": 200,
+      "lastInboundDate": "2026-03-10",
+      "warningThreshold": 30,
+      "status": "NORMAL"
+    },
+    {
+      "id": "seller-inventory-5",
+      "sku": "LB-TNR-150",
+      "productName": "리파이닝 토너 150ml",
+      "warehouseName": "PUS-B",
+      "availableStock": 0,
+      "allocatedStock": 0,
+      "totalStock": 0,
+      "inboundExpected": 150,
+      "lastInboundDate": "2026-02-20",
+      "warningThreshold": 20,
+      "status": "OUT",
+      "detail": {
+        "locationCode": "PUS-B / HOLD-02",
+        "safetyStockDays": 0,
+        "coverageDays": 0,
+        "turnoverRate": "0.0/mo",
+        "lastCycleCount": "2026-03-01",
+        "nextInboundAsnNo": "ASN-20260320-007",
+        "salesChannel": "Seller Manual",
+        "memo": "품절 상태. 신규 입고 전까지 판매 중지 검토."
+      }
+    },
+    {
+      "id": "seller-inventory-6",
+      "sku": "LB-EYE-20",
+      "productName": "아이크림 20ml",
+      "warehouseName": "ICN-A",
+      "availableStock": 67,
+      "allocatedStock": 8,
+      "totalStock": 75,
+      "inboundExpected": 0,
+      "lastInboundDate": "2026-03-02",
+      "warningThreshold": 10,
+      "status": "NORMAL"
+    },
+    {
+      "id": "seller-inventory-7",
+      "sku": "LB-CLN-200",
+      "productName": "젤 클렌저 200ml",
+      "warehouseName": "ICN-A",
+      "availableStock": 310,
+      "allocatedStock": 40,
+      "totalStock": 350,
+      "inboundExpected": 0,
+      "lastInboundDate": "2026-03-06",
+      "warningThreshold": 25,
+      "status": "NORMAL"
+    },
+    {
+      "id": "seller-inventory-8",
+      "sku": "LB-SUN-50",
+      "productName": "UV 선크림 SPF50 50ml",
+      "warehouseName": "PUS-B",
+      "availableStock": 5,
+      "allocatedStock": 3,
+      "totalStock": 8,
+      "inboundExpected": 80,
+      "lastInboundDate": "2026-02-25",
+      "warningThreshold": 15,
+      "status": "LOW",
+      "detail": {
+        "locationCode": "PUS-B / C-02-01",
+        "safetyStockDays": 4,
+        "coverageDays": 2,
+        "turnoverRate": "5.4/mo",
+        "lastCycleCount": "2026-03-09",
+        "nextInboundAsnNo": "ASN-20260317-003",
+        "salesChannel": "Amazon US",
+        "memo": "선케어 시즌 대응용 긴급 보충 대상."
+      }
+    },
+    {
+      "id": "seller-inventory-9",
+      "sku": "LB-MST-100",
+      "productName": "미스트 토닝 100ml",
+      "warehouseName": "ICN-A",
+      "availableStock": 185,
+      "allocatedStock": 20,
+      "totalStock": 205,
+      "inboundExpected": 0,
+      "lastInboundDate": "2026-03-08",
+      "warningThreshold": 20,
+      "status": "NORMAL"
+    },
+    {
+      "id": "seller-inventory-10",
+      "sku": "LB-EXF-80",
+      "productName": "엑스폴리에이팅 스크럽 80g",
+      "warehouseName": "PUS-B",
+      "availableStock": 93,
+      "allocatedStock": 7,
+      "totalStock": 100,
+      "inboundExpected": 50,
+      "lastInboundDate": "2026-03-01",
+      "warningThreshold": 18,
+      "status": "NORMAL"
+    }
+  ],
+  "seller_products": [
+    {
+      "id": "seller-product-1",
+      "sku": "LB-AMP-30",
+      "productName": "루미에르 앰플 30ml",
+      "category": "세럼/앰플",
+      "warehouseName": "ICN-A",
+      "salePrice": 30,
+      "costPrice": 8,
+      "availableStock": 248,
+      "allocatedStock": 42,
+      "status": "ACTIVE",
+      "detail": {
+        "brand": "LUMIERE BEAUTY",
+        "barcode": "8809812300011",
+        "originCountry": "대한민국 (KR)",
+        "hsCode": "3304.99.5000",
+        "customsValue": 8,
+        "unitWeightLbs": 0.32,
+        "dimensions": "5.8 x 1.9 x 1.9 in",
+        "leadTimeDays": 5,
+        "shelfLifeMonths": 24,
+        "description": "흡수가 빠른 브라이트닝 앰플. Amazon 주력 SKU로 운영 중이다.",
+        "memo": "Prime 묶음 프로모션 후보 SKU",
+        "keywords": ["Amazon", "Prime", "Best Seller"]
+      }
+    },
+    {
+      "id": "seller-product-2",
+      "sku": "LB-SRM-50",
+      "productName": "히알루론 세럼 50ml",
+      "category": "세럼/앰플",
+      "warehouseName": "ICN-A",
+      "salePrice": 25,
+      "costPrice": 6.5,
+      "availableStock": 8,
+      "allocatedStock": 26,
+      "status": "LOW_STOCK",
+      "detail": {
+        "brand": "LUMIERE BEAUTY",
+        "barcode": "8809812300012",
+        "originCountry": "대한민국 (KR)",
+        "hsCode": "3304.99.5000",
+        "customsValue": 6.5,
+        "unitWeightLbs": 0.41,
+        "dimensions": "6.1 x 2.2 x 2.2 in",
+        "leadTimeDays": 7,
+        "shelfLifeMonths": 24,
+        "description": "보습 강화 세럼. 재고 부족 구간이라 보충 입고 우선 SKU로 관리한다.",
+        "memo": "ICN-A 안전재고 20 미만",
+        "keywords": ["Low Stock", "Hydration", "Refill Priority"]
+      }
+    },
+    {
+      "id": "seller-product-3",
+      "sku": "LB-CRM-100",
+      "productName": "비타민C 크림 100ml",
+      "category": "스킨케어",
+      "warehouseName": "PUS-B",
+      "salePrice": 35,
+      "costPrice": 10,
+      "availableStock": 152,
+      "allocatedStock": 18,
+      "status": "ACTIVE"
+    },
+    {
+      "id": "seller-product-4",
+      "sku": "LB-MSK-5P",
+      "productName": "콜라겐 마스크 5매입",
+      "category": "마스크팩",
+      "warehouseName": "ICN-A",
+      "salePrice": 18,
+      "costPrice": 4.5,
+      "availableStock": 420,
+      "allocatedStock": 56,
+      "status": "ACTIVE",
+      "detail": {
+        "brand": "LUMIERE BEAUTY",
+        "barcode": "8809812300014",
+        "originCountry": "대한민국 (KR)",
+        "hsCode": "3307.90.0000",
+        "customsValue": 4.5,
+        "unitWeightLbs": 0.58,
+        "dimensions": "8.4 x 5.6 x 1.3 in",
+        "leadTimeDays": 4,
+        "shelfLifeMonths": 30,
+        "description": "5매입 번들 마스크팩. 프로모션 배너와 묶음 판매에 자주 쓰이는 SKU다.",
+        "memo": "Amazon 광고 집행 중",
+        "keywords": ["Mask Pack", "Bundle", "Campaign"]
+      }
+    },
+    {
+      "id": "seller-product-5",
+      "sku": "LB-TNR-150",
+      "productName": "리파이닝 토너 150ml",
+      "category": "스킨케어",
+      "warehouseName": "PUS-B",
+      "salePrice": 22,
+      "costPrice": 5.8,
+      "availableStock": 0,
+      "allocatedStock": 0,
+      "status": "OUT_OF_STOCK"
+    },
+    {
+      "id": "seller-product-6",
+      "sku": "LB-EYE-20",
+      "productName": "아이크림 20ml",
+      "category": "스킨케어",
+      "warehouseName": "ICN-A",
+      "salePrice": 45,
+      "costPrice": 12,
+      "availableStock": 67,
+      "allocatedStock": 12,
+      "status": "ACTIVE"
+    },
+    {
+      "id": "seller-product-7",
+      "sku": "LB-CLN-200",
+      "productName": "젤 클렌저 200ml",
+      "category": "클렌징",
+      "warehouseName": "ICN-A",
+      "salePrice": 15,
+      "costPrice": 4.2,
+      "availableStock": 310,
+      "allocatedStock": 0,
+      "status": "INACTIVE",
+      "detail": {
+        "brand": "LUMIERE BEAUTY",
+        "barcode": "8809812300017",
+        "originCountry": "대한민국 (KR)",
+        "hsCode": "3304.99.9000",
+        "customsValue": 4.2,
+        "unitWeightLbs": 0.76,
+        "dimensions": "7.2 x 2.7 x 2.7 in",
+        "leadTimeDays": 10,
+        "shelfLifeMonths": 24,
+        "description": "민감성용 젤 클렌저. 시즌 종료로 현재 판매 비활성 상태다.",
+        "memo": "리뉴얼 패키지 적용 전 임시 비활성",
+        "keywords": ["Inactive", "Renewal", "Cleansing"]
+      }
+    },
+    {
+      "id": "seller-product-8",
+      "sku": "LB-SUN-50",
+      "productName": "UV 선크림 SPF50 50ml",
+      "category": "선케어",
+      "warehouseName": "PUS-B",
+      "salePrice": 28,
+      "costPrice": 7.2,
+      "availableStock": 5,
+      "allocatedStock": 14,
+      "status": "LOW_STOCK",
+      "detail": {
+        "brand": "LUMIERE BEAUTY",
+        "barcode": "8809812300018",
+        "originCountry": "대한민국 (KR)",
+        "hsCode": "3304.99.9000",
+        "customsValue": 7.2,
+        "unitWeightLbs": 0.37,
+        "dimensions": "5.6 x 2.1 x 1.9 in",
+        "leadTimeDays": 6,
+        "shelfLifeMonths": 24,
+        "description": "SPF50 선크림. 재고 부족으로 긴급 보충 대상에 포함되어 있다.",
+        "memo": "PUS-B 재고 5개",
+        "keywords": ["Suncare", "Low Stock", "PUS-B"]
+      }
+    },
+    {
+      "id": "seller-product-9",
+      "sku": "LB-MST-100",
+      "productName": "미스트 토닝 100ml",
+      "category": "스킨케어",
+      "warehouseName": "ICN-A",
+      "salePrice": 20,
+      "costPrice": 5.2,
+      "availableStock": 185,
+      "allocatedStock": 30,
+      "status": "ACTIVE"
+    },
+    {
+      "id": "seller-product-10",
+      "sku": "LB-FOA-120",
+      "productName": "약산성 폼클렌저 120ml",
+      "category": "클렌징",
+      "warehouseName": "PUS-B",
+      "salePrice": 19,
+      "costPrice": 4.9,
+      "availableStock": 93,
+      "allocatedStock": 11,
+      "status": "ACTIVE"
+    }
+  ],
+  "seller_channel_sync_cards": [
+    {
+      "key": "AMAZON",
+      "label": "Amazon",
+      "syncStatus": "PLANNED",
+      "pendingOrders": 14,
+      "todayImported": 3,
+      "lastSyncedAt": "2026-03-19 09:10",
+      "description": "Amazon 주문을 CONK 주문번호로 매핑해 출고 상태를 추적합니다.",
+      "actions": [
+        { "key": "sync", "label": "동기화", "variant": "ghost", "disabled": false },
+        { "key": "import", "label": "주문 가져오기", "variant": "primary", "disabled": false }
+      ]
+    },
+    {
+      "key": "SHOPIFY",
+      "label": "Shopify",
+      "syncStatus": "CONNECTED",
+      "pendingOrders": 5,
+      "todayImported": 2,
+      "lastSyncedAt": "2026-03-19 08:42",
+      "description": "Shopify 주문을 자동 수집해 WMS 처리 상태와 함께 조회합니다.",
+      "actions": [
+        { "key": "sync", "label": "동기화", "variant": "ghost", "disabled": false },
+        { "key": "import", "label": "주문 가져오기", "variant": "primary", "disabled": false }
+      ]
+    },
+    {
+      "key": "QOO10",
+      "label": "Qoo10",
+      "syncStatus": "DISCONNECTED",
+      "pendingOrders": 0,
+      "todayImported": 0,
+      "lastSyncedAt": "연결 전",
+      "description": "향후 연결 예정 채널입니다. 연결 전에는 주문을 직접 업로드해야 합니다.",
+      "actions": [
+        { "key": "connect", "label": "+ 채널 연결", "variant": "primary", "disabled": false }
+      ]
+    }
+  ],
+  "seller_channel_orders": [
+    {
+      "id": "channel-order-1",
+      "channel": "AMAZON",
+      "channelOrderNo": "AMZ-4583201",
+      "conkOrderNo": "ORD-20260319-001",
+      "recipient": "Emily Harris",
+      "itemsSummary": "루미에르 앰플 30ml 외 1건",
+      "orderAmount": 64.5,
+      "orderedAt": "2026-03-19 09:12",
+      "status": "NEW"
+    },
+    {
+      "id": "channel-order-2",
+      "channel": "MANUAL",
+      "channelOrderNo": "MANUAL-240319-01",
+      "conkOrderNo": "ORD-20260319-004",
+      "recipient": "김도윤",
+      "itemsSummary": "콜라겐 마스크 5매입",
+      "orderAmount": 18,
+      "orderedAt": "2026-03-19 08:20",
+      "status": "READY"
+    },
+    {
+      "id": "channel-order-3",
+      "channel": "SHOPIFY",
+      "channelOrderNo": "SHOP-890231",
+      "conkOrderNo": "ORD-20260318-021",
+      "recipient": "Olivia Carter",
+      "itemsSummary": "리파이닝 토너 150ml",
+      "orderAmount": 22,
+      "orderedAt": "2026-03-18 16:44",
+      "status": "SHIPPED"
+    },
+    {
+      "id": "channel-order-4",
+      "channel": "AMAZON",
+      "channelOrderNo": "AMZ-4583208",
+      "conkOrderNo": "ORD-20260318-019",
+      "recipient": "박서준",
+      "itemsSummary": "UV 선크림 SPF50 50ml",
+      "orderAmount": 28,
+      "orderedAt": "2026-03-18 15:05",
+      "status": "READY"
+    },
+    {
+      "id": "channel-order-5",
+      "channel": "MANUAL",
+      "channelOrderNo": "EXCEL-20260318-07",
+      "conkOrderNo": "ORD-20260318-017",
+      "recipient": "정유진",
+      "itemsSummary": "미스트 토닝 100ml 외 2건",
+      "orderAmount": 75,
+      "orderedAt": "2026-03-18 13:22",
+      "status": "DELIVERED"
+    },
+    {
+      "id": "channel-order-6",
+      "channel": "AMAZON",
+      "channelOrderNo": "AMZ-4583197",
+      "conkOrderNo": "ORD-20260318-010",
+      "recipient": "Sophia Kim",
+      "itemsSummary": "히알루론 세럼 50ml",
+      "orderAmount": 25,
+      "orderedAt": "2026-03-18 09:18",
+      "status": "SHIPPED"
+    }
+  ],
+  "seller_notifications": [
+    {
+      "id": "seller-notification-1",
+      "type": "ASN_RECEIVED",
+      "title": "ASN-20260319-0003 입고가 완료되었습니다.",
+      "body": "ICN-A 창고에서 루미에르 앰플 외 18 SKU 검수가 완료되었습니다.",
+      "timeLabel": "방금",
+      "read": false
+    },
+    {
+      "id": "seller-notification-2",
+      "type": "LOW_STOCK",
+      "title": "재고 부족 상품이 감지되었습니다.",
+      "body": "LB-SUN-50 SKU의 가용재고가 경고 임계치 10개 아래로 내려갔습니다.",
+      "timeLabel": "5분 전",
+      "read": false
+    },
+    {
+      "id": "seller-notification-3",
+      "type": "ORDER_SHIPPED",
+      "title": "AMZ-4583197 주문이 출고 완료되었습니다.",
+      "body": "택배사 인계가 끝나 송장 조회가 가능합니다.",
+      "timeLabel": "32분 전",
+      "read": false
+    },
+    {
+      "id": "seller-notification-4",
+      "type": "QTY_MISMATCH",
+      "title": "입고 수량 불일치가 확인되었습니다.",
+      "body": "ASN-20260318-0011에서 신고 수량과 실제 검수 수량에 차이가 있습니다.",
+      "timeLabel": "1시간 전",
+      "read": true
+    },
+    {
+      "id": "seller-notification-5",
+      "type": "INVOICE_ISSUED",
+      "title": "송장이 발행되었습니다.",
+      "body": "ORD-20260318-021 주문에 UPS 송장번호 1Z-28403이 연결되었습니다.",
+      "timeLabel": "어제",
+      "read": true
+    },
+    {
+      "id": "seller-notification-6",
+      "type": "LOW_STOCK",
+      "title": "마스크팩 재고가 부족합니다.",
+      "body": "LB-MSK-5P SKU가 오늘 예상 판매량 대비 부족 상태입니다.",
+      "timeLabel": "2일 전",
+      "read": true
+    }
+  ]
+}
