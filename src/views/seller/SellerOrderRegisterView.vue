@@ -457,9 +457,13 @@ function findPrimaryChannelCard(cards = []) {
 }
 
 function applyChannelPayload(payload = {}) {
-  channelConnection.connected = Boolean(payload.connected ?? ['CONNECTED', 'ACTIVE'].includes(payload.status))
+  const resolvedStatus = payload.status ?? payload.syncStatus
+  const hasConnectedDetail = Boolean(payload.connectedAt ?? payload.channelApi)
+  channelConnection.connected = Boolean(
+    payload.connected ?? (['CONNECTED', 'ACTIVE'].includes(resolvedStatus) || hasConnectedDetail),
+  )
   channelConnection.pendingOrders = Number(payload.pendingOrders ?? payload.importableOrders ?? 0)
-  channelConnection.lastSyncedAt = payload.lastSyncedAt ?? '-'
+  channelConnection.lastSyncedAt = payload.lastSyncedAt ?? payload.connectedAt ?? '-'
   channelSettings.storeAlias = String(payload.storeAlias ?? payload.storeName ?? channelSettings.storeAlias ?? '').trim()
   channelSettings.marketplace = String(payload.marketplace ?? payload.label ?? payload.channelName ?? channelSettings.marketplace ?? '').trim()
   channelSettings.contactEmail = String(payload.contactEmail ?? payload.email ?? channelSettings.contactEmail ?? '').trim()
