@@ -1,155 +1,246 @@
 <script setup>
-import { ref, reactive, computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import TimelineStepper from '@/components/common/TimelineStepper.vue'
+import {
+  getAsnBinCandidates,
+  getAsnDetail,
+  saveAsnBinAssignments,
+} from '@/api/wms'
 import { INBOUND_STATUS } from '@/constants/status'
 
 const props = defineProps({
-  isOpen:    { type: Boolean, required: true },
-  asn:       { type: Object,  default: null  },
-  canAssign: { type: Boolean, default: false }, // false = 읽기 전용, true = Bin 배정 편집 모드
+  isOpen: { type: Boolean, required: true },
+  asnId: { type: String, default: '' },
+  canAssign: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['cancel', 'confirm'])
 
-// ── 상태 매핑
 const STATUS_MAP = {
-  [INBOUND_STATUS.PENDING]:  { label: '입고 대기',   badge: 'amber' },
-  [INBOUND_STATUS.TRANSIT]:  { label: '운송 중',     badge: 'blue'  },
-  [INBOUND_STATUS.MISMATCH]: { label: '수량 불일치', badge: 'red'   },
-  [INBOUND_STATUS.RECEIVED]: { label: '검수 완료',   badge: 'green' },
+  [INBOUND_STATUS.PENDING]: { label: '입고 대기', badge: 'amber' },
+  [INBOUND_STATUS.TRANSIT]: { label: '운송 중', badge: 'blue' },
+  [INBOUND_STATUS.MISMATCH]: { label: '수량 불일치', badge: 'red' },
+  [INBOUND_STATUS.RECEIVED]: { label: '검수 완료', badge: 'green' },
 }
 const STATUS_STEP_LABEL = {
-  [INBOUND_STATUS.PENDING]:  '등록됨',
-  [INBOUND_STATUS.TRANSIT]:  '입고됨',
+  [INBOUND_STATUS.PENDING]: '등록됨',
+  [INBOUND_STATUS.TRANSIT]: '입고됨',
   [INBOUND_STATUS.MISMATCH]: '검수&적재중',
   [INBOUND_STATUS.RECEIVED]: '보관중',
 }
-
-// ── SKU-Bin 레지스트리 (세션 내 유지 — 실제 환경에서는 API 저장)
-// 등록된 SKU → 이전에 배정된 Bin (기존 상품)
-// 등록 안 된 SKU → 신규 상품, 수동 배정 필요
-const skuBinRegistry = reactive({
-  'SKU-GB-001': 'A-3-2',
-  'SKU-KS-001': 'C-1-4',
-  'SKU-KS-002': 'C-1-5',
-  'SKU-EP-001': 'B-2-1',
-  'SKU-KF-001': 'D-1-2',
-  'SKU-BL-001': 'A-2-1',
-  // SKU-GB-002, SKU-GB-003, SKU-BL-002 → 신규 (레지스트리에 없음)
-})
-
-// 배정 가능한 빈 Bin 목록 (mock)
-const AVAILABLE_BINS = [
-  'A-1-1', 'A-1-2', 'A-2-2', 'A-2-3',
-  'A-3-3', 'A-3-4', 'B-1-1', 'B-1-3',
-  'B-3-1', 'C-2-2', 'D-1-3', 'D-2-2',
-]
-
-// ── ASN별 SKU 원본 데이터 (bin 정보 없음 — 레지스트리에서 동적으로 결정)
-const SKU_MAP_RAW = {
-  'ASN-2024-0312-001': [
-    { code: 'SKU-GB-001', name: '앰플 세럼 30ml',  qty: 600, avail: 720 },
-    { code: 'SKU-GB-002', name: '마스크팩 10매입', qty: 400, avail: 500 }, // 신규
-  ],
-  'ASN-2024-0311-005': [
-    { code: 'SKU-KS-001', name: '티셔츠 L',  qty: 300, avail: 400 },
-    { code: 'SKU-KS-002', name: '청바지 M',  qty: 200, avail: 280 },
-  ],
-  'ASN-2024-0310-003': [
-    { code: 'SKU-EP-001', name: '텀블러 350ml', qty: 200, avail: 240 },
-  ],
-  'ASN-2024-0309-002': [
-    { code: 'SKU-GB-003', name: '마스크팩 10매입 (신상)', qty: 800, avail: 800 }, // 신규
-  ],
-  'ASN-2024-0308-001': [
-    { code: 'SKU-KF-001', name: '특산 진액 30팩', qty: 300, avail: 320 },
-  ],
-  'ASN-2024-0307-004': [
-    { code: 'SKU-BL-001', name: 'BB크림',           qty: 250, avail: 300 },
-    { code: 'SKU-BL-002', name: '파운데이션 SPF50', qty: 150, avail: 200 }, // 신규
-  ],
-}
-
-// ── 모달 세션 내 임시 상태
-const tempBins     = ref({})  // { [skuCode]: 사용자가 선택한 Bin }
-const changingBins = ref({})  // { [skuCode]: true } — 기존 SKU "변경" 클릭 시
-
-// 모달 열릴 때마다 초기화
-watch(() => props.isOpen, (open) => {
-  if (open) {
-    tempBins.value     = {}
-    changingBins.value = {}
-  }
-})
-
-// ── SKU 목록 (신규/기존 여부와 현재 배정 Bin 포함)
-const skuList = computed(() => {
-  const raw = SKU_MAP_RAW[props.asn?.id] ?? []
-  return raw.map(sku => {
-    const registryBin = skuBinRegistry[sku.code] ?? null
-    const isNewSku    = !registryBin
-    const tempBin     = tempBins.value[sku.code] ?? null
-    return {
-      ...sku,
-      isNewSku,
-      registryBin,
-      currentBin: tempBin ?? registryBin,
-      isChanging: !!changingBins.value[sku.code],
-    }
-  })
-})
-
-// 이미 레지스트리에 쓰인 Bin 목록 (다른 SKU와 중복 배정 방지)
-const usedBins = computed(() => new Set(Object.values(skuBinRegistry)))
-
-// 특정 SKU에서 선택 가능한 Bin 목록
-// (AVAILABLE_BINS에서 이미 다른 SKU가 쓰는 Bin 제외, 단 자기 자신의 기존 Bin은 포함)
-function availableBinsFor(sku) {
-  return AVAILABLE_BINS.filter(b => !usedBins.value.has(b) || b === sku.registryBin)
-}
-
-// 입고 확인 버튼 활성화 조건: 모든 신규 SKU에 Bin이 배정되어야 함
-const newSkus    = computed(() => skuList.value.filter(s => s.isNewSku))
-const canConfirm = computed(() => newSkus.value.every(s => s.currentBin))
-
-function selectBin(skuCode, bin) {
-  tempBins.value = { ...tempBins.value, [skuCode]: bin || null }
-}
-
-function startChanging(skuCode) {
-  changingBins.value = { ...changingBins.value, [skuCode]: true }
-}
-
-function cancelChanging(skuCode) {
-  const next = { ...changingBins.value }
-  delete next[skuCode]
-  changingBins.value = next
-  const nextTemp = { ...tempBins.value }
-  delete nextTemp[skuCode]
-  tempBins.value = nextTemp
-}
-
-// 입고 확인: 신규 SKU의 Bin 배정을 레지스트리에 저장
-function handleConfirm() {
-  skuList.value.forEach(sku => {
-    if (sku.currentBin) {
-      skuBinRegistry[sku.code] = sku.currentBin
-    }
-  })
-  emit('confirm', { asnId: props.asn?.id })
-}
-
-// ── 타임라인
-const asnStatus  = computed(() => props.asn?.status ?? '')
-const statusInfo = computed(() => STATUS_MAP[asnStatus.value] ?? { label: '-', badge: 'gray' })
-
 const ASN_STEPS = [
-  { key: INBOUND_STATUS.PENDING,  label: '등록됨' },
-  { key: INBOUND_STATUS.TRANSIT,  label: '입고됨' },
+  { key: INBOUND_STATUS.PENDING, label: '등록됨' },
+  { key: INBOUND_STATUS.TRANSIT, label: '입고됨' },
   { key: INBOUND_STATUS.MISMATCH, label: '검수&적재중' },
   { key: INBOUND_STATUS.RECEIVED, label: '보관중' },
 ]
+
+const loading = ref(false)
+const isSaving = ref(false)
+const loadErrorMessage = ref('')
+const binCandidateErrorMessage = ref('')
+const saveErrorMessage = ref('')
+const asnDetail = ref(null)
+const binCandidates = ref({})
+const tempBins = ref({})
+const changingBins = ref({})
+
+function resetModalState() {
+  loadErrorMessage.value = ''
+  binCandidateErrorMessage.value = ''
+  saveErrorMessage.value = ''
+  asnDetail.value = null
+  binCandidates.value = {}
+  tempBins.value = {}
+  changingBins.value = {}
+}
+
+function normalizeText(value, fallback = '') {
+  const normalized = String(value ?? '').trim()
+  return normalized || fallback
+}
+
+function normalizeNumber(value, fallback = 0) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+function normalizeBinCandidate(bin) {
+  return normalizeText(bin?.bin ?? bin?.binCode ?? bin?.location ?? bin?.value ?? bin)
+}
+
+function normalizeCandidateMap(payload = {}) {
+  const data = payload?.data ?? payload
+
+  if (Array.isArray(data)) {
+    return {
+      default: data.map(normalizeBinCandidate).filter(Boolean),
+    }
+  }
+
+  const normalizedMap = {}
+  const candidateMap = data?.candidatesBySku ?? data?.itemsBySku ?? data ?? {}
+
+  Object.entries(candidateMap).forEach(([sku, values]) => {
+    if (!Array.isArray(values)) return
+    normalizedMap[sku] = values.map(normalizeBinCandidate).filter(Boolean)
+  })
+
+  const defaultCandidates = Array.isArray(data?.candidates)
+    ? data.candidates.map(normalizeBinCandidate).filter(Boolean)
+    : []
+
+  if (defaultCandidates.length) {
+    normalizedMap.default = defaultCandidates
+  }
+
+  return normalizedMap
+}
+
+function normalizeAsnItem(item = {}) {
+  const code = normalizeText(item.sku ?? item.code)
+  const registryBin = normalizeText(item.currentBin ?? item.bin ?? item.binCode, '')
+  const currentTempBin = normalizeText(tempBins.value[code], '')
+
+  return {
+    code,
+    name: normalizeText(item.productName ?? item.name, '-'),
+    qty: normalizeNumber(item.quantity ?? item.qty),
+    avail: normalizeNumber(item.availableStock ?? item.avail),
+    isNewSku: Boolean(item.isNewSku ?? !registryBin),
+    registryBin: registryBin || null,
+    currentBin: currentTempBin || registryBin || null,
+    isChanging: Boolean(changingBins.value[code]),
+  }
+}
+
+const skuList = computed(() => {
+  const items = Array.isArray(asnDetail.value?.items) ? asnDetail.value.items : []
+  return items.map(normalizeAsnItem).filter((item) => item.code)
+})
+
+const usedBins = computed(() => {
+  return new Set(
+    skuList.value
+      .map((sku) => sku.currentBin)
+      .filter(Boolean),
+  )
+})
+
+const newSkus = computed(() => skuList.value.filter((sku) => sku.isNewSku))
+const canConfirm = computed(() => {
+  if (!props.canAssign || isSaving.value) return false
+  return newSkus.value.every((sku) => sku.currentBin)
+})
+const asnStatus = computed(() => asnDetail.value?.status ?? '')
+const statusInfo = computed(() => STATUS_MAP[asnStatus.value] ?? { label: '-', badge: 'gray' })
+const plannedQuantity = computed(() => {
+  if (asnDetail.value?.plannedQty != null) return normalizeNumber(asnDetail.value.plannedQty)
+  return skuList.value.reduce((sum, sku) => sum + sku.qty, 0)
+})
+
+function availableBinsFor(sku) {
+  const candidateList = binCandidates.value[sku.code] ?? binCandidates.value.default ?? []
+  const ownBin = sku.currentBin
+
+  return candidateList.filter((bin) => !usedBins.value.has(bin) || bin === ownBin)
+}
+
+function selectBin(skuCode, bin) {
+  tempBins.value = {
+    ...tempBins.value,
+    [skuCode]: normalizeText(bin) || null,
+  }
+}
+
+function startChanging(skuCode) {
+  changingBins.value = {
+    ...changingBins.value,
+    [skuCode]: true,
+  }
+}
+
+function cancelChanging(skuCode) {
+  const nextChanging = { ...changingBins.value }
+  delete nextChanging[skuCode]
+  changingBins.value = nextChanging
+
+  const nextTempBins = { ...tempBins.value }
+  delete nextTempBins[skuCode]
+  tempBins.value = nextTempBins
+}
+
+function buildBinAssignmentPayload() {
+  return {
+    assignments: skuList.value
+      .filter((sku) => sku.currentBin)
+      .map((sku) => ({
+        sku: sku.code,
+        bin: sku.currentBin,
+        isNewSku: sku.isNewSku,
+      })),
+  }
+}
+
+async function fetchAsnData() {
+  if (!props.asnId) return
+
+  loading.value = true
+  loadErrorMessage.value = ''
+  binCandidateErrorMessage.value = ''
+  saveErrorMessage.value = ''
+
+  try {
+    const [detailResponse, candidateResponse] = await Promise.all([
+      getAsnDetail(props.asnId),
+      getAsnBinCandidates(props.asnId).catch((error) => {
+        binCandidateErrorMessage.value = error.response?.data?.message ?? 'Bin 후보 목록을 불러오지 못했습니다.'
+        return { data: { data: {} } }
+      }),
+    ])
+
+    asnDetail.value = detailResponse.data?.data ?? null
+    binCandidates.value = normalizeCandidateMap(candidateResponse.data)
+  } catch (error) {
+    asnDetail.value = null
+    loadErrorMessage.value = error.response?.data?.message ?? 'ASN 상세 정보를 불러오지 못했습니다.'
+  } finally {
+    loading.value = false
+  }
+}
+
+async function handleConfirm() {
+  if (!canConfirm.value) return
+
+  saveErrorMessage.value = ''
+
+  try {
+    isSaving.value = true
+    await saveAsnBinAssignments(props.asnId, buildBinAssignmentPayload())
+    emit('confirm', { asnId: props.asnId })
+  } catch (error) {
+    saveErrorMessage.value = error.response?.data?.message ?? 'Bin 배정 저장에 실패했습니다.'
+  } finally {
+    isSaving.value = false
+  }
+}
+
+watch(
+  () => [props.isOpen, props.asnId],
+  ([isOpen, asnId]) => {
+    if (!isOpen) {
+      resetModalState()
+      return
+    }
+
+    if (asnId) {
+      tempBins.value = {}
+      changingBins.value = {}
+      void fetchAsnData()
+    }
+  },
+)
 </script>
 
 <template>
@@ -159,17 +250,23 @@ const ASN_STEPS = [
     width="760px"
     @cancel="$emit('cancel')"
   >
-    <div v-if="asn">
+    <div v-if="loading" class="modal-loading">
+      데이터를 불러오는 중입니다.
+    </div>
 
-      <!-- ── Hero ─────────────────────────────────── -->
+    <div v-else-if="loadErrorMessage" class="feedback feedback--error">
+      {{ loadErrorMessage }}
+    </div>
+
+    <div v-else-if="asnDetail">
       <div class="modal-hero">
         <div class="modal-hero-top">
           <div>
             <div class="modal-eyebrow">Inbound ASN</div>
-            <div class="modal-hero-title">{{ asn.id }}</div>
+            <div class="modal-hero-title">{{ asnDetail.id ?? props.asnId }}</div>
             <div class="modal-hero-copy">
               셀러가 등록한 입고 예정 데이터를 확인합니다.
-              신규 SKU는 Bin을 직접 배정하고, 기존 SKU는 이전 배정 이력으로 자동 매핑됩니다.
+              신규 SKU는 Bin을 직접 배정하고, 기존 SKU는 API가 내려준 기존 Bin 상태를 기준으로 표시합니다.
             </div>
           </div>
           <span class="badge" :class="`badge--${statusInfo.badge}`">{{ statusInfo.label }}</span>
@@ -177,17 +274,17 @@ const ASN_STEPS = [
         <div class="metric-grid">
           <div class="metric-card">
             <span class="metric-label">셀러사</span>
-            <span class="metric-value">{{ (asn.sellerCompany ?? asn.company ?? '-').split(' ')[0] }}</span>
-            <span class="metric-sub">{{ asn.sellerCompany ?? asn.company ?? '-' }}</span>
+            <span class="metric-value">{{ (asnDetail.sellerCompany ?? asnDetail.company ?? '-').split(' ')[0] }}</span>
+            <span class="metric-sub">{{ asnDetail.sellerCompany ?? asnDetail.company ?? '-' }}</span>
           </div>
           <div class="metric-card">
             <span class="metric-label">예정 수량</span>
-            <span class="metric-value">{{ (asn.plannedQty ?? asn.actualQty ?? 0).toLocaleString() }}</span>
+            <span class="metric-value">{{ plannedQuantity.toLocaleString() }}</span>
             <span class="metric-sub">{{ skuList.length }}개 SKU</span>
           </div>
           <div class="metric-card">
             <span class="metric-label">예정 도착일</span>
-            <span class="metric-value">{{ (asn.eta ?? asn.expectedDate ?? '-').slice(0, 10) }}</span>
+            <span class="metric-value">{{ (asnDetail.eta ?? asnDetail.expectedDate ?? '-').slice(0, 10) }}</span>
           </div>
           <div class="metric-card">
             <span class="metric-label">현재 상태</span>
@@ -197,7 +294,6 @@ const ASN_STEPS = [
         </div>
       </div>
 
-      <!-- ── SKU 구성 및 Bin 배정 ───────────────── -->
       <div class="modal-section">
         <div class="modal-section-head">
           <div class="modal-section-title">SKU 구성 및 Bin 배정</div>
@@ -207,12 +303,14 @@ const ASN_STEPS = [
           </div>
         </div>
 
-        <!-- 신규 SKU 안내 배너 (배정 모드 + 신규 SKU가 있을 때만 표시) -->
+        <div v-if="binCandidateErrorMessage" class="feedback feedback--error">
+          {{ binCandidateErrorMessage }}
+        </div>
+        <div v-if="saveErrorMessage" class="feedback feedback--error">
+          {{ saveErrorMessage }}
+        </div>
+
         <div v-if="canAssign && newSkus.length" class="new-sku-notice">
-          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14" style="flex-shrink:0">
-            <circle cx="7" cy="7" r="5.5"/>
-            <path d="M7 5v4M7 3.5v.5" stroke-linecap="round"/>
-          </svg>
           <span>
             <strong>{{ newSkus.length }}개의 신규 SKU</strong>가 있습니다.
             아직 Bin이 등록되지 않은 상품입니다. Bin을 배정하면 다음 입고부터 자동으로 매핑됩니다.
@@ -236,21 +334,13 @@ const ASN_STEPS = [
                 :key="sku.code"
                 :class="{ 'row--new': sku.isNewSku && !sku.currentBin }"
               >
-                <!-- SKU 코드 -->
                 <td><span class="code-cell">{{ sku.code }}</span></td>
-
-                <!-- 상품명 + 신규 배지 -->
                 <td>
                   <span class="sku-name">{{ sku.name }}</span>
                   <span v-if="sku.isNewSku" class="badge badge--amber sku-new-badge">신규</span>
                 </td>
-
-                <!-- 예정 수량 -->
                 <td style="text-align:right">{{ sku.qty.toLocaleString() }}</td>
-
-                <!-- 배정 Bin 셀 -->
                 <td>
-                  <!-- ── 읽기 전용 모드 (ASN 목록 탭 상세) ── -->
                   <template v-if="!canAssign">
                     <div class="bin-cell">
                       <template v-if="sku.currentBin">
@@ -258,30 +348,27 @@ const ASN_STEPS = [
                           {{ sku.currentBin }}
                         </span>
                         <span v-if="sku.isNewSku" class="badge badge--amber">미확정</span>
-                        <span v-else class="badge badge--blue">자동</span>
+                        <span v-else class="badge badge--blue">기존</span>
                       </template>
                       <span v-else class="badge badge--amber">미배정</span>
                     </div>
                   </template>
 
-                  <!-- ── 배정 편집 모드 (Bin 미배정 ASN 탭 배정하기) ── -->
                   <template v-else>
-                    <!-- 신규 SKU: Bin 미배정 상태 -->
                     <template v-if="sku.isNewSku && !sku.currentBin">
                       <div class="bin-cell">
-                        <span class="badge badge--amber">⚠ 미배정</span>
+                        <span class="badge badge--amber">미배정</span>
                         <select
                           class="bin-select"
                           value=""
-                          @change="e => selectBin(sku.code, e.target.value)"
+                          @change="(event) => selectBin(sku.code, event.target.value)"
                         >
-                          <option value="">— Bin 선택 —</option>
-                          <option v-for="b in availableBinsFor(sku)" :key="b" :value="b">{{ b }}</option>
+                          <option value="">Bin 선택</option>
+                          <option v-for="bin in availableBinsFor(sku)" :key="bin" :value="bin">{{ bin }}</option>
                         </select>
                       </div>
                     </template>
 
-                    <!-- 신규 SKU: Bin 배정 완료 -->
                     <template v-else-if="sku.isNewSku && sku.currentBin">
                       <div class="bin-cell">
                         <span class="location-tag location-tag--new">{{ sku.currentBin }}</span>
@@ -290,33 +377,29 @@ const ASN_STEPS = [
                       </div>
                     </template>
 
-                    <!-- 기존 SKU: 자동 배정, 변경 중 아님 -->
                     <template v-else-if="!sku.isChanging">
                       <div class="bin-cell">
                         <span class="location-tag">{{ sku.currentBin }}</span>
-                        <span class="badge badge--blue">자동</span>
+                        <span class="badge badge--blue">기존</span>
                         <button class="ui-btn ui-btn--ghost ui-btn--xs" @click="startChanging(sku.code)">변경</button>
                       </div>
                     </template>
 
-                    <!-- 기존 SKU: 변경 중 -->
                     <template v-else>
                       <div class="bin-cell">
                         <select
                           class="bin-select"
                           :value="sku.currentBin ?? ''"
-                          @change="e => selectBin(sku.code, e.target.value)"
+                          @change="(event) => selectBin(sku.code, event.target.value)"
                         >
-                          <option value="">— Bin 선택 —</option>
-                          <option v-for="b in availableBinsFor(sku)" :key="b" :value="b">{{ b }}</option>
+                          <option value="">Bin 선택</option>
+                          <option v-for="bin in availableBinsFor(sku)" :key="bin" :value="bin">{{ bin }}</option>
                         </select>
                         <button class="ui-btn ui-btn--ghost ui-btn--xs" @click="cancelChanging(sku.code)">취소</button>
                       </div>
                     </template>
                   </template>
                 </td>
-
-                <!-- 수용 가능 수량 -->
                 <td style="text-align:right">{{ sku.avail.toLocaleString() }}</td>
               </tr>
             </tbody>
@@ -324,15 +407,17 @@ const ASN_STEPS = [
         </div>
       </div>
 
-      <!-- ── 진행 타임라인 ─────────────────────────── -->
       <div class="modal-section">
         <div class="modal-section-head">
           <div class="modal-section-title">진행 타임라인</div>
-          <div class="modal-section-copy">입고 확인 이후 검수&amp;적재 작업 배정으로 이어집니다.</div>
+          <div class="modal-section-copy">입고 확인 이후 검수&적재 작업 배정으로 이어집니다.</div>
         </div>
         <TimelineStepper :steps="ASN_STEPS" :currentStep="asnStatus" />
       </div>
+    </div>
 
+    <div v-else class="modal-empty">
+      ASN 정보를 찾을 수 없습니다.
     </div>
 
     <template #footer>
@@ -344,14 +429,35 @@ const ASN_STEPS = [
         :title="canConfirm ? '' : '모든 신규 SKU에 Bin을 배정하세요'"
         @click="handleConfirm"
       >
-        입고 확인
+        {{ isSaving ? '저장 중...' : '입고 확인' }}
       </button>
     </template>
   </BaseModal>
 </template>
 
 <style scoped>
-/* ── Hero ─────────────────────────────────────── */
+.modal-loading,
+.modal-empty {
+  padding: 48px 0;
+  text-align: center;
+  color: var(--t3);
+  font-size: var(--font-size-sm);
+}
+
+.feedback {
+  margin-bottom: var(--space-3);
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.feedback--error {
+  border: 1px solid rgba(209, 67, 67, 0.24);
+  background: rgba(209, 67, 67, 0.08);
+  color: #a12e2e;
+}
+
 .modal-hero {
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -359,6 +465,7 @@ const ASN_STEPS = [
   padding: var(--space-5);
   margin-bottom: var(--space-5);
 }
+
 .modal-hero-top {
   display: flex;
   justify-content: space-between;
@@ -366,6 +473,7 @@ const ASN_STEPS = [
   gap: var(--space-4);
   margin-bottom: var(--space-4);
 }
+
 .modal-eyebrow {
   font-size: 11px;
   font-weight: 600;
@@ -374,6 +482,7 @@ const ASN_STEPS = [
   text-transform: uppercase;
   margin-bottom: 6px;
 }
+
 .modal-hero-title {
   font-family: var(--font-condensed);
   font-size: var(--font-size-xl);
@@ -381,6 +490,7 @@ const ASN_STEPS = [
   color: var(--t1);
   margin-bottom: 6px;
 }
+
 .modal-hero-copy {
   font-size: var(--font-size-xs);
   color: var(--t3);
@@ -388,12 +498,12 @@ const ASN_STEPS = [
   max-width: 480px;
 }
 
-/* ── Metric Grid ──────────────────────────────── */
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--space-3);
 }
+
 .metric-card {
   display: flex;
   flex-direction: column;
@@ -403,7 +513,13 @@ const ASN_STEPS = [
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
 }
-.metric-label { font-size: 11px; color: var(--t3); font-weight: 500; }
+
+.metric-label {
+  font-size: 11px;
+  color: var(--t3);
+  font-weight: 500;
+}
+
 .metric-value {
   font-family: var(--font-condensed);
   font-size: var(--font-size-lg);
@@ -411,16 +527,36 @@ const ASN_STEPS = [
   color: var(--t1);
   line-height: 1.2;
 }
-.metric-sub { font-size: 11px; color: var(--t3); }
 
-/* ── Section ──────────────────────────────────── */
-.modal-section { margin-bottom: var(--space-5); }
-.modal-section:last-child { margin-bottom: 0; }
-.modal-section-head { margin-bottom: var(--space-3); }
-.modal-section-title { font-size: var(--font-size-sm); font-weight: 700; color: var(--t1); }
-.modal-section-copy  { font-size: var(--font-size-xs); color: var(--t3); margin-top: 3px; }
+.metric-sub {
+  font-size: 11px;
+  color: var(--t3);
+}
 
-/* ── 신규 SKU 안내 배너 ─────────────────────── */
+.modal-section {
+  margin-bottom: var(--space-5);
+}
+
+.modal-section:last-child {
+  margin-bottom: 0;
+}
+
+.modal-section-head {
+  margin-bottom: var(--space-3);
+}
+
+.modal-section-title {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--t1);
+}
+
+.modal-section-copy {
+  font-size: var(--font-size-xs);
+  color: var(--t3);
+  margin-top: 3px;
+}
+
 .new-sku-notice {
   display: flex;
   align-items: flex-start;
@@ -434,15 +570,17 @@ const ASN_STEPS = [
   margin-bottom: var(--space-3);
   line-height: 1.5;
 }
-.new-sku-notice strong { font-weight: 700; }
 
-/* ── Table ────────────────────────────────────── */
-.table-wrap { overflow-x: auto; }
+.table-wrap {
+  overflow-x: auto;
+}
+
 .table-wrap table {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--font-size-sm);
 }
+
 .table-wrap th {
   padding: 8px 12px;
   text-align: left;
@@ -453,6 +591,7 @@ const ASN_STEPS = [
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
+
 .table-wrap td {
   padding: 10px 12px;
   border-bottom: 1px solid var(--border);
@@ -460,10 +599,14 @@ const ASN_STEPS = [
   font-size: var(--font-size-sm);
   vertical-align: middle;
 }
-.table-wrap tr:last-child td { border-bottom: none; }
 
-/* 신규 SKU 행: 미배정 상태 강조 */
-.row--new td { background: rgba(245, 166, 35, 0.04); }
+.table-wrap tr:last-child td {
+  border-bottom: none;
+}
+
+.row--new td {
+  background: rgba(245, 166, 35, 0.04);
+}
 
 .code-cell {
   font-family: var(--font-mono);
@@ -471,10 +614,16 @@ const ASN_STEPS = [
   color: var(--t3);
 }
 
-.sku-name { margin-right: var(--space-2); }
-.sku-new-badge { font-size: 10px; padding: 1px 6px; vertical-align: middle; }
+.sku-name {
+  margin-right: var(--space-2);
+}
 
-/* ── Bin 셀 레이아웃 ─────────────────────────── */
+.sku-new-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  vertical-align: middle;
+}
+
 .bin-cell {
   display: flex;
   align-items: center;
@@ -507,14 +656,13 @@ const ASN_STEPS = [
   color: var(--t2);
   white-space: nowrap;
 }
-/* 신규 SKU에 새로 배정된 Bin */
+
 .location-tag--new {
   border-color: var(--green);
   background: var(--green-pale);
   color: var(--green);
 }
 
-/* ── 배지 ─────────────────────────────────────── */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -524,12 +672,27 @@ const ASN_STEPS = [
   font-weight: 600;
   white-space: nowrap;
 }
-.badge--amber { background: var(--amber-pale); color: #b45309; }
-.badge--blue  { background: var(--blue-pale);  color: var(--blue); }
-.badge--green { background: var(--green-pale); color: var(--green); }
-.badge--red   { background: var(--red-pale);   color: var(--red); }
 
-/* ── 버튼 ─────────────────────────────────────── */
+.badge--amber {
+  background: var(--amber-pale);
+  color: #b45309;
+}
+
+.badge--blue {
+  background: var(--blue-pale);
+  color: var(--blue);
+}
+
+.badge--green {
+  background: var(--green-pale);
+  color: var(--green);
+}
+
+.badge--red {
+  background: var(--red-pale);
+  color: var(--red);
+}
+
 .ui-btn {
   display: inline-flex;
   align-items: center;
@@ -541,6 +704,7 @@ const ASN_STEPS = [
   white-space: nowrap;
   transition: background var(--ease-fast), opacity var(--ease-fast);
 }
+
 .ui-btn--ghost {
   border-color: var(--border);
   background: transparent;
@@ -549,7 +713,12 @@ const ASN_STEPS = [
   height: 36px;
   font-size: var(--font-size-sm);
 }
-.ui-btn--ghost:hover { background: var(--surface-2); color: var(--t1); }
+
+.ui-btn--ghost:hover {
+  background: var(--surface-2);
+  color: var(--t1);
+}
+
 .ui-btn--primary {
   background: var(--blue);
   color: #fff;
@@ -557,8 +726,16 @@ const ASN_STEPS = [
   height: 36px;
   font-size: var(--font-size-sm);
 }
-.ui-btn--primary:not(:disabled):hover { opacity: 0.9; }
-.ui-btn--primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.ui-btn--primary:not(:disabled):hover {
+  opacity: 0.9;
+}
+
+.ui-btn--primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .ui-btn--xs {
   height: 26px;
   padding: 0 var(--space-2);

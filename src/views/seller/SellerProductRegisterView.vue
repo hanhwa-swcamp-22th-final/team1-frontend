@@ -3,9 +3,9 @@
  * 셀러 상품 등록 화면.
  * Pigma 상품 등록 시안을 기준으로 입력 섹션과 우측 설정 카드를 구성하고 mock 저장까지 연결한다.
  */
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { createSellerProduct, getSellerProductDetail, updateSellerProduct } from '@/api/wms'
+import { createSellerProduct, getSellerProductDetail, getSellerProductOptions, updateSellerProduct } from '@/api/wms'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import FileUpload from '@/components/common/FileUpload.vue'
@@ -15,9 +15,6 @@ import {
   buildVolumeWeight,
   createInitialProductErrors,
   createInitialProductForm,
-  SELLER_PRODUCT_CATEGORY_OPTIONS,
-  SELLER_PRODUCT_HS_CODE_OPTIONS,
-  SELLER_PRODUCT_ORIGIN_OPTIONS,
   validateProductForm,
 } from '@/utils/seller/productRegister.utils.js'
 
@@ -39,6 +36,10 @@ const fieldErrors = reactive(createInitialProductErrors())
 const selectedImages = ref([])
 const isSubmitting = ref(false)
 const isLoadingEditProduct = ref(false)
+const categoryOptions = ref([])
+const hsCodeOptions = ref([])
+const originOptions = ref([])
+const optionsErrorMessage = ref('')
 
 // 버튼 클릭 후 사용자에게 보여줄 안내 문구를 구분해서 관리한다.
 const infoMessage = ref('')
@@ -60,6 +61,7 @@ function clearMessages() {
   infoMessage.value = ''
   successMessage.value = ''
   errorMessage.value = ''
+  optionsErrorMessage.value = ''
 }
 
 // 상품 등록 검증 결과를 다시 보여주기 전 기존 에러를 비운다.
@@ -142,6 +144,18 @@ function handleDraftSave() {
   infoMessage.value = `${productLabel} 초안을 임시저장했습니다. 실제 저장은 다음 단계에서 연결합니다.`
 }
 
+function normalizeOptionList(items = []) {
+  return (Array.isArray(items) ? items : []).map((item) => {
+    if (typeof item === 'string') {
+      return { value: item, label: item }
+    }
+
+    const value = String(item?.value ?? item?.code ?? item?.id ?? item?.key ?? item?.name ?? '').trim()
+    const label = String(item?.label ?? item?.name ?? item?.value ?? item?.code ?? value).trim()
+    return { value, label }
+  }).filter((item) => item.value)
+}
+
 // 최종 등록은 필수 입력을 검증한 뒤 mock-server 상품 등록 API를 호출한다.
 async function handleSubmit() {
   clearMessages()
@@ -207,9 +221,30 @@ async function loadEditableProduct() {
   }
 }
 
+async function fetchProductOptions() {
+  optionsErrorMessage.value = ''
+
+  try {
+    const response = await getSellerProductOptions()
+    const payload = response.data?.data ?? {}
+    categoryOptions.value = normalizeOptionList(payload.categories)
+    hsCodeOptions.value = normalizeOptionList(payload.hsCodes)
+    originOptions.value = normalizeOptionList(payload.originCountries)
+  } catch (error) {
+    categoryOptions.value = []
+    hsCodeOptions.value = []
+    originOptions.value = []
+    optionsErrorMessage.value = error.response?.data?.message ?? '상품 등록 옵션을 불러오지 못했습니다.'
+  }
+}
+
 watch(() => editingProductId.value, () => {
   void loadEditableProduct()
 }, { immediate: true })
+
+onMounted(() => {
+  void fetchProductOptions()
+})
 </script>
 
 <template>
@@ -237,7 +272,7 @@ watch(() => editingProductId.value, () => {
                 <select v-model="productForm.category">
                   <option value="">선택</option>
                   <option
-                    v-for="category in SELLER_PRODUCT_CATEGORY_OPTIONS"
+                    v-for="category in categoryOptions"
                     :key="category.value"
                     :value="category.value"
                   >
@@ -313,7 +348,7 @@ watch(() => editingProductId.value, () => {
                   <select v-model="productForm.hsCode">
                     <option value="">선택 안 함</option>
                     <option
-                      v-for="hsCode in SELLER_PRODUCT_HS_CODE_OPTIONS"
+                      v-for="hsCode in hsCodeOptions"
                       :key="hsCode.value"
                       :value="hsCode.value"
                     >
@@ -335,7 +370,7 @@ watch(() => editingProductId.value, () => {
                 <select v-model="productForm.originCountry">
                   <option value="">원산지를 선택하세요</option>
                   <option
-                    v-for="origin in SELLER_PRODUCT_ORIGIN_OPTIONS"
+                    v-for="origin in originOptions"
                     :key="origin.value"
                     :value="origin.value"
                   >
@@ -375,6 +410,7 @@ watch(() => editingProductId.value, () => {
           <p v-if="isLoadingEditProduct" class="page-message page-message--info">상품 정보를 불러오는 중입니다.</p>
           <p v-if="infoMessage" class="page-message page-message--info">{{ infoMessage }}</p>
           <p v-if="successMessage" class="page-message page-message--success">{{ successMessage }}</p>
+          <p v-if="optionsErrorMessage" class="page-message page-message--error">{{ optionsErrorMessage }}</p>
           <p v-if="errorMessage" class="page-message page-message--error">{{ errorMessage }}</p>
         </div>
 

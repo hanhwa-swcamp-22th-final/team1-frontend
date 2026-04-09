@@ -1,6 +1,6 @@
 /**
  * 셀러 주문 등록 관련 유틸 모음.
- * 업로드 포맷 정보와 수동 등록 검증 로직을 한 곳에서 관리한다.
+ * 업로드 포맷과 API 기반 옵션 데이터를 화면 전용 형태로 정리한다.
  */
 import { validateSku } from '@/utils/validate.js'
 
@@ -11,37 +11,9 @@ export const SELLER_ORDER_REGISTER_TABS = [
 
 export const SELLER_BULK_ORDER_REGISTER_TABS = [
   { key: 'excel', label: '엑셀 업로드' },
-  { key: 'amazon', label: 'Amazon 연동' },
+  { key: 'shopify', label: 'Shopify 연동' },
 ]
 
-export const ORDER_PRODUCT_OPTIONS = [
-  {
-    sku: 'LB-AMP-30',
-    productName: '루미에르 앰플 30ml',
-    availableStock: 980,
-    unitPrice: 30,
-  },
-  {
-    sku: 'LB-SRM-50',
-    productName: '히알루론 세럼 50ml',
-    availableStock: 245,
-    unitPrice: 25,
-  },
-  {
-    sku: 'LB-CRM-100',
-    productName: '비타민C 크림 100ml',
-    availableStock: 12,
-    unitPrice: 35,
-  },
-  {
-    sku: 'LB-MSK-5P',
-    productName: '콜라겐 마스크 5매입',
-    availableStock: 1620,
-    unitPrice: 18,
-  },
-]
-
-// 엑셀 업로드 파싱 전에 반드시 있어야 하는 필수 헤더 목록.
 export const ORDER_UPLOAD_REQUIRED_COLUMNS = [
   '주문번호',
   '주문일자',
@@ -55,7 +27,6 @@ export const ORDER_UPLOAD_REQUIRED_COLUMNS = [
   '수량',
 ]
 
-// 주문 업로드 포맷 예시를 표로 보여줄 때 사용하는 컬럼 정의.
 export const ORDER_PREVIEW_COLUMNS = [
   { key: 'orderNo', label: '주문번호', width: '150px' },
   { key: 'orderDate', label: '주문일자', width: '120px' },
@@ -68,24 +39,6 @@ export const ORDER_PREVIEW_COLUMNS = [
   { key: 'sku', label: 'SKU', width: '150px' },
   { key: 'quantity', label: '수량', width: '90px', align: 'right' },
   { key: 'requestNote', label: '요청사항', width: '180px' },
-]
-
-// 실제 업로드 연결 전 화면에서 보여줄 샘플 행 데이터.
-export const ORDER_TEMPLATE_PREVIEW_ROWS = [
-  {
-    id: 'sample-order-1',
-    orderNo: 'ORD-20260317-001',
-    orderDate: '2026-03-17',
-    recipient: '홍길동',
-    contact: '010-1234-5678',
-    state: 'California',
-    city: 'Los Angeles',
-    zipCode: '90001',
-    address: '서울특별시 강남구 테헤란로 123',
-    sku: 'SKU-AMPLE-001',
-    quantity: '2',
-    requestNote: '부재 시 문 앞 보관',
-  },
 ]
 
 const ORDER_TEMPLATE_DOWNLOAD_COLUMNS = [
@@ -116,6 +69,15 @@ function normalizeDateLike(value) {
   return Number.isNaN(parsed.getTime()) ? new Date() : parsed
 }
 
+function normalizeProductOption(product = {}) {
+  return {
+    sku: String(product.sku ?? '').trim(),
+    productName: String(product.productName ?? product.name ?? '').trim(),
+    availableStock: Number(product.availableStock ?? product.stock ?? 0),
+    unitPrice: Number(product.unitPrice ?? product.price ?? product.salePrice ?? 0),
+  }
+}
+
 function normalizeProductLine(line = {}, index = 0) {
   const rawQuantity = Number(line.quantity ?? 1)
 
@@ -144,13 +106,19 @@ export function createOrderProductLine(lineId = 'order-item-1') {
   }
 }
 
-export function getOrderProductOption(sku = '') {
-  const normalizedSku = String(sku ?? '').trim()
-  return ORDER_PRODUCT_OPTIONS.find((item) => item.sku === normalizedSku) ?? null
+export function normalizeOrderProductOptions(products = []) {
+  return (Array.isArray(products) ? products : [])
+    .map(normalizeProductOption)
+    .filter((product) => product.sku)
 }
 
-export function buildOrderProductLineSummary(line = {}) {
-  const product = getOrderProductOption(line.sku)
+export function getOrderProductOption(sku = '', productOptions = []) {
+  const normalizedSku = String(sku ?? '').trim()
+  return normalizeOrderProductOptions(productOptions).find((item) => item.sku === normalizedSku) ?? null
+}
+
+export function buildOrderProductLineSummary(line = {}, productOptions = []) {
+  const product = getOrderProductOption(line.sku, productOptions)
   const quantity = Math.max(1, Number(line.quantity ?? 1) || 1)
   const unitPrice = Number(product?.unitPrice ?? 0)
   const availableStock = Number(product?.availableStock ?? 0)
@@ -175,7 +143,6 @@ export function generateSellerOrderNumber(baseDate = new Date(), sequence = 1) {
   return `ORD-${year}${month}${day}-${String(normalizedSequence).padStart(3, '0')}`
 }
 
-// 원본 엑셀 헤더를 정리한 뒤 누락된 필수 헤더만 반환한다.
 export function getMissingOrderUploadColumns(headers = []) {
   const normalizedHeaders = new Set(
     headers
@@ -186,7 +153,6 @@ export function getMissingOrderUploadColumns(headers = []) {
   return ORDER_UPLOAD_REQUIRED_COLUMNS.filter((header) => !normalizedHeaders.has(header))
 }
 
-// 업로드한 엑셀 행 데이터를 화면 미리보기 표 형식으로 변환한다.
 export function mapOrderUploadRows(rows = []) {
   return rows.map((row, index) => ({
     id: `upload-order-${index + 1}`,
@@ -204,13 +170,12 @@ export function mapOrderUploadRows(rows = []) {
   }))
 }
 
-// 수동 등록 폼 값을 주문 등록 API 요청 형식으로 정리한다.
-export function buildManualOrderPayload(form = {}, { baseDate = new Date() } = {}) {
+export function buildManualOrderPayload(form = {}, { baseDate = new Date(), productOptions = [] } = {}) {
   const normalizedItems = (Array.isArray(form.items) ? form.items : [])
     .map((line, index) => normalizeProductLine(line, index))
     .filter((line) => line.sku && line.quantity > 0)
     .map((line) => {
-      const product = getOrderProductOption(line.sku)
+      const product = getOrderProductOption(line.sku, productOptions)
       const unitPrice = Number(product?.unitPrice ?? 0)
 
       return {
@@ -249,7 +214,6 @@ export function buildManualOrderPayload(form = {}, { baseDate = new Date() } = {
   }
 }
 
-// 업로드 미리보기 행을 일괄 등록 API 요청 형식으로 변환한다.
 export function buildBulkOrderPayload(rows = []) {
   return rows.map((row) => ({
     orderNo: String(row.orderNo ?? '').trim(),
@@ -266,8 +230,8 @@ export function buildBulkOrderPayload(rows = []) {
   }))
 }
 
-export function buildOrderTemplateCsv(rows = ORDER_TEMPLATE_PREVIEW_ROWS) {
-  const normalizedRows = Array.isArray(rows) && rows.length ? rows : ORDER_TEMPLATE_PREVIEW_ROWS
+export function buildOrderTemplateCsv(rows = []) {
+  const normalizedRows = Array.isArray(rows) ? rows : []
   const lines = [
     ORDER_TEMPLATE_DOWNLOAD_COLUMNS.map(escapeCsvValue).join(','),
     ...normalizedRows.map((row) => (
@@ -292,7 +256,6 @@ export function buildOrderTemplateCsv(rows = ORDER_TEMPLATE_PREVIEW_ROWS) {
   return lines.join('\n')
 }
 
-// 업로드 결과 모달에 표시할 요약 정보를 계산한다.
 export function buildOrderUploadResultSummary(rows = [], fileName = '') {
   const normalizedRows = Array.isArray(rows) ? rows : []
 
@@ -308,15 +271,15 @@ export function buildOrderUploadResultSummary(rows = [], fileName = '') {
   }
 }
 
-export function buildAmazonImportPreviewMessage(syncWindow = '', pendingOrders = 0) {
+export function buildChannelImportPreviewMessage(channelLabel = '', syncWindow = '', pendingOrders = 0) {
+  const normalizedChannelLabel = String(channelLabel ?? '').trim() || '채널'
   const normalizedWindow = String(syncWindow ?? '').trim() || '최근 7일'
   const normalizedCount = Math.max(0, Number(pendingOrders ?? 0) || 0)
 
-  return `${normalizedWindow} 기준 미등록 Amazon 주문 ${normalizedCount}건을 가져올 준비가 완료되었습니다.`
+  return `${normalizedWindow} 기준 미등록 ${normalizedChannelLabel} 주문 ${normalizedCount}건을 가져올 준비가 완료되었습니다.`
 }
 
-// 현재 수동 주문 등록 폼을 검증하고 필드별 에러 메시지를 반환한다.
-export function validateOrderForm(form = {}) {
+export function validateOrderForm(form = {}, productOptions = []) {
   const errors = {
     orderNo: '',
     orderDate: '',
@@ -331,7 +294,6 @@ export function validateOrderForm(form = {}) {
     items: '',
   }
 
-  // 필수값을 먼저 검사해서 화면에 바로 에러를 연결할 수 있게 한다.
   if (!Boolean(form.autoGenerateOrderNo) && !String(form.orderNo ?? '').trim()) {
     errors.orderNo = '주문번호를 입력하세요.'
   }
@@ -360,6 +322,8 @@ export function validateOrderForm(form = {}) {
     errors.sku = 'SKU를 선택하세요.'
   } else if (!validateSku(sku)) {
     errors.sku = 'SKU 형식이 올바르지 않습니다.'
+  } else if (productOptions.length && !getOrderProductOption(sku, productOptions)) {
+    errors.sku = '유효한 SKU를 선택하세요.'
   }
 
   if (invalidQuantityLine || !firstLine.quantity || Number(firstLine.quantity) < 1) {

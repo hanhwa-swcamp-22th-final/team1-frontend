@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  buildAmazonImportPreviewMessage,
+  buildChannelImportPreviewMessage,
   buildBulkOrderPayload,
   buildManualOrderPayload,
   buildOrderProductLineSummary,
@@ -24,7 +24,7 @@ describe('orderRegister utils', () => {
   })
 
   it('일괄 등록 하위 탭 키가 올바르지 않으면 엑셀 업로드 탭으로 fallback 한다', () => {
-    expect(normalizeBulkOrderRegisterTab('amazon')).toBe('amazon')
+    expect(normalizeBulkOrderRegisterTab('shopify')).toBe('shopify')
     expect(normalizeBulkOrderRegisterTab('unknown')).toBe('excel')
   })
 
@@ -263,9 +263,9 @@ describe('orderRegister utils', () => {
     })
   })
 
-  it('Amazon 가져오기 안내 문구는 미등록 주문 기준으로 생성한다', () => {
-    expect(buildAmazonImportPreviewMessage('최근 3일', 12))
-      .toBe('최근 3일 기준 미등록 Amazon 주문 12건을 가져올 준비가 완료되었습니다.')
+  it('채널 가져오기 안내 문구는 미등록 주문 기준으로 생성한다', () => {
+    expect(buildChannelImportPreviewMessage('Shopify', '최근 3일', 12))
+      .toBe('최근 3일 기준 미등록 Shopify 주문 12건을 가져올 준비가 완료되었습니다.')
   })
 
   it('필수값이 비어 있으면 주문 등록 검증 에러를 반환한다', () => {

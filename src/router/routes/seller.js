@@ -75,7 +75,7 @@ export default [
   // 부가 기능
   {
     path: '/seller/channels/orders',
-    name: ROUTE_NAMES.SELLER_AMAZON_CONNECT,
+    name: ROUTE_NAMES.SELLER_CHANNEL_ORDERS,
     component: () => import('@/views/seller/SellerChannelOrdersView.vue'),
     meta: { role: ROLES.SELLER },
   },

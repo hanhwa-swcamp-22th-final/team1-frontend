@@ -4,18 +4,19 @@
  * mock-server seller 채널 연결 카드와 통합 주문 목록 API를 기준으로 화면을 구성한다.
  */
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { getSellerChannelCards, getSellerChannelOrders } from '@/api/integration.js'
+import {
+  connectSellerChannel,
+  getSellerChannelCards,
+  getSellerChannelOrders,
+  importSellerChannelOrders,
+  syncSellerChannel,
+} from '@/api/integration.js'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import SellerChannelConnectModal from '@/components/seller/SellerChannelConnectModal.vue'
 import { downloadExcel } from '@/utils/excel.js'
 import {
-  buildSellerConnectedChannelCard,
-  buildSellerImportedChannelCard,
-  buildSellerImportedChannelOrder,
   buildSellerChannelOrderExportRows,
-  buildSellerSyncedChannelCard,
-  filterSellerChannelOrderRows,
   getSellerChannelMeta,
   getSellerChannelOrderStatusMeta,
   getSellerChannelSyncStatusMeta,
@@ -41,31 +42,23 @@ const connectForm = reactive({
   syncMode: 'AUTO',
 })
 
-// 페이지네이션은 로컬 mock 기준으로 단순 처리한다.
 const currentPage = ref(1)
 const PAGE_SIZE = 6
+const totalItems = ref(0)
 
 watch([activeChannel, searchKeyword], () => {
-  currentPage.value = 1
-})
+  if (currentPage.value !== 1) {
+    currentPage.value = 1
+    return
+  }
 
-// 선택한 채널과 검색어를 기준으로 통합 주문 목록을 필터링한다.
-const filteredRows = computed(() => {
-  return filterSellerChannelOrderRows(channelOrderRows.value, {
-    channel: activeChannel.value,
-    search: searchKeyword.value,
-  })
-})
-
-const pagedRows = computed(() => {
-  const start = (currentPage.value - 1) * PAGE_SIZE
-  return filteredRows.value.slice(start, start + PAGE_SIZE)
+  void fetchSellerChannelData()
 })
 
 const pagination = computed(() => ({
   page: currentPage.value,
   pageSize: PAGE_SIZE,
-  total: filteredRows.value.length,
+  total: totalItems.value,
 }))
 
 function handlePageChange(page) {
@@ -79,7 +72,12 @@ async function fetchSellerChannelData() {
   try {
     const [cardsRes, ordersRes] = await Promise.all([
       getSellerChannelCards(),
-      getSellerChannelOrders(),
+      getSellerChannelOrders({
+        page: currentPage.value - 1,
+        size: PAGE_SIZE,
+        channel: activeChannel.value === 'all' ? undefined : activeChannel.value,
+        search: searchKeyword.value || undefined,
+      }),
     ])
 
     channelCards.value = Array.isArray(cardsRes.data?.data)
@@ -89,20 +87,31 @@ async function fetchSellerChannelData() {
         }))
       : []
 
-    channelOrderRows.value = Array.isArray(ordersRes.data?.data)
-      ? ordersRes.data.data.map((row) => ({ ...row }))
-      : []
+    const ordersPayload = ordersRes.data?.data
+    const orders = Array.isArray(ordersPayload)
+      ? ordersPayload
+      : Array.isArray(ordersPayload?.items)
+        ? ordersPayload.items
+        : []
+
+    channelOrderRows.value = orders.map((row) => ({ ...row }))
+    totalItems.value = Number(ordersPayload?.total ?? orders.length)
   } catch (error) {
     console.error('[SellerChannelOrdersView] fetch error:', error)
     loadErrorMessage.value = '주문 연동 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
     channelCards.value = []
     channelOrderRows.value = []
+    totalItems.value = 0
   } finally {
     isLoading.value = false
   }
 }
 
 onMounted(fetchSellerChannelData)
+
+watch(currentPage, () => {
+  void fetchSellerChannelData()
+})
 
 const selectedChannelCard = computed(() => {
   return channelCards.value.find((card) => card.key === selectedChannelKey.value) ?? null
@@ -128,76 +137,54 @@ function handleCloseConnectModal() {
   resetConnectForm()
 }
 
-function handleConfirmChannelConnect() {
+async function handleConfirmChannelConnect() {
   if (!selectedChannelCard.value) return
 
-  channelCards.value = channelCards.value.map((card) => {
-    if (card.key !== selectedChannelCard.value.key) return card
-
-    return buildSellerConnectedChannelCard(card, {
-      storeAlias: connectForm.storeAlias,
-      connectedAt: '2026-03-19 17:30',
-    })
-  })
-
-  toolbarMessage.value = `${selectedChannelCard.value.label} 채널 연결을 완료했습니다.`
-  handleCloseConnectModal()
+  try {
+    await connectSellerChannel(selectedChannelCard.value.key, { ...connectForm })
+    toolbarMessage.value = `${selectedChannelCard.value.label} 채널 연결을 완료했습니다.`
+    handleCloseConnectModal()
+    await fetchSellerChannelData()
+  } catch (error) {
+    toolbarMessage.value = error.response?.data?.message ?? '채널 연결에 실패했습니다.'
+  }
 }
 
 function showToolbarMessage(message) {
   toolbarMessage.value = message
 }
 
-function buildTimestampLabel(date = new Date()) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-
-  return `${year}-${month}-${day} ${hours}:${minutes}`
+async function handleSyncChannel(card) {
+  try {
+    await syncSellerChannel(card.key)
+    showToolbarMessage(`${card.label} 채널 동기화를 완료했습니다.`)
+    await fetchSellerChannelData()
+  } catch (error) {
+    showToolbarMessage(error.response?.data?.message ?? '채널 동기화에 실패했습니다.')
+  }
 }
 
-function handleSyncChannel(card) {
-  const syncedAt = buildTimestampLabel()
-
-  channelCards.value = channelCards.value.map((currentCard) => {
-    if (currentCard.key !== card.key) return currentCard
-
-    return buildSellerSyncedChannelCard(currentCard, { syncedAt })
-  })
-
-  showToolbarMessage(`${card.label} 채널 동기화를 완료했습니다.`)
-}
-
-function handleImportChannelOrders(card) {
-  const importedAt = buildTimestampLabel()
-  const nextSequence = channelOrderRows.value.filter((row) => row.channel === card.key).length + 1
-  const nextOrder = buildSellerImportedChannelOrder(card, {
-    sequence: nextSequence,
-    importedAt,
-  })
-
-  channelOrderRows.value = [nextOrder, ...channelOrderRows.value]
-  channelCards.value = channelCards.value.map((currentCard) => {
-    if (currentCard.key !== card.key) return currentCard
-
-    return buildSellerImportedChannelCard(currentCard, {
-      importedAt,
-      importedCount: 1,
-    })
-  })
-  currentPage.value = 1
-  showToolbarMessage(`${card.label} 주문 1건을 가져왔습니다.`)
+async function handleImportChannelOrders(card) {
+  try {
+    await importSellerChannelOrders(card.key)
+    showToolbarMessage(`${card.label} 주문을 가져왔습니다.`)
+    if (currentPage.value !== 1) {
+      currentPage.value = 1
+      return
+    }
+    await fetchSellerChannelData()
+  } catch (error) {
+    showToolbarMessage(error.response?.data?.message ?? '채널 주문 가져오기에 실패했습니다.')
+  }
 }
 
 function handleExportChannelOrders() {
   downloadExcel(
-    buildSellerChannelOrderExportRows(filteredRows.value),
-    `seller-channel-orders-${buildTimestampLabel().slice(0, 10)}`,
+    buildSellerChannelOrderExportRows(channelOrderRows.value),
+    `seller-channel-orders-${new Date().toISOString().slice(0, 10)}`,
   )
 
-  showToolbarMessage(`통합 주문 ${filteredRows.value.length}건을 내보냈습니다.`)
+  showToolbarMessage(`통합 주문 ${channelOrderRows.value.length}건을 내보냈습니다.`)
 }
 
 function handleCardAction(card, action) {
@@ -320,7 +307,7 @@ function handleCardAction(card, action) {
 
         <BaseTable
           :columns="SELLER_CHANNEL_ORDER_COLUMNS"
-          :rows="pagedRows"
+          :rows="channelOrderRows"
           :pagination="pagination"
           :loading="isLoading"
           row-key="id"

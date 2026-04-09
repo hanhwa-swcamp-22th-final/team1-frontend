@@ -1,27 +1,12 @@
 /**
  * Seller 대시보드 화면용 파생 데이터와 차트 가공 유틸.
- * 기존 Seller 주문/ASN/재고/채널 mock 데이터를 조합해 대시보드 요약 정보를 만든다.
+ * API 응답만 기준으로 요약 정보를 계산한다.
  */
 import { ASN_STATUS, ROUTE_NAMES } from '@/constants'
-
-import { getSellerAsnDetailById, normalizeSellerAsnDetail, SELLER_ASN_LIST_ROWS } from '@/utils/seller/asnList.utils.js'
-import {
-  getSellerChannelMeta,
-  getSellerChannelOrderStatusMeta,
-  SELLER_CHANNEL_ORDER_ROWS,
-} from '@/utils/seller/channelOrders.utils.js'
-import {
-  getSellerInventoryDetailById,
-  getSellerInventoryStatusMeta,
-  normalizeSellerInventoryDetail,
-  SELLER_INVENTORY_LIST_ROWS,
-} from '@/utils/seller/inventoryList.utils.js'
-import {
-  getSellerOrderDetailById,
-  getSellerOrderStatusMeta,
-  normalizeSellerOrderDetail,
-  SELLER_ORDER_LIST_ROWS,
-} from '@/utils/seller/orderList.utils.js'
+import { normalizeSellerAsnDetail } from '@/utils/seller/asnList.utils.js'
+import { getSellerChannelMeta, getSellerChannelOrderStatusMeta } from '@/utils/seller/channelOrders.utils.js'
+import { getSellerInventoryStatusMeta, normalizeSellerInventoryDetail } from '@/utils/seller/inventoryList.utils.js'
+import { getSellerOrderStatusMeta, normalizeSellerOrderDetail } from '@/utils/seller/orderList.utils.js'
 
 const numberFormatter = new Intl.NumberFormat('ko-KR')
 const DASHBOARD_ACTIVITY_LIMIT = 5
@@ -44,6 +29,12 @@ export const SELLER_DASHBOARD_PERIOD_OPTIONS = [
   { key: 'month', label: '월간' },
   { key: 'quarter', label: '분기' },
 ]
+
+export const SELLER_DASHBOARD_TREND_SERIES = {
+  week: { key: 'week', maxValue: 5, points: [] },
+  month: { key: 'month', maxValue: 5, points: [] },
+  quarter: { key: 'quarter', maxValue: 5, points: [] },
+}
 
 function formatNumber(value) {
   return numberFormatter.format(Math.max(0, Number(value) || 0))
@@ -163,7 +154,11 @@ function normalizeChannelLabel(channel) {
   return getSellerChannelMeta(channel).label
 }
 
-function inferOrderQuantity(itemsSummary = '') {
+function inferOrderQuantity(itemsSummary = '', items = []) {
+  if (Array.isArray(items) && items.length) {
+    return String(items.reduce((sum, item) => sum + Number(item.quantity ?? 0), 0))
+  }
+
   const normalized = String(itemsSummary ?? '')
   const multiplied = [...normalized.matchAll(/×\s*(\d+)/g)]
 
@@ -178,17 +173,14 @@ function inferOrderQuantity(itemsSummary = '') {
   return '1'
 }
 
-function buildDashboardOrderRows(
-  orderRows = SELLER_ORDER_LIST_ROWS,
-  channelOrderRows = SELLER_CHANNEL_ORDER_ROWS,
-) {
-  const localOrders = orderRows.map((row) => ({
-    id: row.id,
+function buildDashboardOrderRows(orderRows = [], channelOrderRows = []) {
+  const localOrders = (Array.isArray(orderRows) ? orderRows : []).map((row) => ({
+    id: row.id ?? row.orderId ?? row.orderNo,
     code: row.orderNo,
     channelLabel: normalizeChannelLabel(row.channel),
-    orderedAt: row.orderedAt,
-    itemsSummary: row.itemsSummary,
-    quantity: inferOrderQuantity(row.itemsSummary),
+    orderedAt: row.orderedAt ?? row.orderDate ?? row.createdAt,
+    itemsSummary: row.itemsSummary ?? '',
+    quantity: inferOrderQuantity(row.itemsSummary, row.detail?.items),
     statusMeta: getSellerOrderStatusMeta(row.status),
     stage: getDashboardOutboundStage(row.status),
     order: {
@@ -196,17 +188,17 @@ function buildDashboardOrderRows(
       orderNo: row.orderNo,
       channel: normalizeChannelLabel(row.channel),
       status: normalizeDashboardOrderStatus(row.status),
-      detail: row.detail ?? null,
     },
+    orderDetail: row.detail ? normalizeSellerOrderDetail(row.detail, row) : null,
   }))
 
-  const syncedOrders = channelOrderRows.map((row) => ({
-    id: row.id,
+  const syncedOrders = (Array.isArray(channelOrderRows) ? channelOrderRows : []).map((row) => ({
+    id: row.id ?? row.orderId ?? row.channelOrderNo,
     code: row.conkOrderNo || row.channelOrderNo,
     channelLabel: normalizeChannelLabel(row.channel),
-    orderedAt: row.orderedAt,
-    itemsSummary: row.itemsSummary,
-    quantity: inferOrderQuantity(row.itemsSummary),
+    orderedAt: row.orderedAt ?? row.createdAt,
+    itemsSummary: row.itemsSummary ?? '',
+    quantity: inferOrderQuantity(row.itemsSummary, row.items),
     statusMeta: getSellerChannelOrderStatusMeta(row.status),
     stage: getDashboardOutboundStage(row.status),
     order: {
@@ -214,13 +206,15 @@ function buildDashboardOrderRows(
       orderNo: row.conkOrderNo || row.channelOrderNo,
       channel: normalizeChannelLabel(row.channel),
       recipient: row.recipient,
-      address: '-',
+      address: row.address ?? '-',
       itemsSummary: row.itemsSummary,
-      orderedAt: row.orderedAt,
+      orderedAt: row.orderedAt ?? row.createdAt,
       status: normalizeDashboardOrderStatus(row.status),
-      trackingNo: '',
+      trackingNo: row.trackingNo ?? '',
       canCancel: false,
+      detail: row.detail ?? null,
     },
+    orderDetail: row.detail ? normalizeSellerOrderDetail(row.detail, row) : null,
   }))
 
   return [...localOrders, ...syncedOrders]
@@ -317,9 +311,9 @@ function buildTrendPeriodSeries(rows = [], period = 'month') {
 }
 
 export function buildSellerDashboardKpiCards({
-  inventoryRows = SELLER_INVENTORY_LIST_ROWS,
-  orderRows = SELLER_ORDER_LIST_ROWS,
-  channelOrderRows = SELLER_CHANNEL_ORDER_ROWS,
+  inventoryRows = [],
+  orderRows = [],
+  channelOrderRows = [],
   baseDate = new Date(),
 } = {}) {
   const combinedOrders = buildDashboardOrderRows(orderRows, channelOrderRows)
@@ -344,11 +338,12 @@ export function buildSellerDashboardKpiCards({
   const progressCount = combinedOrders.filter((row) => row.stage === 'progress').length
   const completedCount = combinedOrders.filter((row) => row.stage === 'completed').length
 
-  const availableStock = inventoryRows.reduce((sum, row) => sum + Number(row.availableStock || 0), 0)
-  const allocatedStock = inventoryRows.reduce((sum, row) => sum + Number(row.allocatedStock || 0), 0)
-  const lowStockCount = inventoryRows.filter((row) => ['LOW', 'OUT'].includes(row.status)).length
-  const warningCount = inventoryRows.filter((row) => row.status === 'LOW').length
-  const outCount = inventoryRows.filter((row) => row.status === 'OUT').length
+  const normalizedInventoryRows = Array.isArray(inventoryRows) ? inventoryRows : []
+  const availableStock = normalizedInventoryRows.reduce((sum, row) => sum + Number(row.availableStock || 0), 0)
+  const allocatedStock = normalizedInventoryRows.reduce((sum, row) => sum + Number(row.allocatedStock || 0), 0)
+  const lowStockCount = normalizedInventoryRows.filter((row) => ['LOW', 'OUT'].includes(row.status)).length
+  const warningCount = normalizedInventoryRows.filter((row) => row.status === 'LOW').length
+  const outCount = normalizedInventoryRows.filter((row) => row.status === 'OUT').length
   const orderTrendMeta = buildOrderTrendMeta(latestCount, previousCount)
 
   return [
@@ -356,7 +351,7 @@ export function buildSellerDashboardKpiCards({
       key: 'available-stock',
       label: '가용 재고 총 수량',
       value: formatNumber(availableStock),
-      subtext: `총 ${formatNumber(inventoryRows.length)} SKU · 할당재고 ${formatNumber(allocatedStock)}개 제외`,
+      subtext: `총 ${formatNumber(normalizedInventoryRows.length)} SKU · 할당재고 ${formatNumber(allocatedStock)}개 제외`,
       tone: 'gold',
       routeName: ROUTE_NAMES.SELLER_INVENTORY,
     },
@@ -389,8 +384,8 @@ export function buildSellerDashboardKpiCards({
 }
 
 export function buildSellerDashboardTrendSeries({
-  orderRows = SELLER_ORDER_LIST_ROWS,
-  channelOrderRows = SELLER_CHANNEL_ORDER_ROWS,
+  orderRows = [],
+  channelOrderRows = [],
 } = {}) {
   const combinedOrders = buildDashboardOrderRows(orderRows, channelOrderRows)
 
@@ -401,12 +396,17 @@ export function buildSellerDashboardTrendSeries({
   }
 }
 
+export function getSellerDashboardTrendSeries(period = 'month') {
+  return SELLER_DASHBOARD_TREND_SERIES[period] ?? SELLER_DASHBOARD_TREND_SERIES.month
+}
+
 export function buildSellerDashboardStockRatio({
-  inventoryRows = SELLER_INVENTORY_LIST_ROWS,
+  inventoryRows = [],
 } = {}) {
-  const availableStock = inventoryRows.reduce((sum, row) => sum + Number(row.availableStock || 0), 0)
-  const allocatedStock = inventoryRows.reduce((sum, row) => sum + Number(row.allocatedStock || 0), 0)
-  const inboundExpected = inventoryRows.reduce((sum, row) => sum + Number(row.inboundExpected || 0), 0)
+  const normalizedInventoryRows = Array.isArray(inventoryRows) ? inventoryRows : []
+  const availableStock = normalizedInventoryRows.reduce((sum, row) => sum + Number(row.availableStock || 0), 0)
+  const allocatedStock = normalizedInventoryRows.reduce((sum, row) => sum + Number(row.allocatedStock || 0), 0)
+  const inboundExpected = normalizedInventoryRows.reduce((sum, row) => sum + Number(row.inboundExpected || 0), 0)
   const total = Math.max(availableStock + allocatedStock + inboundExpected, 1)
 
   const availableShare = Math.round((availableStock / total) * 100)
@@ -421,16 +421,16 @@ export function buildSellerDashboardStockRatio({
 }
 
 export function buildSellerDashboardRecentActivityRows({
-  orderRows = SELLER_ORDER_LIST_ROWS,
-  channelOrderRows = SELLER_CHANNEL_ORDER_ROWS,
-  asnRows = SELLER_ASN_LIST_ROWS,
-  inventoryRows = SELLER_INVENTORY_LIST_ROWS,
+  orderRows = [],
+  channelOrderRows = [],
+  asnRows = [],
+  inventoryRows = [],
 } = {}) {
   const orderActivities = buildDashboardOrderRows(orderRows, channelOrderRows).map((row) => {
     const orderedAt = parseDateString(row.orderedAt)
 
     return {
-      id: `activity-${row.id}`,
+      id: `activity-order-${row.id}`,
       type: '주문',
       typeTone: 'gold',
       code: row.code,
@@ -441,19 +441,17 @@ export function buildSellerDashboardRecentActivityRows({
       occurredAt: formatDateLabel(orderedAt),
       routeName: ROUTE_NAMES.SELLER_ORDER_LIST,
       order: row.order,
-      orderDetail: row.order.detail
-        ? normalizeSellerOrderDetail(row.order.detail, row.order)
-        : getSellerOrderDetailById(row.order.id, row.order),
+      orderDetail: row.orderDetail,
       sortAt: orderedAt?.getTime() || 0,
     }
   })
 
-  const asnActivities = asnRows.map((row) => {
-    const createdAt = parseDateString(`${row.createdAt} 09:00`)
+  const asnActivities = (Array.isArray(asnRows) ? asnRows : []).map((row) => {
+    const createdAt = parseDateString(`${row.createdAt ?? row.expectedDate ?? ''} 09:00`)
     const statusMeta = getAsnStatusMeta(row.status)
 
     return {
-      id: `activity-${row.id}`,
+      id: `activity-asn-${row.id ?? row.asnNo}`,
       type: 'ASN',
       typeTone: 'blue',
       code: row.asnNo,
@@ -467,14 +465,14 @@ export function buildSellerDashboardRecentActivityRows({
     }
   })
 
-  const inventoryActivities = inventoryRows
+  const inventoryActivities = (Array.isArray(inventoryRows) ? inventoryRows : [])
     .filter((row) => row.status !== 'NORMAL')
     .map((row) => {
-      const occurredAt = parseDateString(`${row.lastInboundDate} 08:00`)
+      const occurredAt = parseDateString(`${row.lastInboundDate ?? ''} 08:00`)
       const statusMeta = getSellerInventoryStatusMeta(row.status)
 
       return {
-        id: `activity-${row.id}`,
+        id: `activity-inventory-${row.id ?? row.sku}`,
         type: '재고',
         typeTone: 'default',
         code: row.sku,
@@ -495,21 +493,15 @@ export function buildSellerDashboardRecentActivityRows({
 }
 
 export function buildSellerDashboardInboundRows({
-  asnRows = SELLER_ASN_LIST_ROWS,
-  inventoryRows = SELLER_INVENTORY_LIST_ROWS,
+  asnRows = [],
+  inventoryRows = [],
 } = {}) {
-  const inboundScheduleBySku = asnRows
-    .slice()
-    .sort((left, right) => {
-      const leftDate = parseDateString(left.expectedDate)?.getTime() || 0
-      const rightDate = parseDateString(right.expectedDate)?.getTime() || 0
-      return rightDate - leftDate
-    })
+  const inboundScheduleBySku = (Array.isArray(asnRows) ? asnRows : [])
     .reduce((map, row) => {
-      const detail = row.detail
-        ? normalizeSellerAsnDetail(row.detail, row)
-        : getSellerAsnDetailById(row.id, row)
+      const detail = row.detail ? normalizeSellerAsnDetail(row.detail, row) : null
       const expectedDate = parseDateString(row.expectedDate)
+
+      if (!detail?.items?.length) return map
 
       detail.items.forEach((item) => {
         if (map.has(item.sku)) return
@@ -525,28 +517,25 @@ export function buildSellerDashboardInboundRows({
       return map
     }, new Map())
 
-  return inventoryRows
-    .filter((row) => Number(row.inboundExpected) > 0)
+  return (Array.isArray(inventoryRows) ? inventoryRows : [])
+    .filter((row) => Number(row.inboundExpected) > 0 || inboundScheduleBySku.has(row.sku))
     .map((row) => {
       const schedule = inboundScheduleBySku.get(row.sku)
-      const expectedDate = schedule?.expectedDate ?? null
-      const etaMeta = getInboundEtaMeta(schedule?.status)
-      const inventoryDetail = row.detail
-        ? normalizeSellerInventoryDetail(row.detail, row)
-        : getSellerInventoryDetailById(row.id, row)
+      const expectedDate = schedule?.expectedDate ?? parseDateString(row.expectedDate)
+      const etaMeta = getInboundEtaMeta(schedule?.status ?? row.status)
+      const inventoryDetail = row.detail ? normalizeSellerInventoryDetail(row.detail, row) : null
       const expectedQty = Number(schedule?.quantity ?? row.inboundExpected ?? 0)
-      const inventory = schedule ? { ...row, inboundExpected: expectedQty } : row
 
       return {
-        id: `inbound-${row.id}`,
+        id: `inbound-${row.id ?? row.sku}`,
         period: formatKoreanDate(expectedDate),
         sku: row.sku,
         productName: row.productName,
         expectedQty: formatNumber(expectedQty),
         etaLabel: etaMeta.label,
         etaTone: etaMeta.tone,
-        inventory,
-        inventoryDetail: schedule?.asnNo
+        inventory: { ...row, inboundExpected: expectedQty },
+        inventoryDetail: schedule?.asnNo && inventoryDetail
           ? { ...inventoryDetail, nextInboundAsnNo: schedule.asnNo }
           : inventoryDetail,
         routeName: ROUTE_NAMES.SELLER_ASN_LIST,
@@ -560,16 +549,6 @@ export function buildSellerDashboardInboundRows({
     })
     .slice(0, DASHBOARD_INBOUND_LIMIT)
     .map(({ sortAt, sortQty, ...row }) => row)
-}
-
-export const SELLER_DASHBOARD_KPI_CARDS = buildSellerDashboardKpiCards()
-export const SELLER_DASHBOARD_TREND_SERIES = buildSellerDashboardTrendSeries()
-export const SELLER_DASHBOARD_STOCK_RATIO = buildSellerDashboardStockRatio()
-export const SELLER_DASHBOARD_RECENT_ACTIVITY_ROWS = buildSellerDashboardRecentActivityRows()
-export const SELLER_DASHBOARD_INBOUND_ROWS = buildSellerDashboardInboundRows()
-
-export function getSellerDashboardTrendSeries(period = 'month') {
-  return SELLER_DASHBOARD_TREND_SERIES[period] ?? SELLER_DASHBOARD_TREND_SERIES.month
 }
 
 export function buildSellerDashboardTrendChart(points = [], { maxValue = 500 } = {}) {

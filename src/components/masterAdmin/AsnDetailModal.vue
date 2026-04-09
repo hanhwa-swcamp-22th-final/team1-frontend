@@ -1,18 +1,5 @@
 <script setup>
-/**
- * AsnDetailModal — ASN 상세 정보 모달 (재사용 컴포넌트)
- *
- * props:
- *   asnId   (String)  — ASN 번호 (예: 'ASN-2026-0312-001')
- *   isOpen  (Boolean) — 모달 표시 여부
- *
- * emits:
- *   close — 닫기 버튼 / 오버레이 클릭 시
- *
- * 데이터:
- *   isOpen 이 true 가 되면 GET /wms/asns/:id 조회
- */
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { getAsnDetail } from '@/api/wms'
 import BaseModal from '@/components/common/BaseModal.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
@@ -25,6 +12,25 @@ const emit = defineEmits(['close'])
 
 const loading = ref(false)
 const asn     = ref(null)
+
+const skuItems = computed(() => (Array.isArray(asn.value?.items) ? asn.value.items : []))
+const skuSummary = computed(() => {
+  if (String(asn.value?.sku ?? '').trim()) return asn.value.sku
+  if (!skuItems.value.length) return '-'
+
+  return skuItems.value
+    .map((item) => String(item.sku ?? item.code ?? '').trim())
+    .filter(Boolean)
+    .join(', ')
+})
+const plannedQuantity = computed(() => {
+  if (asn.value?.plannedQty != null) return Number(asn.value.plannedQty ?? 0)
+  return skuItems.value.reduce((sum, item) => sum + Number(item.quantity ?? item.qty ?? 0), 0)
+})
+const skuCount = computed(() => {
+  if (asn.value?.skuCount != null) return Number(asn.value.skuCount ?? 0)
+  return skuItems.value.length
+})
 
 async function fetchData() {
   if (!props.asnId) return
@@ -72,26 +78,26 @@ function isUpcoming(date) { return date >= '2026-03-17' }
       </div>
 
       <!-- 기본 정보 그리드 -->
-      <div class="detail-grid">
+        <div class="detail-grid">
         <div class="detail-item">
           <span class="detail-label">셀러사</span>
-          <span class="detail-value">{{ asn.company }}</span>
+          <span class="detail-value">{{ asn.company ?? asn.sellerCompany ?? '-' }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">담당자</span>
-          <span class="detail-value">{{ asn.seller }}</span>
+          <span class="detail-value">{{ asn.seller ?? asn.contactName ?? '-' }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">입고 창고</span>
-          <span class="detail-value">{{ asn.warehouse }}</span>
+          <span class="detail-value">{{ asn.warehouse ?? asn.warehouseName ?? '-' }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">SKU 수</span>
-          <span class="detail-value">{{ asn.skuCount }} SKU</span>
+          <span class="detail-value">{{ skuCount }} SKU</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">예정 수량</span>
-          <span class="detail-value">{{ asn.plannedQty?.toLocaleString() }} EA</span>
+          <span class="detail-value">{{ plannedQuantity.toLocaleString() }} EA</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">실수령 수량</span>
@@ -101,7 +107,7 @@ function isUpcoming(date) { return date >= '2026-03-17' }
         </div>
         <div class="detail-item detail-item--full">
           <span class="detail-label">SKU 내용</span>
-          <span class="detail-value">{{ asn.sku }}</span>
+          <span class="detail-value">{{ skuSummary }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">예정 입고일</span>

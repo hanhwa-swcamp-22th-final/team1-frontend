@@ -9,8 +9,7 @@
  *        ↓
  *   ── 요청 인터셉터 ──────────────────────────────────────
  *   localStorage 'conk-auth' 읽기
- *     → token   있으면: Authorization: Bearer {token}
- *     → tenantCode 있으면: X-Tenant-Code: {tenantCode}
+ *     → token 있으면: Authorization: Bearer {token}
  *        ↓
  *   [백엔드 API 서버]  baseURL = VITE_API_BASE_URL
  *        ↓
@@ -51,9 +50,8 @@ instance.interceptors.request.use((config) => {
   const raw = localStorage.getItem('conk-auth')
   if (raw) {
     try {
-      const { token, tenantCode } = JSON.parse(raw)
+      const { token } = JSON.parse(raw)
       if (token) config.headers['Authorization'] = `Bearer ${token}`
-      if (tenantCode) config.headers['X-Tenant-Code'] = tenantCode
     } catch {
       // JSON.parse 실패(손상된 데이터) 시 무시하고 헤더 미설정
     }

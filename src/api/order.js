@@ -19,19 +19,41 @@ export async function createSellerOrder(payload) {
 
 /**
  * 셀러 엑셀 업로드 주문 일괄 등록
- * @param {Array<object>} orders
+ * @param {File|Blob} file
  * @returns {Promise<AxiosResponse>}
  */
-export async function createSellerBulkOrders(orders) {
-  return instance.post('/orders/seller/bulk', { orders })
+export async function createSellerBulkOrders(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return instance.post('/orders/seller/bulk', formData)
 }
 
 /**
  * 셀러 주문 목록 조회
  * @returns {Promise<AxiosResponse>} { success, data: SellerOrderRow[] }
  */
-export function getSellerOrderList() {
-  return instance.get('/orders/seller/list')
+export function getSellerOrderList(params = {}) {
+  return instance.get('/orders/seller/list', { params })
+}
+
+export function getSellerOrderDetail(orderId) {
+  return instance.get(`/orders/seller/${orderId}`)
+}
+
+export function cancelSellerOrder(orderId) {
+  return instance.post(`/orders/seller/${orderId}/cancel`)
+}
+
+export function getSellerOrderOptions() {
+  return instance.get('/orders/seller/options')
+}
+
+export function getSellerMarginPresets() {
+  return instance.get('/orders/seller/margin-presets')
+}
+
+export function getSellerOrderKpi() {
+  return instance.get('/orders/seller/kpi')
 }
 
 /**

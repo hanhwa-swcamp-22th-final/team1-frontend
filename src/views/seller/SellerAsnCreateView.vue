@@ -3,8 +3,8 @@
  * 셀러 ASN 등록 화면.
  * 피그마 스크린샷 기준으로 섹션형 입력 화면을 맞추고 mock 저장까지 연결한다.
  */
-import { computed, reactive, ref } from 'vue'
-import { createSellerAsn } from '@/api/wms.js'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { createSellerAsn, getSellerAsnOptions } from '@/api/wms.js'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import {
@@ -16,21 +16,21 @@ import {
   createInitialAsnLine,
   createInitialAsnLineError,
   getAsnProductBySku,
-  SELLER_ASN_PRODUCT_OPTIONS,
-  SELLER_ASN_WAREHOUSE_OPTIONS,
   validateAsnForm,
 } from '@/utils/seller/asnCreate.utils.js'
 
 /** Header 브레드크럼 표시용 */
 const breadcrumb = [{ label: 'Seller' }, { label: 'ASN 등록' }]
 
-// 새 ASN 초안을 보이게 하기 위한 시퀀스 상태.
-const asnSequence = ref(1)
 // 품목 라인 고유 id를 만들기 위한 시퀀스 상태.
 const lineSequence = ref(1)
+const warehouseOptions = ref([])
+const productOptions = ref([])
+const nextAsnNo = ref('')
+const optionsErrorMessage = ref('')
 
 // ASN 기본 정보, 품목 라인, 첨부 파일 이름 상태.
-const asnForm = ref(createInitialAsnForm(asnSequence.value))
+const asnForm = ref(createInitialAsnForm())
 const lineItems = ref([createInitialAsnLine(lineSequence.value)])
 const selectedAttachmentName = ref('')
 
@@ -47,7 +47,7 @@ const isSubmitting = ref(false)
 // 우측 요약 카드에 표시할 값을 현재 입력 상태로 계산한다.
 const summary = computed(() => calculateAsnSummary(lineItems.value))
 const selectedWarehouseName = computed(() => {
-  return SELLER_ASN_WAREHOUSE_OPTIONS.find((item) => item.id === asnForm.value.warehouseId)?.name ?? '-'
+  return warehouseOptions.value.find((item) => item.id === asnForm.value.warehouseId)?.name ?? '-'
 })
 
 // 메시지는 한 번에 하나만 보여주도록 제출 관련 문구를 초기화한다.
@@ -72,9 +72,8 @@ function resetLineErrors() {
 
 // 새 초안을 시작할 때 입력값과 상태를 처음으로 되돌린다.
 function resetAsnDraft() {
-  asnSequence.value += 1
   lineSequence.value = 1
-  asnForm.value = createInitialAsnForm(asnSequence.value)
+  asnForm.value = createInitialAsnForm(nextAsnNo.value)
   lineItems.value = [createInitialAsnLine(lineSequence.value)]
   selectedAttachmentName.value = ''
   clearMessages()
@@ -99,7 +98,7 @@ function handleRemoveLine(index) {
 
 // 선택한 SKU에 맞춰 상품명과 현재 가용재고를 자동 반영한다.
 function handleSkuChange(index, sku) {
-  const product = getAsnProductBySku(sku)
+  const product = getAsnProductBySku(sku, productOptions.value)
 
   lineItems.value[index].productName = product?.productName ?? ''
   lineItems.value[index].availableStock = product?.availableStock ?? ''
@@ -153,6 +152,34 @@ async function handleSubmit() {
     isSubmitting.value = false
   }
 }
+
+async function fetchAsnOptions() {
+  optionsErrorMessage.value = ''
+
+  try {
+    const response = await getSellerAsnOptions()
+    const payload = response.data?.data ?? {}
+    warehouseOptions.value = Array.isArray(payload.warehouses) ? payload.warehouses : []
+    productOptions.value = Array.isArray(payload.skus) ? payload.skus : []
+    nextAsnNo.value = String(payload.nextAsnNo ?? '').trim()
+
+    if (!asnForm.value.asnNo) {
+      asnForm.value = {
+        ...asnForm.value,
+        asnNo: nextAsnNo.value,
+      }
+    }
+  } catch (error) {
+    warehouseOptions.value = []
+    productOptions.value = []
+    nextAsnNo.value = ''
+    optionsErrorMessage.value = error.response?.data?.message ?? 'ASN 등록 옵션을 불러오지 못했습니다.'
+  }
+}
+
+onMounted(() => {
+  void fetchAsnOptions()
+})
 </script>
 
 <template>
@@ -179,7 +206,7 @@ async function handleSubmit() {
                 <select v-model="asnForm.warehouseId">
                   <option value="">창고를 선택하세요</option>
                   <option
-                    v-for="warehouse in SELLER_ASN_WAREHOUSE_OPTIONS"
+                    v-for="warehouse in warehouseOptions"
                     :key="warehouse.id"
                     :value="warehouse.id"
                   >
@@ -251,7 +278,7 @@ async function handleSubmit() {
                   <select v-model="line.sku" @change="handleSkuChange(index, line.sku)">
                     <option value="">SKU</option>
                     <option
-                      v-for="product in SELLER_ASN_PRODUCT_OPTIONS"
+                      v-for="product in productOptions"
                       :key="product.sku"
                       :value="product.sku"
                     >
@@ -320,6 +347,7 @@ async function handleSubmit() {
           </div>
 
           <p v-if="draftMessage" class="panel-message panel-message--success">{{ draftMessage }}</p>
+          <p v-if="optionsErrorMessage" class="panel-message panel-message--error">{{ optionsErrorMessage }}</p>
           <p v-if="submitErrorMessage" class="panel-message panel-message--error">{{ submitErrorMessage }}</p>
           <p v-if="submitMessage" class="panel-message panel-message--success">{{ submitMessage }}</p>
         </div>

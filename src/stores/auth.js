@@ -22,7 +22,7 @@
  * 사용 예:
  *   import { useAuthStore } from '@/stores/auth'
  *   const auth = useAuthStore()
- *   auth.setAuth({ user, token, role, tenantCode, customerCode })
+ *   auth.setAuth({ user, token, role })
  *   if (auth.isLoggedIn) { ... }
  *   auth.clearAuth()  // 로그아웃
  */
@@ -41,25 +41,17 @@ export const useAuthStore = defineStore(
     // 현재 유저의 역할 — constants/roles.js의 ROLES 값 중 하나
     const role = ref(null)
 
-    // 창고사(테넌트) 코드 — X-Tenant-Code 헤더에 사용
-    const tenantCode = ref(null)
-
-    // 셀러 고객사 코드 (SELLER Role 전용, 나머지 Role은 null)
-    const customerCode = ref(null)
-
     /** token이 있으면 로그인 상태로 판단 */
     const isLoggedIn = computed(() => !!token.value)
 
     /**
      * 로그인 성공 후 호출. 백엔드 응답 데이터를 그대로 전달.
-     * @param {{ user, token, role, tenantCode, customerCode }} payload
+     * @param {{ user, token, role }} payload
      */
     function setAuth(payload) {
       user.value = payload.user ?? null
       token.value = payload.token ?? null
       role.value = payload.role ?? null
-      tenantCode.value = payload.tenantCode ?? null
-      customerCode.value = payload.customerCode ?? null
     }
 
     /**
@@ -67,10 +59,10 @@ export const useAuthStore = defineStore(
      * persist에 의해 localStorage도 자동으로 업데이트됨.
      */
     function clearAuth() {
-      user.value = token.value = role.value = tenantCode.value = customerCode.value = null
+      user.value = token.value = role.value = null
     }
 
-    return { user, token, role, tenantCode, customerCode, isLoggedIn, setAuth, clearAuth }
+    return { user, token, role, isLoggedIn, setAuth, clearAuth }
   },
   {
     // pinia-plugin-persistedstate: 브라우저 새로고침 후에도 상태 유지

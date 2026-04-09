@@ -7,12 +7,14 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { getSellerChannelOrders } from '@/api/integration.js'
-import { getSellerOrderList } from '@/api/order.js'
-import { getSellerAsnList, getSellerInventoryList } from '@/api/wms.js'
+import { getSellerOrderDetail, getSellerOrderList } from '@/api/order.js'
+import { getSellerAsnList, getSellerInventoryDetail, getSellerInventoryList } from '@/api/wms.js'
 import { ROUTE_NAMES } from '@/constants'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import SellerInventoryDetailModal from '@/components/seller/SellerInventoryDetailModal.vue'
 import SellerOrderDetailModal from '@/components/seller/SellerOrderDetailModal.vue'
+import { normalizeSellerInventoryDetail } from '@/utils/seller/inventoryList.utils.js'
+import { normalizeSellerOrderDetail } from '@/utils/seller/orderList.utils.js'
 import {
   buildSellerDashboardInboundRows,
   buildSellerDashboardKpiCards,
@@ -111,30 +113,34 @@ const donutTotal = computed(() => {
   return stockRatio.value.reduce((sum, item) => sum + Number(item.value || 0), 0)
 })
 
+function normalizeListPayload(payload = {}, collectionKeys = ['items']) {
+  if (Array.isArray(payload)) return payload
+
+  for (const key of collectionKeys) {
+    if (Array.isArray(payload?.[key])) {
+      return payload[key]
+    }
+  }
+
+  return []
+}
+
 async function fetchSellerDashboardData() {
   isDashboardLoading.value = true
   dashboardErrorMessage.value = ''
 
   try {
     const [ordersRes, asnsRes, inventoriesRes, channelOrdersRes] = await Promise.all([
-      getSellerOrderList(),
-      getSellerAsnList(),
-      getSellerInventoryList(),
-      getSellerChannelOrders(),
+      getSellerOrderList({ page: 0, size: 100 }),
+      getSellerAsnList({ page: 0, size: 100 }),
+      getSellerInventoryList({ page: 0, size: 100 }),
+      getSellerChannelOrders({ page: 0, size: 100 }),
     ])
 
-    sellerOrderRows.value = Array.isArray(ordersRes.data?.data)
-      ? ordersRes.data.data.map((row) => ({ ...row }))
-      : []
-    sellerAsnRows.value = Array.isArray(asnsRes.data?.data)
-      ? asnsRes.data.data.map((row) => ({ ...row }))
-      : []
-    sellerInventoryRows.value = Array.isArray(inventoriesRes.data?.data)
-      ? inventoriesRes.data.data.map((row) => ({ ...row }))
-      : []
-    sellerChannelOrderRows.value = Array.isArray(channelOrdersRes.data?.data)
-      ? channelOrdersRes.data.data.map((row) => ({ ...row }))
-      : []
+    sellerOrderRows.value = normalizeListPayload(ordersRes.data?.data, ['orders', 'items']).map((row) => ({ ...row }))
+    sellerAsnRows.value = normalizeListPayload(asnsRes.data?.data, ['items']).map((row) => ({ ...row }))
+    sellerInventoryRows.value = normalizeListPayload(inventoriesRes.data?.data, ['items']).map((row) => ({ ...row }))
+    sellerChannelOrderRows.value = normalizeListPayload(channelOrdersRes.data?.data, ['items']).map((row) => ({ ...row }))
   } catch (error) {
     console.error('[SellerDashboardView] fetch error:', error)
     dashboardErrorMessage.value = '대시보드 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
@@ -147,17 +153,30 @@ async function fetchSellerDashboardData() {
   }
 }
 
-onMounted(fetchSellerDashboardData)
+onMounted(() => {
+  void fetchSellerDashboardData()
+})
 
 function navigateToRoute(name) {
   if (!name) return
   router.push({ name })
 }
 
-function handleRecentActivityCodeClick(row) {
+async function handleRecentActivityCodeClick(row) {
   if (row.type === '주문' && row.order) {
     selectedRecentOrder.value = row.order
-    selectedRecentOrderDetail.value = row.orderDetail
+
+    try {
+      if (row.order.id) {
+        const response = await getSellerOrderDetail(row.order.id)
+        selectedRecentOrderDetail.value = normalizeSellerOrderDetail(response.data?.data ?? {}, row.order)
+      } else {
+        selectedRecentOrderDetail.value = row.orderDetail
+      }
+    } catch (error) {
+      selectedRecentOrderDetail.value = row.orderDetail
+    }
+
     isRecentOrderDetailOpen.value = true
     return
   }
@@ -171,14 +190,25 @@ function handleCloseRecentOrderDetail() {
   selectedRecentOrderDetail.value = null
 }
 
-function handleInboundSkuClick(row) {
+async function handleInboundSkuClick(row) {
   if (!row.inventory) {
     navigateToRoute(row.routeName)
     return
   }
 
   selectedInboundInventory.value = row.inventory
-  selectedInboundInventoryDetail.value = row.inventoryDetail
+
+  try {
+    if (row.inventory.id) {
+      const response = await getSellerInventoryDetail(row.inventory.id)
+      selectedInboundInventoryDetail.value = normalizeSellerInventoryDetail(response.data?.data ?? {}, row.inventory)
+    } else {
+      selectedInboundInventoryDetail.value = row.inventoryDetail
+    }
+  } catch (error) {
+    selectedInboundInventoryDetail.value = row.inventoryDetail
+  }
+
   isInboundInventoryDetailOpen.value = true
 }
 
@@ -189,7 +219,7 @@ function handleCloseInboundInventoryDetail() {
 }
 
 function handleRetryDashboard() {
-  fetchSellerDashboardData()
+  void fetchSellerDashboardData()
 }
 </script>
 

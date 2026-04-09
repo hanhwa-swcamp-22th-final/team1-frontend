@@ -5,7 +5,7 @@
  */
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { getSellerProductList } from '@/api/wms'
+import { getSellerProductDetail, getSellerProductList, updateSellerProductStatus } from '@/api/wms'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import SellerConfirmDialog from '@/components/seller/SellerConfirmDialog.vue'
@@ -14,10 +14,8 @@ import { ROUTE_NAMES } from '@/constants'
 import { downloadExcel } from '@/utils/excel.js'
 import {
   buildSellerProductExportRows,
-  filterSellerProductRows,
   getSellerProductStatusMeta,
   normalizeSellerProductDetail,
-  SELLER_PRODUCT_CATEGORY_OPTIONS,
   SELLER_PRODUCT_LIST_COLUMNS,
   SELLER_PRODUCT_STATUS_OPTIONS,
 } from '@/utils/seller/productList.utils.js'
@@ -40,34 +38,29 @@ const isDetailModalOpen = ref(false)
 const isStatusDialogOpen = ref(false)
 const isCsvDialogOpen = ref(false)
 
-// 페이지네이션은 로컬 mock 기준으로 단순 처리한다.
 const currentPage = ref(1)
 const PAGE_SIZE = 8
+const totalItems = ref(0)
+const selectedProductDetail = ref(null)
 
-// 필터가 바뀌면 첫 페이지로 되돌린다.
 watch([activeStatus, activeCategory, searchKeyword], () => {
-  currentPage.value = 1
+  if (currentPage.value !== 1) {
+    currentPage.value = 1
+    return
+  }
+
+  void fetchSellerProducts()
 })
 
-// 현재 상태와 카테고리, 검색어를 기준으로 상품 목록을 필터링한다.
-const filteredRows = computed(() => {
-  return filterSellerProductRows(productRows.value, {
-    status: activeStatus.value,
-    category: activeCategory.value,
-    search: searchKeyword.value,
-  })
-})
-
-// 현재 페이지에 해당하는 구간만 잘라서 테이블에 전달한다.
-const pagedRows = computed(() => {
-  const start = (currentPage.value - 1) * PAGE_SIZE
-  return filteredRows.value.slice(start, start + PAGE_SIZE)
+const categoryOptions = computed(() => {
+  const categories = new Set(productRows.value.map((row) => row.category).filter(Boolean))
+  return [{ key: 'all', label: '전체' }, ...[...categories].map((category) => ({ key: category, label: category }))]
 })
 
 const pagination = computed(() => ({
   page: currentPage.value,
   pageSize: PAGE_SIZE,
-  total: filteredRows.value.length,
+  total: totalItems.value,
 }))
 
 function handlePageChange(page) {
@@ -79,14 +72,27 @@ async function fetchSellerProducts() {
   loadErrorMessage.value = ''
 
   try {
-    const res = await getSellerProductList()
-    productRows.value = Array.isArray(res.data?.data)
-      ? res.data.data.map((row) => ({ ...row }))
-      : []
+    const res = await getSellerProductList({
+      page: currentPage.value - 1,
+      size: PAGE_SIZE,
+      status: activeStatus.value === 'all' ? undefined : activeStatus.value,
+      category: activeCategory.value === 'all' ? undefined : activeCategory.value,
+      search: searchKeyword.value || undefined,
+    })
+    const payload = res.data?.data
+    const rows = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.items)
+        ? payload.items
+        : []
+
+    productRows.value = rows.map((row) => ({ ...row }))
+    totalItems.value = Number(payload?.total ?? rows.length)
   } catch (error) {
     console.error('[SellerProductListView] fetch error:', error)
     loadErrorMessage.value = '상품 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
     productRows.value = []
+    totalItems.value = 0
   } finally {
     isLoading.value = false
   }
@@ -94,13 +100,12 @@ async function fetchSellerProducts() {
 
 onMounted(fetchSellerProducts)
 
-const selectedProduct = computed(() => {
-  return productRows.value.find((row) => row.id === selectedProductId.value) ?? null
+watch(currentPage, () => {
+  void fetchSellerProducts()
 })
 
-const selectedProductDetail = computed(() => {
-  if (!selectedProduct.value) return null
-  return normalizeSellerProductDetail(selectedProduct.value.detail ?? null, selectedProduct.value)
+const selectedProduct = computed(() => {
+  return productRows.value.find((row) => row.id === selectedProductId.value) ?? null
 })
 
 const pendingStatusProduct = computed(() => {
@@ -126,7 +131,7 @@ const statusDialogMessage = computed(() => {
 })
 
 const csvDialogMessage = computed(() => {
-  return `${filteredRows.value.length}건 상품 목록을 CSV로 내보내시겠습니까?`
+  return `${productRows.value.length}건 상품 목록을 CSV로 내보내시겠습니까?`
 })
 
 function showToolbarMessage(message) {
@@ -134,7 +139,7 @@ function showToolbarMessage(message) {
 }
 
 function handleOpenCsvDialog() {
-  if (!filteredRows.value.length) {
+  if (!productRows.value.length) {
     showToolbarMessage('내보낼 상품이 없습니다.')
     return
   }
@@ -147,14 +152,14 @@ function handleCloseCsvDialog() {
 }
 
 function handleConfirmCsv() {
-  if (!filteredRows.value.length) {
+  if (!productRows.value.length) {
     handleCloseCsvDialog()
     showToolbarMessage('내보낼 상품이 없습니다.')
     return
   }
 
   downloadExcel(
-    buildSellerProductExportRows(filteredRows.value),
+    buildSellerProductExportRows(productRows.value),
     `seller-products-${new Date().toISOString().slice(0, 10)}`,
   )
   showToolbarMessage('현재 필터 기준 상품 목록을 다운로드했습니다.')
@@ -168,13 +173,21 @@ function handleEditProduct(row) {
   })
 }
 
-function handleOpenProductDetail(row) {
-  selectedProductId.value = row.id
-  isDetailModalOpen.value = true
+async function handleOpenProductDetail(row) {
+  try {
+    const response = await getSellerProductDetail(row.id)
+    selectedProductDetail.value = normalizeSellerProductDetail(response.data?.data ?? {}, row)
+    selectedProductId.value = row.id
+    isDetailModalOpen.value = true
+  } catch (error) {
+    showToolbarMessage(error.response?.data?.message ?? '상품 상세를 불러오지 못했습니다.')
+  }
 }
 
 function handleCloseProductDetail() {
   isDetailModalOpen.value = false
+  selectedProductId.value = ''
+  selectedProductDetail.value = null
 }
 
 function handleOpenStatusDialog(row, mode) {
@@ -196,28 +209,23 @@ function buildReactivatedStatus(row) {
   return 'ACTIVE'
 }
 
-function handleConfirmStatusChange() {
+async function handleConfirmStatusChange() {
   if (!pendingStatusProduct.value) return
 
   const nextStatus = isReactivateAction.value
     ? buildReactivatedStatus(pendingStatusProduct.value)
     : 'INACTIVE'
 
-  productRows.value = productRows.value.map((row) => {
-    if (row.id !== pendingStatusProduct.value.id) return row
-
-    return {
-      ...row,
-      previousStatus: isReactivateAction.value ? '' : row.status,
-      status: nextStatus,
-    }
-  })
-
-  toolbarMessage.value = isReactivateAction.value
-    ? `${pendingStatusProduct.value.sku} 상품을 ${getSellerProductStatusMeta(nextStatus).label} 상태로 전환했습니다.`
-    : `${pendingStatusProduct.value.sku} 상품을 비활성 처리했습니다.`
-
-  handleCloseStatusDialog()
+  try {
+    await updateSellerProductStatus(pendingStatusProduct.value.id, { status: nextStatus })
+    toolbarMessage.value = isReactivateAction.value
+      ? `${pendingStatusProduct.value.sku} 상품을 ${getSellerProductStatusMeta(nextStatus).label} 상태로 전환했습니다.`
+      : `${pendingStatusProduct.value.sku} 상품을 비활성 처리했습니다.`
+    handleCloseStatusDialog()
+    await fetchSellerProducts()
+  } catch (error) {
+    showToolbarMessage(error.response?.data?.message ?? '상품 상태 변경에 실패했습니다.')
+  }
 }
 </script>
 
@@ -252,7 +260,7 @@ function handleConfirmStatusChange() {
               <span class="filter-label">카테고리</span>
 
               <button
-                v-for="option in SELLER_PRODUCT_CATEGORY_OPTIONS"
+                v-for="option in categoryOptions"
                 :key="option.key"
                 type="button"
                 class="filter-badge"
@@ -288,7 +296,7 @@ function handleConfirmStatusChange() {
 
         <BaseTable
           :columns="SELLER_PRODUCT_LIST_COLUMNS"
-          :rows="pagedRows"
+          :rows="productRows"
           :pagination="pagination"
           :loading="isLoading"
           row-key="id"

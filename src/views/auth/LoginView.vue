@@ -56,8 +56,6 @@ async function handleSubmit() {
       user:         { name: data.user.name, email: data.user.email, status: data.user.status, organization: data.user.organization ?? null },
       token:        data.token,
       role:         data.user.role,
-      tenantCode:   data.tenantCode   ?? null,
-      customerCode: data.customerCode ?? null,
     })
 
     const redirect  = route.query.redirect

@@ -91,8 +91,8 @@ export function getAsnList(params = {}) {
  * 셀러 ASN 목록 조회
  * @returns {Promise<AxiosResponse>} { success, data: SellerAsn[] }
  */
-export function getSellerAsnList() {
-  return instance.get('/wms/seller/asns')
+export function getSellerAsnList(params = {}) {
+  return instance.get('/wms/seller/asns', { params })
 }
 
 /**
@@ -104,12 +104,20 @@ export function createSellerAsn(payload) {
   return instance.post('/wms/seller/asns', payload)
 }
 
+export function getSellerAsnOptions() {
+  return instance.get('/wms/seller/asns/options')
+}
+
+export function cancelSellerAsn(asnId) {
+  return instance.post(`/wms/asns/${encodeURIComponent(asnId)}/cancel`)
+}
+
 /**
  * 셀러 재고 목록 조회
  * @returns {Promise<AxiosResponse>} { success, data: SellerInventory[] }
  */
-export function getSellerInventoryList() {
-  return instance.get('/wms/seller/inventories')
+export function getSellerInventoryList(params = {}) {
+  return instance.get('/wms/seller/inventories', { params })
 }
 
 /**
@@ -119,6 +127,14 @@ export function getSellerInventoryList() {
  */
 export function getAsnDetail(asnId) {
   return instance.get(`/wms/asns/${encodeURIComponent(asnId)}`)
+}
+
+export function getAsnBinCandidates(asnId) {
+  return instance.get(`/wms/asns/${encodeURIComponent(asnId)}/bin-candidates`)
+}
+
+export function saveAsnBinAssignments(asnId, payload) {
+  return instance.post(`/wms/asns/${encodeURIComponent(asnId)}/bin-assignments`, payload)
 }
 
 /**
@@ -190,6 +206,10 @@ export function getInventoryDetail(id) {
   return instance.get(`/wms/inventories/${id}`)
 }
 
+export function getSellerInventoryDetail(id) {
+  return instance.get(`/wms/inventories/${id}`)
+}
+
 // ── 상품 (Product) ────────────────────────────────────────────────────
 
 export function createSellerProduct(payload) {
@@ -200,12 +220,20 @@ export function getSellerProductDetail(productId) {
   return instance.get(`/wms/products/seller/${productId}`)
 }
 
-export function getSellerProductList() {
-  return instance.get('/wms/products/seller/list')
+export function getSellerProductList(params = {}) {
+  return instance.get('/wms/products/seller/list', { params })
 }
 
 export function updateSellerProduct(productId, payload) {
   return instance.put(`/wms/products/seller/${productId}`, payload)
+}
+
+export function updateSellerProductStatus(productId, payload) {
+  return instance.patch(`/wms/products/seller/${productId}/status`, payload)
+}
+
+export function getSellerProductOptions() {
+  return instance.get('/wms/products/seller/options')
 }
 
 // ── 창고 관리자 (WH Manager) ──────────────────────────────────────────
@@ -416,8 +444,8 @@ export function getWhmInventoryDetail(id) {
  * 작업자 작업 목록 조회
  * @returns {Promise<AxiosResponse>} { success: true, data: WhWorkerTask[] }
  */
-export async function getWhWorkerTasks(params = {}) {
-  return instance.get('/wms/worker/tasks', { params })
+export async function getWhWorkerTasks() {
+  return instance.get('/wms/worker/tasks')
 }
 
 /**

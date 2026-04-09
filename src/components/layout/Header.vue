@@ -21,11 +21,10 @@
  *   - watch(showNotifPanel)    → 패널 열릴 때 document 리스너 등록, 닫힐 때 해제
  *   - onUnmounted              → 컴포넌트 제거 시 리스너 정리(메모리 누수 방지)
  */
-import { onUnmounted, ref, watch } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationStore } from '@/stores/notification'
-import { useUiStore } from '@/stores/ui'
 import { ROUTE_NAMES } from '@/constants'
 
 defineProps({
@@ -36,7 +35,6 @@ defineProps({
 const router = useRouter()
 const auth = useAuthStore()
 const notif = useNotificationStore()
-const ui = useUiStore()
 const showNotifPanel = ref(false)
 
 /** 패널 외부 클릭 시 닫힘 처리 */
@@ -62,7 +60,30 @@ onUnmounted(() => {
   document.removeEventListener('click', onDocClick)
 })
 
+onMounted(() => {
+  if (auth.isLoggedIn) {
+    void notif.initialize()
+  }
+})
+
+async function handleMarkAllRead() {
+  try {
+    await notif.markAllAsRead()
+  } catch (error) {
+    console.error('[Header] mark all notifications as read failed:', error)
+  }
+}
+
+async function handleNotificationClick(notificationId) {
+  try {
+    await notif.markAsRead(notificationId)
+  } catch (error) {
+    console.error('[Header] mark notification as read failed:', error)
+  }
+}
+
 async function logout() {
+  notif.clear()
   auth.clearAuth()
   await router.replace({ name: ROUTE_NAMES.LOGIN })
 }
@@ -113,21 +134,21 @@ async function logout() {
           <div v-if="showNotifPanel" class="notif-panel">
             <div class="notif-header">
               <span class="notif-title">알림</span>
-              <button class="notif-all-read" @click="notif.markAllAsRead()">모두 읽음</button>
+              <button class="notif-all-read" @click="handleMarkAllRead">모두 읽음</button>
             </div>
             <div class="notif-body">
               <div v-if="!notif.notifications.length" class="notif-empty">새 알림이 없습니다</div>
               <!-- 최대 20개만 표시 (성능 고려) -->
               <div
                 v-for="item in notif.notifications.slice(0, 20)"
-                :key="item.id"
-                :class="{ unread: !item.read }"
+                :key="item.notificationId"
+                :class="{ unread: !item.isRead }"
                 class="notif-item"
-                @click="notif.markAsRead(item.id)"
+                @click="handleNotificationClick(item.notificationId)"
               >
-                <span v-if="!item.read" class="notif-dot" />
+                <span v-if="!item.isRead" class="notif-dot" />
                 <p class="notif-msg">{{ item.message }}</p>
-                <span class="notif-time">{{ item.time }}</span>
+                <span class="notif-time">{{ item.timeLabel }}</span>
               </div>
             </div>
           </div>

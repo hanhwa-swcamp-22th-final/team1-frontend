@@ -4,7 +4,12 @@
  * 단건 주문 등록과 일괄 주문 등록 흐름을 탭으로 나눠 관리한다.
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
-import { createSellerBulkOrders, createSellerOrder } from '@/api/order'
+import {
+  getSellerChannelCards,
+  getSellerChannelDetail,
+  getSellerChannelImportPreview,
+} from '@/api/integration'
+import { createSellerBulkOrders, createSellerOrder, getSellerOrderOptions } from '@/api/order'
 import BaseForm from '@/components/common/BaseForm.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import FileUpload from '@/components/common/FileUpload.vue'
@@ -13,8 +18,7 @@ import ToastMessage from '@/components/common/ToastMessage.vue'
 import SellerExcelUploadResultModal from '@/components/seller/SellerExcelUploadResultModal.vue'
 import { parseExcel } from '@/utils/excel'
 import {
-  buildBulkOrderPayload,
-  buildAmazonImportPreviewMessage,
+  buildChannelImportPreviewMessage,
   buildManualOrderPayload,
   buildOrderProductLineSummary,
   buildOrderTemplateCsv,
@@ -26,8 +30,6 @@ import {
   normalizeBulkOrderRegisterTab,
   normalizeOrderRegisterTab,
   ORDER_PREVIEW_COLUMNS,
-  ORDER_PRODUCT_OPTIONS,
-  ORDER_TEMPLATE_PREVIEW_ROWS,
   ORDER_UPLOAD_REQUIRED_COLUMNS,
   SELLER_BULK_ORDER_REGISTER_TABS,
   SELLER_ORDER_REGISTER_TABS,
@@ -36,8 +38,9 @@ import {
 
 const breadcrumb = [{ label: 'Seller' }, { label: '주문 등록' }]
 
-const SALES_CHANNEL_OPTIONS = ['자사몰', '스마트스토어', '쿠팡', 'Qoo10', 'Amazon']
-const AMAZON_SYNC_WINDOW_OPTIONS = ['최근 1일', '최근 3일', '최근 7일', '최근 14일']
+const PRIMARY_CHANNEL_KEY = 'SHOPIFY'
+const PRIMARY_CHANNEL_LABEL = 'Shopify'
+const CHANNEL_SYNC_WINDOW_OPTIONS = ['최근 1일', '최근 3일', '최근 7일', '최근 14일']
 
 const activeRegisterMode = ref('manual')
 const activeBulkTab = ref('')
@@ -50,27 +53,33 @@ const bulkSubmitErrorMessage = ref('')
 const isSubmittingBulk = ref(false)
 const isUploadResultModalOpen = ref(false)
 const uploadResultSummary = ref(null)
-const previewRows = ref(ORDER_TEMPLATE_PREVIEW_ROWS)
+const previewRows = ref([])
 const isPreviewSample = ref(true)
-const amazonFeedbackMessage = ref('')
-const amazonFeedbackTone = ref('idle')
+const channelFeedbackMessage = ref('')
+const channelFeedbackTone = ref('idle')
 const isLiveSummaryVisible = ref(true)
 const isChecklistVisible = ref(true)
 const isUploadGuideVisible = ref(true)
-const isAmazonNotesVisible = ref(true)
+const isChannelNotesVisible = ref(true)
 const manualCombinedCardRef = ref(null)
 const recipientCardMinHeight = ref('')
 const toast = ref({ visible: false, message: '', type: 'success' })
+const productOptions = ref([])
+const salesChannelOptions = ref([])
+const selectedBulkFile = ref(null)
+const optionsErrorMessage = ref('')
+const isCheckingChannel = ref(false)
+const isImportPreviewLoading = ref(false)
 
-const amazonSettings = reactive({
-  storeAlias: 'Lumiere Beauty US',
-  marketplace: 'Amazon US',
-  contactEmail: 'seller-ops@conk.local',
-  syncWindow: '최근 7일',
+const channelSettings = reactive({
+  storeAlias: '',
+  marketplace: '',
+  contactEmail: '',
+  syncWindow: '',
   autoImport: true,
 })
 
-const amazonConnection = reactive({
+const channelConnection = reactive({
   connected: false,
   lastSyncedAt: '-',
   pendingOrders: 0,
@@ -86,7 +95,7 @@ function createInitialForm() {
     autoGenerateOrderNo: false,
     orderNo: '',
     orderDate: '',
-    salesChannel: '자사몰',
+    salesChannel: salesChannelOptions.value[0]?.value ?? '수동',
     recipient: '',
     contact: '',
     state: '',
@@ -123,7 +132,7 @@ const currentOrderNoPreview = computed(() => (
 const manualProductRows = computed(() => (
   manualForm.value.items.map((line, index) => {
     const quantity = Math.max(1, Number(line.quantity ?? 1) || 1)
-    const summary = buildOrderProductLineSummary({ ...line, quantity })
+    const summary = buildOrderProductLineSummary({ ...line, quantity }, productOptions.value)
 
     return {
       ...line,
@@ -160,12 +169,12 @@ const uploadSummaryCards = computed(() => {
   ]
 })
 
-const amazonStatusLabel = computed(() => (amazonConnection.connected ? '연결됨' : '미연동'))
-const amazonStatusClassName = computed(() => (
-  amazonConnection.connected ? 'status-pill status-pill--success' : 'status-pill status-pill--muted'
+const channelStatusLabel = computed(() => (channelConnection.connected ? '연결됨' : '미연동'))
+const channelStatusClassName = computed(() => (
+  channelConnection.connected ? 'status-pill status-pill--success' : 'status-pill status-pill--muted'
 ))
-const amazonFeedbackClassName = computed(() => (
-  amazonFeedbackTone.value === 'error' ? 'feedback feedback--error' : 'feedback feedback--success'
+const channelFeedbackClassName = computed(() => (
+  channelFeedbackTone.value === 'error' ? 'feedback feedback--error' : 'feedback feedback--success'
 ))
 const recipientCardStyle = computed(() => (
   recipientCardMinHeight.value ? { minHeight: recipientCardMinHeight.value } : {}
@@ -218,12 +227,13 @@ function handleReset() {
 }
 
 function resetUploadState() {
+  selectedBulkFile.value = null
   selectedFileName.value = ''
   uploadErrorMessage.value = ''
   bulkSubmitErrorMessage.value = ''
   isUploadResultModalOpen.value = false
   uploadResultSummary.value = null
-  previewRows.value = ORDER_TEMPLATE_PREVIEW_ROWS
+  previewRows.value = []
   isPreviewSample.value = true
 }
 
@@ -280,7 +290,7 @@ function handleProductQuantityBlur(line) {
 
 function getProductLineSummary(line) {
   const quantity = Math.max(1, Number(line.quantity ?? 1) || 1)
-  return buildOrderProductLineSummary({ ...line, quantity })
+  return buildOrderProductLineSummary({ ...line, quantity }, productOptions.value)
 }
 
 function isQuantityOverflow(line) {
@@ -330,13 +340,14 @@ async function handleFileSelected(file) {
     return
   }
 
+  selectedBulkFile.value = targetFile
   selectedFileName.value = targetFile.name
 
   try {
     const rows = await parseExcel(targetFile)
 
     if (!rows.length) {
-      previewRows.value = ORDER_TEMPLATE_PREVIEW_ROWS
+      previewRows.value = []
       isPreviewSample.value = true
       uploadErrorMessage.value = '업로드한 파일에 주문 데이터가 없습니다.'
       return
@@ -344,7 +355,7 @@ async function handleFileSelected(file) {
 
     const missingColumns = getMissingOrderUploadColumns(Object.keys(rows[0] ?? {}))
     if (missingColumns.length) {
-      previewRows.value = ORDER_TEMPLATE_PREVIEW_ROWS
+      previewRows.value = []
       isPreviewSample.value = true
       uploadErrorMessage.value = `필수 컬럼이 누락되었습니다: ${missingColumns.join(', ')}`
       return
@@ -356,7 +367,7 @@ async function handleFileSelected(file) {
     uploadResultSummary.value = buildOrderUploadResultSummary(previewRows.value, targetFile.name)
     isUploadResultModalOpen.value = true
   } catch (error) {
-    previewRows.value = ORDER_TEMPLATE_PREVIEW_ROWS
+    previewRows.value = []
     isPreviewSample.value = true
     uploadErrorMessage.value = '엑셀 파일을 읽지 못했습니다. 파일 형식을 확인하세요.'
   }
@@ -366,7 +377,7 @@ async function handleManualSubmit() {
   submitErrorMessage.value = ''
   clearFormErrors()
 
-  const errors = validateOrderForm(manualForm.value)
+  const errors = validateOrderForm(manualForm.value, productOptions.value)
   Object.entries(errors).forEach(([key, value]) => {
     formErrors[key] = value
   })
@@ -375,7 +386,7 @@ async function handleManualSubmit() {
 
   try {
     isSubmittingManual.value = true
-    const payload = buildManualOrderPayload(manualForm.value)
+    const payload = buildManualOrderPayload(manualForm.value, { productOptions: productOptions.value })
     const response = await createSellerOrder(payload)
 
     resetManualForm()
@@ -390,16 +401,15 @@ async function handleManualSubmit() {
 async function handleBulkSubmit() {
   bulkSubmitErrorMessage.value = ''
 
-  if (isPreviewSample.value || !previewRows.value.length) {
+  if (isPreviewSample.value || !previewRows.value.length || !selectedBulkFile.value) {
     bulkSubmitErrorMessage.value = '저장할 업로드 주문이 없습니다.'
     return
   }
 
   try {
     isSubmittingBulk.value = true
-    const payload = buildBulkOrderPayload(previewRows.value)
-    const response = await createSellerBulkOrders(payload)
-    const savedCount = response.data?.data?.savedCount ?? payload.length
+    const response = await createSellerBulkOrders(selectedBulkFile.value)
+    const savedCount = response.data?.data?.savedCount ?? previewRows.value.length
 
     resetUploadState()
     showToast(`${response.data?.message ?? '업로드 주문이 등록되었습니다.'} (${savedCount}건)`)
@@ -410,26 +420,163 @@ async function handleBulkSubmit() {
   }
 }
 
-function handleAmazonConnectionCheck() {
-  amazonConnection.connected = true
-  amazonConnection.pendingOrders = 12
-  amazonConnection.lastSyncedAt = new Date().toLocaleString('ko-KR', { hour12: false })
-  amazonFeedbackTone.value = 'success'
-  amazonFeedbackMessage.value = 'Amazon 연결 설정을 로컬 상태 기준으로 확인했습니다.'
+function normalizeSelectOptions(items = [], { fallbackValue = '', fallbackLabel = '' } = {}) {
+  const normalized = (Array.isArray(items) ? items : []).map((item) => {
+    if (typeof item === 'string') {
+      return { value: item, label: item }
+    }
+
+    const value = String(item?.value ?? item?.key ?? item?.channelKey ?? item?.channel ?? item?.name ?? '').trim()
+    const label = String(item?.label ?? item?.name ?? item?.channelName ?? item?.value ?? value).trim()
+    return { value, label }
+  }).filter((item) => item.value)
+
+  if (!normalized.length && fallbackValue) {
+    return [{ value: fallbackValue, label: fallbackLabel || fallbackValue }]
+  }
+
+  return normalized
 }
 
-function handleAmazonImportPreview() {
-  if (!amazonConnection.connected) {
-    amazonFeedbackTone.value = 'error'
-    amazonFeedbackMessage.value = '먼저 Amazon 연결 확인을 진행하세요.'
+function resetPrimaryChannelState() {
+  channelConnection.connected = false
+  channelConnection.pendingOrders = 0
+  channelConnection.lastSyncedAt = '-'
+  channelSettings.storeAlias = ''
+  channelSettings.marketplace = ''
+  channelSettings.contactEmail = ''
+  channelSettings.syncWindow = ''
+  channelSettings.autoImport = true
+}
+
+function findPrimaryChannelCard(cards = []) {
+  return cards.find((card) => {
+    const channelKey = String(card.channelKey ?? card.channel ?? card.name ?? '').toUpperCase()
+    return channelKey === PRIMARY_CHANNEL_KEY
+  }) ?? null
+}
+
+function applyChannelPayload(payload = {}) {
+  channelConnection.connected = Boolean(payload.connected ?? ['CONNECTED', 'ACTIVE'].includes(payload.status))
+  channelConnection.pendingOrders = Number(payload.pendingOrders ?? payload.importableOrders ?? 0)
+  channelConnection.lastSyncedAt = payload.lastSyncedAt ?? '-'
+  channelSettings.storeAlias = String(payload.storeAlias ?? payload.storeName ?? channelSettings.storeAlias ?? '').trim()
+  channelSettings.marketplace = String(payload.marketplace ?? payload.label ?? payload.channelName ?? channelSettings.marketplace ?? '').trim()
+  channelSettings.contactEmail = String(payload.contactEmail ?? payload.email ?? channelSettings.contactEmail ?? '').trim()
+  channelSettings.syncWindow = String(payload.syncWindow ?? channelSettings.syncWindow ?? '').trim()
+  channelSettings.autoImport = Boolean(payload.autoImport ?? channelSettings.autoImport)
+}
+
+async function fetchOrderOptions() {
+  optionsErrorMessage.value = ''
+
+  try {
+    const [optionsResponse, channelCardsResponse] = await Promise.all([
+      getSellerOrderOptions(),
+      getSellerChannelCards(),
+    ])
+
+    const optionsPayload = optionsResponse.data?.data ?? {}
+    const channelCards = Array.isArray(channelCardsResponse.data?.data) ? channelCardsResponse.data.data : []
+    productOptions.value = Array.isArray(optionsPayload.products) ? optionsPayload.products : []
+    salesChannelOptions.value = normalizeSelectOptions(
+      optionsPayload.channels ?? channelCards.map((card) => ({
+        value: card.channelKey ?? card.channel ?? card.name,
+        label: card.label ?? card.name ?? card.channelKey,
+      })),
+      { fallbackValue: '수동', fallbackLabel: '수동' },
+    )
+
+    if (!manualForm.value.salesChannel) {
+      manualForm.value.salesChannel = salesChannelOptions.value[0]?.value ?? '수동'
+    }
+
+    resetPrimaryChannelState()
+
+    const primaryChannelCard = findPrimaryChannelCard(channelCards)
+    if (primaryChannelCard) {
+      applyChannelPayload(primaryChannelCard)
+    }
+
+    try {
+      const detailResponse = await getSellerChannelDetail(PRIMARY_CHANNEL_KEY)
+      const channelDetail = detailResponse.data?.data ?? {}
+      applyChannelPayload(channelDetail)
+    } catch {
+      // 카드 응답만으로도 1차 렌더가 가능하므로 상세 조회 실패는 여기서 무시한다.
+    }
+  } catch (error) {
+    productOptions.value = []
+    salesChannelOptions.value = normalizeSelectOptions([], { fallbackValue: '수동', fallbackLabel: '수동' })
+    if (!manualForm.value.salesChannel) {
+      manualForm.value.salesChannel = '수동'
+    }
+    resetPrimaryChannelState()
+    optionsErrorMessage.value = error.response?.data?.message ?? '주문 등록 옵션을 불러오지 못했습니다.'
+  }
+}
+
+async function handleChannelConnectionCheck() {
+  channelFeedbackMessage.value = ''
+  channelFeedbackTone.value = 'idle'
+
+  try {
+    isCheckingChannel.value = true
+    const [cardsResponse, detailResponse] = await Promise.all([
+      getSellerChannelCards(),
+      getSellerChannelDetail(PRIMARY_CHANNEL_KEY),
+    ])
+    const cards = Array.isArray(cardsResponse.data?.data) ? cardsResponse.data.data : []
+    const primaryChannelCard = findPrimaryChannelCard(cards)
+
+    if (!primaryChannelCard) {
+      resetPrimaryChannelState()
+      channelFeedbackTone.value = 'error'
+      channelFeedbackMessage.value = `${PRIMARY_CHANNEL_LABEL} 채널 연결 정보를 찾지 못했습니다.`
+      return
+    }
+
+    applyChannelPayload(primaryChannelCard)
+    applyChannelPayload(detailResponse.data?.data ?? {})
+    channelFeedbackTone.value = channelConnection.connected ? 'success' : 'error'
+    channelFeedbackMessage.value = channelConnection.connected
+      ? `${PRIMARY_CHANNEL_LABEL} 채널 연결 상태를 확인했습니다.`
+      : `${PRIMARY_CHANNEL_LABEL} 채널이 아직 연결되지 않았습니다.`
+  } catch (error) {
+    channelFeedbackTone.value = 'error'
+    channelFeedbackMessage.value = error.response?.data?.message ?? `${PRIMARY_CHANNEL_LABEL} 연결 상태를 확인하지 못했습니다.`
+  } finally {
+    isCheckingChannel.value = false
+  }
+}
+
+async function handleChannelImportPreview() {
+  if (!channelConnection.connected) {
+    channelFeedbackTone.value = 'error'
+    channelFeedbackMessage.value = `먼저 ${PRIMARY_CHANNEL_LABEL} 연결 확인을 진행하세요.`
     return
   }
 
-  amazonFeedbackTone.value = 'success'
-  amazonFeedbackMessage.value = buildAmazonImportPreviewMessage(
-    amazonSettings.syncWindow,
-    amazonConnection.pendingOrders,
-  )
+  try {
+    isImportPreviewLoading.value = true
+    const response = await getSellerChannelImportPreview(PRIMARY_CHANNEL_KEY, {
+      storeAlias: channelSettings.storeAlias,
+      contactEmail: channelSettings.contactEmail,
+      syncWindow: channelSettings.syncWindow,
+      autoImport: channelSettings.autoImport,
+    })
+    const payload = response.data?.data ?? {}
+    channelConnection.pendingOrders = Number(payload.pendingOrders ?? channelConnection.pendingOrders ?? 0)
+    channelConnection.lastSyncedAt = payload.lastSyncedAt ?? channelConnection.lastSyncedAt
+    channelFeedbackTone.value = 'success'
+    channelFeedbackMessage.value = response.data?.message
+      ?? buildChannelImportPreviewMessage(PRIMARY_CHANNEL_LABEL, channelSettings.syncWindow, channelConnection.pendingOrders)
+  } catch (error) {
+    channelFeedbackTone.value = 'error'
+    channelFeedbackMessage.value = error.response?.data?.message ?? `${PRIMARY_CHANNEL_LABEL} 주문 가져오기 미리보기를 불러오지 못했습니다.`
+  } finally {
+    isImportPreviewLoading.value = false
+  }
 }
 
 watch(activeRegisterMode, async (mode) => {
@@ -441,6 +588,7 @@ watch(activeRegisterMode, async (mode) => {
 })
 
 onMounted(async () => {
+  await fetchOrderOptions()
   await nextTick()
   bindManualCombinedCardObserver()
   syncRecipientCardMinHeight()
@@ -518,15 +666,17 @@ onBeforeUnmount(() => {
             {{ isSubmittingBulk ? '저장 중...' : '업로드 주문 저장' }}
           </button>
         </div>
-        <div v-else-if="activeRegisterMode === 'bulk' && activeBulkTab === 'amazon'" class="toolbar-actions">
-          <button class="ui-btn ui-btn--ghost" type="button" @click="handleAmazonConnectionCheck">
-            연결 확인
+        <div v-else-if="activeRegisterMode === 'bulk' && activeBulkTab === 'shopify'" class="toolbar-actions">
+          <button class="ui-btn ui-btn--ghost" type="button" :disabled="isCheckingChannel" @click="handleChannelConnectionCheck">
+            {{ isCheckingChannel ? '확인 중...' : '연결 확인' }}
           </button>
-          <button class="ui-btn ui-btn--primary" type="button" @click="handleAmazonImportPreview">
-            주문 가져오기 준비
+          <button class="ui-btn ui-btn--primary" type="button" :disabled="isImportPreviewLoading" @click="handleChannelImportPreview">
+            {{ isImportPreviewLoading ? '조회 중...' : '주문 가져오기 준비' }}
           </button>
         </div>
       </div>
+
+      <p v-if="optionsErrorMessage" class="feedback feedback--error">{{ optionsErrorMessage }}</p>
 
       <section v-if="activeRegisterMode === 'manual'" class="manual-register-layout">
         <div
@@ -638,8 +788,8 @@ onBeforeUnmount(() => {
 
                 <BaseForm label="판매 채널" required>
                   <select v-model="manualForm.salesChannel">
-                    <option v-for="channel in SALES_CHANNEL_OPTIONS" :key="channel" :value="channel">
-                      {{ channel }}
+                    <option v-for="channel in salesChannelOptions" :key="channel.value" :value="channel.value">
+                      {{ channel.label }}
                     </option>
                   </select>
                 </BaseForm>
@@ -683,7 +833,7 @@ onBeforeUnmount(() => {
                         <select v-model="line.sku" @change="handleProductSkuChange">
                           <option value="">SKU 선택</option>
                           <option
-                            v-for="product in ORDER_PRODUCT_OPTIONS"
+                            v-for="product in productOptions"
                             :key="product.sku"
                             :value="product.sku"
                           >
@@ -817,7 +967,7 @@ onBeforeUnmount(() => {
             <h3 class="section-title">일괄 주문 등록 방식을 선택하세요</h3>
           </div>
           <p class="preview-description">
-            상단 `일괄 주문 등록` 버튼 오른쪽에서 `엑셀 업로드` 또는 `Amazon 연동`을 선택하면 해당 화면으로 이동합니다.
+                  상단 `일괄 주문 등록` 버튼 오른쪽에서 `엑셀 업로드` 또는 `Shopify 연동`을 선택하면 해당 화면으로 이동합니다.
           </p>
         </article>
 
@@ -924,7 +1074,7 @@ onBeforeUnmount(() => {
                 </div>
                 <div class="summary-row">
                   <dt>미리보기 상태</dt>
-                  <dd>{{ isPreviewSample ? '샘플 포맷' : '실데이터 미리보기' }}</dd>
+                  <dd>{{ isPreviewSample ? '업로드 대기' : '실데이터 미리보기' }}</dd>
                 </div>
               </dl>
               </section>
@@ -937,12 +1087,12 @@ onBeforeUnmount(() => {
                 <p class="section-eyebrow">Preview Format</p>
                 <h3 class="section-title">업로드 미리보기</h3>
               </div>
-              <span class="section-caption">{{ isPreviewSample ? '샘플 1행' : `업로드 ${previewRows.length}건` }}</span>
+              <span class="section-caption">{{ isPreviewSample ? '업로드 대기' : `업로드 ${previewRows.length}건` }}</span>
             </div>
 
             <p class="preview-description">
               {{ isPreviewSample
-                ? '업로드 전에는 템플릿 예시를 먼저 보여줍니다.'
+                ? '업로드 전에는 테이블이 비어 있으며, 파일 선택 후 실데이터만 미리보기합니다.'
                 : '현재 표에는 업로드한 파일 데이터를 그대로 표시하고 있습니다.' }}
             </p>
 
@@ -950,17 +1100,17 @@ onBeforeUnmount(() => {
           </article>
         </div>
         <div v-else class="content-stack">
-          <article v-if="isAmazonNotesVisible" class="surface-card side-card">
+          <article v-if="isChannelNotesVisible" class="surface-card side-card">
             <div class="section-head section-head--compact">
               <div>
-                <p class="section-eyebrow">Amazon Notes</p>
+                <p class="section-eyebrow">Shopify Notes</p>
                 <h3 class="section-title">다음 연결 단계</h3>
               </div>
               <button
                 type="button"
                 class="panel-close"
                 aria-label="다음 연결 단계 닫기"
-                @click="isAmazonNotesVisible = false"
+                @click="isChannelNotesVisible = false"
               >
                 x
               </button>
@@ -969,63 +1119,64 @@ onBeforeUnmount(() => {
             <ul class="check-list">
               <li>스토어 별칭과 운영 이메일을 먼저 정리합니다.</li>
               <li>조회 기간을 고른 뒤 미등록 주문만 가져오도록 확인합니다.</li>
-              <li>현재 화면은 로컬 확인용이며 실제 API 저장은 다음 단계입니다.</li>
+              <li>연결 확인 후 API 미리보기 결과를 검토하고 주문 가져오기를 진행합니다.</li>
             </ul>
           </article>
 
-          <div class="amazon-main-grid">
+          <div class="channel-main-grid">
             <article class="surface-card">
               <div class="section-head">
                 <div>
-                  <p class="section-eyebrow">Amazon Sync</p>
-                  <h3 class="section-title">Amazon 연동 상태</h3>
+                  <p class="section-eyebrow">Shopify Sync</p>
+                  <h3 class="section-title">Shopify 연동 상태</h3>
                 </div>
-                <span :class="amazonStatusClassName">{{ amazonStatusLabel }}</span>
+                <span :class="channelStatusClassName">{{ channelStatusLabel }}</span>
               </div>
 
-              <div class="amazon-status-grid">
+              <div class="channel-status-grid">
                 <div class="metric-card metric-card--dense">
                   <span class="metric-label">마켓플레이스</span>
-                  <strong class="metric-value">{{ amazonSettings.marketplace }}</strong>
+                  <strong class="metric-value">{{ channelSettings.marketplace || PRIMARY_CHANNEL_LABEL }}</strong>
                 </div>
                 <div class="metric-card metric-card--dense">
                   <span class="metric-label">최근 동기화</span>
-                  <strong class="metric-value">{{ amazonConnection.lastSyncedAt }}</strong>
+                  <strong class="metric-value">{{ channelConnection.lastSyncedAt }}</strong>
                 </div>
                 <div class="metric-card metric-card--dense">
                   <span class="metric-label">가져올 미등록 주문</span>
-                  <strong class="metric-value">{{ amazonConnection.pendingOrders }}건</strong>
+                  <strong class="metric-value">{{ channelConnection.pendingOrders }}건</strong>
                 </div>
               </div>
 
-              <p v-if="amazonFeedbackMessage" :class="amazonFeedbackClassName">{{ amazonFeedbackMessage }}</p>
+              <p v-if="channelFeedbackMessage" :class="channelFeedbackClassName">{{ channelFeedbackMessage }}</p>
             </article>
 
             <article class="surface-card">
               <div class="section-head">
                 <div>
-                  <p class="section-eyebrow">Amazon Settings</p>
+                  <p class="section-eyebrow">Shopify Settings</p>
                   <h3 class="section-title">연동 설정</h3>
                 </div>
-                <span class="section-caption">로컬 UI 단계</span>
+                <span class="section-caption">API 연동</span>
               </div>
 
               <div class="form-grid">
                 <BaseForm label="스토어 별칭" required>
-                  <input v-model="amazonSettings.storeAlias" type="text" placeholder="스토어 별칭" />
+                  <input v-model="channelSettings.storeAlias" type="text" placeholder="스토어 별칭" />
                 </BaseForm>
 
                 <BaseForm label="운영 이메일" required>
-                  <input v-model="amazonSettings.contactEmail" type="email" placeholder="seller-ops@example.com" />
+                  <input v-model="channelSettings.contactEmail" type="email" placeholder="seller-ops@example.com" />
                 </BaseForm>
 
                 <BaseForm label="마켓플레이스" required>
-                  <input v-model="amazonSettings.marketplace" type="text" placeholder="Amazon US" />
+                  <input v-model="channelSettings.marketplace" type="text" placeholder="Shopify" />
                 </BaseForm>
 
                 <BaseForm label="조회 기간" required>
-                  <select v-model="amazonSettings.syncWindow">
-                    <option v-for="window in AMAZON_SYNC_WINDOW_OPTIONS" :key="window" :value="window">
+                  <select v-model="channelSettings.syncWindow">
+                    <option value="">조회 기간 선택</option>
+                    <option v-for="window in CHANNEL_SYNC_WINDOW_OPTIONS" :key="window" :value="window">
                       {{ window }}
                     </option>
                   </select>
@@ -1037,7 +1188,7 @@ onBeforeUnmount(() => {
 
                 <BaseForm class="form-span-2" label="자동 주문 가져오기">
                   <label class="toggle-check toggle-check--block">
-                    <input v-model="amazonSettings.autoImport" type="checkbox" />
+                    <input v-model="channelSettings.autoImport" type="checkbox" />
                     <span>연결 확인 후 미등록 주문만 자동으로 가져옵니다.</span>
                   </label>
                 </BaseForm>
@@ -1280,7 +1431,7 @@ onBeforeUnmount(() => {
   grid-template-columns: minmax(0, 1fr);
 }
 
-.amazon-main-grid {
+.channel-main-grid {
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
   gap: var(--space-5);
@@ -1625,7 +1776,7 @@ onBeforeUnmount(() => {
 }
 
 .guide-grid,
-.amazon-status-grid {
+.channel-status-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
@@ -1725,14 +1876,14 @@ onBeforeUnmount(() => {
   }
 
   .manual-main-grid,
-  .amazon-main-grid {
+  .channel-main-grid {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 900px) {
   .guide-grid,
-  .amazon-status-grid,
+  .channel-status-grid,
   .manual-info-grid,
   .summary-metrics,
   .form-grid {

@@ -1,50 +1,14 @@
 /**
- * 셀러 ASN 등록 화면에서 사용하는 선택 옵션, 검증, payload 가공 유틸.
+ * 셀러 ASN 등록 화면에서 사용하는 검증, payload 가공 유틸.
  */
 
-// ASN 등록 화면에서 선택할 수 있는 mock 창고 목록.
-export const SELLER_ASN_WAREHOUSE_OPTIONS = [
-  { id: '1', name: 'NJ Warehouse', region: 'New Jersey', leadTime: '2일' },
-  { id: '2', name: 'LA Warehouse', region: 'Los Angeles', leadTime: '3일' },
-  { id: '3', name: 'TX Warehouse', region: 'Dallas', leadTime: '4일' },
-]
-
-const ASN_WAREHOUSE_NAME_MAP = Object.fromEntries(
-  SELLER_ASN_WAREHOUSE_OPTIONS.map((warehouse) => [warehouse.id, warehouse.name])
-)
-
-// ASN 등록에서 사용하는 mock 입고 방식 옵션.
-export const SELLER_ASN_INBOUND_TYPES = [
-  { value: 'SEA', label: '해상 입고' },
-  { value: 'AIR', label: '항공 입고' },
-  { value: 'TRANSFER', label: '국내 이동 입고' },
-]
-
-// SKU 선택 시 자동으로 채워 넣을 mock 상품 정보.
-export const SELLER_ASN_PRODUCT_OPTIONS = [
-  { sku: 'KR-MASK-001', productName: '리페어 마스크팩 10입', unit: 'EA', brand: 'CONK Beauty', availableStock: 348 },
-  { sku: 'KR-SNCK-012', productName: '한입 고구마 스낵', unit: 'BOX', brand: 'CONK Food', availableStock: 185 },
-  { sku: 'KR-COSM-034', productName: '비타 세럼 앰플', unit: 'EA', brand: 'CONK Beauty', availableStock: 8 },
-  { sku: 'KR-HOME-056', productName: '실리콘 조리도구 세트', unit: 'SET', brand: 'CONK Home', availableStock: 210 },
-]
-
-/**
- * 화면에서 새 ASN 번호처럼 보이게 만들기 위한 mock 번호 생성기.
- * 날짜와 순번만으로 고정 포맷을 맞춘다.
- */
-export function buildMockAsnNumber(sequence = 1, date = '2026-03-18') {
-  const normalizedDate = String(date).replaceAll('-', '')
-  return `ASN-${normalizedDate}-${String(sequence).padStart(3, '0')}`
-}
-
-// ASN 기본 정보 폼의 초기 상태를 만든다.
-export function createInitialAsnForm(sequence = 1) {
+export function createInitialAsnForm(asnNo = '') {
   return {
-    asnNo: buildMockAsnNumber(sequence),
+    asnNo: String(asnNo ?? '').trim(),
     warehouseId: '',
     expectedDate: '',
     shippingMethod: '',
-    senderName: 'LUMIERE BEAUTY',
+    senderName: '',
     originCountry: '',
     senderAddress: '',
     senderPhone: '',
@@ -52,7 +16,6 @@ export function createInitialAsnForm(sequence = 1) {
   }
 }
 
-// 품목 라인 한 줄의 초기 상태를 만든다.
 export function createInitialAsnLine(sequence = 1) {
   return {
     id: `asn-line-${sequence}`,
@@ -64,7 +27,6 @@ export function createInitialAsnLine(sequence = 1) {
   }
 }
 
-// 품목 라인 한 줄에 연결할 에러 상태 기본값.
 export function createInitialAsnLineError() {
   return {
     sku: '',
@@ -73,7 +35,6 @@ export function createInitialAsnLineError() {
   }
 }
 
-// ASN 기본 정보 영역에 표시할 필드 에러 기본값.
 export function createInitialAsnFieldErrors() {
   return {
     warehouseId: '',
@@ -86,24 +47,18 @@ export function createInitialAsnFieldErrors() {
   }
 }
 
-// 임시저장 준비중 상태에서 공통으로 보여줄 안내 문구를 만든다.
 export function buildAsnDraftPendingMessage(asnNo = '') {
   const normalizedAsnNo = String(asnNo ?? '').trim()
-
   return normalizedAsnNo
     ? `${normalizedAsnNo} 임시저장 기능은 준비 중입니다.`
     : '임시저장 기능은 준비 중입니다.'
 }
 
-// 선택한 SKU에 해당하는 mock 상품 정보를 반환한다.
-export function getAsnProductBySku(sku, productOptions = SELLER_ASN_PRODUCT_OPTIONS) {
-  return productOptions.find((product) => product.sku === sku) ?? null
+export function getAsnProductBySku(sku, productOptions = []) {
+  const normalizedSku = String(sku ?? '').trim()
+  return productOptions.find((product) => product.sku === normalizedSku) ?? null
 }
 
-/**
- * 현재 품목 라인을 기준으로 요약 카드 수치를 계산한다.
- * 빈 SKU 라인은 SKU 수에 포함하지 않고, 수량/박스 수는 숫자만 누적한다.
- */
 export function calculateAsnSummary(lineItems = []) {
   const skuSet = new Set()
   let totalQuantity = 0
@@ -124,10 +79,6 @@ export function calculateAsnSummary(lineItems = []) {
   }
 }
 
-/**
- * ASN 등록 화면의 필수 입력값을 검사한다.
- * 기본 정보와 품목 라인 에러를 분리해서 화면에 바로 바인딩할 수 있게 한다.
- */
 export function validateAsnForm(form = {}, lineItems = []) {
   const fieldErrors = createInitialAsnFieldErrors()
   const lineErrors = lineItems.map(() => createInitialAsnLineError())
@@ -156,13 +107,13 @@ export function validateAsnForm(form = {}, lineItems = []) {
     fieldErrors.senderPhone = '연락처를 입력하세요.'
   }
 
-  const hasAnyFilledLine = lineItems.some((line) => {
-    return Boolean(
+  const hasAnyFilledLine = lineItems.some((line) => (
+    Boolean(
       String(line.sku ?? '').trim()
       || String(line.quantity ?? '').trim()
-      || String(line.cartonCount ?? '').trim(),
+      || String(line.cartonCount ?? '').trim()
     )
-  })
+  ))
 
   if (!lineItems.length || !hasAnyFilledLine) {
     fieldErrors.lineItems = 'SKU와 수량이 포함된 품목을 1개 이상 입력하세요.'
@@ -185,52 +136,30 @@ export function validateAsnForm(form = {}, lineItems = []) {
   return { fieldErrors, lineErrors }
 }
 
-/**
- * ASN 등록 폼과 품목 라인을 seller ASN 저장 payload로 정규화한다.
- * 목록 row와 상세 모달이 바로 사용할 수 있는 shape를 함께 만든다.
- */
 export function buildSellerAsnPayload(form = {}, lineItems = [], options = {}) {
   const normalizedItems = lineItems
     .filter((line) => String(line.sku ?? '').trim())
     .map((line) => ({
       sku: String(line.sku ?? '').trim(),
-      productName: String(line.productName ?? '').trim() || '상품명 미확인',
+      productName: String(line.productName ?? '').trim(),
       quantity: Number(line.quantity ?? 0),
       cartons: Number(line.cartonCount ?? 0),
     }))
 
-  const totalQuantity = normalizedItems.reduce((sum, item) => sum + Number(item.quantity ?? 0), 0)
-  const documents = ['Packing List']
-
-  if (options.attachmentName) {
-    documents.push(String(options.attachmentName).trim())
-  }
+  const attachmentName = String(options.attachmentName ?? '').trim()
 
   return {
     asnNo: String(form.asnNo ?? '').trim(),
     warehouseId: String(form.warehouseId ?? '').trim(),
-    warehouseName: ASN_WAREHOUSE_NAME_MAP[String(form.warehouseId ?? '').trim()] ?? '미지정 창고',
     expectedDate: String(form.expectedDate ?? '').trim(),
     shippingMethod: String(form.shippingMethod ?? '').trim(),
-    senderName: String(form.senderName ?? '').trim() || 'LUMIERE BEAUTY',
+    senderName: String(form.senderName ?? '').trim(),
     originCountry: String(form.originCountry ?? '').trim(),
     senderAddress: String(form.senderAddress ?? '').trim(),
     senderPhone: String(form.senderPhone ?? '').trim(),
     note: String(form.note ?? '').trim(),
-    referenceNo: `REF-${String(form.asnNo ?? '').trim().slice(-6) || 'PENDING'}`,
-    skuCount: normalizedItems.length,
-    totalQuantity,
-    status: 'SUBMITTED',
+    attachmentName,
     detail: {
-      supplierName: String(form.senderName ?? '').trim() || 'LUMIERE BEAUTY',
-      originCountry: String(form.originCountry ?? '').trim(),
-      originPort: String(form.senderAddress ?? '').trim() || '-',
-      transportMode: String(form.shippingMethod ?? '').trim(),
-      incoterms: 'EXW',
-      bookingNo: `BK-${String(form.asnNo ?? '').trim().slice(-6) || 'PENDING'}`,
-      carrier: '배차 정보 준비중',
-      arrivalWindow: String(form.expectedDate ?? '').trim() || '-',
-      documents,
       items: normalizedItems,
     },
   }

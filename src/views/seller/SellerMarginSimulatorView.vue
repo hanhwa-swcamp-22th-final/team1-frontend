@@ -3,7 +3,8 @@
  * 셀러 마진 시뮬레이터 화면.
  * 상품, 채널, 운송 조건을 바꾸면 우측 수익성과 비용 구성이 즉시 갱신된다.
  */
-import { computed, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { getSellerMarginPresets } from '@/api/order'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import {
@@ -13,20 +14,23 @@ import {
   getMarginChannelByKey,
   getMarginProductBySku,
   getProductShippingCost,
-  SELLER_MARGIN_CHANNEL_OPTIONS,
-  SELLER_MARGIN_PRODUCT_OPTIONS,
-  SELLER_MARGIN_SHIPPING_OPTIONS,
+  normalizeMarginChannelOptions,
+  normalizeMarginProductOptions,
+  normalizeMarginShippingOptions,
 } from '@/utils/seller/marginSimulator.utils.js'
 
 const breadcrumb = [{ label: 'Seller' }, { label: '마진 시뮬레이터' }]
 
-// TODO(frontend): 상품별 실제 비용 기준과 채널 수수료 preset API를 연결한다.
-// 시뮬레이터 입력값은 현재 화면에서만 유지한다.
+const productOptions = ref([])
+const channelOptions = ref([])
+const shippingOptions = ref([])
+const presetsErrorMessage = ref('')
+const isLoadingPresets = ref(false)
 const form = reactive(createInitialMarginForm())
 
-const currentProduct = computed(() => getMarginProductBySku(form.productSku))
+const currentProduct = computed(() => getMarginProductBySku(form.productSku, productOptions.value))
 const result = computed(() => calculateMarginResult(form))
-const scenarioCards = computed(() => buildMarginScenarioCards(form))
+const scenarioCards = computed(() => buildMarginScenarioCards(form, { product: currentProduct.value }))
 const maxBreakdownValue = computed(() => {
   return Math.max(...result.value.breakdown.map((item) => item.value), 1)
 })
@@ -43,7 +47,7 @@ function formatPercent(value) {
 watch(
   () => form.productSku,
   (sku) => {
-    const product = getMarginProductBySku(sku)
+    const product = getMarginProductBySku(sku, productOptions.value)
     if (!product) return
 
     form.salePrice = product.defaultSalePrice
@@ -60,7 +64,7 @@ watch(
 watch(
   () => form.salesChannel,
   (channelKey) => {
-    const channel = getMarginChannelByKey(channelKey)
+    const channel = getMarginChannelByKey(channelKey, channelOptions.value)
     if (!channel) return
     form.channelFeeRate = channel.defaultFeeRate
   },
@@ -75,8 +79,44 @@ watch(
 )
 
 function resetForm() {
-  Object.assign(form, createInitialMarginForm())
+  Object.assign(form, createInitialMarginForm({
+    products: productOptions.value,
+    channels: channelOptions.value,
+    shippingModes: shippingOptions.value,
+  }))
 }
+
+async function fetchMarginPresets() {
+  presetsErrorMessage.value = ''
+
+  try {
+    isLoadingPresets.value = true
+    const response = await getSellerMarginPresets()
+    const payload = response.data?.data ?? {}
+    productOptions.value = normalizeMarginProductOptions(payload.products)
+    channelOptions.value = normalizeMarginChannelOptions(payload.channels)
+    shippingOptions.value = normalizeMarginShippingOptions(payload.shippingModes)
+
+    Object.assign(form, createInitialMarginForm({
+      products: productOptions.value,
+      channels: channelOptions.value,
+      shippingModes: shippingOptions.value,
+      defaultScenario: payload.defaultScenario ?? {},
+    }))
+  } catch (error) {
+    productOptions.value = []
+    channelOptions.value = []
+    shippingOptions.value = []
+    Object.assign(form, createInitialMarginForm())
+    presetsErrorMessage.value = error.response?.data?.message ?? '마진 시뮬레이터 preset을 불러오지 못했습니다.'
+  } finally {
+    isLoadingPresets.value = false
+  }
+}
+
+onMounted(() => {
+  void fetchMarginPresets()
+})
 </script>
 
 <template>
@@ -95,8 +135,9 @@ function resetForm() {
             <div class="form-grid">
               <BaseForm label="상품 SKU" required>
                 <select v-model="form.productSku">
+                  <option v-if="!productOptions.length" value="">선택 가능한 상품이 없습니다</option>
                   <option
-                    v-for="product in SELLER_MARGIN_PRODUCT_OPTIONS"
+                    v-for="product in productOptions"
                     :key="product.sku"
                     :value="product.sku"
                   >
@@ -107,8 +148,9 @@ function resetForm() {
 
               <BaseForm label="판매 채널" required>
                 <select v-model="form.salesChannel">
+                  <option v-if="!channelOptions.length" value="">선택 가능한 채널이 없습니다</option>
                   <option
-                    v-for="channel in SELLER_MARGIN_CHANNEL_OPTIONS"
+                    v-for="channel in channelOptions"
                     :key="channel.key"
                     :value="channel.key"
                   >
@@ -119,8 +161,9 @@ function resetForm() {
 
               <BaseForm label="운송 모드" required>
                 <select v-model="form.shippingMode">
+                  <option v-if="!shippingOptions.length" value="">선택 가능한 운송 방식이 없습니다</option>
                   <option
-                    v-for="option in SELLER_MARGIN_SHIPPING_OPTIONS"
+                    v-for="option in shippingOptions"
                     :key="option.key"
                     :value="option.key"
                   >
@@ -135,6 +178,9 @@ function resetForm() {
             <header class="panel-header">
               <h2 class="panel-title">판매 정보</h2>
             </header>
+
+            <p v-if="isLoadingPresets" class="form-status">preset을 불러오는 중입니다.</p>
+            <p v-else-if="presetsErrorMessage" class="form-status form-status--error">{{ presetsErrorMessage }}</p>
 
             <div class="form-grid">
               <BaseForm label="판매가 (USD)" required>
@@ -387,6 +433,16 @@ function resetForm() {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
+}
+
+.form-status {
+  margin: 0 0 var(--space-4);
+  color: var(--t3);
+  font-size: var(--font-size-sm);
+}
+
+.form-status--error {
+  color: var(--red);
 }
 
 :deep(.field-control input),

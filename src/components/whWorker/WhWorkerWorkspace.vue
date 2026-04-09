@@ -1,6 +1,5 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useAuthStore } from '@/stores/auth'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { getWhWorkerTasks, updateWhWorkerTask } from '@/api/wms'
 
@@ -12,7 +11,6 @@ const props = defineProps({
   },
 })
 
-const auth = useAuthStore()
 const loading = ref(false)
 const workerRecords = ref([])
 const toastVisible = ref(false)
@@ -93,7 +91,7 @@ onMounted(loadTasks)
 async function loadTasks() {
   loading.value = true
   try {
-    const { data } = await getWhWorkerTasks({ workerUserId: auth.user?.id ?? 4 })
+    const { data } = await getWhWorkerTasks()
     workerRecords.value = Array.isArray(data) ? data : []
   } catch (error) {
     console.error('WH Worker 데이터 로드 실패', error)

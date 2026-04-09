@@ -1,6 +1,6 @@
 /**
- * 셀러 마진 시뮬레이터 화면용 로컬 mock 데이터와 계산 유틸.
- * 상품, 채널, 운송 조건을 바꿨을 때 수익성과 비용 구성을 즉시 계산한다.
+ * 셀러 마진 시뮬레이터 계산 유틸.
+ * 정적 mock 데이터 대신 API preset 응답만 받아 계산한다.
  */
 
 function toNumber(value) {
@@ -8,103 +8,117 @@ function toNumber(value) {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-// 마진 시뮬레이터에서 사용하는 채널 옵션.
-export const SELLER_MARGIN_CHANNEL_OPTIONS = [
-  { key: 'AMAZON', label: 'Amazon', defaultFeeRate: 15 },
-  { key: 'SHOPIFY', label: 'Shopify', defaultFeeRate: 3.2 },
-  { key: 'MANUAL', label: '수동', defaultFeeRate: 0 },
-]
-
-// 마진 시뮬레이터에서 사용하는 운송 방식 옵션.
-export const SELLER_MARGIN_SHIPPING_OPTIONS = [
-  { key: 'SEA', label: '해상' },
-  { key: 'AIR', label: '항공' },
-]
-
-// 상품 기본값과 물류비 기준이 함께 들어있는 상품 mock 데이터.
-export const SELLER_MARGIN_PRODUCT_OPTIONS = [
-  {
-    sku: 'LB-AMP-30',
-    productName: '루미에르 앰플 30ml',
-    defaultSalePrice: 34,
-    declaredValue: 8.6,
-    productCost: 6.8,
-    packagingCost: 0.7,
-    fulfillmentFee: 2.4,
-    seaShippingCost: 1.5,
-    airShippingCost: 3.8,
-    storageUnitCost: 0.16,
-  },
-  {
-    sku: 'LB-MSK-5P',
-    productName: '콜라겐 마스크 5매입',
-    defaultSalePrice: 18,
-    declaredValue: 4.4,
-    productCost: 3.1,
-    packagingCost: 0.35,
-    fulfillmentFee: 1.8,
-    seaShippingCost: 0.95,
-    airShippingCost: 2.3,
-    storageUnitCost: 0.1,
-  },
-  {
-    sku: 'LB-SUN-50',
-    productName: 'UV 선크림 SPF50 50ml',
-    defaultSalePrice: 28,
-    declaredValue: 6.2,
-    productCost: 5,
-    packagingCost: 0.5,
-    fulfillmentFee: 2.1,
-    seaShippingCost: 1.25,
-    airShippingCost: 3.1,
-    storageUnitCost: 0.14,
-  },
-]
-
-export function getMarginProductBySku(sku) {
-  return SELLER_MARGIN_PRODUCT_OPTIONS.find((item) => item.sku === sku) ?? null
-}
-
-export function getMarginChannelByKey(channelKey) {
-  return SELLER_MARGIN_CHANNEL_OPTIONS.find((item) => item.key === channelKey) ?? null
-}
-
-// 선택한 상품과 채널, 운송 모드에 맞는 기본 입력값을 만든다.
-export function createInitialMarginForm() {
-  const product = SELLER_MARGIN_PRODUCT_OPTIONS[0]
-  const channel = SELLER_MARGIN_CHANNEL_OPTIONS[0]
-
+function normalizeMarginProduct(product = {}) {
   return {
-    productSku: product.sku,
-    salesChannel: channel.key,
-    shippingMode: 'SEA',
-    salePrice: product.defaultSalePrice,
-    channelFeeRate: channel.defaultFeeRate,
-    fulfillmentFee: product.fulfillmentFee,
-    internationalShippingFee: product.seaShippingCost,
-    otherCost: 120,
-    monthlySalesQty: 200,
-    storageUnitCost: product.storageUnitCost,
-    declaredValue: product.declaredValue,
-    dutyMode: 'rate',
-    vatRate: 10,
-    dutyRate: 8,
-    dutyAmount: 0,
-    productCost: product.productCost,
-    packagingCost: product.packagingCost,
+    sku: String(product.sku ?? '').trim(),
+    productName: String(product.productName ?? product.name ?? '').trim(),
+    defaultSalePrice: Number(product.defaultSalePrice ?? product.salePrice ?? product.price ?? 0),
+    declaredValue: Number(product.declaredValue ?? product.customsValue ?? 0),
+    productCost: Number(product.productCost ?? product.costPrice ?? 0),
+    packagingCost: Number(product.packagingCost ?? 0),
+    fulfillmentFee: Number(product.fulfillmentFee ?? 0),
+    seaShippingCost: Number(
+      product.seaShippingCost
+      ?? product.shippingCosts?.SEA
+      ?? product.shippingCosts?.sea
+      ?? 0,
+    ),
+    airShippingCost: Number(
+      product.airShippingCost
+      ?? product.shippingCosts?.AIR
+      ?? product.shippingCosts?.air
+      ?? 0,
+    ),
+    storageUnitCost: Number(product.storageUnitCost ?? 0),
   }
 }
 
-// 선택한 상품과 운송 방식에 맞는 기본 국제 배송비를 반환한다.
+function normalizeMarginChannel(channel = {}) {
+  return {
+    key: String(channel.key ?? channel.channelKey ?? '').trim(),
+    label: String(channel.label ?? channel.name ?? channel.channelName ?? '').trim(),
+    defaultFeeRate: Number(channel.defaultFeeRate ?? channel.feeRate ?? 0),
+  }
+}
+
+function normalizeShippingMode(mode = {}) {
+  return {
+    key: String(mode.key ?? mode.code ?? '').trim(),
+    label: String(mode.label ?? mode.name ?? '').trim(),
+  }
+}
+
+export function normalizeMarginProductOptions(products = []) {
+  return (Array.isArray(products) ? products : [])
+    .map(normalizeMarginProduct)
+    .filter((product) => product.sku)
+}
+
+export function normalizeMarginChannelOptions(channels = []) {
+  return (Array.isArray(channels) ? channels : [])
+    .map(normalizeMarginChannel)
+    .filter((channel) => channel.key)
+}
+
+export function normalizeMarginShippingOptions(shippingModes = []) {
+  return (Array.isArray(shippingModes) ? shippingModes : [])
+    .map((mode) => (typeof mode === 'string' ? { key: mode, label: mode } : normalizeShippingMode(mode)))
+    .filter((mode) => mode.key)
+}
+
+export function getMarginProductBySku(sku, products = []) {
+  return normalizeMarginProductOptions(products).find((item) => item.sku === sku) ?? null
+}
+
+export function getMarginChannelByKey(channelKey, channels = []) {
+  return normalizeMarginChannelOptions(channels).find((item) => item.key === channelKey) ?? null
+}
+
+export function getShippingModeByKey(modeKey, shippingModes = []) {
+  return normalizeMarginShippingOptions(shippingModes).find((item) => item.key === modeKey) ?? null
+}
+
+export function createInitialMarginForm({
+  products = [],
+  channels = [],
+  shippingModes = [],
+  defaultScenario = {},
+} = {}) {
+  const normalizedProducts = normalizeMarginProductOptions(products)
+  const normalizedChannels = normalizeMarginChannelOptions(channels)
+  const normalizedShippingModes = normalizeMarginShippingOptions(shippingModes)
+  const product = getMarginProductBySku(defaultScenario.productSku, normalizedProducts) ?? normalizedProducts[0] ?? null
+  const channel = getMarginChannelByKey(defaultScenario.salesChannel, normalizedChannels) ?? normalizedChannels[0] ?? null
+  const shippingMode = getShippingModeByKey(defaultScenario.shippingMode, normalizedShippingModes)?.key
+    ?? normalizedShippingModes[0]?.key
+    ?? 'SEA'
+
+  return {
+    productSku: product?.sku ?? '',
+    salesChannel: channel?.key ?? '',
+    shippingMode,
+    salePrice: defaultScenario.salePrice ?? product?.defaultSalePrice ?? 0,
+    channelFeeRate: defaultScenario.channelFeeRate ?? channel?.defaultFeeRate ?? 0,
+    fulfillmentFee: defaultScenario.fulfillmentFee ?? product?.fulfillmentFee ?? 0,
+    internationalShippingFee: defaultScenario.internationalShippingFee ?? getProductShippingCost(product, shippingMode),
+    otherCost: defaultScenario.otherCost ?? 120,
+    monthlySalesQty: defaultScenario.monthlySalesQty ?? 200,
+    storageUnitCost: defaultScenario.storageUnitCost ?? product?.storageUnitCost ?? 0,
+    declaredValue: defaultScenario.declaredValue ?? product?.declaredValue ?? 0,
+    dutyMode: defaultScenario.dutyMode ?? 'rate',
+    vatRate: defaultScenario.vatRate ?? 10,
+    dutyRate: defaultScenario.dutyRate ?? 8,
+    dutyAmount: defaultScenario.dutyAmount ?? 0,
+    productCost: defaultScenario.productCost ?? product?.productCost ?? 0,
+    packagingCost: defaultScenario.packagingCost ?? product?.packagingCost ?? 0,
+  }
+}
+
 export function getProductShippingCost(product, shippingMode) {
   if (!product) return 0
   return shippingMode === 'AIR' ? product.airShippingCost : product.seaShippingCost
 }
 
-/**
- * 시뮬레이터 입력값을 기반으로 예상 매출과 총 비용, 순이익, 마진율을 계산한다.
- * 기타 비용은 월 고정비로 가정하고, 나머지 비용은 수량 기준 변동비로 계산한다.
- */
 export function calculateMarginResult(form = {}) {
   const salePrice = toNumber(form.salePrice)
   const feeRate = toNumber(form.channelFeeRate)
@@ -184,10 +198,7 @@ export function calculateMarginResult(form = {}) {
   }
 }
 
-// 현재 설정과 해상/항공 기준을 함께 비교할 수 있게 시나리오 카드를 만든다.
-export function buildMarginScenarioCards(form = {}) {
-  const product = getMarginProductBySku(form.productSku)
-
+export function buildMarginScenarioCards(form = {}, { product = null } = {}) {
   const seaForm = {
     ...form,
     shippingMode: 'SEA',

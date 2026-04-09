@@ -4,7 +4,7 @@
  * mock-server seller 재고 목록 API를 기준으로 상태/창고 필터와 테이블 UI를 구성한다.
  */
 import { computed, onMounted, ref, watch } from 'vue'
-import { getSellerInventoryList } from '@/api/wms.js'
+import { getSellerInventoryDetail, getSellerInventoryList } from '@/api/wms.js'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import SellerConfirmDialog from '@/components/seller/SellerConfirmDialog.vue'
@@ -12,12 +12,10 @@ import SellerInventoryDetailModal from '@/components/seller/SellerInventoryDetai
 import { downloadExcel } from '@/utils/excel.js'
 import {
   buildSellerInventoryExportRows,
-  filterSellerInventoryRows,
   getSellerInventoryStatusMeta,
   normalizeSellerInventoryDetail,
   SELLER_INVENTORY_LIST_COLUMNS,
   SELLER_INVENTORY_STATUS_OPTIONS,
-  SELLER_INVENTORY_WAREHOUSE_OPTIONS,
 } from '@/utils/seller/inventoryList.utils.js'
 
 const breadcrumb = [{ label: 'Seller' }, { label: '재고 목록' }]
@@ -34,34 +32,29 @@ const selectedInventoryId = ref('')
 const isDetailModalOpen = ref(false)
 const isCsvDialogOpen = ref(false)
 
-// 페이지네이션은 조회된 재고 목록 기준으로 단순 처리한다.
 const currentPage = ref(1)
 const PAGE_SIZE = 10
+const totalItems = ref(0)
+const selectedInventoryDetail = ref(null)
 
-// 필터가 바뀌면 첫 페이지로 되돌린다.
 watch([activeStatus, activeWarehouse, searchKeyword], () => {
-  currentPage.value = 1
+  if (currentPage.value !== 1) {
+    currentPage.value = 1
+    return
+  }
+
+  void fetchSellerInventories()
 })
 
-// 현재 상태와 창고, 검색어를 기준으로 재고 목록을 필터링한다.
-const filteredRows = computed(() => {
-  return filterSellerInventoryRows(inventoryRows.value, {
-    status: activeStatus.value,
-    warehouse: activeWarehouse.value,
-    search: searchKeyword.value,
-  })
-})
-
-// 현재 페이지에 해당하는 구간만 잘라서 테이블에 전달한다.
-const pagedRows = computed(() => {
-  const start = (currentPage.value - 1) * PAGE_SIZE
-  return filteredRows.value.slice(start, start + PAGE_SIZE)
+const warehouseOptions = computed(() => {
+  const warehouses = new Set(inventoryRows.value.map((row) => row.warehouseName).filter(Boolean))
+  return [{ key: 'all', label: '전체' }, ...[...warehouses].map((warehouse) => ({ key: warehouse, label: warehouse }))]
 })
 
 const pagination = computed(() => ({
   page: currentPage.value,
   pageSize: PAGE_SIZE,
-  total: filteredRows.value.length,
+  total: totalItems.value,
 }))
 
 function handlePageChange(page) {
@@ -73,14 +66,27 @@ async function fetchSellerInventories() {
   loadErrorMessage.value = ''
 
   try {
-    const res = await getSellerInventoryList()
-    inventoryRows.value = Array.isArray(res.data?.data)
-      ? res.data.data.map((row) => ({ ...row }))
-      : []
+    const res = await getSellerInventoryList({
+      page: currentPage.value - 1,
+      size: PAGE_SIZE,
+      stockStatus: activeStatus.value === 'all' ? undefined : activeStatus.value,
+      warehouseId: activeWarehouse.value === 'all' ? undefined : activeWarehouse.value,
+      search: searchKeyword.value || undefined,
+    })
+    const payload = res.data?.data
+    const rows = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.items)
+        ? payload.items
+        : []
+
+    inventoryRows.value = rows.map((row) => ({ ...row }))
+    totalItems.value = Number(payload?.total ?? rows.length)
   } catch (error) {
     console.error('[SellerInventoryListView] fetch error:', error)
     loadErrorMessage.value = '재고 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
     inventoryRows.value = []
+    totalItems.value = 0
   } finally {
     isLoading.value = false
   }
@@ -88,26 +94,33 @@ async function fetchSellerInventories() {
 
 onMounted(fetchSellerInventories)
 
+watch(currentPage, () => {
+  void fetchSellerInventories()
+})
+
 const selectedInventory = computed(() => {
   return inventoryRows.value.find((row) => row.id === selectedInventoryId.value) ?? null
 })
 
-const selectedInventoryDetail = computed(() => {
-  if (!selectedInventory.value) return null
-  return normalizeSellerInventoryDetail(selectedInventory.value.detail ?? null, selectedInventory.value)
-})
-
 const csvDialogMessage = computed(() => {
-  return `${filteredRows.value.length}건 재고 목록을 CSV로 내보내시겠습니까?`
+  return `${inventoryRows.value.length}건 재고 목록을 CSV로 내보내시겠습니까?`
 })
 
-function handleOpenInventoryDetail(row) {
-  selectedInventoryId.value = row.id
-  isDetailModalOpen.value = true
+async function handleOpenInventoryDetail(row) {
+  try {
+    const response = await getSellerInventoryDetail(row.id)
+    selectedInventoryDetail.value = normalizeSellerInventoryDetail(response.data?.data ?? {}, row)
+    selectedInventoryId.value = row.id
+    isDetailModalOpen.value = true
+  } catch (error) {
+    showToolbarMessage(error.response?.data?.message ?? '재고 상세를 불러오지 못했습니다.')
+  }
 }
 
 function handleCloseInventoryDetail() {
   isDetailModalOpen.value = false
+  selectedInventoryId.value = ''
+  selectedInventoryDetail.value = null
 }
 
 function showToolbarMessage(message) {
@@ -115,7 +128,7 @@ function showToolbarMessage(message) {
 }
 
 function handleOpenCsvDialog() {
-  if (!filteredRows.value.length) {
+  if (!inventoryRows.value.length) {
     showToolbarMessage('내보낼 재고가 없습니다.')
     return
   }
@@ -128,14 +141,14 @@ function handleCloseCsvDialog() {
 }
 
 function handleConfirmCsv() {
-  if (!filteredRows.value.length) {
+  if (!inventoryRows.value.length) {
     handleCloseCsvDialog()
     showToolbarMessage('내보낼 재고가 없습니다.')
     return
   }
 
   downloadExcel(
-    buildSellerInventoryExportRows(filteredRows.value),
+    buildSellerInventoryExportRows(inventoryRows.value),
     `seller-inventories-${new Date().toISOString().slice(0, 10)}`,
   )
   showToolbarMessage('현재 필터 기준 재고 목록을 다운로드했습니다.')
@@ -168,7 +181,7 @@ function handleConfirmCsv() {
               <span class="filter-label">창고</span>
 
               <button
-                v-for="option in SELLER_INVENTORY_WAREHOUSE_OPTIONS"
+                v-for="option in warehouseOptions"
                 :key="option.key"
                 type="button"
                 class="filter-badge"
@@ -205,7 +218,7 @@ function handleConfirmCsv() {
         <BaseTable
           :columns="SELLER_INVENTORY_LIST_COLUMNS"
           :loading="isLoading"
-          :rows="pagedRows"
+          :rows="inventoryRows"
           :pagination="pagination"
           row-key="id"
           @page-change="handlePageChange"

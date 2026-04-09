@@ -1,10 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import instance from '@/api/instance'
-import { getSellerChannelCards, getSellerChannelOrders } from '@/api/integration'
+import {
+  getSellerChannelCards,
+  getSellerChannelDetail,
+  getSellerChannelImportPreview,
+  getSellerChannelOrders,
+} from '@/api/integration'
 
 vi.mock('@/api/instance', () => ({
   default: {
     get: vi.fn().mockResolvedValue({}),
+    post: vi.fn().mockResolvedValue({}),
   },
 }))
 
@@ -25,5 +31,21 @@ describe('integration API', () => {
 
     expect(instance.get).toHaveBeenCalledOnce()
     expect(instance.get).toHaveBeenCalledWith('/integrations/seller/orders')
+  })
+
+  it('getSellerChannelDetail은 GET /integrations/seller/channels/{channelKey}를 호출한다', async () => {
+    await getSellerChannelDetail('SHOPIFY')
+
+    expect(instance.get).toHaveBeenCalledOnce()
+    expect(instance.get).toHaveBeenCalledWith('/integrations/seller/channels/SHOPIFY')
+  })
+
+  it('getSellerChannelImportPreview는 POST /integrations/seller/channels/{channelKey}/import-preview를 호출한다', async () => {
+    const payload = { syncWindow: '최근 7일' }
+
+    await getSellerChannelImportPreview('SHOPIFY', payload)
+
+    expect(instance.post).toHaveBeenCalledOnce()
+    expect(instance.post).toHaveBeenCalledWith('/integrations/seller/channels/shopify/import-preview', payload)
   })
 })

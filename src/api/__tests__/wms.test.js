@@ -2,11 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import instance from '@/api/instance'
 import {
   createSellerAsn,
+  getAsnBinCandidates,
   getAsnStats,
   getInventoryStats,
   getWarehouseStatus,
   getAsnList,
   getAsnKpi,
+  saveAsnBinAssignments,
   getSellerAsnList,
   getSellerInventoryList,
 } from '@/api/wms'
@@ -72,5 +74,22 @@ describe('wms API', () => {
     await getSellerInventoryList()
     expect(instance.get).toHaveBeenCalledOnce()
     expect(instance.get).toHaveBeenCalledWith('/wms/seller/inventories')
+  })
+
+  it('getAsnBinCandidates는 GET /wms/asns/{asnId}/bin-candidates를 호출한다', async () => {
+    await getAsnBinCandidates('ASN-20260322-001')
+    expect(instance.get).toHaveBeenCalledOnce()
+    expect(instance.get).toHaveBeenCalledWith('/wms/asns/ASN-20260322-001/bin-candidates')
+  })
+
+  it('saveAsnBinAssignments는 POST /wms/asns/{asnId}/bin-assignments를 호출한다', async () => {
+    const payload = {
+      assignments: [{ sku: 'SKU-001', bin: 'A-1-1', isNewSku: true }],
+    }
+
+    await saveAsnBinAssignments('ASN-20260322-001', payload)
+
+    expect(instance.post).toHaveBeenCalledOnce()
+    expect(instance.post).toHaveBeenCalledWith('/wms/asns/ASN-20260322-001/bin-assignments', payload)
   })
 })

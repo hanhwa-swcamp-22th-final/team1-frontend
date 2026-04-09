@@ -5,7 +5,7 @@
  */
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { getSellerAsnList } from '@/api/wms.js'
+import { cancelSellerAsn, getAsnDetail, getAsnKpi, getSellerAsnList } from '@/api/wms.js'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
@@ -15,8 +15,6 @@ import { downloadExcel } from '@/utils/excel.js'
 import { ASN_STATUS, ROUTE_NAMES } from '@/constants'
 import {
   buildSellerAsnExportRows,
-  filterSellerAsnRows,
-  getSellerAsnKpi,
   normalizeSellerAsnDetail,
   SELLER_ASN_LIST_COLUMNS,
 } from '@/utils/seller/asnList.utils.js'
@@ -37,48 +35,53 @@ const isDetailModalOpen = ref(false)
 const isCancelDialogOpen = ref(false)
 const isCsvDialogOpen = ref(false)
 
-// 페이지네이션은 조회된 ASN 기준으로 단순 처리한다.
 const currentPage = ref(1)
 const PAGE_SIZE = 6
+const totalItems = ref(0)
+const kpi = ref({ total: 0, submitted: 0, received: 0, cancelled: 0 })
+const selectedAsnDetail = ref(null)
 
-// 필터가 바뀌면 첫 페이지로 되돌린다.
 watch([activeStatus, searchKeyword], () => {
-  currentPage.value = 1
-})
+  if (currentPage.value !== 1) {
+    currentPage.value = 1
+    return
+  }
 
-// 상단 KPI 카드에 필요한 집계를 계산한다.
-const kpi = computed(() => getSellerAsnKpi(asnRows.value))
+  void fetchSellerAsns()
+})
 
 // 상태 탭은 KPI 수치를 함께 보여준다.
 const statusTabs = computed(() => [
-  { key: 'all', label: '전체', count: kpi.value.total },
-  { key: ASN_STATUS.SUBMITTED, label: '제출됨', count: kpi.value.submitted },
-  { key: ASN_STATUS.RECEIVED, label: '입고완료', count: kpi.value.received },
-  { key: ASN_STATUS.CANCELLED, label: '취소', count: kpi.value.cancelled },
+  { key: 'all', label: '전체', count: kpi.value.total ?? 0 },
+  { key: ASN_STATUS.SUBMITTED, label: '제출됨', count: kpi.value.submitted ?? 0 },
+  { key: ASN_STATUS.RECEIVED, label: '입고완료', count: kpi.value.received ?? 0 },
+  { key: ASN_STATUS.CANCELLED, label: '취소', count: kpi.value.cancelled ?? 0 },
 ])
-
-// 현재 상태 탭과 검색어를 기준으로 목록을 필터링한다.
-const filteredRows = computed(() => {
-  return filterSellerAsnRows(asnRows.value, {
-    status: activeStatus.value,
-    search: searchKeyword.value,
-  })
-})
-
-// 테이블은 현재 페이지에 해당하는 구간만 잘라서 보여준다.
-const pagedRows = computed(() => {
-  const start = (currentPage.value - 1) * PAGE_SIZE
-  return filteredRows.value.slice(start, start + PAGE_SIZE)
-})
 
 const pagination = computed(() => ({
   page: currentPage.value,
   pageSize: PAGE_SIZE,
-  total: filteredRows.value.length,
+  total: totalItems.value,
 }))
 
 function handlePageChange(page) {
   currentPage.value = page
+}
+
+function extractListPayload(payload) {
+  if (Array.isArray(payload)) {
+    return {
+      items: payload,
+      total: payload.length,
+      page: currentPage.value,
+    }
+  }
+
+  return {
+    items: Array.isArray(payload?.items) ? payload.items : [],
+    total: Number(payload?.total ?? payload?.totalCount ?? 0),
+    page: Number(payload?.page ?? currentPage.value),
+  }
 }
 
 async function fetchSellerAsns() {
@@ -86,14 +89,35 @@ async function fetchSellerAsns() {
   loadErrorMessage.value = ''
 
   try {
-    const res = await getSellerAsnList()
-    asnRows.value = Array.isArray(res.data?.data)
-      ? res.data.data.map((row) => ({ ...row }))
-      : []
+    const [listRes, kpiRes] = await Promise.all([
+      getSellerAsnList({
+        page: currentPage.value - 1,
+        size: PAGE_SIZE,
+        status: activeStatus.value === 'all' ? undefined : activeStatus.value,
+        search: searchKeyword.value || undefined,
+      }),
+      getAsnKpi(),
+    ])
+
+    const listPayload = extractListPayload(listRes.data?.data)
+    asnRows.value = listPayload.items.map((row) => ({ ...row }))
+    totalItems.value = listPayload.total || listPayload.items.length
+
+    const nextKpi = kpiRes.data?.data
+    kpi.value = nextKpi && typeof nextKpi === 'object'
+      ? {
+          total: Number(nextKpi.total ?? 0),
+          submitted: Number(nextKpi.submitted ?? 0),
+          received: Number(nextKpi.received ?? 0),
+          cancelled: Number(nextKpi.cancelled ?? 0),
+        }
+      : { total: 0, submitted: 0, received: 0, cancelled: 0 }
   } catch (error) {
     console.error('[SellerAsnListView] fetch error:', error)
     loadErrorMessage.value = 'ASN 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
     asnRows.value = []
+    totalItems.value = 0
+    kpi.value = { total: 0, submitted: 0, received: 0, cancelled: 0 }
   } finally {
     isLoading.value = false
   }
@@ -101,13 +125,12 @@ async function fetchSellerAsns() {
 
 onMounted(fetchSellerAsns)
 
-const selectedAsn = computed(() => {
-  return asnRows.value.find((row) => row.id === selectedAsnId.value) ?? null
+watch(currentPage, () => {
+  void fetchSellerAsns()
 })
 
-const selectedAsnDetail = computed(() => {
-  if (!selectedAsn.value) return null
-  return normalizeSellerAsnDetail(selectedAsn.value.detail ?? null, selectedAsn.value)
+const selectedAsn = computed(() => {
+  return asnRows.value.find((row) => row.id === selectedAsnId.value) ?? null
 })
 
 const pendingCancelAsn = computed(() => {
@@ -115,17 +138,25 @@ const pendingCancelAsn = computed(() => {
 })
 
 const csvDialogMessage = computed(() => {
-  const count = filteredRows.value.length
+  const count = asnRows.value.length
   return `${count}건 ASN 목록을 CSV로 내보내시겠습니까?`
 })
 
-function handleOpenAsnDetail(row) {
-  selectedAsnId.value = row.id
-  isDetailModalOpen.value = true
+async function handleOpenAsnDetail(row) {
+  try {
+    const response = await getAsnDetail(row.asnNo ?? row.id)
+    selectedAsnDetail.value = normalizeSellerAsnDetail(response.data?.data ?? {}, row)
+    selectedAsnId.value = row.id
+    isDetailModalOpen.value = true
+  } catch (error) {
+    toolbarMessage.value = error.response?.data?.message ?? 'ASN 상세를 불러오지 못했습니다.'
+  }
 }
 
 function handleCloseAsnDetail() {
   isDetailModalOpen.value = false
+  selectedAsnId.value = ''
+  selectedAsnDetail.value = null
 }
 
 function handleOpenCancelDialog(row) {
@@ -138,21 +169,17 @@ function handleCloseCancelDialog() {
   pendingCancelAsnId.value = ''
 }
 
-function handleConfirmCancel() {
+async function handleConfirmCancel() {
   if (!pendingCancelAsn.value) return
 
-  asnRows.value = asnRows.value.map((row) => {
-    if (row.id !== pendingCancelAsn.value.id) return row
-
-    return {
-      ...row,
-      status: ASN_STATUS.CANCELLED,
-      note: `${row.note} / 셀러 취소 요청`,
-    }
-  })
-
-  toolbarMessage.value = `${pendingCancelAsn.value.asnNo} ASN을 취소 처리했습니다.`
-  handleCloseCancelDialog()
+  try {
+    await cancelSellerAsn(pendingCancelAsn.value.asnNo ?? pendingCancelAsn.value.id)
+    toolbarMessage.value = `${pendingCancelAsn.value.asnNo} ASN을 취소 처리했습니다.`
+    handleCloseCancelDialog()
+    await fetchSellerAsns()
+  } catch (error) {
+    toolbarMessage.value = error.response?.data?.message ?? 'ASN 취소 처리에 실패했습니다.'
+  }
 }
 
 function handleOpenCsvDialog() {
@@ -165,10 +192,10 @@ function handleCloseCsvDialog() {
 
 function handleConfirmCsv() {
   downloadExcel(
-    buildSellerAsnExportRows(filteredRows.value),
+    buildSellerAsnExportRows(asnRows.value),
     `seller-asn-list-${new Date().toISOString().slice(0, 10)}`,
   )
-  toolbarMessage.value = `${filteredRows.value.length}건 ASN 목록을 내보냈습니다.`
+  toolbarMessage.value = `${asnRows.value.length}건 ASN 목록을 내보냈습니다.`
   handleCloseCsvDialog()
 }
 </script>
@@ -256,7 +283,7 @@ function handleConfirmCsv() {
         <BaseTable
           :columns="SELLER_ASN_LIST_COLUMNS"
           :loading="isLoading"
-          :rows="pagedRows"
+          :rows="asnRows"
           :pagination="pagination"
           row-key="id"
           @page-change="handlePageChange"

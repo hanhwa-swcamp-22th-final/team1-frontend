@@ -5,7 +5,7 @@
  */
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { getSellerOrderList } from '@/api/order.js'
+import { cancelSellerOrder, getSellerOrderDetail, getSellerOrderList } from '@/api/order.js'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import SellerConfirmDialog from '@/components/seller/SellerConfirmDialog.vue'
@@ -14,7 +14,6 @@ import { ROUTE_NAMES } from '@/constants'
 import { downloadExcel } from '@/utils/excel.js'
 import {
   buildSellerOrderExportRows,
-  filterSellerOrderRows,
   getSellerOrderChannelMeta,
   getSellerOrderStatusMeta,
   normalizeSellerOrderDetail,
@@ -40,34 +39,24 @@ const isDetailModalOpen = ref(false)
 const isCancelDialogOpen = ref(false)
 const isCsvDialogOpen = ref(false)
 
-// 페이지네이션은 조회된 주문 목록 기준으로 단순 처리한다.
 const currentPage = ref(1)
 const PAGE_SIZE = 10
+const totalItems = ref(0)
+const selectedOrderDetail = ref(null)
 
-// 필터가 바뀌면 첫 페이지로 되돌린다.
 watch([activeStatus, activeChannel, searchKeyword], () => {
-  currentPage.value = 1
-})
+  if (currentPage.value !== 1) {
+    currentPage.value = 1
+    return
+  }
 
-// 현재 상태와 채널, 검색어를 기준으로 주문 목록을 필터링한다.
-const filteredRows = computed(() => {
-  return filterSellerOrderRows(orderRows.value, {
-    status: activeStatus.value,
-    channel: activeChannel.value,
-    search: searchKeyword.value,
-  })
-})
-
-// 현재 페이지에 해당하는 구간만 잘라서 테이블에 전달한다.
-const pagedRows = computed(() => {
-  const start = (currentPage.value - 1) * PAGE_SIZE
-  return filteredRows.value.slice(start, start + PAGE_SIZE)
+  void fetchSellerOrders()
 })
 
 const pagination = computed(() => ({
   page: currentPage.value,
   pageSize: PAGE_SIZE,
-  total: filteredRows.value.length,
+  total: totalItems.value,
 }))
 
 function handlePageChange(page) {
@@ -79,14 +68,29 @@ async function fetchSellerOrders() {
   loadErrorMessage.value = ''
 
   try {
-    const res = await getSellerOrderList()
-    orderRows.value = Array.isArray(res.data?.data)
-      ? res.data.data.map((row) => ({ ...row }))
-      : []
+    const res = await getSellerOrderList({
+      page: currentPage.value - 1,
+      size: PAGE_SIZE,
+      status: activeStatus.value === 'all' ? undefined : activeStatus.value,
+      channel: activeChannel.value === 'all' ? undefined : activeChannel.value,
+      search: searchKeyword.value || undefined,
+    })
+    const payload = res.data?.data
+    const rows = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.orders)
+        ? payload.orders
+        : Array.isArray(payload?.items)
+          ? payload.items
+          : []
+
+    orderRows.value = rows.map((row) => ({ ...row }))
+    totalItems.value = Number(payload?.totalCount ?? payload?.total ?? rows.length)
   } catch (error) {
     console.error('[SellerOrderListView] fetch error:', error)
     loadErrorMessage.value = '주문 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
     orderRows.value = []
+    totalItems.value = 0
   } finally {
     isLoading.value = false
   }
@@ -94,13 +98,12 @@ async function fetchSellerOrders() {
 
 onMounted(fetchSellerOrders)
 
-const selectedOrder = computed(() => {
-  return orderRows.value.find((row) => row.id === selectedOrderId.value) ?? null
+watch(currentPage, () => {
+  void fetchSellerOrders()
 })
 
-const selectedOrderDetail = computed(() => {
-  if (!selectedOrder.value) return null
-  return normalizeSellerOrderDetail(selectedOrder.value.detail ?? null, selectedOrder.value)
+const selectedOrder = computed(() => {
+  return orderRows.value.find((row) => row.id === selectedOrderId.value) ?? null
 })
 
 const pendingCancelOrder = computed(() => {
@@ -108,7 +111,7 @@ const pendingCancelOrder = computed(() => {
 })
 
 const csvDialogMessage = computed(() => {
-  return `${filteredRows.value.length}건 주문 목록을 CSV로 내보내시겠습니까?`
+  return `${orderRows.value.length}건 주문 목록을 CSV로 내보내시겠습니까?`
 })
 
 function showToolbarMessage(message) {
@@ -116,7 +119,7 @@ function showToolbarMessage(message) {
 }
 
 function handleOpenCsvDialog() {
-  if (!filteredRows.value.length) {
+  if (!orderRows.value.length) {
     showToolbarMessage('내보낼 주문이 없습니다.')
     return
   }
@@ -129,27 +132,35 @@ function handleCloseCsvDialog() {
 }
 
 function handleConfirmCsv() {
-  if (!filteredRows.value.length) {
+  if (!orderRows.value.length) {
     handleCloseCsvDialog()
     showToolbarMessage('내보낼 주문이 없습니다.')
     return
   }
 
   downloadExcel(
-    buildSellerOrderExportRows(filteredRows.value),
+    buildSellerOrderExportRows(orderRows.value),
     `seller-orders-${new Date().toISOString().slice(0, 10)}`,
   )
   showToolbarMessage('현재 필터 기준 주문 목록을 다운로드했습니다.')
   handleCloseCsvDialog()
 }
 
-function handleOpenOrderDetail(row) {
-  selectedOrderId.value = row.id
-  isDetailModalOpen.value = true
+async function handleOpenOrderDetail(row) {
+  try {
+    const response = await getSellerOrderDetail(row.id)
+    selectedOrderDetail.value = normalizeSellerOrderDetail(response.data?.data ?? {}, row)
+    selectedOrderId.value = row.id
+    isDetailModalOpen.value = true
+  } catch (error) {
+    showToolbarMessage(error.response?.data?.message ?? '주문 상세를 불러오지 못했습니다.')
+  }
 }
 
 function handleCloseOrderDetail() {
   isDetailModalOpen.value = false
+  selectedOrderId.value = ''
+  selectedOrderDetail.value = null
 }
 
 function handleOpenCancelDialog(row) {
@@ -162,22 +173,17 @@ function handleCloseCancelDialog() {
   pendingCancelOrderId.value = ''
 }
 
-function handleConfirmCancel() {
+async function handleConfirmCancel() {
   if (!pendingCancelOrder.value) return
 
-  orderRows.value = orderRows.value.map((row) => {
-    if (row.id !== pendingCancelOrder.value.id) return row
-
-    return {
-      ...row,
-      status: 'CANCELLED',
-      canCancel: false,
-      trackingNo: '',
-    }
-  })
-
-  toolbarMessage.value = `${pendingCancelOrder.value.orderNo} 주문을 취소했습니다.`
-  handleCloseCancelDialog()
+  try {
+    await cancelSellerOrder(pendingCancelOrder.value.id)
+    toolbarMessage.value = `${pendingCancelOrder.value.orderNo} 주문을 취소했습니다.`
+    handleCloseCancelDialog()
+    await fetchSellerOrders()
+  } catch (error) {
+    showToolbarMessage(error.response?.data?.message ?? '주문 취소 처리에 실패했습니다.')
+  }
 }
 </script>
 
@@ -250,7 +256,7 @@ function handleConfirmCancel() {
         <BaseTable
           :columns="SELLER_ORDER_LIST_COLUMNS"
           :loading="isLoading"
-          :rows="pagedRows"
+          :rows="orderRows"
           :pagination="pagination"
           row-key="id"
           @page-change="handlePageChange"

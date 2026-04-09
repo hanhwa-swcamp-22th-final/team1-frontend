@@ -156,24 +156,15 @@ function openMismatchModal(asn) {
   showMismatchModal.value = true
 }
 
-// ────────────────────────────────────────────
-// Bin 미배정 ASN 탭
-// ────────────────────────────────────────────
-
-// 배정 완료 처리된 ASN ID 세트 (모달에서 '입고 확인' 클릭 시 추가됨)
-const resolvedAsnIds = ref(new Set())
-
 // 신규 SKU가 있고 아직 배정 완료되지 않은 ASN 목록
 const unassignedAsns = computed(() =>
-  asnList.value.filter(a => a.newSkus?.length > 0 && !resolvedAsnIds.value.has(a.id))
+  asnList.value.filter(a => a.newSkus?.length > 0)
 )
 
 // AsnDetailModal에서 '입고 확인' 완료 시 호출
-function handleDetailConfirm({ asnId }) {
-  const next = new Set(resolvedAsnIds.value)
-  next.add(asnId)
-  resolvedAsnIds.value = next
+async function handleDetailConfirm() {
   showDetailModal.value = false
+  await fetchAsns()
 }
 
 const binPendingColumns = [
@@ -434,7 +425,7 @@ const binPendingColumns = [
     <!-- ── 모달 ─────────────────────────────────── -->
     <AsnDetailModal
       :is-open="showDetailModal"
-      :asn="selectedAsn"
+      :asn-id="selectedAsn?.id ?? ''"
       :can-assign="detailCanAssign"
       @cancel="showDetailModal = false"
       @confirm="handleDetailConfirm"
