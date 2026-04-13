@@ -23,6 +23,7 @@
  */
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { logoutSession } from '@/api/member'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationStore } from '@/stores/notification'
 import { ROUTE_NAMES } from '@/constants'
@@ -83,9 +84,17 @@ async function handleNotificationClick(notificationId) {
 }
 
 async function logout() {
-  notif.clear()
-  auth.clearAuth()
-  await router.replace({ name: ROUTE_NAMES.LOGIN })
+  try {
+    // 서버 logout 호출로 refresh cookie까지 정리한다.
+    await logoutSession()
+  } catch (error) {
+    // 네트워크 오류가 있어도 프런트 메모리 상태는 정리해 로그아웃 UX를 유지한다.
+    console.error('[Header] logout failed:', error)
+  } finally {
+    notif.clear()
+    auth.clearAuth()
+    await router.replace({ name: ROUTE_NAMES.LOGIN })
+  }
 }
 </script>
 

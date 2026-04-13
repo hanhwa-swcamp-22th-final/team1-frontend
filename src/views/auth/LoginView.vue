@@ -52,11 +52,7 @@ async function handleSubmit() {
     const res  = await login({ email: loginId.value, password: password.value })
     const data = res.data.data
 
-    auth.setAuth({
-      user:         { name: data.user.name, email: data.user.email, status: data.user.status, organization: data.user.organization ?? null },
-      token:        data.token,
-      role:         data.user.role,
-    })
+    auth.applyLoginResponse(data)
 
     const redirect  = route.query.redirect
     const dashboard = DASHBOARD_BY_ROLE[data.user.role]

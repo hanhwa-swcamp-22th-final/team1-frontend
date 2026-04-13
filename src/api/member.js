@@ -6,7 +6,23 @@ import instance from './instance.js'
  * @returns {Promise<AxiosResponse>}
  */
 export async function login(payload) {
-  return instance.post('/member/auth/login', payload)
+  return instance.post('/member/auth/login', payload, { _skipAuthRefresh: true })
+}
+
+/**
+ * 앱 부팅/토큰 만료 시 refresh cookie로 access token 재발급
+ * @returns {Promise<AxiosResponse>}
+ */
+export async function refreshSession() {
+  return instance.post('/member/auth/refresh', null, { _skipAuthRefresh: true })
+}
+
+/**
+ * 서버 세션 종료(refresh cookie 삭제)
+ * @returns {Promise<AxiosResponse>}
+ */
+export async function logoutSession() {
+  return instance.post('/member/auth/logout')
 }
 
 /**

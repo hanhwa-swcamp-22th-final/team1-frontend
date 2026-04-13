@@ -1,5 +1,11 @@
 /**
  * stores/notification.js — 헤더 알림 드롭다운 전용 스토어
+ *
+ * 인증 토큰 사용 방식:
+ *   - 알림 API와 SSE는 모두 Authorization 헤더의 access token이 필요하다.
+ *   - access token은 localStorage가 아니라 Pinia 메모리 auth.token에서 읽는다.
+ *   - 새로고침 직후에는 main.js의 bootstrapAuth()가 refresh cookie로 세션을
+ *     먼저 복구한 뒤 앱을 마운트하므로, initialize() 시점에는 최신 토큰이 들어있다.
  */
 import { EventSourcePolyfill } from 'event-source-polyfill'
 import {
@@ -10,20 +16,14 @@ import {
 } from '@/api/notification'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import pinia from '@/pinia'
+import { useAuthStore } from '@/stores/auth'
 
-const AUTH_STORAGE_KEY = 'conk-auth'
 const DEFAULT_PAGE_SIZE = 20
 
 function readAccessToken() {
-  const raw = localStorage.getItem(AUTH_STORAGE_KEY)
-  if (!raw) return null
-
-  try {
-    const { token } = JSON.parse(raw)
-    return token ?? null
-  } catch {
-    return null
-  }
+  const auth = useAuthStore(pinia)
+  return auth.token ?? null
 }
 
 function buildNotificationSseUrl() {
@@ -119,6 +119,8 @@ export const useNotificationStore = defineStore('notification', () => {
     const token = readAccessToken()
     if (!token || eventSource) return
 
+    // SSE는 브라우저 기본 EventSource 헤더 주입이 제한적이어서 polyfill을 사용한다.
+    // 여기서도 현재 메모리 토큰을 Authorization 헤더로 직접 넣는다.
     eventSource = new EventSourcePolyfill(buildNotificationSseUrl(), {
       headers: {
         Authorization: `Bearer ${token}`,

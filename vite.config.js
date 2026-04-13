@@ -13,8 +13,8 @@ export default defineConfig({
     },
   },
   // npm run dev 전용 프록시 설정 — 빌드(dist/)에는 영향 없음
-  // Vite dev server(:5173)가 API 요청을 Nginx(:80)로 대신 전달
-  // → 브라우저 입장에서 같은 출처(5173)에 요청하므로 CORS 미발생
+  // VITE_API_BASE_URL=http://localhost (절대 URL) 사용으로 실제로는 경유하지 않음
+  // 브라우저가 http://localhost(Nginx:80)으로 직접 요청
   server: {
     proxy: {
       '/member':        { target: 'http://localhost', changeOrigin: true },
