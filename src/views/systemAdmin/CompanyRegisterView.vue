@@ -71,8 +71,6 @@ async function submitRegistration() {
 
     await createCompanyLog({
       companyId: tenantId,
-      at:        new Date().toISOString(),
-      actor:     'sys.admin@conk.com',
       action:    '업체 등록',
     })
 

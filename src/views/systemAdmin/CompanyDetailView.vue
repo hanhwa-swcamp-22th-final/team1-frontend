@@ -44,7 +44,7 @@ async function fetchData() {
     const [companyRes, userRes, logRes] = await Promise.all([
       getCompanies({ id: companyId }),
       getUsers({ companyId }),
-      getCompanyLogs({ companyId }),
+      getCompanyLogs(),
     ])
     company.value = companyRes.data.data[0] || null
     users.value = userRes.data.data
@@ -91,7 +91,8 @@ async function saveBasicInfo() {
       address: editForm.address,
     })
     await createCompanyLog({
-      id: Date.now(), companyId: company.value.id, at: new Date().toISOString(), actor: 'sys.admin@conk.com', action: '업체 기본 정보 수정',
+      companyId: company.value.id,
+      action:    '업체 기본 정보 수정',
     })
     await fetchData()
   } finally {
@@ -121,7 +122,10 @@ async function issueAdmin() {
       wasActiveBeforeCompanyInactivation: false,
     })
     await updateCompany(companyId, { userCount: Number(company.value.userCount || 0) + 1 })
-    await createCompanyLog({ id: Date.now(), companyId, at: new Date().toISOString(), actor: 'sys.admin@conk.com', action: '총괄 관리자 추가 발급' })
+    await createCompanyLog({
+      companyId: companyId,
+      action:    '총괄 관리자 추가 발급',
+    })
     inviteModal.open = false
     inviteModal.name = ''
     inviteModal.email = ''
