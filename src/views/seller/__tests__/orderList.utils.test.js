@@ -50,13 +50,13 @@ describe('orderList utils', () => {
     expect(buildSellerOrderListQuery({
       page: 0,
       size: 10,
-      status: 'PENDING',
+      status: 'DISPATCHED',
       channel: 'SHOPIFY',
       search: 'ORD-2026',
     })).toEqual({
       page: 0,
       size: 10,
-      status: 'PENDING',
+      status: 'DISPATCHED',
     })
   })
 
@@ -167,6 +167,6 @@ describe('orderList utils', () => {
   })
 
   it('취소 상태는 스텝퍼 기준 접수 단계로 처리한다', () => {
-    expect(getSellerOrderProgressStep('CANCELLED')).toBe('RECEIVED')
+    expect(getSellerOrderProgressStep('CANCELED')).toBe('RECEIVED')
   })
 })

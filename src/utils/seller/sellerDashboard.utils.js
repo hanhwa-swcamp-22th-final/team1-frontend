@@ -136,6 +136,7 @@ function getDashboardOutboundStage(status) {
   if (['RECEIVED', 'NEW'].includes(status)) return 'pending'
   if (['WAITING', 'ALLOCATED', 'DISPATCHED', 'READY', 'SHIPPED'].includes(status)) return 'progress'
   if (['COMPLETED', 'DELIVERED'].includes(status)) return 'completed'
+  if (['CANCELED', 'CANCELLED'].includes(status)) return 'ignored'
   return 'ignored'
 }
 
@@ -145,6 +146,7 @@ function normalizeDashboardOrderStatus(status) {
   if (['ALLOCATED'].includes(status)) return 'ALLOCATED'
   if (['SHIPPED', 'DISPATCHED'].includes(status)) return 'DISPATCHED'
   if (['DELIVERED', 'COMPLETED'].includes(status)) return 'COMPLETED'
+  if (['CANCELED', 'CANCELLED'].includes(status)) return 'CANCELED'
   return status
 }
 

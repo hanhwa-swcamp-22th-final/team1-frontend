@@ -9,7 +9,7 @@ export const SELLER_ORDER_STATUS_OPTIONS = [
   { key: 'DISPATCHED', label: '출고지시됨' },
   { key: 'WAITING', label: '출고 대기중' },
   { key: 'COMPLETED', label: '출고완료' },
-  { key: 'CANCELLED', label: '취소됨' },
+  { key: 'CANCELED', label: '취소됨' },
 ]
 
 export const SELLER_ORDER_CHANNEL_OPTIONS = [
@@ -25,7 +25,7 @@ export const SELLER_ORDER_STATUS_META = {
   DISPATCHED: { label: '출고지시됨', tone: 'amber' },
   WAITING: { label: '출고 대기중', tone: 'gold' },
   COMPLETED: { label: '출고완료', tone: 'green' },
-  CANCELLED: { label: '취소됨', tone: 'red' },
+  CANCELED: { label: '취소됨', tone: 'red' },
 }
 
 export const SELLER_ORDER_CHANNEL_META = {

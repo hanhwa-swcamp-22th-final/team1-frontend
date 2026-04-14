@@ -63,7 +63,7 @@ const currentStep = computed(() => getSellerOrderProgressStep(displayStatus.valu
 
         <div class="hero-stepper">
           <TimelineStepper :steps="SELLER_ORDER_PROGRESS_STEPS" :current-step="currentStep" />
-          <p v-if="displayStatus === 'CANCELLED'" class="hero-note">
+          <p v-if="displayStatus === 'CANCELED'" class="hero-note">
             취소된 주문은 접수 시점 기준으로 처리 흐름을 표시합니다.
           </p>
         </div>
