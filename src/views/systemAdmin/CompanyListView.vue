@@ -142,7 +142,6 @@ async function submitInvite() {
   ui.setLoading(true)
   try {
     await createUser(payload)
-    await updateCompany(inviteModal.company.id, { userCount: Number(inviteModal.company.userCount || 0) + 1 })
     await createCompanyLog({ id: Date.now(), companyId: inviteModal.company.id, at: new Date().toISOString(), actor: 'sys.admin@conk.com', action: '총괄 관리자 추가 발급' })
     inviteModal.open = false
     await fetchAll()

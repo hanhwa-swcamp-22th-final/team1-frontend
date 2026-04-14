@@ -84,9 +84,9 @@ async function saveBasicInfo() {
   ui.setLoading(true)
   try {
     await updateCompany(company.value.id, {
-      representative: editForm.representative,
-      businessNumber: editForm.businessNumber,
-      phone: editForm.phone,
+      representativeName: editForm.representative,
+      businessNo: editForm.businessNumber,
+      phoneNo: editForm.phone,
       email: editForm.email,
       address: editForm.address,
     })
@@ -121,7 +121,6 @@ async function issueAdmin() {
       lastLoginAt: null,
       wasActiveBeforeCompanyInactivation: false,
     })
-    await updateCompany(companyId, { userCount: Number(company.value.userCount || 0) + 1 })
     await createCompanyLog({
       companyId: companyId,
       action:    '총괄 관리자 추가 발급',
