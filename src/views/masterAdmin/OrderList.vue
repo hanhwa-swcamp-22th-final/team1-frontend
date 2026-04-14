@@ -19,6 +19,7 @@ import StatusBadge from '@/components/common/StatusBadge.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import MasterListToolbar from '@/components/masterAdmin/MasterListToolbar.vue'
 import MasterStatusTabs from '@/components/masterAdmin/MasterStatusTabs.vue'
+import { normalizeOrderStatusRows } from '@/utils/orderStatus.utils.js'
 
 // -- 브레드크럼 ---------------------------------------------------------------
 const breadcrumb = [{ label: '입출고' }, { label: '주문 목록' }]
@@ -127,7 +128,8 @@ async function fetchAll() {
   isLoading.value = true
   try {
     const res = await getOrderList()
-    allOrders.value = res.data.data
+    const payload = Array.isArray(res.data?.data) ? res.data.data : []
+    allOrders.value = normalizeOrderStatusRows(payload)
   } catch (error) {
     console.error('[OrderList] fetch error:', error)
   } finally {

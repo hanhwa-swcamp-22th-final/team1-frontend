@@ -7,6 +7,7 @@ import BulkOutboundModal from '@/components/whManager/BulkOutboundModal.vue'
 import OrderDetailModal from '@/components/whManager/OrderDetailModal.vue'
 import { getWhmOrders } from '@/api/order'
 import { ORDER_STATUS } from '@/constants'
+import { normalizeOrderStatusRows } from '@/utils/orderStatus.utils.js'
 
 // ── 탭
 const TABS = [
@@ -51,7 +52,8 @@ const orders = ref([])
 async function fetchOrders() {
   try {
     const { data } = await getWhmOrders()
-    orders.value = data.data ?? data
+    const payload = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []
+    orders.value = normalizeOrderStatusRows(payload)
   } catch (e) {
     console.error('주문 데이터 로드 실패:', e)
   }
