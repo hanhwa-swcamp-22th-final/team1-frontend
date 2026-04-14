@@ -6,7 +6,7 @@ import BaseForm from '@/components/common/BaseForm.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import { ROUTE_NAMES } from '@/constants'
-import { createCompany, createCompanyLog, createUser, getCompanies, getUsers } from '@/api/member'
+import { createCompany, createCompanyLog, createUser } from '@/api/member'
 import { useUiStore } from '@/stores/ui'
 
 const router = useRouter()
@@ -39,69 +39,41 @@ function openConfirm() {
   confirmOpen.value = true
 }
 
-function slug(text) {
-  return text.replace(/[^a-zA-Z0-9가-힣 ]/g, '').trim().split(/\s+/).slice(0, 2).join('').toUpperCase().slice(0, 8)
-}
 
 const flowSummary = computed(() => [
   '업체와 최초 총괄 관리자 계정이 동시에 생성됩니다.',
   '고유 테넌트 코드가 자동 부여되고 업체 상태는 설정중으로 저장됩니다.',
-  '최초 총괄 관리자에게 비밀번호 최초 설정 링크가 발송되며 설정 완료 후 활성 상태로 전환됩니다.',
-  '최초 설정 링크는 설정 완료 후 다시 사용할 수 없습니다.',
+  '최초 총괄 관리자 이메일로 임시 비밀번호가 발송됩니다. 최초 로그인 후 비밀번호를 변경해야 합니다.',
 ])
 
 async function submitRegistration() {
   confirmOpen.value = false
   ui.setLoading(true)
   try {
-    const [companiesRes, usersRes] = await Promise.all([getCompanies(), getUsers()])
-    const companies = companiesRes.data.data
-    const users = usersRes.data.data
-    const nextCompanyId = Math.max(0, ...companies.map((item) => Number(item.id) || 0)) + 1
-    const nextUserId = Math.max(0, ...users.map((item) => Number(item.id) || 0)) + 1
-    createdTenantCode.value = `TEN-${slug(form.name)}-${String(nextCompanyId).padStart(3, '0')}`
-
-    await createCompany({
-      id: nextCompanyId,
-      name: form.name.trim(),
-      representative: form.representative.trim(),
-      businessNumber: form.businessNumber.trim(),
-      phone: form.phone.trim(),
-      email: form.email.trim(),
-      address: form.address.trim(),
-      companyType: form.companyType,
-      tenantCode: createdTenantCode.value,
-      status: 'SETTING',
-      createdAt: new Date().toISOString(),
-      warehouseCount: 0,
-      sellerCount: 0,
-      userCount: 1,
-      lockedAccountCount: 1,
-      warehouseList: [],
-      sellerCompanyList: [],
-      activationLinkStatus: 'PENDING',
+    const companyRes = await createCompany({
+      tenantName:         form.name.trim(),
+      representativeName: form.representative.trim(),
+      businessNo:         form.businessNumber.trim(),
+      phoneNo:            form.phone.trim(),
+      email:              form.email.trim(),
+      address:            form.address.trim(),
+      tenantType:         form.companyType,
     })
+    const tenantId = companyRes.data.data.id
+    createdTenantCode.value = companyRes.data.data.tenantCode ?? ''
 
     await createUser({
-      id: nextUserId,
-      companyId: nextCompanyId,
-      name: form.adminName.trim(),
-      email: form.adminEmail.trim(),
-      role: 'MASTER_ADMIN',
-      organization: form.name.trim(),
-      warehouse: '-',
-      status: 'INVITE_PENDING',
-      registeredAt: new Date().toISOString(),
-      lastLoginAt: null,
-      wasActiveBeforeCompanyInactivation: false,
+      tenantId: tenantId,
+      name:     form.adminName.trim(),
+      email:    form.adminEmail.trim(),
+      role:     'MASTER_ADMIN',
     })
 
     await createCompanyLog({
-      id: Date.now(),
-      companyId: nextCompanyId,
-      at: new Date().toISOString(),
-      actor: 'sys.admin@conk.com',
-      action: '업체 등록',
+      companyId: tenantId,
+      at:        new Date().toISOString(),
+      actor:     'sys.admin@conk.com',
+      action:    '업체 등록',
     })
 
     resultOpen.value = true
