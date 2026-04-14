@@ -9,7 +9,13 @@ import {
   getSellerChannelDetail,
   getSellerChannelImportPreview,
 } from '@/api/integration'
-import { createSellerBulkOrders, createSellerOrder, getSellerOrderOptions } from '@/api/order'
+import {
+  createSellerBulkOrders,
+  createSellerOrder,
+  downloadSellerBulkOrderTemplate,
+  getSellerOrderOptions,
+  validateSellerBulkOrders,
+} from '@/api/order'
 import BaseForm from '@/components/common/BaseForm.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import FileUpload from '@/components/common/FileUpload.vue'
@@ -21,16 +27,15 @@ import {
   buildChannelImportPreviewMessage,
   buildManualOrderPayload,
   buildOrderProductLineSummary,
-  buildOrderTemplateCsv,
   buildOrderUploadResultSummary,
   createOrderProductLine,
-  generateSellerOrderNumber,
   getMissingOrderUploadColumns,
   mapOrderUploadRows,
   normalizeBulkOrderRegisterTab,
   normalizeOrderRegisterTab,
   ORDER_PREVIEW_COLUMNS,
   ORDER_UPLOAD_REQUIRED_COLUMNS,
+  resolveTemplateDownloadFilename,
   SELLER_BULK_ORDER_REGISTER_TABS,
   SELLER_ORDER_REGISTER_TABS,
   validateOrderForm,
@@ -92,8 +97,6 @@ function createInitialForm() {
   productLineSequence = 2
 
   return {
-    autoGenerateOrderNo: false,
-    orderNo: '',
     orderDate: '',
     salesChannel: salesChannelOptions.value[0]?.value ?? '수동',
     recipient: '',
@@ -110,7 +113,6 @@ function createInitialForm() {
 
 const manualForm = ref(createInitialForm())
 const formErrors = reactive({
-  orderNo: '',
   orderDate: '',
   recipient: '',
   contact: '',
@@ -122,12 +124,6 @@ const formErrors = reactive({
   quantity: '',
   items: '',
 })
-
-const currentOrderNoPreview = computed(() => (
-  manualForm.value.autoGenerateOrderNo
-    ? generateSellerOrderNumber(manualForm.value.orderDate || new Date())
-    : String(manualForm.value.orderNo ?? '').trim() || '직접 입력'
-))
 
 const manualProductRows = computed(() => (
   manualForm.value.items.map((line, index) => {
@@ -310,21 +306,33 @@ function handleCloseUploadResultModal() {
   isUploadResultModalOpen.value = false
 }
 
-function handleDownloadTemplate() {
-  const csvContent = `\uFEFF${buildOrderTemplateCsv()}`
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const href = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
+async function handleDownloadTemplate() {
+  try {
+    const response = await downloadSellerBulkOrderTemplate()
+    const fileName = resolveTemplateDownloadFilename(
+      response.headers?.['content-disposition'],
+      'order_upload_template.xlsx',
+    )
+    const blob = response.data instanceof Blob
+      ? response.data
+      : new Blob([response.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
+    const href = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
 
-  anchor.href = href
-  anchor.download = 'seller-order-template.csv'
-  document.body.appendChild(anchor)
-  anchor.click()
-  document.body.removeChild(anchor)
-  URL.revokeObjectURL(href)
+    anchor.href = href
+    anchor.download = fileName
+    document.body.appendChild(anchor)
+    anchor.click()
+    document.body.removeChild(anchor)
+    URL.revokeObjectURL(href)
 
-  uploadErrorMessage.value = ''
-  showToast('주문 등록 템플릿을 다운로드했습니다.')
+    uploadErrorMessage.value = ''
+    showToast('주문 등록 템플릿을 다운로드했습니다.')
+  } catch (error) {
+    uploadErrorMessage.value = error.response?.data?.message ?? '템플릿 다운로드 중 오류가 발생했습니다.'
+  }
 }
 
 async function handleFileSelected(file) {
@@ -362,14 +370,27 @@ async function handleFileSelected(file) {
     }
 
     previewRows.value = mapOrderUploadRows(rows)
+    const validationResponse = await validateSellerBulkOrders(targetFile)
+    const validationResult = validationResponse.data?.data ?? {}
+
     isPreviewSample.value = false
-    showToast(`${targetFile.name} 파일에서 ${previewRows.value.length}건을 불러왔습니다.`)
-    uploadResultSummary.value = buildOrderUploadResultSummary(previewRows.value, targetFile.name)
+    uploadResultSummary.value = buildOrderUploadResultSummary(
+      previewRows.value,
+      targetFile.name,
+      validationResult,
+    )
     isUploadResultModalOpen.value = true
+
+    if (uploadResultSummary.value.errorCount > 0) {
+      uploadErrorMessage.value = `검증 오류 ${uploadResultSummary.value.errorCount}건이 있습니다. 파일을 수정한 뒤 다시 업로드하세요.`
+      return
+    }
+
+    showToast(`${targetFile.name} 파일에서 ${previewRows.value.length}건을 불러왔습니다.`)
   } catch (error) {
     previewRows.value = []
     isPreviewSample.value = true
-    uploadErrorMessage.value = '엑셀 파일을 읽지 못했습니다. 파일 형식을 확인하세요.'
+    uploadErrorMessage.value = error.response?.data?.message ?? '엑셀 파일을 읽지 못했습니다. 파일 형식을 확인하세요.'
   }
 }
 
@@ -406,10 +427,16 @@ async function handleBulkSubmit() {
     return
   }
 
+  if (uploadResultSummary.value?.errorCount > 0) {
+    bulkSubmitErrorMessage.value = '검증 오류가 있는 파일은 저장할 수 없습니다.'
+    isUploadResultModalOpen.value = true
+    return
+  }
+
   try {
     isSubmittingBulk.value = true
     const response = await createSellerBulkOrders(selectedBulkFile.value)
-    const savedCount = response.data?.data?.savedCount ?? previewRows.value.length
+    const savedCount = response.data?.data?.successCount ?? previewRows.value.length
 
     resetUploadState()
     showToast(`${response.data?.message ?? '업로드 주문이 등록되었습니다.'} (${savedCount}건)`)
@@ -706,8 +733,8 @@ onBeforeUnmount(() => {
 
             <dl class="summary-list">
               <div class="summary-row">
-                <dt>주문번호</dt>
-                <dd>{{ currentOrderNoPreview }}</dd>
+                <dt>주문일자</dt>
+                <dd>{{ manualForm.orderDate || '-' }}</dd>
               </div>
               <div class="summary-row">
                 <dt>판매 채널</dt>
@@ -745,7 +772,7 @@ onBeforeUnmount(() => {
             </div>
 
             <ul class="check-list">
-              <li>주문번호 자동생성 사용 시 주문일자를 먼저 선택합니다.</li>
+              <li>주문일자를 먼저 선택하고 실제 주문 시점을 확인합니다.</li>
               <li>배송지는 State / City / Zip Code 를 각각 나눠 입력합니다.</li>
               <li>SKU는 셀러 공통 재고 코드 기준으로 선택합니다.</li>
               <li>가용재고를 초과한 수량은 저장 전 다시 확인합니다.</li>
@@ -765,27 +792,6 @@ onBeforeUnmount(() => {
               </div>
 
               <div class="form-grid">
-                <BaseForm
-                  class="form-span-2"
-                  label="주문번호"
-                  :error="formErrors.orderNo"
-                  hint="직접 입력하거나 자동생성을 선택할 수 있습니다."
-                >
-                  <div class="order-no-stack">
-                    <input
-                      v-model="manualForm.orderNo"
-                      type="text"
-                      placeholder="ORD-20260321-001"
-                      :disabled="manualForm.autoGenerateOrderNo"
-                    />
-                    <label class="toggle-check">
-                      <input v-model="manualForm.autoGenerateOrderNo" type="checkbox" />
-                      <span>주문번호 자동생성</span>
-                      <strong>{{ currentOrderNoPreview }}</strong>
-                    </label>
-                  </div>
-                </BaseForm>
-
                 <BaseForm label="주문일자" required :error="formErrors.orderDate">
                   <input v-model="manualForm.orderDate" type="date" />
                 </BaseForm>
@@ -1079,6 +1085,16 @@ onBeforeUnmount(() => {
                 <div class="summary-row">
                   <dt>미리보기 상태</dt>
                   <dd>{{ isPreviewSample ? '업로드 대기' : '실데이터 미리보기' }}</dd>
+                </div>
+                <div class="summary-row">
+                  <dt>검증 결과</dt>
+                  <dd>
+                    {{ uploadResultSummary
+                      ? uploadResultSummary.errorCount
+                        ? `오류 ${uploadResultSummary.errorCount}건`
+                        : `${uploadResultSummary.validRows}건 통과`
+                      : '-' }}
+                  </dd>
                 </div>
               </dl>
               </section>

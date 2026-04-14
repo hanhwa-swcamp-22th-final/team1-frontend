@@ -4,6 +4,7 @@ import BaseModal from '@/components/common/BaseModal.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import TimelineStepper from '@/components/common/TimelineStepper.vue'
 import { ORDER_STATUS } from '@/constants'
+import { toDisplayOrderStatus } from '@/utils/orderStatus.utils.js'
 
 const props = defineProps({
   isOpen: { type: Boolean, required: true },
@@ -25,7 +26,8 @@ const ORDER_STEPS = [
   { key: ORDER_STATUS.SHIPPED,        label: '출고완료' },
 ]
 
-const isCancelled = computed(() => props.order?.status === ORDER_STATUS.CANCELLED)
+const displayOrderStatus = computed(() => toDisplayOrderStatus(props.order?.status))
+const isCancelled = computed(() => displayOrderStatus.value === ORDER_STATUS.CANCELLED)
 </script>
 
 <template>
@@ -85,7 +87,7 @@ const isCancelled = computed(() => props.order?.status === ORDER_STATUS.CANCELLE
       <!-- 진행 타임라인 -->
       <div v-else class="timeline-section">
         <div class="section-label">처리 현황</div>
-        <TimelineStepper :steps="ORDER_STEPS" :currentStep="order?.status" />
+        <TimelineStepper :steps="ORDER_STEPS" :currentStep="displayOrderStatus || ORDER_STATUS.PENDING" />
       </div>
     </template>
 

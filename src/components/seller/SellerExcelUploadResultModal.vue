@@ -25,7 +25,11 @@ const emit = defineEmits(['cancel'])
         <div>
           <p class="hero-eyebrow">Seller Upload Result</p>
           <h2 class="hero-title">{{ summary.fileName || '업로드 파일' }}</h2>
-          <p class="hero-copy">업로드 미리보기에 반영된 주문 결과를 바로 확인합니다.</p>
+          <p class="hero-copy">
+            {{ summary.errorCount
+              ? `검증 오류 ${summary.errorCount}건을 수정한 뒤 다시 업로드하세요.`
+              : '업로드 검증이 완료되었습니다.' }}
+          </p>
         </div>
       </section>
 
@@ -55,10 +59,40 @@ const emit = defineEmits(['cancel'])
             <dd>{{ summary.firstOrderNo }}</dd>
           </div>
           <div>
+            <dt>검증 대상 행</dt>
+            <dd>{{ summary.totalRows }}</dd>
+          </div>
+          <div>
+            <dt>검증 통과 행</dt>
+            <dd>{{ summary.validRows }}</dd>
+          </div>
+          <div>
+            <dt>검증 오류</dt>
+            <dd>{{ summary.errorCount ? `${summary.errorCount}건` : '없음' }}</dd>
+          </div>
+          <div>
             <dt>안내</dt>
-            <dd>아래 미리보기 표에서 주문별 데이터를 검토한 뒤 업로드 주문 저장을 진행하면 됩니다.</dd>
+            <dd>
+              {{ summary.errorCount
+                ? '오류 행을 수정한 뒤 다시 검증하세요.'
+                : '미리보기를 확인한 뒤 업로드 주문 저장을 진행하세요.' }}
+            </dd>
           </div>
         </dl>
+
+        <div v-if="summary.errorCount" class="validation-errors">
+          <strong class="validation-errors__title">검증 오류 목록</strong>
+          <ul class="validation-errors__list">
+            <li
+              v-for="error in summary.errors"
+              :key="`${error.row}-${error.message}`"
+              class="validation-errors__item"
+            >
+              <span class="validation-errors__row">{{ error.row ? `${error.row}행` : '행 정보 없음' }}</span>
+              <span>{{ error.message }}</span>
+            </li>
+          </ul>
+        </div>
       </section>
     </div>
 
@@ -155,6 +189,38 @@ const emit = defineEmits(['cancel'])
   color: var(--t1);
   font-size: var(--font-size-sm);
   line-height: 1.5;
+}
+
+.validation-errors {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.validation-errors__title {
+  color: var(--red);
+  font-size: var(--font-size-sm);
+}
+
+.validation-errors__list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: 18px;
+}
+
+.validation-errors__item {
+  color: var(--t2);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.validation-errors__row {
+  margin-right: 6px;
+  color: var(--red);
+  font-weight: 700;
 }
 
 @media (max-width: 720px) {

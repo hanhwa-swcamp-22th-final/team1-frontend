@@ -29,9 +29,13 @@ export const SELLER_ORDER_STATUS_META = {
 }
 
 export const SELLER_ORDER_CHANNEL_META = {
+  AMAZON: { label: 'Amazon', tone: 'amazon' },
   Amazon: { label: 'Amazon', tone: 'amazon' },
+  SHOPIFY: { label: 'Shopify', tone: 'shopify' },
   수동: { label: '수동', tone: 'manual' },
+  MANUAL: { label: '수동', tone: 'manual' },
   엑셀: { label: '엑셀', tone: 'excel' },
+  EXCEL: { label: '엑셀', tone: 'excel' },
 }
 
 export const SELLER_ORDER_PROGRESS_STEPS = [
@@ -43,7 +47,7 @@ export const SELLER_ORDER_PROGRESS_STEPS = [
 ]
 
 export const SELLER_ORDER_LIST_COLUMNS = [
-  { key: 'orderNo', label: '주문번호', width: '170px' },
+  { key: 'orderId', label: '주문번호', width: '170px' },
   { key: 'channel', label: '채널', width: '100px' },
   { key: 'recipient', label: '수령자', width: '120px' },
   { key: 'address', label: '배송지', width: '190px' },
@@ -56,7 +60,7 @@ export const SELLER_ORDER_LIST_COLUMNS = [
 
 export function buildSellerOrderExportRows(rows = []) {
   return rows.map((row) => ({
-    주문번호: row.orderNo ?? '',
+    주문번호: row.orderId ?? row.id ?? '',
     채널: getSellerOrderChannelMeta(row.channel).label,
     수령자: row.recipient ?? '',
     배송지: row.address ?? '',
@@ -65,6 +69,17 @@ export function buildSellerOrderExportRows(rows = []) {
     상태: getSellerOrderStatusMeta(row.status).label,
     송장번호: row.trackingNo ?? '',
   }))
+}
+
+export function buildSellerOrderListQuery(filters = {}) {
+  const page = Number(filters.page ?? 0)
+  const size = Number(filters.size ?? 10)
+
+  return {
+    page: Number.isFinite(page) && page >= 0 ? page : 0,
+    size: Number.isFinite(size) && size > 0 ? size : 10,
+    status: filters.status && filters.status !== 'all' ? filters.status : undefined,
+  }
 }
 
 export function getSellerOrderStatusMeta(status) {
@@ -80,25 +95,69 @@ export function getSellerOrderProgressStep(status) {
   return matchedStep?.key ?? 'RECEIVED'
 }
 
+function joinAddress(parts = []) {
+  return parts
+    .map((part) => String(part ?? '').trim())
+    .filter(Boolean)
+    .join(' ')
+}
+
+function resolveSellerOrderId(order = {}) {
+  return String(order.orderId ?? order.orderNo ?? order.id ?? '').trim()
+}
+
+export function normalizeSellerOrderRow(row = {}) {
+  const orderId = resolveSellerOrderId(row)
+  const itemCount = Math.max(0, Number(row.itemCount ?? 0) || 0)
+
+  return {
+    ...row,
+    id: orderId || String(row.id ?? '').trim(),
+    orderId,
+    channel: row.channel ?? row.orderChannel ?? '',
+    recipient: row.recipient ?? row.receiverName ?? '',
+    address: row.address ?? joinAddress([row.street1, row.street2]),
+    itemsSummary: row.itemsSummary ?? (itemCount > 0 ? `상품 ${itemCount}건` : ''),
+    trackingNo: row.trackingNo ?? '',
+    canCancel: Boolean(row.canCancel),
+  }
+}
+
+export function normalizeSellerOrderListPayload(payload = {}) {
+  const rows = Array.isArray(payload?.orders) ? payload.orders : []
+
+  return {
+    orders: rows.map((row) => normalizeSellerOrderRow(row)),
+    totalCount: Math.max(0, Number(payload?.totalCount ?? 0) || 0),
+    page: Math.max(0, Number(payload?.page ?? 0) || 0),
+    size: Math.max(0, Number(payload?.size ?? rows.length) || 0),
+  }
+}
+
 export function normalizeSellerOrderDetail(detail = {}, order = {}) {
+  const normalizedOrder = normalizeSellerOrderRow(order)
   const items = Array.isArray(detail?.items)
     ? detail.items.map((item) => ({
-        ...item,
+        sku: String(item.sku ?? '').trim(),
+        productName: String(item.productName ?? '').trim(),
         quantity: Number(item.quantity ?? 0),
-        unitPrice: Number(item.unitPrice ?? 0),
-        amount: Number(item.amount ?? (Number(item.quantity ?? 0) * Number(item.unitPrice ?? 0))),
       }))
     : []
 
   return {
-    receiverPhone: detail?.receiverPhone ?? '-',
-    state: detail?.state ?? '-',
-    city: detail?.city ?? '-',
-    zipCode: detail?.zipCode ?? '-',
-    addressLine: detail?.addressLine ?? order.address ?? '-',
-    shippingMethod: detail?.shippingMethod ?? '-',
-    carrier: detail?.carrier ?? '-',
+    orderId: String(detail?.orderId ?? normalizedOrder.orderId ?? '').trim(),
+    orderedAt: detail?.orderedAt ?? normalizedOrder.orderedAt ?? '-',
+    status: detail?.status ?? normalizedOrder.status ?? '-',
+    orderChannel: detail?.orderChannel ?? normalizedOrder.channel ?? '-',
+    receiverName: detail?.receiverName ?? normalizedOrder.recipient ?? '-',
+    phone: detail?.phone ?? normalizedOrder.phone ?? '-',
     memo: detail?.memo ?? '',
+    street1: detail?.street1 ?? normalizedOrder.street1 ?? normalizedOrder.address ?? '-',
+    street2: detail?.street2 ?? normalizedOrder.street2 ?? '',
+    state: detail?.state ?? normalizedOrder.state ?? '-',
+    zip: detail?.zip ?? normalizedOrder.zip ?? '-',
+    country: detail?.country ?? normalizedOrder.country ?? '-',
+    canCancel: Boolean(detail?.canCancel ?? normalizedOrder.canCancel),
     items,
   }
 }

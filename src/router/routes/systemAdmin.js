@@ -32,10 +32,4 @@ export default [
     component: () => import('@/views/systemAdmin/UserAccountListView.vue'),
     meta: { role: ROLES.SYSTEM_ADMIN },
   },
-  {
-    path: '/system/import-surcharges',
-    name: ROUTE_NAMES.SYS_IMPORT_SURCHARGE,
-    component: () => import('@/views/systemAdmin/ImportSurchargeView.vue'),
-    meta: { role: ROLES.SYSTEM_ADMIN },
-  },
 ]

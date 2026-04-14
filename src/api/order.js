@@ -29,8 +29,27 @@ export async function createSellerBulkOrders(file) {
 }
 
 /**
+ * 셀러 엑셀 업로드 주문 사전 검증
+ * @param {File|Blob} file
+ * @returns {Promise<AxiosResponse>}
+ */
+export async function validateSellerBulkOrders(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return instance.post('/orders/seller/bulk/validate', formData)
+}
+
+/**
+ * 셀러 엑셀 업로드 템플릿 다운로드
+ * @returns {Promise<AxiosResponse<Blob>>}
+ */
+export function downloadSellerBulkOrderTemplate() {
+  return instance.get('/orders/seller/bulk/template', { responseType: 'blob' })
+}
+
+/**
  * 셀러 주문 목록 조회
- * @returns {Promise<AxiosResponse>} { success, data: SellerOrderRow[] }
+ * @returns {Promise<AxiosResponse>} { success, data: { orders, totalCount, page, size } }
  */
 export function getSellerOrderList(params = {}) {
   return instance.get('/orders/seller/list', { params })
@@ -41,7 +60,7 @@ export function getSellerOrderDetail(orderId) {
 }
 
 export function cancelSellerOrder(orderId) {
-  return instance.post(`/orders/seller/${orderId}/cancel`)
+  return instance.patch(`/orders/seller/${orderId}/cancel`)
 }
 
 export function getSellerOrderOptions() {

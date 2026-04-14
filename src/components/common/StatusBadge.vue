@@ -9,11 +9,11 @@
  * 상태별 색상 매핑 테이블:
  *
  * [order]
- *   PENDING        → amber  (접수)
- *   CONFIRMED      → blue   (확인)
- *   PREPARING_ITEM → purple (물품준비중)
- *   SHIPPED        → green  (출고완료)
- *   CANCELLED      → red    (취소)
+ *   PENDING / RECEIVED                → amber  (접수)
+ *   CONFIRMED / ALLOCATED             → blue   (확인)
+ *   PREPARING_ITEM / OUTBOUND_INSTRUCTED / PICKING / PACKING / OUTBOUND_PENDING → purple (물품준비중)
+ *   SHIPPED / OUTBOUND_COMPLETED      → green  (출고완료)
+ *   CANCELLED / CANCELED              → red    (취소)
  *
  * [asn]
  *   SUBMITTED → blue  (제출됨)
@@ -54,10 +54,16 @@
  */
 import { computed } from 'vue'
 import { ACCOUNT_STATUS, ASN_STATUS, INVENTORY_STATUS, ITEM_STATUS, LABEL_STATUS, ORDER_STATUS, OUTBOUND_CONFIRM_STATUS, PICKING_LIST_STATUS, STOCK_STATUS, TASK_ASSIGN_TYPE, TASK_STATUS, WORKER_PRESENCE_STATUS, WORKER_STATUS, SELLER_STATUS } from '@/constants'
+import { toDisplayOrderStatus } from '@/utils/orderStatus.utils.js'
 
 const props = defineProps({
   status: { type: String, required: true },
   type: { type: String, default: 'order' },
+})
+
+const normalizedStatus = computed(() => {
+  if (props.type !== 'order') return props.status
+  return toDisplayOrderStatus(props.status)
 })
 
 /** type별 상태→표시정보 매핑 */
@@ -148,8 +154,8 @@ const MAP = {
  * MAP에 없는 상태는 원본 문자열을 회색으로 표시 (fallback).
  */
 const info = computed(() => {
-  const entry = MAP[props.type]?.[props.status]
-  return entry ?? { label: props.status, color: 'default' }
+  const entry = MAP[props.type]?.[normalizedStatus.value]
+  return entry ?? { label: normalizedStatus.value, color: 'default' }
 })
 </script>
 

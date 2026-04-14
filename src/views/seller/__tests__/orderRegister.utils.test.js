@@ -14,6 +14,8 @@ import {
   normalizeBulkOrderRegisterTab,
   normalizeOrderRegisterTab,
   ORDER_UPLOAD_REQUIRED_COLUMNS,
+  resolveTemplateDownloadFilename,
+  SAMPLE_PRODUCT_OPTIONS,
   validateOrderForm,
 } from '@/utils/seller/orderRegister.utils.js'
 
@@ -37,10 +39,7 @@ describe('orderRegister utils', () => {
   })
 
   it('상품 라인 요약은 단가, 소계, 재고주의 여부를 계산한다', () => {
-    const result = buildOrderProductLineSummary({
-      sku: 'LB-CRM-100',
-      quantity: 2,
-    })
+    const result = buildOrderProductLineSummary({ sku: 'LB-CRM-100', quantity: 2 }, SAMPLE_PRODUCT_OPTIONS)
 
     expect(result).toEqual({
       productName: '비타민C 크림 100ml',
@@ -121,76 +120,78 @@ describe('orderRegister utils', () => {
   })
 
   it('수동 등록 폼 값을 주문 상품 테이블 기준 payload 로 정리한다', () => {
-    const result = buildManualOrderPayload({
-      orderNo: ' ORD-20260321-001 ',
-      orderDate: '2026-03-21',
-      salesChannel: ' Amazon ',
-      autoGenerateOrderNo: false,
-      recipient: ' 홍길동 ',
-      contact: '010-1234-5678',
-      state: ' California ',
-      city: ' Los Angeles ',
-      zipCode: ' 90001 ',
-      address1: ' 123 Flower Ave ',
-      address2: ' Suite 9 ',
-      items: [
-        { id: 'line-1', sku: 'LB-AMP-30', quantity: 2 },
-        { id: 'line-2', sku: 'LB-MSK-5P', quantity: 1 },
-      ],
-      memo: ' 문 앞 보관 ',
-    })
+    const result = buildManualOrderPayload(
+      {
+        orderDate: '2026-03-21',
+        recipient: ' 홍길동 ',
+        contact: '010-1234-5678',
+        state: ' California ',
+        city: ' Los Angeles ',
+        zipCode: ' 90001 ',
+        address1: ' 123 Flower Ave ',
+        address2: ' Suite 9 ',
+        items: [
+          { id: 'line-1', sku: 'LB-AMP-30', quantity: 2 },
+          { id: 'line-2', sku: 'LB-MSK-5P', quantity: 1 },
+        ],
+        memo: ' 문 앞 보관 ',
+      },
+      { productOptions: SAMPLE_PRODUCT_OPTIONS },
+    )
 
     expect(result).toEqual({
-      orderNo: 'ORD-20260321-001',
-      orderDate: '2026-03-21',
-      salesChannel: 'Amazon',
-      autoGenerateOrderNo: false,
-      recipient: '홍길동',
-      contact: '010-1234-5678',
-      state: 'California',
-      city: 'Los Angeles',
-      zipCode: '90001',
-      postalCode: '90001',
-      address1: '123 Flower Ave',
-      address2: 'Suite 9',
-      sku: 'LB-AMP-30',
-      quantity: 2,
+      orderedAt: '2026-03-21T00:00:00',
+      receiverName: '홍길동',
+      receiverPhoneNo: '010-1234-5678',
+      shippingAddress: {
+        address1: '123 Flower Ave',
+        address2: 'Suite 9',
+        city: 'Los Angeles',
+        state: 'California',
+        zipCode: '90001',
+      },
       items: [
         {
           sku: 'LB-AMP-30',
-          productName: '루미에르 앰플 30ml',
           quantity: 2,
-          unitPrice: 30,
-          subtotal: 60,
+          productNameSnapshot: '루미에르 앰플 30ml',
         },
         {
           sku: 'LB-MSK-5P',
-          productName: '콜라겐 마스크 5매입',
           quantity: 1,
-          unitPrice: 18,
-          subtotal: 18,
+          productNameSnapshot: '콜라겐 마스크 5매입',
         },
       ],
       memo: '문 앞 보관',
     })
   })
 
-  it('자동생성 옵션이면 주문번호 없이도 payload 에 생성된 주문번호를 넣는다', () => {
-    const result = buildManualOrderPayload({
-      orderDate: '2026-03-21',
-      autoGenerateOrderNo: true,
-      salesChannel: '자사몰',
-      recipient: '홍길동',
-      contact: '010-1234-5678',
-      state: 'California',
-      city: 'Los Angeles',
-      zipCode: '90001',
-      address1: '123 Flower Ave',
-      items: [{ id: 'line-1', sku: 'LB-AMP-30', quantity: 2 }],
-    })
+  it('자동생성 옵션이어도 주문 등록 payload 는 백엔드 DTO 필드만 포함한다', () => {
+    const result = buildManualOrderPayload(
+      {
+        orderDate: '2026-03-21',
+        recipient: '홍길동',
+        contact: '010-1234-5678',
+        state: 'California',
+        city: 'Los Angeles',
+        zipCode: '90001',
+        address1: '123 Flower Ave',
+        items: [{ id: 'line-1', sku: 'LB-AMP-30', quantity: 2 }],
+      },
+      { productOptions: SAMPLE_PRODUCT_OPTIONS },
+    )
 
-    expect(result.orderNo).toBe('ORD-20260321-001')
-    expect(result.autoGenerateOrderNo).toBe(true)
+    expect(result.orderedAt).toBe('2026-03-21T00:00:00')
+    expect(result.receiverName).toBe('홍길동')
+    expect(result).not.toHaveProperty('orderNo')
+    expect(result).not.toHaveProperty('salesChannel')
+    expect(result.items).toEqual([
+      {
+        sku: 'LB-AMP-30',
+        quantity: 2,
+        productNameSnapshot: '루미에르 앰플 30ml',
+      },
+    ])
   })
 
   it('업로드 미리보기 행을 일괄 등록 요청 형식으로 변환한다', () => {
@@ -234,6 +235,14 @@ describe('orderRegister utils', () => {
     expect(result).toContain('"California","Los Angeles","90001"')
   })
 
+  it('템플릿 다운로드 파일명은 Content-Disposition 헤더에서 추출한다', () => {
+    expect(resolveTemplateDownloadFilename('attachment; filename=order_upload_template.xlsx'))
+      .toBe('order_upload_template.xlsx')
+    expect(resolveTemplateDownloadFilename(`attachment; filename*=UTF-8''order_upload_template.xlsx`))
+      .toBe('order_upload_template.xlsx')
+    expect(resolveTemplateDownloadFilename('')).toBe('order_upload_template.xlsx')
+  })
+
   it('업로드 결과 모달용 요약 정보를 계산한다', () => {
     const result = buildOrderUploadResultSummary(
       [
@@ -260,6 +269,52 @@ describe('orderRegister utils', () => {
       uniqueSkuCount: 2,
       uniqueRecipientCount: 2,
       firstOrderNo: 'ORD-20260321-009',
+      totalRows: 2,
+      validRows: 2,
+      errorCount: 0,
+      errors: [],
+    })
+  })
+
+  it('업로드 결과 모달용 요약 정보는 서버 검증 결과를 함께 반영한다', () => {
+    const result = buildOrderUploadResultSummary(
+      [
+        {
+          orderNo: 'ORD-20260321-011',
+          recipient: '홍길동',
+          sku: 'LB-AMP-30',
+          quantity: '3',
+        },
+      ],
+      'orders.xlsx',
+      {
+        totalRows: 10,
+        validRows: 8,
+        errors: [
+          {
+            row: 4,
+            message: 'SKU가 비어 있습니다.',
+          },
+        ],
+      },
+    )
+
+    expect(result).toEqual({
+      fileName: 'orders.xlsx',
+      rowCount: 1,
+      totalQuantity: 3,
+      uniqueSkuCount: 1,
+      uniqueRecipientCount: 1,
+      firstOrderNo: 'ORD-20260321-011',
+      totalRows: 10,
+      validRows: 8,
+      errorCount: 1,
+      errors: [
+        {
+          row: 4,
+          message: 'SKU가 비어 있습니다.',
+        },
+      ],
     })
   })
 
@@ -270,7 +325,6 @@ describe('orderRegister utils', () => {
 
   it('필수값이 비어 있으면 주문 등록 검증 에러를 반환한다', () => {
     const result = validateOrderForm({
-      orderNo: '',
       orderDate: '',
       recipient: '',
       contact: '',
@@ -281,7 +335,6 @@ describe('orderRegister utils', () => {
       items: [],
     })
 
-    expect(result.orderNo).toBe('주문번호를 입력하세요.')
     expect(result.orderDate).toBe('주문일자를 선택하세요.')
     expect(result.recipient).toBe('수령인을 입력하세요.')
     expect(result.contact).toBe('연락처를 입력하세요.')
@@ -295,7 +348,6 @@ describe('orderRegister utils', () => {
 
   it('상품 행 중 하나라도 수량이 1 미만이면 quantity 에러를 반환한다', () => {
     const result = validateOrderForm({
-      autoGenerateOrderNo: true,
       orderDate: '2026-03-21',
       recipient: '홍길동',
       contact: '010-1234-5678',
@@ -309,13 +361,11 @@ describe('orderRegister utils', () => {
       ],
     })
 
-    expect(result.orderNo).toBe('')
     expect(result.quantity).toBe('수량은 1 이상이어야 합니다.')
   })
 
-  it('자동생성 + 정상 입력이면 주문 등록 검증 에러가 없다', () => {
+  it('정상 입력이면 주문 등록 검증 에러가 없다', () => {
     const result = validateOrderForm({
-      autoGenerateOrderNo: true,
       orderDate: '2026-03-21',
       recipient: '홍길동',
       contact: '010-1234-5678',

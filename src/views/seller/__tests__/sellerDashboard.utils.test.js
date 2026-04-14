@@ -23,8 +23,8 @@ describe('sellerDashboard utils', () => {
         { availableStock: 0, allocatedStock: 0, status: 'OUT' },
       ],
       orderRows: [
-        { id: 'order-1', orderNo: 'ORD-001', channel: '수동', orderedAt: '2026-03-19 09:00', status: 'RECEIVED' },
-        { id: 'order-2', orderNo: 'ORD-002', channel: '수동', orderedAt: '2026-03-18 09:00', status: 'WAITING' },
+        { id: 'order-1', orderId: 'ORD-001', channel: '수동', orderedAt: '2026-03-19 09:00', status: 'RECEIVED' },
+        { id: 'order-2', orderId: 'ORD-002', channel: '수동', orderedAt: '2026-03-18 09:00', status: 'WAITING' },
       ],
       channelOrderRows: [
         { id: 'channel-1', channelOrderNo: 'CH-001', channel: 'SHOPIFY', orderedAt: '2026-03-19 11:00', status: 'COMPLETED' },
@@ -46,8 +46,8 @@ describe('sellerDashboard utils', () => {
   it('추이 시리즈는 전달된 주문 데이터로 주간/월간/분기별 포인트를 만든다', () => {
     const result = buildSellerDashboardTrendSeries({
       orderRows: [
-        { id: 'order-1', orderNo: 'ORD-001', channel: '수동', orderedAt: '2026-03-18 09:00', status: 'RECEIVED' },
-        { id: 'order-2', orderNo: 'ORD-002', channel: '수동', orderedAt: '2026-03-19 09:00', status: 'RECEIVED' },
+        { id: 'order-1', orderId: 'ORD-001', channel: '수동', orderedAt: '2026-03-18 09:00', status: 'RECEIVED' },
+        { id: 'order-2', orderId: 'ORD-002', channel: '수동', orderedAt: '2026-03-19 09:00', status: 'RECEIVED' },
       ],
       channelOrderRows: [
         { id: 'channel-1', channelOrderNo: 'CH-001', channel: 'SHOPIFY', orderedAt: '2026-03-19 12:00', status: 'COMPLETED' },
@@ -128,7 +128,7 @@ describe('sellerDashboard utils', () => {
       orderRows: [
         {
           id: 'seller-order-1',
-          orderNo: 'ORD-20260319-001',
+          orderId: 'ORD-20260319-001',
           channel: 'SHOPIFY',
           itemsSummary: 'LB-AMP-30 × 2',
           orderedAt: '2026-03-19 10:00',

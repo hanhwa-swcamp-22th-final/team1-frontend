@@ -16,7 +16,6 @@ export const SYSTEM_ADMIN_MENU_GROUPS = [
     label: '단가 관리',
     items: [
       { name: ROUTE_NAMES.SYS_FEE_SETTING, label: '채널 수수료율', icon: '◌' },
-      { name: ROUTE_NAMES.SYS_IMPORT_SURCHARGE, label: '수입 부가비용', icon: '⊕' },
     ],
   },
 ]
