@@ -24,7 +24,6 @@ import {
   buildOrderTemplateCsv,
   buildOrderUploadResultSummary,
   createOrderProductLine,
-  generateSellerOrderNumber,
   getMissingOrderUploadColumns,
   mapOrderUploadRows,
   normalizeBulkOrderRegisterTab,
@@ -92,8 +91,6 @@ function createInitialForm() {
   productLineSequence = 2
 
   return {
-    autoGenerateOrderNo: false,
-    orderNo: '',
     orderDate: '',
     salesChannel: salesChannelOptions.value[0]?.value ?? '수동',
     recipient: '',
@@ -110,7 +107,6 @@ function createInitialForm() {
 
 const manualForm = ref(createInitialForm())
 const formErrors = reactive({
-  orderNo: '',
   orderDate: '',
   recipient: '',
   contact: '',
@@ -122,12 +118,6 @@ const formErrors = reactive({
   quantity: '',
   items: '',
 })
-
-const currentOrderNoPreview = computed(() => (
-  manualForm.value.autoGenerateOrderNo
-    ? generateSellerOrderNumber(manualForm.value.orderDate || new Date())
-    : String(manualForm.value.orderNo ?? '').trim() || '직접 입력'
-))
 
 const manualProductRows = computed(() => (
   manualForm.value.items.map((line, index) => {
@@ -706,8 +696,8 @@ onBeforeUnmount(() => {
 
             <dl class="summary-list">
               <div class="summary-row">
-                <dt>주문번호</dt>
-                <dd>{{ currentOrderNoPreview }}</dd>
+                <dt>주문일자</dt>
+                <dd>{{ manualForm.orderDate || '-' }}</dd>
               </div>
               <div class="summary-row">
                 <dt>판매 채널</dt>
@@ -745,7 +735,7 @@ onBeforeUnmount(() => {
             </div>
 
             <ul class="check-list">
-              <li>주문번호 자동생성 사용 시 주문일자를 먼저 선택합니다.</li>
+              <li>주문일자를 먼저 선택하고 실제 주문 시점을 확인합니다.</li>
               <li>배송지는 State / City / Zip Code 를 각각 나눠 입력합니다.</li>
               <li>SKU는 셀러 공통 재고 코드 기준으로 선택합니다.</li>
               <li>가용재고를 초과한 수량은 저장 전 다시 확인합니다.</li>
@@ -765,27 +755,6 @@ onBeforeUnmount(() => {
               </div>
 
               <div class="form-grid">
-                <BaseForm
-                  class="form-span-2"
-                  label="주문번호"
-                  :error="formErrors.orderNo"
-                  hint="직접 입력하거나 자동생성을 선택할 수 있습니다."
-                >
-                  <div class="order-no-stack">
-                    <input
-                      v-model="manualForm.orderNo"
-                      type="text"
-                      placeholder="ORD-20260321-001"
-                      :disabled="manualForm.autoGenerateOrderNo"
-                    />
-                    <label class="toggle-check">
-                      <input v-model="manualForm.autoGenerateOrderNo" type="checkbox" />
-                      <span>주문번호 자동생성</span>
-                      <strong>{{ currentOrderNoPreview }}</strong>
-                    </label>
-                  </div>
-                </BaseForm>
-
                 <BaseForm label="주문일자" required :error="formErrors.orderDate">
                   <input v-model="manualForm.orderDate" type="date" />
                 </BaseForm>

@@ -55,6 +55,14 @@ const ORDER_TEMPLATE_DOWNLOAD_COLUMNS = [
   '요청사항',
 ]
 
+/* 테스트·데모용 샘플 상품 목록. */
+export const SAMPLE_PRODUCT_OPTIONS = [
+  { sku: 'LB-AMP-30', productName: '루미에르 앰플 30ml', availableStock: 50, unitPrice: 45 },
+  { sku: 'LB-CRM-100', productName: '비타민C 크림 100ml', availableStock: 12, unitPrice: 35 },
+  { sku: 'LB-MSK-5P', productName: '콜라겐 마스크 5매입', availableStock: 80, unitPrice: 25 },
+  { sku: 'LB-TNR-150', productName: '센서티브 토너 150ml', availableStock: 35, unitPrice: 30 },
+]
+
 function pad(value) {
   return String(value).padStart(2, '0')
 }
@@ -170,45 +178,29 @@ export function mapOrderUploadRows(rows = []) {
   }))
 }
 
-export function buildManualOrderPayload(form = {}, { baseDate = new Date(), productOptions = [] } = {}) {
+export function buildManualOrderPayload(form = {}, { productOptions = [] } = {}) {
   const normalizedItems = (Array.isArray(form.items) ? form.items : [])
     .map((line, index) => normalizeProductLine(line, index))
     .filter((line) => line.sku && line.quantity > 0)
-    .map((line) => {
-      const product = getOrderProductOption(line.sku, productOptions)
-      const unitPrice = Number(product?.unitPrice ?? 0)
+    .map((line) => ({
+      sku: line.sku,
+      quantity: line.quantity,
+      productNameSnapshot: getOrderProductOption(line.sku, productOptions)?.productName ?? '',
+    }))
 
-      return {
-        sku: line.sku,
-        productName: product?.productName ?? '',
-        quantity: line.quantity,
-        unitPrice,
-        subtotal: unitPrice * line.quantity,
-      }
-    })
-
-  const fallbackSku = String(form.sku ?? '').trim()
-  const fallbackQuantity = Number(form.quantity ?? 0)
   const orderDate = String(form.orderDate ?? '').trim()
-  const orderNo = Boolean(form.autoGenerateOrderNo)
-    ? generateSellerOrderNumber(orderDate || baseDate)
-    : String(form.orderNo ?? '').trim()
 
   return {
-    orderNo,
-    orderDate,
-    salesChannel: String(form.salesChannel ?? '').trim(),
-    autoGenerateOrderNo: Boolean(form.autoGenerateOrderNo),
-    recipient: String(form.recipient ?? '').trim(),
-    contact: String(form.contact ?? '').trim(),
-    state: String(form.state ?? '').trim(),
-    city: String(form.city ?? '').trim(),
-    zipCode: String(form.zipCode ?? '').trim(),
-    postalCode: String(form.zipCode ?? form.postalCode ?? '').trim(),
-    address1: String(form.address1 ?? '').trim(),
-    address2: String(form.address2 ?? '').trim(),
-    sku: normalizedItems[0]?.sku ?? fallbackSku,
-    quantity: normalizedItems[0]?.quantity ?? fallbackQuantity,
+    orderedAt: orderDate ? `${orderDate}T00:00:00` : new Date().toISOString().slice(0, 19),
+    receiverName: String(form.recipient ?? '').trim(),
+    receiverPhoneNo: String(form.contact ?? '').trim(),
+    shippingAddress: {
+      address1: String(form.address1 ?? '').trim(),
+      address2: String(form.address2 ?? '').trim(),
+      city: String(form.city ?? '').trim(),
+      state: String(form.state ?? '').trim(),
+      zipCode: String(form.zipCode ?? '').trim(),
+    },
     items: normalizedItems,
     memo: String(form.memo ?? '').trim(),
   }
@@ -230,8 +222,22 @@ export function buildBulkOrderPayload(rows = []) {
   }))
 }
 
+const ORDER_TEMPLATE_SAMPLE_ROW = {
+  orderNo: 'ORD-20260321-001',
+  orderDate: '2026-03-21',
+  recipient: '홍길동',
+  contact: '010-1234-5678',
+  state: 'California',
+  city: 'Los Angeles',
+  zipCode: '90001',
+  address: '123 Flower Ave',
+  sku: 'LB-AMP-30',
+  quantity: 1,
+  requestNote: '',
+}
+
 export function buildOrderTemplateCsv(rows = []) {
-  const normalizedRows = Array.isArray(rows) ? rows : []
+  const normalizedRows = Array.isArray(rows) && rows.length ? rows : [ORDER_TEMPLATE_SAMPLE_ROW]
   const lines = [
     ORDER_TEMPLATE_DOWNLOAD_COLUMNS.map(escapeCsvValue).join(','),
     ...normalizedRows.map((row) => (
@@ -281,7 +287,6 @@ export function buildChannelImportPreviewMessage(channelLabel = '', syncWindow =
 
 export function validateOrderForm(form = {}, productOptions = []) {
   const errors = {
-    orderNo: '',
     orderDate: '',
     recipient: '',
     contact: '',
@@ -294,9 +299,6 @@ export function validateOrderForm(form = {}, productOptions = []) {
     items: '',
   }
 
-  if (!Boolean(form.autoGenerateOrderNo) && !String(form.orderNo ?? '').trim()) {
-    errors.orderNo = '주문번호를 입력하세요.'
-  }
   if (!form.orderDate) errors.orderDate = '주문일자를 선택하세요.'
   if (!String(form.recipient ?? '').trim()) errors.recipient = '수령인을 입력하세요.'
   if (!String(form.contact ?? '').trim()) errors.contact = '연락처를 입력하세요.'
