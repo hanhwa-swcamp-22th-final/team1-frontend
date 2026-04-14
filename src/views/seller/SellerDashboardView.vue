@@ -14,7 +14,7 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import SellerInventoryDetailModal from '@/components/seller/SellerInventoryDetailModal.vue'
 import SellerOrderDetailModal from '@/components/seller/SellerOrderDetailModal.vue'
 import { normalizeSellerInventoryDetail } from '@/utils/seller/inventoryList.utils.js'
-import { normalizeSellerOrderDetail } from '@/utils/seller/orderList.utils.js'
+import { normalizeSellerOrderDetail, normalizeSellerOrderRow } from '@/utils/seller/orderList.utils.js'
 import {
   buildSellerDashboardInboundRows,
   buildSellerDashboardKpiCards,
@@ -137,7 +137,8 @@ async function fetchSellerDashboardData() {
       getSellerChannelOrders({ page: 0, size: 100 }),
     ])
 
-    sellerOrderRows.value = normalizeListPayload(ordersRes.data?.data, ['orders', 'items']).map((row) => ({ ...row }))
+    sellerOrderRows.value = normalizeListPayload(ordersRes.data?.data, ['orders', 'items'])
+      .map((row) => normalizeSellerOrderRow(row))
     sellerAsnRows.value = normalizeListPayload(asnsRes.data?.data, ['items']).map((row) => ({ ...row }))
     sellerInventoryRows.value = normalizeListPayload(inventoriesRes.data?.data, ['items']).map((row) => ({ ...row }))
     sellerChannelOrderRows.value = normalizeListPayload(channelOrdersRes.data?.data, ['items']).map((row) => ({ ...row }))
@@ -167,8 +168,10 @@ async function handleRecentActivityCodeClick(row) {
     selectedRecentOrder.value = row.order
 
     try {
-      if (row.order.id) {
-        const response = await getSellerOrderDetail(row.order.id)
+      const targetOrderId = row.order.orderId ?? row.order.id ?? row.order.orderNo
+
+      if (targetOrderId) {
+        const response = await getSellerOrderDetail(targetOrderId)
         selectedRecentOrderDetail.value = normalizeSellerOrderDetail(response.data?.data ?? {}, row.order)
       } else {
         selectedRecentOrderDetail.value = row.orderDetail

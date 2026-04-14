@@ -22,17 +22,17 @@ const props = defineProps({
 
 defineEmits(['cancel'])
 
-const currentStep = computed(() => getSellerOrderProgressStep(props.order?.status))
-
-function formatCurrency(value) {
-  return `$${Number(value || 0).toFixed(2)}`
-}
+const displayOrderId = computed(() => props.detail?.orderId ?? props.order?.orderId ?? props.order?.orderNo ?? '')
+const displayStatus = computed(() => props.detail?.status ?? props.order?.status)
+const displayChannel = computed(() => props.detail?.orderChannel ?? props.order?.channel)
+const displayMemo = computed(() => props.detail?.memo || '요청사항이 없습니다.')
+const currentStep = computed(() => getSellerOrderProgressStep(displayStatus.value))
 </script>
 
 <template>
   <SellerBaseModal
     :isOpen="isOpen"
-    :title="order?.orderNo ? `${order.orderNo} 주문 상세` : '주문 상세'"
+    :title="displayOrderId ? `${displayOrderId} 주문 상세` : '주문 상세'"
     size="tall"
     @cancel="$emit('cancel')"
   >
@@ -41,29 +41,29 @@ function formatCurrency(value) {
         <div class="hero-head">
           <div>
             <p class="hero-eyebrow">Seller Order Detail</p>
-            <h2 class="hero-title">{{ order.orderNo }}</h2>
-            <p class="hero-copy">{{ detail.memo }}</p>
+            <h2 class="hero-title">{{ displayOrderId }}</h2>
+            <p class="hero-copy">{{ displayMemo }}</p>
           </div>
 
           <div class="hero-meta">
             <span
               class="channel-tag"
-              :class="`channel-tag--${getSellerOrderChannelMeta(order.channel).tone}`"
+              :class="`channel-tag--${getSellerOrderChannelMeta(displayChannel).tone}`"
             >
-              {{ getSellerOrderChannelMeta(order.channel).label }}
+              {{ getSellerOrderChannelMeta(displayChannel).label }}
             </span>
             <span
               class="order-status-badge"
-              :class="`order-status-badge--${getSellerOrderStatusMeta(order.status).tone}`"
+              :class="`order-status-badge--${getSellerOrderStatusMeta(displayStatus).tone}`"
             >
-              {{ getSellerOrderStatusMeta(order.status).label }}
+              {{ getSellerOrderStatusMeta(displayStatus).label }}
             </span>
           </div>
         </div>
 
         <div class="hero-stepper">
           <TimelineStepper :steps="SELLER_ORDER_PROGRESS_STEPS" :current-step="currentStep" />
-          <p v-if="order.status === 'CANCELLED'" class="hero-note">
+          <p v-if="displayStatus === 'CANCELLED'" class="hero-note">
             취소된 주문은 접수 시점 기준으로 처리 흐름을 표시합니다.
           </p>
         </div>
@@ -75,19 +75,19 @@ function formatCurrency(value) {
           <dl class="detail-list">
             <div>
               <dt>주문번호</dt>
-              <dd>{{ order.orderNo }}</dd>
+              <dd>{{ detail.orderId }}</dd>
             </div>
             <div>
               <dt>주문일</dt>
-              <dd>{{ order.orderedAt }}</dd>
+              <dd>{{ detail.orderedAt }}</dd>
             </div>
             <div>
               <dt>채널</dt>
-              <dd>{{ order.channel }}</dd>
+              <dd>{{ getSellerOrderChannelMeta(detail.orderChannel).label }}</dd>
             </div>
             <div>
               <dt>현재 상태</dt>
-              <dd>{{ getSellerOrderStatusMeta(order.status).label }}</dd>
+              <dd>{{ getSellerOrderStatusMeta(detail.status).label }}</dd>
             </div>
           </dl>
         </section>
@@ -97,19 +97,19 @@ function formatCurrency(value) {
           <dl class="detail-list">
             <div>
               <dt>수령자</dt>
-              <dd>{{ order.recipient }}</dd>
+              <dd>{{ detail.receiverName }}</dd>
             </div>
             <div>
               <dt>연락처</dt>
-              <dd>{{ detail.receiverPhone }}</dd>
+              <dd>{{ detail.phone }}</dd>
             </div>
             <div>
-              <dt>State / City</dt>
-              <dd>{{ detail.state }} / {{ detail.city }}</dd>
+              <dt>State</dt>
+              <dd>{{ detail.state }}</dd>
             </div>
             <div>
               <dt>Zip</dt>
-              <dd>{{ detail.zipCode }}</dd>
+              <dd>{{ detail.zip }}</dd>
             </div>
           </dl>
         </section>
@@ -118,20 +118,20 @@ function formatCurrency(value) {
           <h3 class="detail-title">배송 정보</h3>
           <dl class="detail-list">
             <div>
-              <dt>주소</dt>
-              <dd>{{ detail.addressLine }}</dd>
+              <dt>주소 1</dt>
+              <dd>{{ detail.street1 }}</dd>
             </div>
             <div>
-              <dt>배송 방식</dt>
-              <dd>{{ detail.shippingMethod }}</dd>
+              <dt>주소 2</dt>
+              <dd>{{ detail.street2 || '-' }}</dd>
             </div>
             <div>
-              <dt>택배사</dt>
-              <dd>{{ detail.carrier }}</dd>
+              <dt>국가</dt>
+              <dd>{{ detail.country }}</dd>
             </div>
             <div>
-              <dt>송장번호</dt>
-              <dd>{{ order.trackingNo || '미발급' }}</dd>
+              <dt>취소 가능</dt>
+              <dd>{{ detail.canCancel ? '가능' : '불가' }}</dd>
             </div>
           </dl>
         </section>
@@ -150,17 +150,13 @@ function formatCurrency(value) {
                 <th>SKU</th>
                 <th>상품명</th>
                 <th>수량</th>
-                <th>단가</th>
-                <th>소계</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in detail.items" :key="`${order.id}-${item.sku}`">
+              <tr v-for="item in detail.items" :key="`${detail.orderId}-${item.sku}`">
                 <td>{{ item.sku }}</td>
                 <td>{{ item.productName }}</td>
                 <td>{{ item.quantity }}</td>
-                <td>{{ formatCurrency(item.unitPrice) }}</td>
-                <td>{{ formatCurrency(item.amount) }}</td>
               </tr>
             </tbody>
           </table>
@@ -319,6 +315,11 @@ function formatCurrency(value) {
 .channel-tag--amazon {
   background: #fff3e0;
   color: #e65100;
+}
+
+.channel-tag--shopify {
+  background: rgba(76, 116, 255, 0.12);
+  color: #2f5ae6;
 }
 
 .channel-tag--manual {

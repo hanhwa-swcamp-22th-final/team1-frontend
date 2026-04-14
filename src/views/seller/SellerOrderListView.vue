@@ -1,7 +1,7 @@
 <script setup>
 /**
  * 셀러 주문 목록 화면.
- * mock-server seller 주문 목록 API를 기준으로 상태/채널 필터와 테이블 UI를 구성한다.
+ * 백엔드 seller 주문 목록 API를 기준으로 상태 필터와 테이블 UI를 구성한다.
  */
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
@@ -13,11 +13,12 @@ import SellerOrderDetailModal from '@/components/seller/SellerOrderDetailModal.v
 import { ROUTE_NAMES } from '@/constants'
 import { downloadExcel } from '@/utils/excel.js'
 import {
+  buildSellerOrderListQuery,
   buildSellerOrderExportRows,
   getSellerOrderChannelMeta,
   getSellerOrderStatusMeta,
+  normalizeSellerOrderListPayload,
   normalizeSellerOrderDetail,
-  SELLER_ORDER_CHANNEL_OPTIONS,
   SELLER_ORDER_LIST_COLUMNS,
   SELLER_ORDER_STATUS_OPTIONS,
 } from '@/utils/seller/orderList.utils.js'
@@ -25,10 +26,8 @@ import {
 /** Header 브레드크럼 표시용 */
 const breadcrumb = [{ label: 'Seller' }, { label: '주문 목록' }]
 
-// 목록 화면은 상태, 채널, 검색어 조합으로 먼저 필터링한다.
+// 목록 화면은 백엔드가 지원하는 상태 필터만 사용한다.
 const activeStatus = ref('all')
-const activeChannel = ref('all')
-const searchKeyword = ref('')
 const toolbarMessage = ref('')
 const loadErrorMessage = ref('')
 const isLoading = ref(false)
@@ -44,7 +43,7 @@ const PAGE_SIZE = 10
 const totalItems = ref(0)
 const selectedOrderDetail = ref(null)
 
-watch([activeStatus, activeChannel, searchKeyword], () => {
+watch(activeStatus, () => {
   if (currentPage.value !== 1) {
     currentPage.value = 1
     return
@@ -68,24 +67,17 @@ async function fetchSellerOrders() {
   loadErrorMessage.value = ''
 
   try {
-    const res = await getSellerOrderList({
-      page: currentPage.value - 1,
-      size: PAGE_SIZE,
-      status: activeStatus.value === 'all' ? undefined : activeStatus.value,
-      channel: activeChannel.value === 'all' ? undefined : activeChannel.value,
-      search: searchKeyword.value || undefined,
-    })
-    const payload = res.data?.data
-    const rows = Array.isArray(payload)
-      ? payload
-      : Array.isArray(payload?.orders)
-        ? payload.orders
-        : Array.isArray(payload?.items)
-          ? payload.items
-          : []
+    const res = await getSellerOrderList(
+      buildSellerOrderListQuery({
+        page: currentPage.value - 1,
+        size: PAGE_SIZE,
+        status: activeStatus.value,
+      }),
+    )
+    const payload = normalizeSellerOrderListPayload(res.data?.data ?? {})
 
-    orderRows.value = rows.map((row) => ({ ...row }))
-    totalItems.value = Number(payload?.totalCount ?? payload?.total ?? rows.length)
+    orderRows.value = payload.orders
+    totalItems.value = payload.totalCount
   } catch (error) {
     console.error('[SellerOrderListView] fetch error:', error)
     loadErrorMessage.value = '주문 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
@@ -103,11 +95,11 @@ watch(currentPage, () => {
 })
 
 const selectedOrder = computed(() => {
-  return orderRows.value.find((row) => row.id === selectedOrderId.value) ?? null
+  return orderRows.value.find((row) => row.orderId === selectedOrderId.value) ?? null
 })
 
 const pendingCancelOrder = computed(() => {
-  return orderRows.value.find((row) => row.id === pendingCancelOrderId.value) ?? null
+  return orderRows.value.find((row) => row.orderId === pendingCancelOrderId.value) ?? null
 })
 
 const csvDialogMessage = computed(() => {
@@ -148,9 +140,9 @@ function handleConfirmCsv() {
 
 async function handleOpenOrderDetail(row) {
   try {
-    const response = await getSellerOrderDetail(row.id)
+    const response = await getSellerOrderDetail(row.orderId)
     selectedOrderDetail.value = normalizeSellerOrderDetail(response.data?.data ?? {}, row)
-    selectedOrderId.value = row.id
+    selectedOrderId.value = row.orderId
     isDetailModalOpen.value = true
   } catch (error) {
     showToolbarMessage(error.response?.data?.message ?? '주문 상세를 불러오지 못했습니다.')
@@ -164,7 +156,7 @@ function handleCloseOrderDetail() {
 }
 
 function handleOpenCancelDialog(row) {
-  pendingCancelOrderId.value = row.id
+  pendingCancelOrderId.value = row.orderId
   isCancelDialogOpen.value = true
 }
 
@@ -177,8 +169,8 @@ async function handleConfirmCancel() {
   if (!pendingCancelOrder.value) return
 
   try {
-    await cancelSellerOrder(pendingCancelOrder.value.id)
-    toolbarMessage.value = `${pendingCancelOrder.value.orderNo} 주문을 취소했습니다.`
+    await cancelSellerOrder(pendingCancelOrder.value.orderId)
+    toolbarMessage.value = `${pendingCancelOrder.value.orderId} 주문을 취소했습니다.`
     handleCloseCancelDialog()
     await fetchSellerOrders()
   } catch (error) {
@@ -213,33 +205,9 @@ async function handleConfirmCancel() {
                 {{ option.label }}
               </button>
             </div>
-
-            <div class="filter-row">
-              <span class="filter-label">채널</span>
-
-              <button
-                v-for="option in SELLER_ORDER_CHANNEL_OPTIONS"
-                :key="option.key"
-                type="button"
-                class="filter-badge"
-                :class="{ 'filter-badge--active': activeChannel === option.key }"
-                @click="activeChannel = option.key"
-              >
-                {{ option.label }}
-              </button>
-            </div>
           </div>
 
           <div class="toolbar-right">
-            <label class="search-box">
-              <span class="sr-only">검색</span>
-              <input
-                v-model="searchKeyword"
-                type="text"
-                placeholder="주문번호 또는 수령자명 검색"
-              />
-            </label>
-
             <button
               class="ui-btn ui-btn--ghost toolbar-btn"
               type="button"
@@ -258,7 +226,7 @@ async function handleConfirmCancel() {
           :loading="isLoading"
           :rows="orderRows"
           :pagination="pagination"
-          row-key="id"
+          row-key="orderId"
           @page-change="handlePageChange"
         >
           <template #cell-orderNo="{ row, value }">
@@ -343,7 +311,7 @@ async function handleConfirmCancel() {
 
     <SellerConfirmDialog
       :isOpen="isCancelDialogOpen"
-      :message="pendingCancelOrder ? `${pendingCancelOrder.orderNo} 주문을 취소하시겠습니까?` : '주문을 취소하시겠습니까?'"
+      :message="pendingCancelOrder ? `${pendingCancelOrder.orderId} 주문을 취소하시겠습니까?` : '주문을 취소하시겠습니까?'"
       confirmLabel="취소 확정"
       title="주문 취소"
       :danger="true"
@@ -526,6 +494,11 @@ async function handleConfirmCancel() {
 .channel-tag--amazon {
   background: #fff3e0;
   color: #e65100;
+}
+
+.channel-tag--shopify {
+  background: rgba(76, 116, 255, 0.12);
+  color: #2f5ae6;
 }
 
 .channel-tag--manual {
