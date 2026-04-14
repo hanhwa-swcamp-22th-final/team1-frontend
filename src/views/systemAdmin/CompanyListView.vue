@@ -125,19 +125,11 @@ async function submitInvite() {
     inviteModal.error = '이름과 이메일을 입력해주세요.'
     return
   }
-  const nextId = Math.max(0, ...users.value.map((item) => Number(item.id) || 0)) + 1
   const payload = {
-    id: nextId,
-    companyId: inviteModal.company.id,
-    name: inviteModal.name.trim(),
-    email: inviteModal.email.trim(),
-    role: 'MASTER_ADMIN',
-    organization: inviteModal.company.name,
-    warehouse: '-',
-    status: 'INVITE_PENDING',
-    registeredAt: new Date().toISOString(),
-    lastLoginAt: null,
-    wasActiveBeforeCompanyInactivation: false,
+    tenantId: inviteModal.company.id,
+    name:     inviteModal.name.trim(),
+    email:    inviteModal.email.trim(),
+    role:     'MASTER_ADMIN',
   }
   ui.setLoading(true)
   try {

@@ -105,21 +105,13 @@ async function issueAdmin() {
     inviteModal.error = '이름과 이메일을 모두 입력해주세요.'
     return
   }
-  const nextId = Math.max(0, ...users.value.map((item) => Number(item.id) || 0)) + 1
   ui.setLoading(true)
   try {
     await createUser({
-      id: nextId,
-      companyId,
-      name: inviteModal.name.trim(),
-      email: inviteModal.email.trim(),
-      role: 'MASTER_ADMIN',
-      organization: company.value.name,
-      warehouse: '-',
-      status: 'INVITE_PENDING',
-      registeredAt: new Date().toISOString(),
-      lastLoginAt: null,
-      wasActiveBeforeCompanyInactivation: false,
+      tenantId: companyId,
+      name:     inviteModal.name.trim(),
+      email:    inviteModal.email.trim(),
+      role:     'MASTER_ADMIN',
     })
     await createCompanyLog({
       companyId: companyId,
