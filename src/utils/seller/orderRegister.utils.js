@@ -262,6 +262,31 @@ export function buildOrderTemplateCsv(rows = []) {
   return lines.join('\n')
 }
 
+export function resolveTemplateDownloadFilename(
+  contentDisposition = '',
+  fallback = 'order_upload_template.xlsx',
+) {
+  const header = String(contentDisposition ?? '').trim()
+  if (!header) return fallback
+
+  const utf8Match = header.match(/filename\*\s*=\s*UTF-8''([^;]+)/i)
+  if (utf8Match?.[1]) {
+    try {
+      return decodeURIComponent(utf8Match[1].trim())
+    } catch {
+      return utf8Match[1].trim()
+    }
+  }
+
+  const quotedMatch = header.match(/filename\s*=\s*"([^"]+)"/i)
+  if (quotedMatch?.[1]) return quotedMatch[1].trim()
+
+  const plainMatch = header.match(/filename\s*=\s*([^;]+)/i)
+  if (plainMatch?.[1]) return plainMatch[1].trim()
+
+  return fallback
+}
+
 export function buildOrderUploadResultSummary(rows = [], fileName = '') {
   const normalizedRows = Array.isArray(rows) ? rows : []
 

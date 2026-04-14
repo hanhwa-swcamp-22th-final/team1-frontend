@@ -9,7 +9,12 @@ import {
   getSellerChannelDetail,
   getSellerChannelImportPreview,
 } from '@/api/integration'
-import { createSellerBulkOrders, createSellerOrder, getSellerOrderOptions } from '@/api/order'
+import {
+  createSellerBulkOrders,
+  createSellerOrder,
+  downloadSellerBulkOrderTemplate,
+  getSellerOrderOptions,
+} from '@/api/order'
 import BaseForm from '@/components/common/BaseForm.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import FileUpload from '@/components/common/FileUpload.vue'
@@ -21,7 +26,6 @@ import {
   buildChannelImportPreviewMessage,
   buildManualOrderPayload,
   buildOrderProductLineSummary,
-  buildOrderTemplateCsv,
   buildOrderUploadResultSummary,
   createOrderProductLine,
   getMissingOrderUploadColumns,
@@ -30,6 +34,7 @@ import {
   normalizeOrderRegisterTab,
   ORDER_PREVIEW_COLUMNS,
   ORDER_UPLOAD_REQUIRED_COLUMNS,
+  resolveTemplateDownloadFilename,
   SELLER_BULK_ORDER_REGISTER_TABS,
   SELLER_ORDER_REGISTER_TABS,
   validateOrderForm,
@@ -300,21 +305,33 @@ function handleCloseUploadResultModal() {
   isUploadResultModalOpen.value = false
 }
 
-function handleDownloadTemplate() {
-  const csvContent = `\uFEFF${buildOrderTemplateCsv()}`
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const href = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
+async function handleDownloadTemplate() {
+  try {
+    const response = await downloadSellerBulkOrderTemplate()
+    const fileName = resolveTemplateDownloadFilename(
+      response.headers?.['content-disposition'],
+      'order_upload_template.xlsx',
+    )
+    const blob = response.data instanceof Blob
+      ? response.data
+      : new Blob([response.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
+    const href = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
 
-  anchor.href = href
-  anchor.download = 'seller-order-template.csv'
-  document.body.appendChild(anchor)
-  anchor.click()
-  document.body.removeChild(anchor)
-  URL.revokeObjectURL(href)
+    anchor.href = href
+    anchor.download = fileName
+    document.body.appendChild(anchor)
+    anchor.click()
+    document.body.removeChild(anchor)
+    URL.revokeObjectURL(href)
 
-  uploadErrorMessage.value = ''
-  showToast('주문 등록 템플릿을 다운로드했습니다.')
+    uploadErrorMessage.value = ''
+    showToast('주문 등록 템플릿을 다운로드했습니다.')
+  } catch (error) {
+    uploadErrorMessage.value = error.response?.data?.message ?? '템플릿 다운로드 중 오류가 발생했습니다.'
+  }
 }
 
 async function handleFileSelected(file) {

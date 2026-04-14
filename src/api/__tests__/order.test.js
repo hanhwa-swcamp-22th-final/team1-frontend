@@ -4,6 +4,7 @@ import {
   cancelSellerOrder,
   createSellerBulkOrders,
   createSellerOrder,
+  downloadSellerBulkOrderTemplate,
   getOutboundStats,
   getSellerOrderDetail,
   getSellerOrderList,
@@ -60,6 +61,15 @@ describe('order API', () => {
 
     expect(instance.post).toHaveBeenCalledOnce()
     expect(instance.post).toHaveBeenCalledWith('/orders/seller/bulk', expect.any(FormData))
+  })
+
+  it('downloadSellerBulkOrderTemplate는 GET /orders/seller/bulk/template를 blob으로 호출한다', async () => {
+    await downloadSellerBulkOrderTemplate()
+
+    expect(instance.get).toHaveBeenCalledOnce()
+    expect(instance.get).toHaveBeenCalledWith('/orders/seller/bulk/template', {
+      responseType: 'blob',
+    })
   })
 
   it('getSellerOrderList는 GET /orders/seller/list를 호출한다', async () => {

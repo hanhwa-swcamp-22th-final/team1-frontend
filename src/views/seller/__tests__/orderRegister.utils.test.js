@@ -14,6 +14,7 @@ import {
   normalizeBulkOrderRegisterTab,
   normalizeOrderRegisterTab,
   ORDER_UPLOAD_REQUIRED_COLUMNS,
+  resolveTemplateDownloadFilename,
   SAMPLE_PRODUCT_OPTIONS,
   validateOrderForm,
 } from '@/utils/seller/orderRegister.utils.js'
@@ -232,6 +233,14 @@ describe('orderRegister utils', () => {
 
     expect(result).toContain('"State","City","Zip Code"')
     expect(result).toContain('"California","Los Angeles","90001"')
+  })
+
+  it('템플릿 다운로드 파일명은 Content-Disposition 헤더에서 추출한다', () => {
+    expect(resolveTemplateDownloadFilename('attachment; filename=order_upload_template.xlsx'))
+      .toBe('order_upload_template.xlsx')
+    expect(resolveTemplateDownloadFilename(`attachment; filename*=UTF-8''order_upload_template.xlsx`))
+      .toBe('order_upload_template.xlsx')
+    expect(resolveTemplateDownloadFilename('')).toBe('order_upload_template.xlsx')
   })
 
   it('업로드 결과 모달용 요약 정보를 계산한다', () => {
