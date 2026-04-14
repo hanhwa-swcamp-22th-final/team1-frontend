@@ -1,11 +1,11 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
 import { formatDate, formatNumber } from '@/utils/format'
-import { getOutboundStats, getCurrentRevenue, getMonthlyRevenue } from '@/api/order'
-import { getAsnStats, getInventoryStats, getWarehouseStatus } from '@/api/wms'
-import { getSellerStats, getSellerFeeSummary, getSellerRevenue } from '@/api/member'
+import { getCurrentRevenue, getMonthlyRevenue, getOutboundStats } from '@/api/order'
+import { getAsnStats, getInventoryStats, getWarehouseStatus, getWhmMonthlyBillingResults } from '@/api/wms'
+import { getSellerList, getSellerStats } from '@/api/member'
 import { ROUTE_NAMES } from '@/constants'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
@@ -13,25 +13,122 @@ import VueApexCharts from 'vue3-apexcharts'
 
 const breadcrumb = [{ label: 'CONK' }, { label: '대시보드' }]
 
-const router            = useRouter()
-const ui                = useUiStore()
-const summaryCards      = ref([])
-const warehouses        = ref([])
-const sellerFees        = ref([])
-const sellerRevenueRows = ref([])
-const monthlyRevenue    = ref([])
-const sellerFeeViewMode  = ref('chart')
-const revenueChartType   = ref('area') // 'area' | 'bar' | 'donut'
-const fetchedAt         = ref(null)
-const errorMsg          = ref('')
+const router = useRouter()
+const ui = useUiStore()
+const summaryCards = ref([])
+const warehouses = ref([])
+const sellerFees = ref([])
+const monthlyRevenue = ref([])
+const sellerFeeViewMode = ref('chart')
+const revenueChartType = ref('area') // 'area' | 'bar' | 'donut'
+const billingMonth = ref(getPreviousBillingMonth())
+const billingLoadFailed = ref(false)
+const fetchedAt = ref(null)
+const errorMsg = ref('')
+
+function getPreviousBillingMonth(baseDate = new Date()) {
+  const date = new Date(baseDate.getFullYear(), baseDate.getMonth() - 1, 1)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  return `${year}-${month}`
+}
+
+function toAmount(value) {
+  const amount = Number(value)
+  return Number.isFinite(amount) ? amount : 0
+}
+
+function getSettledData(result, fallback) {
+  return result?.status === 'fulfilled' ? (result.value.data?.data ?? fallback) : fallback
+}
+
+function getSellerStatsFallback(sellers = []) {
+  const activeSellerCount = sellers.filter(seller => seller.status === 'ACTIVE' || seller.status === 'APPROVED').length
+  return {
+    activeSellerCount: activeSellerCount || sellers.length,
+    newThisMonth: 0,
+    trendType: 'neutral',
+  }
+}
+
+function getRevenueFallback(revenueRows = []) {
+  const totalRevenue = revenueRows.reduce((sum, row) => sum + toAmount(row.monthRevenue), 0)
+  return {
+    totalRevenue,
+    trend: '-',
+    trendLabel: '집계 데이터 준비 중',
+    trendType: 'neutral',
+  }
+}
+
+function getSellerMeta(seller) {
+  return {
+    sellerCode: seller.customerCode || seller.sellerInfo || seller.id,
+    sellerName: seller.brandNameKo || seller.brandNameEn || seller.sellerInfo || seller.customerCode || seller.id,
+  }
+}
+
+function buildMonthlyBillingRows(billingResults = [], sellers = []) {
+  const sellerMetaById = new Map()
+  for (const seller of sellers) {
+    const meta = getSellerMeta(seller)
+    if (seller.id) sellerMetaById.set(seller.id, meta)
+    if (seller.tenantId) sellerMetaById.set(seller.tenantId, meta)
+  }
+
+  const aggregated = new Map()
+
+  for (const result of billingResults) {
+    const sellerId = result.sellerId
+    const sellerMeta = sellerMetaById.get(sellerId) ?? {
+      sellerCode: sellerId,
+      sellerName: `셀러 ${sellerId}`,
+    }
+
+    if (!aggregated.has(sellerId)) {
+      aggregated.set(sellerId, {
+        sellerId,
+        sellerCode: sellerMeta.sellerCode,
+        sellerName: sellerMeta.sellerName,
+        totalFee: 0,
+        storageFee: 0,
+        pickingFee: 0,
+        packingFee: 0,
+        pickCount: 0,
+        packCount: 0,
+        warehouseIds: new Set(),
+      })
+    }
+
+    const item = aggregated.get(sellerId)
+    item.totalFee += toAmount(result.totalFee)
+    item.storageFee += toAmount(result.storageFee)
+    item.pickingFee += toAmount(result.pickingFee)
+    item.packingFee += toAmount(result.packingFee)
+    item.pickCount += toAmount(result.pickCount)
+    item.packCount += toAmount(result.packCount)
+
+    if (result.warehouseId) {
+      item.warehouseIds.add(result.warehouseId)
+    }
+  }
+
+  return [...aggregated.values()]
+    .map(item => ({
+      ...item,
+      warehouseCount: item.warehouseIds.size,
+    }))
+    .sort((a, b) => b.totalFee - a.totalFee)
+}
 
 // ── 테이블 컬럼 정의 ──────────────────────────────────────────────────────────
 
 const SELLER_FEE_COLUMNS = [
-  { key: 'sellerName',   label: '셀러' },
-  { key: 'estimatedCost',label: '당월 예상 비용', align: 'right',  width: '120px' },
-  { key: 'momGrowth',    label: '전월비',    align: 'right',  width: '80px'  },
-  { key: 'turnoverRate', label: '출고회전율', align: 'center', width: '90px'  },
+  { key: 'sellerName', label: '셀러' },
+  { key: 'totalFee', label: '월 정산 총액', align: 'right', width: '140px' },
+  { key: 'storageFee', label: '보관비', align: 'right', width: '120px' },
+  { key: 'pickingFee', label: '피킹비', align: 'right', width: '120px' },
+  { key: 'packingFee', label: '패킹비', align: 'right', width: '120px' },
 ]
 
 // ── 차트 옵션 ─────────────────────────────────────────────────────────────────
@@ -42,33 +139,32 @@ const sectionDate = computed(() =>
 
 const revenueChartOptions = computed(() => {
   const data = monthlyRevenue.value
-  const avg  = data.length ? data.reduce((s, d) => s + d.revenue, 0) / data.length : 0
+  const avg = data.length ? data.reduce((sum, item) => sum + item.revenue, 0) / data.length : 0
 
-  // ── 도넛 전용 ──
   if (revenueChartType.value === 'donut') {
     return {
-      chart:    { type: 'donut', fontFamily: 'Inter, sans-serif' },
-      labels:   data.map(d => d.label),
-      colors:   ['#4C74FF', '#34B469', '#F5A623', '#E84646', '#9747FF', '#14B8A6'],
-      legend:   { position: 'bottom', fontSize: '12px', fontFamily: 'Inter, sans-serif' },
-      dataLabels: { enabled: true, formatter: val => val.toFixed(1) + '%' },
+      chart: { type: 'donut', fontFamily: 'Inter, sans-serif' },
+      labels: data.map(item => item.label),
+      colors: ['#4C74FF', '#34B469', '#F5A623', '#E84646', '#9747FF', '#14B8A6'],
+      legend: { position: 'bottom', fontSize: '12px', fontFamily: 'Inter, sans-serif' },
+      dataLabels: { enabled: true, formatter: value => value.toFixed(1) + '%' },
       plotOptions: { pie: { donut: { size: '65%' } } },
-      tooltip:  { y: { formatter: v => `₩${formatNumber(v)}` } },
+      tooltip: { y: { formatter: value => `₩${formatNumber(value)}` } },
     }
   }
 
-  // ── area / bar 공통 ──
-  const momColors = data.map((d, i) =>
-    i === 0 ? 'transparent' : d.revenue >= data[i - 1].revenue ? '#34B469' : '#E84646'
+  const momColors = data.map((item, index) =>
+    index === 0 ? 'transparent' : item.revenue >= data[index - 1].revenue ? '#34B469' : '#E84646'
   )
+
   const base = {
     chart: { type: revenueChartType.value, toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
     colors: ['#4C74FF'],
     dataLabels: {
       enabled: true,
-      formatter: (val, { dataPointIndex: i }) => {
-        if (i === 0) return ''
-        const pct = ((data[i].revenue - data[i - 1].revenue) / data[i - 1].revenue * 100).toFixed(1)
+      formatter: (value, { dataPointIndex: index }) => {
+        if (index === 0) return ''
+        const pct = ((data[index].revenue - data[index - 1].revenue) / data[index - 1].revenue * 100).toFixed(1)
         return (pct >= 0 ? '+' : '') + pct + '%'
       },
       style: { fontSize: '10px', fontWeight: 700, colors: momColors },
@@ -76,31 +172,38 @@ const revenueChartOptions = computed(() => {
       offsetY: -8,
     },
     xaxis: {
-      categories: data.map(d => d.label),
-      axisBorder: { show: false }, axisTicks: { show: false },
+      categories: data.map(item => item.label),
+      axisBorder: { show: false },
+      axisTicks: { show: false },
       labels: { style: { colors: '#7B859A', fontSize: '11px' } },
     },
     yaxis: {
       labels: {
         style: { colors: '#7B859A', fontSize: '11px' },
-        formatter: v => `₩${(v / 1_000_000).toFixed(0)}M`,
+        formatter: value => `₩${(value / 1_000_000).toFixed(0)}M`,
       },
     },
     grid: { borderColor: '#E4E8F0', strokeDashArray: 4 },
     annotations: {
       yaxis: [{
-        y: avg, borderColor: '#F5A623', borderWidth: 1, strokeDashArray: 5,
-        label: { text: '평균', position: 'right',
-          style: { color: '#F5A623', background: 'transparent', fontSize: '10px', fontWeight: 600 } },
+        y: avg,
+        borderColor: '#F5A623',
+        borderWidth: 1,
+        strokeDashArray: 5,
+        label: {
+          text: '평균',
+          position: 'right',
+          style: { color: '#F5A623', background: 'transparent', fontSize: '10px', fontWeight: 600 },
+        },
       }],
     },
     tooltip: {
       y: {
-        formatter: (v, { dataPointIndex: i }) => {
-          const b = `₩${formatNumber(v)}`
-          if (i === 0) return b
-          const pct = ((data[i].revenue - data[i - 1].revenue) / data[i - 1].revenue * 100).toFixed(1)
-          return `${b}  (전월비 ${pct >= 0 ? '+' : ''}${pct}%)`
+        formatter: (value, { dataPointIndex: index }) => {
+          const formatted = `₩${formatNumber(value)}`
+          if (index === 0) return formatted
+          const pct = ((data[index].revenue - data[index - 1].revenue) / data[index - 1].revenue * 100).toFixed(1)
+          return `${formatted}  (전월비 ${pct >= 0 ? '+' : ''}${pct}%)`
         },
       },
     },
@@ -109,38 +212,39 @@ const revenueChartOptions = computed(() => {
   if (revenueChartType.value === 'area') {
     return {
       ...base,
-      stroke:  { curve: 'smooth', width: 2.5 },
-      fill:    { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.02, stops: [0, 100] } },
+      stroke: { curve: 'smooth', width: 2.5 },
+      fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.02, stops: [0, 100] } },
       markers: { size: 4, colors: ['#4C74FF'], strokeColors: '#fff', strokeWidth: 2, hover: { size: 6 } },
     }
   }
-  // bar
+
   return {
     ...base,
     stroke: { show: false },
-    fill:   { type: 'solid' },
+    fill: { type: 'solid' },
     plotOptions: { bar: { borderRadius: 4, columnWidth: '55%' } },
   }
 })
 
-const revenueChartSeries = computed(() =>
+const revenueChartSeries = computed(() => (
   revenueChartType.value === 'donut'
-    ? monthlyRevenue.value.map(d => d.revenue)
-    : [{ name: '매출액', data: monthlyRevenue.value.map(d => d.revenue) }]
-)
+    ? monthlyRevenue.value.map(item => item.revenue)
+    : [{ name: '매출액', data: monthlyRevenue.value.map(item => item.revenue) }]
+))
 
-const sellerFeeChartRows = computed(() => {
-  const revenueMap = new Map(
-    sellerRevenueRows.value.map(row => [row.sellerCode, row.monthRevenue ?? 0])
-  )
+const sellerFeeChartRows = computed(() => [...sellerFees.value].slice(0, 5))
 
-  return [...sellerFees.value]
-    .map(row => ({
-      ...row,
-      monthRevenue: revenueMap.get(row.sellerCode) ?? 0,
-    }))
-    .sort((a, b) => b.monthRevenue - a.monthRevenue)
-    .slice(0, 5)
+const sellerFeePanelSub = computed(() => (
+  sellerFeeViewMode.value === 'chart'
+    ? `${billingMonth.value} 정산월 청구액 상위 5개 셀러`
+    : `${billingMonth.value} 정산월 청구 상세`
+))
+
+const sellerFeeEmptyMessage = computed(() => {
+  if (billingLoadFailed.value) {
+    return '월 정산 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
+  }
+  return `${billingMonth.value} 정산월에 표시할 셀러 정산 데이터가 없습니다.`
 })
 
 const sellerFeeChartOptions = computed(() => ({
@@ -175,12 +279,12 @@ const sellerFeeChartOptions = computed(() => ({
           },
           total: {
             show: true,
-            label: '총 예상 비용',
+            label: `${billingMonth.value} 총 청구액`,
             fontSize: '12px',
             fontWeight: 600,
             color: '#7B859A',
             formatter: () => {
-              const total = sellerFeeChartRows.value.reduce((sum, row) => sum + row.estimatedCost, 0)
+              const total = sellerFeeChartRows.value.reduce((sum, row) => sum + row.totalFee, 0)
               return `₩${formatNumber(total)}`
             },
           },
@@ -212,7 +316,7 @@ const sellerFeeChartOptions = computed(() => ({
     formatter: (seriesName, opts) => {
       const row = sellerFeeChartRows.value[opts.seriesIndex]
       if (!row) return seriesName
-      return `${seriesName}  ₩${formatNumber(row.estimatedCost)}`
+      return `${seriesName}  ₩${formatNumber(row.totalFee)}`
     },
   },
   tooltip: {
@@ -220,77 +324,116 @@ const sellerFeeChartOptions = computed(() => ({
       const row = sellerFeeChartRows.value[dataPointIndex]
       if (!row) return ''
 
-      const growthLabel = row.momGrowth > 0
-        ? `전월비 +${row.momGrowth.toFixed(1)}%`
-        : `전월비 ${row.momGrowth.toFixed(1)}%`
-
       return `
         <div class="seller-fee-tooltip">
           <strong>${row.sellerName}</strong>
-          <span>당월 매출: ₩${formatNumber(row.monthRevenue)}</span>
-          <span>예상 비용: ₩${formatNumber(row.estimatedCost)}</span>
-          <span>${growthLabel}</span>
-          <span>출고회전율 ${row.turnoverRate}%</span>
+          <span>월 정산 총액: ₩${formatNumber(row.totalFee)}</span>
+          <span>보관비: ₩${formatNumber(row.storageFee)}</span>
+          <span>피킹비: ₩${formatNumber(row.pickingFee)}</span>
+          <span>패킹비: ₩${formatNumber(row.packingFee)}</span>
         </div>
       `
     },
   },
 }))
 
-const sellerFeeChartSeries = computed(() => sellerFeeChartRows.value.map(row => row.estimatedCost))
+const sellerFeeChartSeries = computed(() => sellerFeeChartRows.value.map(row => row.totalFee))
 
 function moveToSellerRevenue() {
   router.push({ name: ROUTE_NAMES.MASTER_SELLER_REVENUE })
 }
 
-// ── 데이터 fetch ──────────────────────────────────────────────────────────────
-
 async function fetchDashboard() {
   errorMsg.value = ''
   ui.setLoading(true)
+
   try {
-    const [outboundRes, asnRes, inventoryRes, sellerRes, whRes,
-           revenueRes, monthlyRes, sellerFeeRes, sellerRevenueRes] = await Promise.all([
+    const results = await Promise.allSettled([
       getOutboundStats(),
-      getAsnStats(),
-      getInventoryStats(),
-      getSellerStats(),
-      getWarehouseStatus(),
       getCurrentRevenue(),
       getMonthlyRevenue(),
-      getSellerFeeSummary(),
-      getSellerRevenue(),
+      getAsnStats(),
+      getInventoryStats(),
+      getWarehouseStatus(),
+      getSellerList(),
+      getSellerStats(),
     ])
 
-    const o = outboundRes.data.data
-    const a = asnRes.data.data
-    const i = inventoryRes.data.data
-    const s = sellerRes.data.data
-    const r = revenueRes.data.data
+    const [
+      outboundResult,
+      currentRevenueResult,
+      monthlyRevenueResult,
+      asnResult,
+      inventoryResult,
+      warehouseResult,
+      sellerListResult,
+      sellerStatsResult,
+    ] = results
+
+    const sellerList = getSettledData(sellerListResult, [])
+    const outbound = getSettledData(outboundResult, {
+      pendingOutboundCount: 0,
+      trend: '-',
+      trendLabel: '데이터 없음',
+      trendType: 'neutral',
+    })
+    const asn = getSettledData(asnResult, {
+      unprocessedCount: 0,
+      trend: '-',
+      trendLabel: '데이터 없음',
+      trendType: 'neutral',
+    })
+    const inventory = getSettledData(inventoryResult, {
+      lowStockSkuCount: 0,
+      trend: '-',
+      trendLabel: '데이터 없음',
+      trendType: 'neutral',
+    })
+    const sellerStats = getSettledData(sellerStatsResult, getSellerStatsFallback(sellerList))
+    const warehousesData = getSettledData(warehouseResult, [])
+    const currentRevenue = getSettledData(currentRevenueResult, null)
+    const monthlyRevenueRows = getSettledData(monthlyRevenueResult, [])
+
+    let billingRows = []
+    billingLoadFailed.value = false
+
+    try {
+      const billingRes = await getWhmMonthlyBillingResults({ billingMonth: billingMonth.value })
+      billingRows = buildMonthlyBillingRows(
+        billingRes.data.data ?? [],
+        sellerList,
+      )
+    } catch (billingErr) {
+      billingLoadFailed.value = true
+      console.error('[Dashboard] monthly billing fetch error:', billingErr)
+    }
+
+    const resolvedRevenue = currentRevenue ?? getRevenueFallback(billingRows.map(row => ({ monthRevenue: row.totalFee })))
 
     summaryCards.value = [
-      { label: '당월 총 매출',        value: `₩${formatNumber(r.totalRevenue)}`, trend: r.trend, trendLabel: r.trendLabel, trendType: r.trendType, valueColor: 'blue'  },
-      { label: '전체 출고 예정 건수',  value: formatNumber(o.pendingOutboundCount), trend: o.trend, trendLabel: o.trendLabel, trendType: o.trendType },
-      { label: '미처리 ASN (검수 대기)', value: String(a.unprocessedCount), trend: a.trend, trendLabel: a.trendLabel, trendType: a.trendType, valueColor: 'amber' },
-      { label: '재고 부족 경고 SKU',   value: String(i.lowStockSkuCount),  trend: i.trend, trendLabel: i.trendLabel, trendType: i.trendType, valueColor: 'red'   },
-      { label: '활성 셀러 업체 수',    value: String(s.activeSellerCount), trend: `${s.newThisMonth}개사`, trendLabel: '이번 달 신규', trendType: s.trendType },
+      { label: '당월 총 매출', value: `₩${formatNumber(resolvedRevenue.totalRevenue)}`, trend: resolvedRevenue.trend, trendLabel: resolvedRevenue.trendLabel, trendType: resolvedRevenue.trendType, valueColor: 'blue' },
+      { label: '전체 출고 예정 건수', value: formatNumber(outbound.pendingOutboundCount), trend: outbound.trend, trendLabel: outbound.trendLabel, trendType: outbound.trendType },
+      { label: '미처리 ASN (검수 대기)', value: String(asn.unprocessedCount), trend: asn.trend, trendLabel: asn.trendLabel, trendType: asn.trendType, valueColor: 'amber' },
+      { label: '재고 부족 경고 SKU', value: String(inventory.lowStockSkuCount), trend: inventory.trend, trendLabel: inventory.trendLabel, trendType: inventory.trendType, valueColor: 'red' },
+      { label: '활성 셀러 업체 수', value: String(sellerStats.activeSellerCount), trend: `${sellerStats.newThisMonth}개사`, trendLabel: '이번 달 신규', trendType: sellerStats.trendType },
     ]
 
-    warehouses.value     = whRes.data.data
-    monthlyRevenue.value = monthlyRes.data.data
-    sellerFees.value     = [...(sellerFeeRes.data.data ?? [])]
-      .sort((a, b) => b.estimatedCost - a.estimatedCost)
-    sellerRevenueRows.value = sellerRevenueRes.data.data ?? []
-    fetchedAt.value      = new Date()
-  } catch (err) {
-    errorMsg.value = '데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
-    console.error('[Dashboard] fetchDashboard error:', err)
+    warehouses.value = warehousesData
+    monthlyRevenue.value = monthlyRevenueRows
+    sellerFees.value = billingRows
+    fetchedAt.value = new Date()
   } finally {
     ui.setLoading(false)
   }
 }
 
 onMounted(fetchDashboard)
+
+watch(billingMonth, (nextMonth, prevMonth) => {
+  if (nextMonth && nextMonth !== prevMonth) {
+    fetchDashboard()
+  }
+})
 </script>
 
 <template>
@@ -395,18 +538,27 @@ onMounted(fetchDashboard)
         :options="revenueChartOptions"
         :series="revenueChartSeries"
       />
+      <div v-else class="seller-fee-empty">
+        월별 매출 추이 데이터가 아직 준비되지 않았습니다.
+      </div>
     </div>
 
-    <!-- ④ 셀러별 3PL 비용 현황 (full-width) -->
+    <!-- ④ 셀러별 월 정산 현황 (full-width) -->
     <div class="panel">
       <div class="panel-header">
         <div class="panel-title-wrap">
-          <span class="panel-title">셀러별 3PL 비용 현황</span>
-          <span class="panel-sub">
-            {{ sellerFeeViewMode === 'chart' ? '매출액 상위 5개 셀러 비용 비중' : '당월 청구 기준' }}
-          </span>
+          <span class="panel-title">셀러별 월 정산 현황</span>
+          <span class="panel-sub">{{ sellerFeePanelSub }}</span>
         </div>
         <div class="panel-actions">
+          <label class="month-filter">
+            <span class="month-filter__label">정산월</span>
+            <input
+              v-model="billingMonth"
+              class="month-filter__input"
+              type="month"
+            />
+          </label>
           <div class="view-toggle" role="tablist" aria-label="셀러별 3PL 비용 보기 방식">
             <button
               type="button"
@@ -435,24 +587,28 @@ onMounted(fetchDashboard)
         :columns="SELLER_FEE_COLUMNS"
         :rows="sellerFees"
         :pagination="null"
-        row-key="sellerCode"
+        row-key="sellerId"
       >
         <template #cell-sellerName="{ row, value }">
           <div class="seller-name-cell">
             <span class="rank-badge">{{ sellerFees.indexOf(row) + 1 }}</span>
-            {{ value }}
+            <div class="seller-name-meta">
+              <span>{{ value }}</span>
+              <span class="seller-code-sub">{{ row.sellerCode }}</span>
+            </div>
           </div>
         </template>
-        <template #cell-estimatedCost="{ value }">
+        <template #cell-totalFee="{ value }">
+          <span class="amount-cell amount-cell--strong">₩{{ formatNumber(value) }}</span>
+        </template>
+        <template #cell-storageFee="{ value }">
           <span class="amount-cell">₩{{ formatNumber(value) }}</span>
         </template>
-        <template #cell-momGrowth="{ value }">
-          <span :class="value > 0 ? 'trend-up-text' : 'trend-down-text'">
-            {{ value > 0 ? '▲' : '▼' }} {{ Math.abs(value).toFixed(1) }}%
-          </span>
+        <template #cell-pickingFee="{ value }">
+          <span class="amount-cell">₩{{ formatNumber(value) }}</span>
         </template>
-        <template #cell-turnoverRate="{ value }">
-          <span class="turnover-rate">{{ value }}%</span>
+        <template #cell-packingFee="{ value }">
+          <span class="amount-cell">₩{{ formatNumber(value) }}</span>
         </template>
       </BaseTable>
       <div v-else class="seller-fee-chart-panel">
@@ -464,10 +620,10 @@ onMounted(fetchDashboard)
           :series="sellerFeeChartSeries"
         />
         <div v-else class="seller-fee-empty">
-          표시할 셀러 비용 데이터가 없습니다.
+          {{ sellerFeeEmptyMessage }}
         </div>
         <div v-if="sellerFeeChartRows.length" class="seller-fee-chart-note">
-          당월 매출액 기준 상위 {{ sellerFeeChartRows.length }}개 셀러의 3PL 비용 비중을 보여줍니다.
+          {{ billingMonth }} 정산월 기준 청구액 상위 {{ sellerFeeChartRows.length }}개 셀러의 비용 비중을 보여줍니다.
         </div>
       </div>
     </div>
@@ -752,6 +908,29 @@ onMounted(fetchDashboard)
   gap: var(--space-3);
 }
 
+.month-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.month-filter__label {
+  font-size: var(--font-size-xs);
+  color: var(--t3);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.month-filter__input {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--t1);
+  font-size: var(--font-size-sm);
+}
+
 .view-toggle {
   display: inline-flex;
   align-items: center;
@@ -817,6 +996,18 @@ onMounted(fetchDashboard)
   gap: var(--space-2);
 }
 
+.seller-name-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.seller-code-sub {
+  color: var(--t3);
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
 .rank-badge {
   display: inline-flex;
   align-items: center;
@@ -832,24 +1023,8 @@ onMounted(fetchDashboard)
   flex-shrink: 0;
 }
 
-.trend-up-text {
-  color: var(--red);
-  font-family: var(--font-barlow);
-  font-weight: 600;
-  font-size: var(--font-size-sm);
-}
-
-.trend-down-text {
+.amount-cell--strong {
   color: var(--blue);
-  font-family: var(--font-barlow);
-  font-weight: 600;
-  font-size: var(--font-size-sm);
-}
-
-.turnover-rate {
-  font-family: var(--font-barlow);
-  font-weight: 600;
-  color: var(--green);
 }
 
 :deep(.seller-fee-tooltip) {

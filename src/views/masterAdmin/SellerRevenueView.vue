@@ -2,27 +2,17 @@
 /**
  * SellerRevenueView — 총괄관리자 셀러별 매출 현황
  *
- * 현재 API 범위에서 총괄관리자가 빠르게 판단할 수 있도록
- * KPI, 상위 셀러 분포, 검색/정렬, 운영 우선순위 테이블을 함께 제공한다.
+ * 당월 매출 지표에 더해, 선택한 정산월의 3PL 월 정산 결과를 함께 보여준다.
  */
 import { ref, computed, onMounted, watch } from 'vue'
-import { getSellerRevenue } from '@/api/member'
-import { getCurrentRevenue } from '@/api/order'
+import { getSellerList } from '@/api/member'
+import { getCurrentRevenue, getSellerRevenue } from '@/api/order'
+import { getWhmMonthlyBillingResults } from '@/api/wms'
 import { formatNumber } from '@/utils/format'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 
 const breadcrumb = [{ label: '셀러 관리' }, { label: '셀러별 매출' }]
-
-const COLUMNS = [
-  { key: 'rank', label: '순위', align: 'center', width: '72px' },
-  { key: 'sellerName', label: '셀러' },
-  { key: 'monthRevenue', label: '당월 매출', align: 'right', width: '150px' },
-  { key: 'contribution', label: '매출 비중', align: 'right', width: '130px' },
-  { key: 'totalOrders', label: '주문 건수', align: 'right', width: '110px' },
-  { key: 'avgOrderValue', label: '평균 주문액', align: 'right', width: '140px' },
-  { key: 'focus', label: '운영 포인트', align: 'center', width: '120px' },
-]
 
 const SEGMENTS = [
   { key: 'ALL', label: '전체' },
@@ -32,31 +22,153 @@ const SEGMENTS = [
 
 const SORT_OPTIONS = [
   { value: 'revenue_desc', label: '매출 높은 순' },
+  { value: 'billing_desc', label: '정산 비용 높은 순' },
   { value: 'orders_desc', label: '주문 많은 순' },
   { value: 'ticket_desc', label: '평균 주문액 높은 순' },
   { value: 'contribution_desc', label: '기여율 높은 순' },
   { value: 'name_asc', label: '셀러명 순' },
 ]
 
-const rows = ref([])
+const PAGE_SIZE = 10
+
+const revenueRows = ref([])
+const billingRows = ref([])
 const isLoading = ref(false)
 const totalRevenue = ref(0)
+const billingLoadFailed = ref(false)
+const billingMonth = ref(getPreviousBillingMonth())
 const searchQ = ref('')
 const activeSegment = ref('ALL')
 const sortKey = ref('revenue_desc')
 const page = ref(1)
-const PAGE_SIZE = 10
+
+function getPreviousBillingMonth(baseDate = new Date()) {
+  const date = new Date(baseDate.getFullYear(), baseDate.getMonth() - 1, 1)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  return `${year}-${month}`
+}
+
+function toAmount(value) {
+  const amount = Number(value)
+  return Number.isFinite(amount) ? amount : 0
+}
+
+function getSettledData(result, fallback) {
+  return result?.status === 'fulfilled' ? (result.value.data?.data ?? fallback) : fallback
+}
+
+function getSellerMeta(seller) {
+  return {
+    sellerId: seller.id,
+    sellerCode: seller.customerCode || seller.sellerInfo || seller.id,
+    sellerName: seller.brandNameKo || seller.brandNameEn || seller.sellerInfo || seller.customerCode || seller.id,
+  }
+}
+
+function buildMonthlyBillingRows(billingResults = [], sellers = []) {
+  const sellerMetaById = new Map()
+  for (const seller of sellers) {
+    const meta = getSellerMeta(seller)
+    if (seller.id) sellerMetaById.set(seller.id, meta)
+    if (seller.tenantId) sellerMetaById.set(seller.tenantId, meta)
+  }
+
+  const aggregated = new Map()
+
+  for (const result of billingResults) {
+    const sellerId = result.sellerId
+    const sellerMeta = sellerMetaById.get(sellerId) ?? {
+      sellerCode: sellerId,
+      sellerName: `셀러 ${sellerId}`,
+    }
+
+    if (!aggregated.has(sellerId)) {
+      aggregated.set(sellerId, {
+        sellerId,
+        sellerCode: sellerMeta.sellerCode,
+        sellerName: sellerMeta.sellerName,
+        totalFee: 0,
+        storageFee: 0,
+        pickingFee: 0,
+        packingFee: 0,
+      })
+    }
+
+    const item = aggregated.get(sellerId)
+    item.totalFee += toAmount(result.totalFee)
+    item.storageFee += toAmount(result.storageFee)
+    item.pickingFee += toAmount(result.pickingFee)
+    item.packingFee += toAmount(result.packingFee)
+  }
+
+  return [...aggregated.values()].sort((a, b) => b.totalFee - a.totalFee)
+}
+
+const columns = computed(() => [
+  { key: 'rank', label: '순위', align: 'center', width: '72px' },
+  { key: 'sellerName', label: '셀러' },
+  { key: 'monthRevenue', label: '당월 매출', align: 'right', width: '150px' },
+  { key: 'billingTotalFee', label: `${billingMonth.value} 정산 비용`, align: 'right', width: '160px' },
+  { key: 'billingBreakdown', label: '정산 구성', width: '200px' },
+  { key: 'contribution', label: '매출 비중', align: 'right', width: '120px' },
+  { key: 'totalOrders', label: '주문 건수', align: 'right', width: '110px' },
+  { key: 'avgOrderValue', label: '평균 주문액', align: 'right', width: '140px' },
+  { key: 'focus', label: '운영 포인트', align: 'center', width: '120px' },
+])
+
+const mergedRows = computed(() => {
+  const billingByCode = new Map(
+    billingRows.value.map(row => [row.sellerCode, row])
+  )
+
+  const merged = revenueRows.value.map(row => {
+    const billing = billingByCode.get(row.sellerCode)
+    return {
+      sellerCode: row.sellerCode,
+      sellerName: row.sellerName,
+      monthRevenue: toAmount(row.monthRevenue),
+      totalOrders: toAmount(row.totalOrders),
+      avgOrderValue: toAmount(row.avgOrderValue),
+      billingTotalFee: billing?.totalFee ?? 0,
+      storageFee: billing?.storageFee ?? 0,
+      pickingFee: billing?.pickingFee ?? 0,
+      packingFee: billing?.packingFee ?? 0,
+    }
+  })
+
+  const revenueCodes = new Set(revenueRows.value.map(row => row.sellerCode))
+  for (const billing of billingRows.value) {
+    if (!revenueCodes.has(billing.sellerCode)) {
+      merged.push({
+        sellerCode: billing.sellerCode,
+        sellerName: billing.sellerName,
+        monthRevenue: 0,
+        totalOrders: 0,
+        avgOrderValue: 0,
+        billingTotalFee: billing.totalFee,
+        storageFee: billing.storageFee,
+        pickingFee: billing.pickingFee,
+        packingFee: billing.packingFee,
+      })
+    }
+  }
+
+  return merged
+})
 
 const revenueRankedRows = computed(() => {
-  const baseRows = [...rows.value].sort((a, b) => b.monthRevenue - a.monthRevenue)
+  const baseRows = [...mergedRows.value].sort((a, b) => b.monthRevenue - a.monthRevenue)
+
   return baseRows.map((row, index) => {
     const contribution = totalRevenue.value
       ? +((row.monthRevenue / totalRevenue.value) * 100).toFixed(1)
       : 0
 
     let focus = { label: '일반 관리', tone: 'neutral' }
-    if (contribution >= 15) focus = { label: '집중 관리', tone: 'critical' }
-    else if (contribution >= 8) focus = { label: '성장 관찰', tone: 'primary' }
+    if (row.monthRevenue === 0 && row.billingTotalFee > 0) focus = { label: '정산 확인', tone: 'critical' }
+    else if (contribution >= 15) focus = { label: '집중 관리', tone: 'critical' }
+    else if (row.billingTotalFee > 0) focus = { label: '청구 점검', tone: 'primary' }
     else if (contribution < 5) focus = { label: '소형 셀러', tone: 'muted' }
 
     return {
@@ -64,6 +176,7 @@ const revenueRankedRows = computed(() => {
       rank: index + 1,
       contribution,
       focus,
+      billingBreakdown: `보관 ₩${formatNumber(row.storageFee)} / 피킹 ₩${formatNumber(row.pickingFee)} / 패킹 ₩${formatNumber(row.packingFee)}`,
       isCore: contribution >= 15,
       isLongTail: contribution < 5,
     }
@@ -71,34 +184,28 @@ const revenueRankedRows = computed(() => {
 })
 
 const activeSellerCount = computed(() => revenueRankedRows.value.filter(row => row.monthRevenue > 0).length)
-const totalOrders = computed(() => revenueRankedRows.value.reduce((sum, row) => sum + row.totalOrders, 0))
+const billedSellerCount = computed(() => revenueRankedRows.value.filter(row => row.billingTotalFee > 0).length)
+const totalBillingFee = computed(() => revenueRankedRows.value.reduce((sum, row) => sum + row.billingTotalFee, 0))
 const topSeller = computed(() => revenueRankedRows.value[0] ?? null)
-const orderLeader = computed(() => {
-  return revenueRankedRows.value.reduce((best, row) => (
+const billingLeader = computed(() => (
+  revenueRankedRows.value.reduce((best, row) => (
+    !best || row.billingTotalFee > best.billingTotalFee ? row : best
+  ), null)
+))
+const orderLeader = computed(() => (
+  revenueRankedRows.value.reduce((best, row) => (
     !best || row.totalOrders > best.totalOrders ? row : best
   ), null)
-})
-const ticketLeader = computed(() => {
-  return revenueRankedRows.value.reduce((best, row) => (
+))
+const ticketLeader = computed(() => (
+  revenueRankedRows.value.reduce((best, row) => (
     !best || row.avgOrderValue > best.avgOrderValue ? row : best
   ), null)
-})
-const top3Concentration = computed(() => {
-  return +revenueRankedRows.value
-    .slice(0, 3)
-    .reduce((sum, row) => sum + row.contribution, 0)
-    .toFixed(1)
-})
-const longTailRevenueShare = computed(() => {
-  return +revenueRankedRows.value
-    .filter(row => row.isLongTail)
-    .reduce((sum, row) => sum + row.contribution, 0)
-    .toFixed(1)
-})
+))
 const topFiveRows = computed(() => revenueRankedRows.value.slice(0, 5))
 
 const filteredRows = computed(() => {
-  return revenueRankedRows.value.filter((row) => {
+  return revenueRankedRows.value.filter(row => {
     const matchesSegment =
       activeSegment.value === 'ALL' ||
       (activeSegment.value === 'CORE' && row.isCore) ||
@@ -109,10 +216,7 @@ const filteredRows = computed(() => {
     if (!searchQ.value) return true
 
     const query = searchQ.value.toLowerCase()
-    return (
-      row.sellerName.toLowerCase().includes(query) ||
-      row.sellerCode.toLowerCase().includes(query)
-    )
+    return row.sellerName.toLowerCase().includes(query) || row.sellerCode.toLowerCase().includes(query)
   })
 })
 
@@ -120,6 +224,8 @@ const sortedRows = computed(() => {
   const list = [...filteredRows.value]
 
   switch (sortKey.value) {
+    case 'billing_desc':
+      return list.sort((a, b) => b.billingTotalFee - a.billingTotalFee)
     case 'orders_desc':
       return list.sort((a, b) => b.totalOrders - a.totalOrders)
     case 'ticket_desc':
@@ -149,15 +255,61 @@ watch([searchQ, activeSegment, sortKey], () => {
   page.value = 1
 })
 
+watch(billingMonth, (nextMonth, prevMonth) => {
+  if (nextMonth && nextMonth !== prevMonth) {
+    fetchAll()
+  }
+})
+
 async function fetchAll() {
   isLoading.value = true
+  billingLoadFailed.value = false
+
   try {
-    const [revenueRes, currentRes] = await Promise.all([
+    const [revenueResult, currentRevenueResult, sellerListResult] = await Promise.allSettled([
       getSellerRevenue(),
       getCurrentRevenue(),
+      getSellerList(),
     ])
-    totalRevenue.value = currentRes.data.data?.totalRevenue ?? 0
-    rows.value = revenueRes.data.data ?? []
+
+    const sellerList = getSettledData(sellerListResult, [])
+    const sellerMetaById = new Map(
+      sellerList.map(seller => {
+        const meta = getSellerMeta(seller)
+        return [meta.sellerId, meta]
+      })
+    )
+
+    revenueRows.value = getSettledData(revenueResult, []).map(row => {
+      const meta = sellerMetaById.get(row.sellerId) ?? {
+        sellerCode: row.sellerId,
+        sellerName: `셀러 ${row.sellerId}`,
+      }
+
+      return {
+        sellerCode: meta.sellerCode,
+        sellerName: meta.sellerName,
+        monthRevenue: row.monthRevenue,
+        totalOrders: row.totalOrders,
+        avgOrderValue: row.avgOrderValue,
+      }
+    })
+    const currentRevenue = getSettledData(currentRevenueResult, null)
+
+    totalRevenue.value = currentRevenue?.totalRevenue
+      ?? revenueRows.value.reduce((sum, row) => sum + toAmount(row.monthRevenue), 0)
+
+    try {
+      const billingRes = await getWhmMonthlyBillingResults({ billingMonth: billingMonth.value })
+      billingRows.value = buildMonthlyBillingRows(
+        billingRes.data.data ?? [],
+        sellerList,
+      )
+    } catch (billingErr) {
+      billingLoadFailed.value = true
+      billingRows.value = []
+      console.error('[SellerRevenueView] monthly billing fetch error:', billingErr)
+    }
   } catch (e) {
     console.error('[SellerRevenueView] fetch error:', e)
   } finally {
@@ -185,15 +337,17 @@ onMounted(fetchAll)
         </div>
 
         <div class="stat-card stat-card--amber">
-          <span class="stat-label">Top 3 집중도</span>
-          <span class="stat-value">{{ top3Concentration }}<span class="stat-unit">%</span></span>
-          <span class="stat-sub">상위 3개 셀러 매출 비중</span>
+          <span class="stat-label">{{ billingMonth }} 정산 총액</span>
+          <span class="stat-value">₩{{ formatNumber(totalBillingFee) }}</span>
+          <span class="stat-sub">선택한 정산월 기준 3PL 청구 합계</span>
         </div>
 
         <div class="stat-card stat-card--green">
-          <span class="stat-label">소형 셀러 비중</span>
-          <span class="stat-value">{{ longTailRevenueShare }}<span class="stat-unit">%</span></span>
-          <span class="stat-sub">기여율 5% 미만 셀러 합산</span>
+          <span class="stat-label">{{ billingMonth }} 정산 반영 셀러</span>
+          <span class="stat-value">{{ billedSellerCount }}<span class="stat-unit">개사</span></span>
+          <span class="stat-sub">
+            {{ billingLoadFailed ? '월 정산 데이터를 불러오지 못했습니다.' : '선택한 정산월에 청구 데이터가 있는 셀러 수' }}
+          </span>
         </div>
       </div>
 
@@ -245,21 +399,21 @@ onMounted(fetchAll)
             </div>
 
             <div class="focus-item">
+              <span class="focus-label">{{ billingMonth }} 정산 비용 1위</span>
+              <strong class="focus-name">{{ billingLeader?.sellerName ?? '-' }}</strong>
+              <span class="focus-value">₩{{ formatNumber(billingLeader?.billingTotalFee) }}</span>
+            </div>
+
+            <div class="focus-item">
               <span class="focus-label">주문 건수 1위</span>
               <strong class="focus-name">{{ orderLeader?.sellerName ?? '-' }}</strong>
               <span class="focus-value">{{ formatNumber(orderLeader?.totalOrders) }}건</span>
             </div>
 
-            <div class="focus-item">
+            <div class="focus-item focus-item--muted">
               <span class="focus-label">평균 주문액 1위</span>
               <strong class="focus-name">{{ ticketLeader?.sellerName ?? '-' }}</strong>
               <span class="focus-value">₩{{ formatNumber(ticketLeader?.avgOrderValue) }}</span>
-            </div>
-
-            <div class="focus-item focus-item--muted">
-              <span class="focus-label">총 주문 건수</span>
-              <strong class="focus-name">전체 셀러 합산</strong>
-              <span class="focus-value">{{ formatNumber(totalOrders) }}건</span>
             </div>
           </div>
         </section>
@@ -269,7 +423,7 @@ onMounted(fetchAll)
         <div class="table-head">
           <div>
             <h3 class="panel-title">셀러별 매출 순위</h3>
-            <p class="panel-sub">검색, 세그먼트, 정렬로 빠르게 우선순위를 확인합니다.</p>
+            <p class="panel-sub">당월 매출과 {{ billingMonth }} 정산 비용을 함께 비교합니다.</p>
           </div>
         </div>
 
@@ -288,6 +442,15 @@ onMounted(fetchAll)
           </div>
 
           <div class="toolbar-right">
+            <label class="month-filter">
+              <span class="month-filter__label">정산월</span>
+              <input
+                v-model="billingMonth"
+                class="month-filter__input"
+                type="month"
+              />
+            </label>
+
             <div class="search-box">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#B0B8CC" stroke-width="1.6">
                 <circle cx="6" cy="6" r="4.5" />
@@ -310,7 +473,7 @@ onMounted(fetchAll)
         </div>
 
         <BaseTable
-          :columns="COLUMNS"
+          :columns="columns"
           :rows="paginatedRows"
           :loading="isLoading"
           :pagination="pagination"
@@ -330,6 +493,18 @@ onMounted(fetchAll)
 
           <template #cell-monthRevenue="{ value }">
             <span class="metric-strong">₩{{ formatNumber(value) }}</span>
+          </template>
+
+          <template #cell-billingTotalFee="{ value }">
+            <span class="metric-strong metric-strong--blue">₩{{ formatNumber(value) }}</span>
+          </template>
+
+          <template #cell-billingBreakdown="{ row }">
+            <div class="billing-cell">
+              <span>보관 ₩{{ formatNumber(row.storageFee) }}</span>
+              <span>피킹 ₩{{ formatNumber(row.pickingFee) }}</span>
+              <span>패킹 ₩{{ formatNumber(row.packingFee) }}</span>
+            </div>
           </template>
 
           <template #cell-contribution="{ value }">
@@ -615,6 +790,29 @@ onMounted(fetchAll)
   flex-wrap: wrap;
 }
 
+.month-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.month-filter__label {
+  color: var(--t3);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.month-filter__input {
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--t1);
+  font-size: var(--font-size-sm);
+}
+
 .search-box {
   display: flex;
   align-items: center;
@@ -686,6 +884,19 @@ onMounted(fetchAll)
 .metric-strong {
   font-weight: 700;
   color: var(--t1);
+}
+
+.metric-strong--blue {
+  color: var(--blue);
+}
+
+.billing-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--t2);
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
 }
 
 .contribution-cell {
@@ -761,6 +972,15 @@ onMounted(fetchAll)
   }
 
   .toolbar-right {
+    width: 100%;
+  }
+
+  .month-filter {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .month-filter__input {
     width: 100%;
   }
 

@@ -114,3 +114,11 @@ export function getCurrentRevenue() {
 export function getMonthlyRevenue() {
   return instance.get('/orders/revenue/monthly')
 }
+
+/**
+ * 셀러별 당월 매출 조회
+ * @returns {Promise<AxiosResponse>} { success, data: Array<{ sellerId, monthRevenue, totalOrders, avgOrderValue }> }
+ */
+export function getSellerRevenue() {
+  return instance.get('/orders/revenue/sellers')
+}
