@@ -95,5 +95,4 @@ export const ROUTE_NAMES = {
   SYS_COMPANY_DETAIL: 'sys-company-detail',
   SYS_FEE_SETTING: 'sys-fee-setting',
   SYS_USER_ACCOUNT_LIST: 'sys-user-account-list',
-  SYS_IMPORT_SURCHARGE: 'sys-import-surcharge',
 }
