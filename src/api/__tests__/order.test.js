@@ -29,7 +29,20 @@ describe('order API', () => {
   })
 
   it('createSellerOrder는 POST /orders/seller/manual을 호출한다', async () => {
-    const payload = { orderNo: 'ORD-20260317-001', sku: 'SKU-AMPLE-001', quantity: 2 }
+    const payload = {
+      orderedAt: '2026-03-17T10:00:00',
+      receiverName: '홍길동',
+      receiverPhoneNo: '010-1234-5678',
+      shippingAddress: {
+        address1: '서울시 강남구 테헤란로 1',
+        address2: '101동 1001호',
+        city: '서울',
+        state: '서울',
+        zipCode: '06236',
+      },
+      items: [{ sku: 'SKU-AMPLE-001', quantity: 2 }],
+      memo: '문 앞에 놓아주세요.',
+    }
 
     await createSellerOrder(payload)
 

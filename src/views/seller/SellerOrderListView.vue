@@ -229,7 +229,7 @@ async function handleConfirmCancel() {
           row-key="orderId"
           @page-change="handlePageChange"
         >
-          <template #cell-orderNo="{ row, value }">
+          <template #cell-orderId="{ row, value }">
             <button class="cell-trigger cell-trigger--order" type="button" @click="handleOpenOrderDetail(row)">
               <span class="order-num">{{ value }}</span>
             </button>

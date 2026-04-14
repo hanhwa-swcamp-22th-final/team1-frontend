@@ -28,7 +28,7 @@ describe('orderList utils', () => {
 
   it('셀러 주문 목록 응답을 화면 행 구조로 정규화한다', () => {
     expect(normalizeSellerOrderRow({
-      orderNo: 'ORD-2026-00001',
+      orderId: 'ORD-2026-00001',
       orderChannel: 'MANUAL',
       receiverName: '홍길동',
       street1: '서울시 강남구 테헤란로 1',
@@ -38,7 +38,6 @@ describe('orderList utils', () => {
     })).toEqual(expect.objectContaining({
       id: 'ORD-2026-00001',
       orderId: 'ORD-2026-00001',
-      orderNo: 'ORD-2026-00001',
       channel: 'MANUAL',
       recipient: '홍길동',
       address: '서울시 강남구 테헤란로 1 101동 1001호',
@@ -64,14 +63,14 @@ describe('orderList utils', () => {
   it('셀러 주문 목록 payload는 data.orders 기준으로만 정규화한다', () => {
     expect(normalizeSellerOrderListPayload({
       orders: [{
-        orderNo: 'ORD-2026-00001',
+        orderId: 'ORD-2026-00001',
         orderChannel: 'SHOPIFY',
         receiverName: '홍길동',
         street1: '서울시 강남구 테헤란로 1',
         itemCount: 2,
       }],
       items: [{
-        orderNo: 'ORD-IGNORE-00001',
+        orderId: 'ORD-IGNORE-00001',
       }],
       totalCount: 1,
       page: 0,
@@ -80,7 +79,6 @@ describe('orderList utils', () => {
       orders: [
         expect.objectContaining({
           orderId: 'ORD-2026-00001',
-          orderNo: 'ORD-2026-00001',
           channel: 'SHOPIFY',
           recipient: '홍길동',
           itemsSummary: '상품 2건',
@@ -132,7 +130,7 @@ describe('orderList utils', () => {
 
   it('상세 응답이 비어도 목록 행의 주문 식별자를 fallback으로 사용한다', () => {
     expect(normalizeSellerOrderDetail({}, {
-      orderNo: 'ORD-2026-00002',
+      orderId: 'ORD-2026-00002',
       orderChannel: 'MANUAL',
       receiverName: '임꺽정',
       address: '서울시 성동구 아차산로 1',

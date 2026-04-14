@@ -176,7 +176,7 @@ function inferOrderQuantity(itemsSummary = '', items = []) {
 function buildDashboardOrderRows(orderRows = [], channelOrderRows = []) {
   const localOrders = (Array.isArray(orderRows) ? orderRows : []).map((row) => ({
     id: row.id ?? row.orderId ?? row.orderNo,
-    code: row.orderNo,
+    code: row.orderId ?? row.orderNo,
     channelLabel: normalizeChannelLabel(row.channel),
     orderedAt: row.orderedAt ?? row.orderDate ?? row.createdAt,
     itemsSummary: row.itemsSummary ?? '',
@@ -185,7 +185,7 @@ function buildDashboardOrderRows(orderRows = [], channelOrderRows = []) {
     stage: getDashboardOutboundStage(row.status),
     order: {
       ...row,
-      orderNo: row.orderNo,
+      orderId: row.orderId ?? row.id ?? row.orderNo,
       channel: normalizeChannelLabel(row.channel),
       status: normalizeDashboardOrderStatus(row.status),
     },

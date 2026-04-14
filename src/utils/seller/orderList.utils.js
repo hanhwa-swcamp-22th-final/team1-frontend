@@ -47,7 +47,7 @@ export const SELLER_ORDER_PROGRESS_STEPS = [
 ]
 
 export const SELLER_ORDER_LIST_COLUMNS = [
-  { key: 'orderNo', label: '주문번호', width: '170px' },
+  { key: 'orderId', label: '주문번호', width: '170px' },
   { key: 'channel', label: '채널', width: '100px' },
   { key: 'recipient', label: '수령자', width: '120px' },
   { key: 'address', label: '배송지', width: '190px' },
@@ -60,7 +60,7 @@ export const SELLER_ORDER_LIST_COLUMNS = [
 
 export function buildSellerOrderExportRows(rows = []) {
   return rows.map((row) => ({
-    주문번호: row.orderId ?? row.orderNo ?? '',
+    주문번호: row.orderId ?? row.id ?? '',
     채널: getSellerOrderChannelMeta(row.channel).label,
     수령자: row.recipient ?? '',
     배송지: row.address ?? '',
@@ -114,7 +114,6 @@ export function normalizeSellerOrderRow(row = {}) {
     ...row,
     id: orderId || String(row.id ?? '').trim(),
     orderId,
-    orderNo: orderId || String(row.orderNo ?? '').trim(),
     channel: row.channel ?? row.orderChannel ?? '',
     recipient: row.recipient ?? row.receiverName ?? '',
     address: row.address ?? joinAddress([row.street1, row.street2]),

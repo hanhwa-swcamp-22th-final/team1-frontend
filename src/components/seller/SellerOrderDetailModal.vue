@@ -22,7 +22,7 @@ const props = defineProps({
 
 defineEmits(['cancel'])
 
-const displayOrderId = computed(() => props.detail?.orderId ?? props.order?.orderId ?? props.order?.orderNo ?? '')
+const displayOrderId = computed(() => props.detail?.orderId ?? props.order?.orderId ?? props.order?.id ?? '')
 const displayStatus = computed(() => props.detail?.status ?? props.order?.status)
 const displayChannel = computed(() => props.detail?.orderChannel ?? props.order?.channel)
 const displayMemo = computed(() => props.detail?.memo || '요청사항이 없습니다.')
