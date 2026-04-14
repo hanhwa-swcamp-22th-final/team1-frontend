@@ -269,6 +269,52 @@ describe('orderRegister utils', () => {
       uniqueSkuCount: 2,
       uniqueRecipientCount: 2,
       firstOrderNo: 'ORD-20260321-009',
+      totalRows: 2,
+      validRows: 2,
+      errorCount: 0,
+      errors: [],
+    })
+  })
+
+  it('업로드 결과 모달용 요약 정보는 서버 검증 결과를 함께 반영한다', () => {
+    const result = buildOrderUploadResultSummary(
+      [
+        {
+          orderNo: 'ORD-20260321-011',
+          recipient: '홍길동',
+          sku: 'LB-AMP-30',
+          quantity: '3',
+        },
+      ],
+      'orders.xlsx',
+      {
+        totalRows: 10,
+        validRows: 8,
+        errors: [
+          {
+            row: 4,
+            message: 'SKU가 비어 있습니다.',
+          },
+        ],
+      },
+    )
+
+    expect(result).toEqual({
+      fileName: 'orders.xlsx',
+      rowCount: 1,
+      totalQuantity: 3,
+      uniqueSkuCount: 1,
+      uniqueRecipientCount: 1,
+      firstOrderNo: 'ORD-20260321-011',
+      totalRows: 10,
+      validRows: 8,
+      errorCount: 1,
+      errors: [
+        {
+          row: 4,
+          message: 'SKU가 비어 있습니다.',
+        },
+      ],
     })
   })
 

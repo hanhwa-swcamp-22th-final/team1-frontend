@@ -287,8 +287,33 @@ export function resolveTemplateDownloadFilename(
   return fallback
 }
 
-export function buildOrderUploadResultSummary(rows = [], fileName = '') {
+function normalizeBulkValidationErrors(errors = []) {
+  return (Array.isArray(errors) ? errors : [])
+    .map((error) => {
+      const row = Number(error?.row ?? 0)
+      const message = String(error?.message ?? '').trim()
+
+      return {
+        row: Number.isFinite(row) && row > 0 ? row : 0,
+        message,
+      }
+    })
+    .filter((error) => error.row || error.message)
+}
+
+function normalizeBulkValidationCount(value, fallback = 0) {
+  const normalized = Number(value)
+  return Number.isFinite(normalized) && normalized >= 0 ? normalized : fallback
+}
+
+export function buildOrderUploadResultSummary(rows = [], fileName = '', validation = null) {
   const normalizedRows = Array.isArray(rows) ? rows : []
+  const errors = normalizeBulkValidationErrors(validation?.errors)
+  const totalRows = normalizeBulkValidationCount(validation?.totalRows, normalizedRows.length)
+  const validRows = normalizeBulkValidationCount(
+    validation?.validRows,
+    Math.max(totalRows - errors.length, 0),
+  )
 
   return {
     fileName: String(fileName ?? '').trim(),
@@ -299,6 +324,10 @@ export function buildOrderUploadResultSummary(rows = [], fileName = '') {
       normalizedRows.map((row) => String(row.recipient ?? '').trim()).filter(Boolean),
     ).size,
     firstOrderNo: normalizedRows[0]?.orderNo ?? '-',
+    totalRows,
+    validRows,
+    errorCount: errors.length,
+    errors,
   }
 }
 

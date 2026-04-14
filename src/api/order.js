@@ -29,6 +29,17 @@ export async function createSellerBulkOrders(file) {
 }
 
 /**
+ * 셀러 엑셀 업로드 주문 사전 검증
+ * @param {File|Blob} file
+ * @returns {Promise<AxiosResponse>}
+ */
+export async function validateSellerBulkOrders(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return instance.post('/orders/seller/bulk/validate', formData)
+}
+
+/**
  * 셀러 엑셀 업로드 템플릿 다운로드
  * @returns {Promise<AxiosResponse<Blob>>}
  */

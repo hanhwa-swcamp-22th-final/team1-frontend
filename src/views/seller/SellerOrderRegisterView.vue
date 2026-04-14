@@ -14,6 +14,7 @@ import {
   createSellerOrder,
   downloadSellerBulkOrderTemplate,
   getSellerOrderOptions,
+  validateSellerBulkOrders,
 } from '@/api/order'
 import BaseForm from '@/components/common/BaseForm.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
@@ -369,14 +370,27 @@ async function handleFileSelected(file) {
     }
 
     previewRows.value = mapOrderUploadRows(rows)
+    const validationResponse = await validateSellerBulkOrders(targetFile)
+    const validationResult = validationResponse.data?.data ?? {}
+
     isPreviewSample.value = false
-    showToast(`${targetFile.name} 파일에서 ${previewRows.value.length}건을 불러왔습니다.`)
-    uploadResultSummary.value = buildOrderUploadResultSummary(previewRows.value, targetFile.name)
+    uploadResultSummary.value = buildOrderUploadResultSummary(
+      previewRows.value,
+      targetFile.name,
+      validationResult,
+    )
     isUploadResultModalOpen.value = true
+
+    if (uploadResultSummary.value.errorCount > 0) {
+      uploadErrorMessage.value = `검증 오류 ${uploadResultSummary.value.errorCount}건이 있습니다. 파일을 수정한 뒤 다시 업로드하세요.`
+      return
+    }
+
+    showToast(`${targetFile.name} 파일에서 ${previewRows.value.length}건을 불러왔습니다.`)
   } catch (error) {
     previewRows.value = []
     isPreviewSample.value = true
-    uploadErrorMessage.value = '엑셀 파일을 읽지 못했습니다. 파일 형식을 확인하세요.'
+    uploadErrorMessage.value = error.response?.data?.message ?? '엑셀 파일을 읽지 못했습니다. 파일 형식을 확인하세요.'
   }
 }
 
@@ -413,10 +427,16 @@ async function handleBulkSubmit() {
     return
   }
 
+  if (uploadResultSummary.value?.errorCount > 0) {
+    bulkSubmitErrorMessage.value = '검증 오류가 있는 파일은 저장할 수 없습니다.'
+    isUploadResultModalOpen.value = true
+    return
+  }
+
   try {
     isSubmittingBulk.value = true
     const response = await createSellerBulkOrders(selectedBulkFile.value)
-    const savedCount = response.data?.data?.savedCount ?? previewRows.value.length
+    const savedCount = response.data?.data?.successCount ?? previewRows.value.length
 
     resetUploadState()
     showToast(`${response.data?.message ?? '업로드 주문이 등록되었습니다.'} (${savedCount}건)`)
@@ -1065,6 +1085,16 @@ onBeforeUnmount(() => {
                 <div class="summary-row">
                   <dt>미리보기 상태</dt>
                   <dd>{{ isPreviewSample ? '업로드 대기' : '실데이터 미리보기' }}</dd>
+                </div>
+                <div class="summary-row">
+                  <dt>검증 결과</dt>
+                  <dd>
+                    {{ uploadResultSummary
+                      ? uploadResultSummary.errorCount
+                        ? `오류 ${uploadResultSummary.errorCount}건`
+                        : `${uploadResultSummary.validRows}건 통과`
+                      : '-' }}
+                  </dd>
                 </div>
               </dl>
               </section>

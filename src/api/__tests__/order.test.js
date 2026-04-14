@@ -8,6 +8,7 @@ import {
   getOutboundStats,
   getSellerOrderDetail,
   getSellerOrderList,
+  validateSellerBulkOrders,
 } from '@/api/order'
 
 vi.mock('@/api/instance', () => ({
@@ -61,6 +62,17 @@ describe('order API', () => {
 
     expect(instance.post).toHaveBeenCalledOnce()
     expect(instance.post).toHaveBeenCalledWith('/orders/seller/bulk', expect.any(FormData))
+  })
+
+  it('validateSellerBulkOrders는 POST /orders/seller/bulk/validate를 호출한다', async () => {
+    const file = new Blob(['bulk-order-data'], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+
+    await validateSellerBulkOrders(file)
+
+    expect(instance.post).toHaveBeenCalledOnce()
+    expect(instance.post).toHaveBeenCalledWith('/orders/seller/bulk/validate', expect.any(FormData))
   })
 
   it('downloadSellerBulkOrderTemplate는 GET /orders/seller/bulk/template를 blob으로 호출한다', async () => {
