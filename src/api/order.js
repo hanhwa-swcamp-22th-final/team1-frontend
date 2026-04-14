@@ -30,7 +30,7 @@ export async function createSellerBulkOrders(file) {
 
 /**
  * 셀러 주문 목록 조회
- * @returns {Promise<AxiosResponse>} { success, data: SellerOrderRow[] }
+ * @returns {Promise<AxiosResponse>} { success, data: { orders, totalCount, page, size } }
  */
 export function getSellerOrderList(params = {}) {
   return instance.get('/orders/seller/list', { params })
@@ -41,7 +41,7 @@ export function getSellerOrderDetail(orderId) {
 }
 
 export function cancelSellerOrder(orderId) {
-  return instance.post(`/orders/seller/${orderId}/cancel`)
+  return instance.patch(`/orders/seller/${orderId}/cancel`)
 }
 
 export function getSellerOrderOptions() {

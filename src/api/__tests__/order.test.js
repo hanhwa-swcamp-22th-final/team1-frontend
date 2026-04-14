@@ -1,11 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import instance from '@/api/instance'
-import { createSellerBulkOrders, createSellerOrder, getOutboundStats, getSellerOrderList } from '@/api/order'
+import {
+  cancelSellerOrder,
+  createSellerBulkOrders,
+  createSellerOrder,
+  getOutboundStats,
+  getSellerOrderDetail,
+  getSellerOrderList,
+} from '@/api/order'
 
 vi.mock('@/api/instance', () => ({
   default: {
     get: vi.fn().mockResolvedValue({}),
     post: vi.fn().mockResolvedValue({}),
+    patch: vi.fn().mockResolvedValue({}),
   },
 }))
 
@@ -38,13 +46,36 @@ describe('order API', () => {
     await createSellerBulkOrders(orders)
 
     expect(instance.post).toHaveBeenCalledOnce()
-    expect(instance.post).toHaveBeenCalledWith('/orders/seller/bulk', { orders })
+    expect(instance.post).toHaveBeenCalledWith('/orders/seller/bulk', expect.any(FormData))
   })
 
   it('getSellerOrderList는 GET /orders/seller/list를 호출한다', async () => {
     await getSellerOrderList()
 
     expect(instance.get).toHaveBeenCalledOnce()
-    expect(instance.get).toHaveBeenCalledWith('/orders/seller/list')
+    expect(instance.get).toHaveBeenCalledWith('/orders/seller/list', { params: {} })
+  })
+
+  it('getSellerOrderList는 백엔드 지원 쿼리로 GET /orders/seller/list를 호출한다', async () => {
+    const params = { page: 0, size: 10, status: 'PENDING' }
+
+    await getSellerOrderList(params)
+
+    expect(instance.get).toHaveBeenCalledOnce()
+    expect(instance.get).toHaveBeenCalledWith('/orders/seller/list', { params })
+  })
+
+  it('getSellerOrderDetail은 GET /orders/seller/{orderId}를 호출한다', async () => {
+    await getSellerOrderDetail('ORD-2026-00001')
+
+    expect(instance.get).toHaveBeenCalledOnce()
+    expect(instance.get).toHaveBeenCalledWith('/orders/seller/ORD-2026-00001')
+  })
+
+  it('cancelSellerOrder는 PATCH /orders/seller/{orderId}/cancel을 호출한다', async () => {
+    await cancelSellerOrder('ORD-2026-00001')
+
+    expect(instance.patch).toHaveBeenCalledOnce()
+    expect(instance.patch).toHaveBeenCalledWith('/orders/seller/ORD-2026-00001/cancel')
   })
 })
