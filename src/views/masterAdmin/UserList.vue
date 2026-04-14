@@ -145,7 +145,11 @@ async function fetchAll() {
   isLoading.value = true
   try {
     const res = await getUserList()
-    allUsers.value = res.data.data
+    allUsers.value = (res.data.data ?? []).map(user => ({
+      ...user,
+      status:    user.accountStatus,
+      lastLogin: user.lastLoginAt,
+    }))
   } catch (e) {
     console.error('[UserList] fetch error:', e)
   } finally {
