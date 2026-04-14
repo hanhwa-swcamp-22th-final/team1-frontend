@@ -25,3 +25,19 @@ export const MENU_BY_ROLE = {
   [ROLES.WH_MANAGER]:   WH_MANAGER_MENU_GROUPS,
   [ROLES.WH_WORKER]:    WH_WORKER_MENU_GROUPS,
 }
+
+/**
+ * 해당 role의 사이드바 첫 번째 메뉴 라우트 name을 반환한다.
+ * role이 없거나 메뉴가 비어있으면 null을 반환한다.
+ *
+ * @param {string} role - ROLES 상수값
+ * @returns {string|null}
+ */
+export function getFirstMenuRoute(role) {
+  const groups = MENU_BY_ROLE[role]
+  if (!groups) return null
+  for (const group of groups) {
+    if (group.items?.length) return group.items[0].name
+  }
+  return null
+}

@@ -24,24 +24,13 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ACCOUNT_STATUS, ROLES, ROUTE_NAMES } from '@/constants'
 
+import { getFirstMenuRoute } from '@/components/layout/menus'
 import authRoutes from './routes/auth.js'
 import sellerRoutes from './routes/seller.js'
 import masterAdminRoutes from './routes/masterAdmin.js'
 import whManagerRoutes from './routes/whManager.js'
 import whWorkerRoutes from './routes/whWorker.js'
 import systemAdminRoutes from './routes/systemAdmin.js'
-
-/**
- * Role별 로그인 후 기본 진입 화면 (로그인 → 대시보드 리다이렉트용)
- * Role이 추가되면 여기도 업데이트 필요
- */
-const DASHBOARD_BY_ROLE = {
-  [ROLES.SELLER]: ROUTE_NAMES.SELLER_DASHBOARD,
-  [ROLES.MASTER_ADMIN]: ROUTE_NAMES.MASTER_DASHBOARD,
-  [ROLES.WH_MANAGER]: ROUTE_NAMES.WH_MANAGER_DASHBOARD,
-  [ROLES.WH_WORKER]: ROUTE_NAMES.WH_WORKER_DASHBOARD,
-  [ROLES.SYSTEM_ADMIN]: ROUTE_NAMES.SYS_COMPANY_LIST,
-}
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -66,6 +55,7 @@ const router = createRouter({
       component: () => import('@/views/common/ForbiddenView.vue'),
     },
     // 404 Not Found — 반드시 마지막에 위치
+    // 로그인 상태면 네비게이션 가드에서 첫 메뉴로 리다이렉트
     {
       path: '/:pathMatch(.*)*',
       name: ROUTE_NAMES.NOT_FOUND,
@@ -89,10 +79,10 @@ const router = createRouter({
 router.beforeEach((to, _from, next) => {
   const auth = useAuthStore()
 
-  // ─ 가드 #1: 로그인 상태에서 /login 재접근 시 대시보드로 이동 ─────────
+  // ─ 가드 #1: 로그인 상태에서 /login 재접근 시 첫 메뉴로 이동 ──────────
   if (auth.isLoggedIn && to.name === ROUTE_NAMES.LOGIN) {
-    const dashboard = DASHBOARD_BY_ROLE[auth.role]
-    return next(dashboard ? { name: dashboard } : '/')
+    const first = getFirstMenuRoute(auth.role)
+    return next(first ? { name: first } : '/')
   }
 
   // ─ 가드 #2: 비공개 페이지 + 미로그인 → /login?redirect=현재경로 ────────
@@ -115,6 +105,12 @@ router.beforeEach((to, _from, next) => {
   // meta.role 이 없는 라우트는 모든 로그인 사용자 접근 허용
   if (to.meta.role && to.meta.role !== auth.role) {
     return next({ name: ROUTE_NAMES.FORBIDDEN })
+  }
+
+  // ─ 가드 #5: 존재하지 않는 경로 + 로그인 상태 → 첫 메뉴로 ─────────────
+  if (to.name === ROUTE_NAMES.NOT_FOUND && auth.isLoggedIn) {
+    const first = getFirstMenuRoute(auth.role)
+    if (first) return next({ name: first })
   }
 
   next()

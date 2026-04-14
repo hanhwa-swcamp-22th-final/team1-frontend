@@ -3,7 +3,8 @@ import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { login } from '@/api/member'
-import { ROLES, ROUTE_NAMES } from '@/constants'
+import { ROUTE_NAMES } from '@/constants'
+import { getFirstMenuRoute } from '@/components/layout/menus'
 
 const router = useRouter()
 const route  = useRoute()
@@ -14,14 +15,6 @@ const password  = ref('')
 const errorMsg  = ref('')
 const infoMsg   = ref('')
 const isLoading = ref(false)
-
-const DASHBOARD_BY_ROLE = {
-  [ROLES.SELLER]:       ROUTE_NAMES.SELLER_DASHBOARD,
-  [ROLES.MASTER_ADMIN]: ROUTE_NAMES.MASTER_DASHBOARD,
-  [ROLES.WH_MANAGER]:   ROUTE_NAMES.WH_MANAGER_DASHBOARD,
-  [ROLES.WH_WORKER]:    ROUTE_NAMES.WH_WORKER_DASHBOARD,
-  [ROLES.SYSTEM_ADMIN]: ROUTE_NAMES.SYS_COMPANY_LIST,
-}
 
 const roles = [
   { id: 'sys',    name: '시스템 관리자', desc: '플랫폼 전체 사용자·업체 관리',            loginId: 'sys.admin@conk.com',    pw: '1234', note: '정상 로그인 예시' },
@@ -54,13 +47,13 @@ async function handleSubmit() {
 
     auth.applyLoginResponse(data)
 
-    const redirect  = route.query.redirect
-    const dashboard = DASHBOARD_BY_ROLE[data.user.role]
+    const redirect = route.query.redirect
+    const first    = getFirstMenuRoute(data.user.role)
 
     if (redirect) {
       router.replace(redirect)
-    } else if (dashboard) {
-      router.push({ name: dashboard })
+    } else if (first) {
+      router.push({ name: first })
     } else {
       router.push('/')
     }

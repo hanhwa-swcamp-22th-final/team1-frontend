@@ -1,17 +1,17 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import { formatDate } from '@/utils/format'
-import { getFeeProfiles, updateFeeProfile } from '@/api/member'
-import { useUiStore } from '@/stores/ui'
 
-const ui = useUiStore()
 const breadcrumb = [{ label: '단가 관리' }, { label: '채널 수수료' }, { label: '판매 채널 수수료율 등록' }]
-const profiles = ref([])
+const profiles = ref([
+  { id: 1, channel: 'AMAZON_FBM', name: 'Amazon FBM 기본', baseRate: 15, fixedFee: 0, currency: '$', updatedAt: '2025-01-01T00:00:00Z' },
+  { id: 2, channel: 'SHOPIFY',    name: 'Shopify 결제 수수료', baseRate: 2.9, fixedFee: 0.30, currency: '$', updatedAt: '2025-01-01T00:00:00Z' },
+  { id: 3, channel: 'ETC',        name: '기타 채널 기본', baseRate: 0, fixedFee: 0, currency: '$', updatedAt: '2025-01-01T00:00:00Z' },
+])
 const activeChannel = ref('AMAZON_FBM')
 const saveModal = ref(false)
 const editModal = reactive({ open: false, profile: null, baseRate: 0, fixedFee: 0 })
@@ -23,18 +23,6 @@ const columns = [
   { key: 'updatedAt', label: '최근 개정일', align: 'center', width: '22%' },
   { key: 'actions', label: '관리', align: 'center', width: '20%' },
 ]
-
-async function fetchProfiles() {
-  ui.setLoading(true)
-  try {
-    const response = await getFeeProfiles()
-    profiles.value = response.data.data
-  } finally {
-    ui.setLoading(false)
-  }
-}
-
-onMounted(fetchProfiles)
 
 const channelRows = computed(() => profiles.value.filter((profile) => profile.channel === activeChannel.value))
 const summaryMap = computed(() => ({
@@ -50,26 +38,20 @@ function openEdit(profile) {
   editModal.open = true
 }
 
-async function saveProfile() {
-  ui.setLoading(true)
-  try {
-    await updateFeeProfile(editModal.profile.id, {
-      baseRate: Number(editModal.baseRate),
-      fixedFee: Number(editModal.fixedFee),
-      updatedAt: new Date().toISOString(),
-    })
-    editModal.open = false
-    saveModal.value = true
-    await fetchProfiles()
-  } finally {
-    ui.setLoading(false)
+function saveProfile() {
+  const target = profiles.value.find((p) => p.id === editModal.profile.id)
+  if (target) {
+    target.baseRate = Number(editModal.baseRate)
+    target.fixedFee = Number(editModal.fixedFee)
+    target.updatedAt = new Date().toISOString()
   }
+  editModal.open = false
+  saveModal.value = true
 }
 </script>
 
 <template>
   <AppLayout :breadcrumb="breadcrumb" title="판매 채널 수수료율 등록">
-    <LoadingSpinner v-if="ui.isLoading" fullscreen />
 
     <div class="page-grid">
       <section class="summary-grid">
