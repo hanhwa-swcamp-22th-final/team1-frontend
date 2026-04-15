@@ -455,8 +455,8 @@ export function getWhmInventoryDetail(id) {
  * 작업자 작업 목록 조회
  * @returns {Promise<AxiosResponse>} { success: true, data: WhWorkerTask[] }
  */
-export async function getWhWorkerTasks() {
-  return instance.get('/wms/worker/tasks')
+export async function getWhWorkerTasks(params = {}) {
+  return instance.get('/wms/worker/tasks', { params })
 }
 
 /**

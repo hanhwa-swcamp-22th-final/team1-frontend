@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { getWhWorkerTasks, updateWhWorkerTask } from '@/api/wms'
+import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps({
   view: {
@@ -16,6 +17,7 @@ const workerRecords = ref([])
 const toastVisible = ref(false)
 const toastMessage = ref('')
 let toastTimer = null
+const auth = useAuthStore()
 
 const tabs = reactive({
   inboundWork: '검수',
@@ -91,10 +93,18 @@ onMounted(loadTasks)
 async function loadTasks() {
   loading.value = true
   try {
-    const { data } = await getWhWorkerTasks()
+    const workerAccountId = auth.user?.id
+    if (!workerAccountId) {
+      workerRecords.value = []
+      toast('작업자 계정 정보를 확인할 수 없습니다.')
+      return
+    }
+
+    const { data } = await getWhWorkerTasks({ workerAccountId })
     workerRecords.value = Array.isArray(data) ? data : []
   } catch (error) {
     console.error('WH Worker 데이터 로드 실패', error)
+    workerRecords.value = []
     toast('창고작업자 데이터를 불러오지 못했습니다.')
   } finally {
     loading.value = false
@@ -218,6 +228,61 @@ function buildFlatTask(base) {
   }
 }
 
+function normalizeWorkerStage(stage) {
+  return ({
+    검수: 'INSPECTION',
+    적재: 'PUTAWAY',
+    피킹: 'PICKING',
+    패킹: 'PACKING',
+  })[stage] || stage
+}
+
+function parseDetailKey(detailKey = '') {
+  const [orderId = '', skuId = '', locationId = ''] = String(detailKey).split('::')
+  return { orderId, skuId, locationId }
+}
+
+function parseInboundDetailKey(detailKey = '') {
+  const [asnId = '', skuId = '', locationId = ''] = String(detailKey).split('::')
+  return { asnId, skuId, locationId }
+}
+
+function buildWorkerTaskPayload(task, overrides = {}) {
+  const workerAccountId = auth.user?.id ?? ''
+  const basePayload = {
+    workerAccountId,
+    stage: normalizeWorkerStage(task.stage),
+    actualQuantity: overrides.actualQuantity ?? task.actualQty ?? task.qty ?? 0,
+    actualBin: overrides.actualBin ?? task.actualBin ?? '',
+    exceptionType: overrides.exceptionType ?? task.exceptionType ?? '',
+    issueNote: overrides.issueNote ?? task.reason ?? '',
+    orderId: '',
+    asnId: '',
+    skuId: task.sku ?? '',
+    locationId: task.locationId ?? '',
+  }
+
+  if (task.kind === '입고') {
+    const parsed = parseInboundDetailKey(task.sourceId)
+    return {
+      ...basePayload,
+      asnId: parsed.asnId,
+      skuId: parsed.skuId || basePayload.skuId,
+      locationId: parsed.locationId || basePayload.locationId,
+      orderId: '',
+    }
+  }
+
+  const parsed = parseDetailKey(task.sourceId)
+  return {
+    ...basePayload,
+    orderId: parsed.orderId || task.orderNo || '',
+    skuId: parsed.skuId || basePayload.skuId,
+    locationId: parsed.locationId || basePayload.locationId,
+    asnId: '',
+  }
+}
+
 const flatTasks = computed(() => {
   const rows = []
   workerRecords.value.forEach((record) => {
@@ -238,6 +303,7 @@ const flatTasks = computed(() => {
           parentId: record.id,
           sourceId: bin.id,
           sourceType: 'bin',
+          locationId: bin.location,
           kind: '입고',
           stage: '검수',
           status: inspectStatus,
@@ -278,6 +344,7 @@ const flatTasks = computed(() => {
             parentId: record.id,
             sourceId: bin.id,
             sourceType: 'bin',
+            locationId: bin.location,
             kind: '입고',
             stage: '적재',
             status: putStatus,
@@ -321,6 +388,7 @@ const flatTasks = computed(() => {
         parentId: record.id,
         sourceId: bin.id,
         sourceType: 'bin',
+        locationId: bin.location,
         kind: '출고',
         stage: '피킹',
         status: pickStatus,
@@ -364,6 +432,7 @@ const flatTasks = computed(() => {
           parentId: record.id,
           sourceId: order.id,
           sourceType: 'pack',
+          locationId: parseDetailKey(order.id).locationId,
           kind: '출고',
           stage: '패킹',
           status: packStatus,
@@ -603,8 +672,8 @@ async function saveModal() {
   await saveEditModal()
 }
 
-async function persistRecord(record) {
-  await updateWhWorkerTask(record.id, record)
+async function persistRecord(record, task, payloadOverrides = {}) {
+  await updateWhWorkerTask(record.id, buildWorkerTaskPayload(task, payloadOverrides))
   const index = workerRecords.value.findIndex((item) => item.id === record.id)
   if (index !== -1) workerRecords.value.splice(index, 1, record)
 }
@@ -753,7 +822,12 @@ async function saveProcessModal() {
     })
   }
 
-  await persistRecord(record)
+  await persistRecord(record, task, {
+    actualQuantity: actual,
+    actualBin,
+    exceptionType: selectedType || '',
+    issueNote: reason,
+  })
 
   if (shouldSwitchInboundToPut) {
     tabs.inboundWork = '적재'
@@ -923,7 +997,12 @@ async function saveEditModal() {
     })
   }
 
-  await persistRecord(record)
+  await persistRecord(record, task, {
+    actualQuantity: actual,
+    actualBin,
+    exceptionType: selectedType === '정상' ? '' : (selectedType || ''),
+    issueNote: reason,
+  })
   closeModal()
   toast(hasException ? '완료건 수정과 예외 반영이 저장되었습니다.' : (before.hadException ? '예외가 해제되어 정상으로 정정되었습니다.' : '완료건 수정이 저장되었습니다.'))
 }
