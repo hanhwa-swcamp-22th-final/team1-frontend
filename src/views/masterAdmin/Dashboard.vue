@@ -3,10 +3,16 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
 import { formatDate, formatNumber } from '@/utils/format'
-import { getOutboundStats, getCurrentRevenue, getMonthlyRevenue } from '@/api/order'
-import { getAsnStats, getInventoryStats, getWarehouseStatus } from '@/api/wms'
-import { getSellerStats, getSellerFeeSummary, getSellerRevenue } from '@/api/member'
+import { getOutboundStats, getCurrentRevenue, getMonthlyRevenue, getSellerRevenueList } from '@/api/order'
+import { getAsnStats, getInventoryStats, getMonthlyBillingResults, getWarehouseStatus } from '@/api/wms'
+import { getSellerList, getSellerStats } from '@/api/member'
 import { ROUTE_NAMES } from '@/constants'
+import {
+  buildSellerDirectory,
+  getCurrentBillingMonth,
+  normalizeSellerFeeRows,
+  normalizeSellerRevenueRows,
+} from '@/utils/masterAdmin/sellerMetrics.utils'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import VueApexCharts from 'vue3-apexcharts'
@@ -131,13 +137,13 @@ const revenueChartSeries = computed(() =>
 
 const sellerFeeChartRows = computed(() => {
   const revenueMap = new Map(
-    sellerRevenueRows.value.map(row => [row.sellerCode, row.monthRevenue ?? 0])
+    sellerRevenueRows.value.map(row => [row.sellerId, row.monthRevenue ?? 0])
   )
 
   return [...sellerFees.value]
     .map(row => ({
       ...row,
-      monthRevenue: revenueMap.get(row.sellerCode) ?? 0,
+      monthRevenue: revenueMap.get(row.sellerId) ?? 0,
     }))
     .sort((a, b) => b.monthRevenue - a.monthRevenue)
     .slice(0, 5)
@@ -220,9 +226,14 @@ const sellerFeeChartOptions = computed(() => ({
       const row = sellerFeeChartRows.value[dataPointIndex]
       if (!row) return ''
 
-      const growthLabel = row.momGrowth > 0
-        ? `전월비 +${row.momGrowth.toFixed(1)}%`
-        : `전월비 ${row.momGrowth.toFixed(1)}%`
+      const growthLabel = Number.isFinite(row.momGrowth)
+        ? (row.momGrowth > 0
+            ? `전월비 +${row.momGrowth.toFixed(1)}%`
+            : `전월비 ${row.momGrowth.toFixed(1)}%`)
+        : '전월비 데이터 없음'
+      const turnoverLabel = Number.isFinite(row.turnoverRate)
+        ? `출고회전율 ${row.turnoverRate}%`
+        : '출고회전율 데이터 없음'
 
       return `
         <div class="seller-fee-tooltip">
@@ -230,7 +241,7 @@ const sellerFeeChartOptions = computed(() => ({
           <span>당월 매출: ₩${formatNumber(row.monthRevenue)}</span>
           <span>예상 비용: ₩${formatNumber(row.estimatedCost)}</span>
           <span>${growthLabel}</span>
-          <span>출고회전율 ${row.turnoverRate}%</span>
+          <span>${turnoverLabel}</span>
         </div>
       `
     },
@@ -249,8 +260,9 @@ async function fetchDashboard() {
   errorMsg.value = ''
   ui.setLoading(true)
   try {
+    const billingMonth = getCurrentBillingMonth()
     const [outboundRes, asnRes, inventoryRes, sellerRes, whRes,
-           revenueRes, monthlyRes, sellerFeeRes, sellerRevenueRes] = await Promise.all([
+           revenueRes, monthlyRes, sellerListRes, sellerFeeRes, sellerRevenueRes] = await Promise.all([
       getOutboundStats(),
       getAsnStats(),
       getInventoryStats(),
@@ -258,8 +270,9 @@ async function fetchDashboard() {
       getWarehouseStatus(),
       getCurrentRevenue(),
       getMonthlyRevenue(),
-      getSellerFeeSummary(),
-      getSellerRevenue(),
+      getSellerList(),
+      getMonthlyBillingResults(billingMonth),
+      getSellerRevenueList(),
     ])
 
     const o = outboundRes.data.data
@@ -267,6 +280,7 @@ async function fetchDashboard() {
     const i = inventoryRes.data.data
     const s = sellerRes.data.data
     const r = revenueRes.data.data
+    const sellerDirectory = buildSellerDirectory(sellerListRes.data.data ?? [])
 
     summaryCards.value = [
       { label: '당월 총 매출',        value: `₩${formatNumber(r.totalRevenue)}`, trend: r.trend, trendLabel: r.trendLabel, trendType: r.trendType, valueColor: 'blue'  },
@@ -278,9 +292,9 @@ async function fetchDashboard() {
 
     warehouses.value     = whRes.data.data
     monthlyRevenue.value = monthlyRes.data.data
-    sellerFees.value     = [...(sellerFeeRes.data.data ?? [])]
+    sellerFees.value     = normalizeSellerFeeRows(sellerFeeRes.data.data ?? [], sellerDirectory)
       .sort((a, b) => b.estimatedCost - a.estimatedCost)
-    sellerRevenueRows.value = sellerRevenueRes.data.data ?? []
+    sellerRevenueRows.value = normalizeSellerRevenueRows(sellerRevenueRes.data.data ?? [], sellerDirectory)
     fetchedAt.value      = new Date()
   } catch (err) {
     errorMsg.value = '데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
@@ -435,7 +449,7 @@ onMounted(fetchDashboard)
         :columns="SELLER_FEE_COLUMNS"
         :rows="sellerFees"
         :pagination="null"
-        row-key="sellerCode"
+        row-key="sellerId"
       >
         <template #cell-sellerName="{ row, value }">
           <div class="seller-name-cell">
@@ -447,12 +461,14 @@ onMounted(fetchDashboard)
           <span class="amount-cell">₩{{ formatNumber(value) }}</span>
         </template>
         <template #cell-momGrowth="{ value }">
-          <span :class="value > 0 ? 'trend-up-text' : 'trend-down-text'">
+          <span v-if="Number.isFinite(value)" :class="value > 0 ? 'trend-up-text' : 'trend-down-text'">
             {{ value > 0 ? '▲' : '▼' }} {{ Math.abs(value).toFixed(1) }}%
           </span>
+          <span v-else class="muted-text">-</span>
         </template>
         <template #cell-turnoverRate="{ value }">
-          <span class="turnover-rate">{{ value }}%</span>
+          <span v-if="Number.isFinite(value)" class="turnover-rate">{{ value }}%</span>
+          <span v-else class="muted-text">-</span>
         </template>
       </BaseTable>
       <div v-else class="seller-fee-chart-panel">
@@ -488,6 +504,10 @@ onMounted(fetchDashboard)
   border-radius: var(--radius-md);
   color: var(--red);
   font-size: var(--font-size-sm);
+}
+
+.muted-text {
+  color: var(--t3);
 }
 
 /* ── 요약 카드 (5열) ─────────────────────────── */

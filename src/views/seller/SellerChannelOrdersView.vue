@@ -22,6 +22,7 @@ import {
   getSellerChannelMeta,
   getSellerChannelOrderStatusMeta,
   getSellerChannelSyncStatusMeta,
+  normalizeSellerChannelOrderPage,
   SELLER_CHANNEL_FILTER_OPTIONS,
   SELLER_CHANNEL_ORDER_COLUMNS,
 } from '@/utils/seller/channelOrders.utils.js'
@@ -92,15 +93,9 @@ async function fetchSellerChannelData() {
         }))
       : []
 
-    const ordersPayload = ordersRes.data?.data
-    const orders = Array.isArray(ordersPayload)
-      ? ordersPayload
-      : Array.isArray(ordersPayload?.items)
-        ? ordersPayload.items
-        : []
-
-    channelOrderRows.value = orders.map((row) => ({ ...row }))
-    totalItems.value = Number(ordersPayload?.total ?? orders.length)
+    const normalizedOrders = normalizeSellerChannelOrderPage(ordersRes.data?.data)
+    channelOrderRows.value = normalizedOrders.items
+    totalItems.value = normalizedOrders.total
   } catch (error) {
     console.error('[SellerChannelOrdersView] fetch error:', error)
     loadErrorMessage.value = '주문 연동 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
@@ -354,7 +349,7 @@ function handleCardAction(card, action) {
           </template>
 
           <template #cell-orderAmount="{ value }">
-            ${{ value.toFixed(2) }}
+            ${{ Number(value ?? 0).toFixed(2) }}
           </template>
 
           <template #cell-status="{ value }">

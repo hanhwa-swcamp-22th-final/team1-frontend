@@ -196,6 +196,17 @@ export function saveFeeSettings(payload) {
   return instance.put('/wms/fee-settings', payload)
 }
 
+/**
+ * 총괄관리자용 월 정산 결과 조회
+ * @param {string} billingMonth - YYYY-MM
+ * @returns {Promise<AxiosResponse>} { success, data: Array<{ sellerId, totalFee, storageFee, pickingFee, packingFee, billingMonth }> }
+ */
+export function getMonthlyBillingResults(billingMonth) {
+  return instance.get('/wms/manager/billing/monthly-results', {
+    params: { billingMonth },
+  })
+}
+
 // ── 재고 (Inventory) ──────────────────────────────────────────────────
 
 export function getInventories() {

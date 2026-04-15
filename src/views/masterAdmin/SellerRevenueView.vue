@@ -6,9 +6,10 @@
  * KPI, 상위 셀러 분포, 검색/정렬, 운영 우선순위 테이블을 함께 제공한다.
  */
 import { ref, computed, onMounted, watch } from 'vue'
-import { getSellerRevenue } from '@/api/member'
-import { getCurrentRevenue } from '@/api/order'
+import { getCurrentRevenue, getSellerRevenueList } from '@/api/order'
+import { getSellerList } from '@/api/member'
 import { formatNumber } from '@/utils/format'
+import { buildSellerDirectory, normalizeSellerRevenueRows } from '@/utils/masterAdmin/sellerMetrics.utils'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 
@@ -152,12 +153,14 @@ watch([searchQ, activeSegment, sortKey], () => {
 async function fetchAll() {
   isLoading.value = true
   try {
-    const [revenueRes, currentRes] = await Promise.all([
-      getSellerRevenue(),
+    const [revenueRes, currentRes, sellerListRes] = await Promise.all([
+      getSellerRevenueList(),
       getCurrentRevenue(),
+      getSellerList(),
     ])
+    const sellerDirectory = buildSellerDirectory(sellerListRes.data.data ?? [])
     totalRevenue.value = currentRes.data.data?.totalRevenue ?? 0
-    rows.value = revenueRes.data.data ?? []
+    rows.value = normalizeSellerRevenueRows(revenueRes.data.data ?? [], sellerDirectory)
   } catch (e) {
     console.error('[SellerRevenueView] fetch error:', e)
   } finally {
@@ -207,7 +210,7 @@ onMounted(fetchAll)
           </div>
 
           <div class="mix-list">
-            <div v-for="row in topFiveRows" :key="row.sellerCode" class="mix-row">
+            <div v-for="row in topFiveRows" :key="row.sellerId" class="mix-row">
               <div class="mix-meta">
                 <div class="mix-name-wrap">
                   <span class="mix-rank">#{{ row.rank }}</span>
@@ -314,7 +317,7 @@ onMounted(fetchAll)
           :rows="paginatedRows"
           :loading="isLoading"
           :pagination="pagination"
-          row-key="sellerCode"
+          row-key="sellerId"
           @page-change="page = $event"
         >
           <template #cell-rank="{ row }">
