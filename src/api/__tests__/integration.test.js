@@ -30,7 +30,7 @@ describe('integration API', () => {
     await getSellerChannelOrders()
 
     expect(instance.get).toHaveBeenCalledOnce()
-    expect(instance.get).toHaveBeenCalledWith('/integrations/seller/orders')
+    expect(instance.get).toHaveBeenCalledWith('/integrations/seller/orders', { params: {} })
   })
 
   it('getSellerChannelDetail은 GET /integrations/seller/channels/{channelKey}를 호출한다', async () => {

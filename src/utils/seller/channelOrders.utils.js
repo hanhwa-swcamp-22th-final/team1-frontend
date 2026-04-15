@@ -17,6 +17,7 @@ export const SELLER_CHANNEL_META = {
 
 export const SELLER_CHANNEL_ORDER_STATUS_META = {
   NEW: { label: '신규', tone: 'blue' },
+  PROCESSING: { label: '처리중', tone: 'amber' },
   READY: { label: '출고준비', tone: 'amber' },
   SHIPPED: { label: '출고완료', tone: 'green' },
   DELIVERED: { label: '배송완료', tone: 'purple' },
@@ -51,6 +52,55 @@ export function getSellerChannelMeta(channel) {
 
 export function getSellerChannelOrderStatusMeta(status) {
   return SELLER_CHANNEL_ORDER_STATUS_META[status] ?? { label: status ?? '-', tone: 'default' }
+}
+
+function normalizeText(value, fallback = '') {
+  const normalized = String(value ?? '').trim()
+  return normalized || fallback
+}
+
+function normalizeNumber(value, fallback = 0) {
+  const normalized = Number(value)
+  return Number.isFinite(normalized) ? normalized : fallback
+}
+
+export function normalizeSellerChannelDateTime(value, fallback = '-') {
+  const normalized = normalizeText(value)
+  if (!normalized) return fallback
+
+  return normalized.replace('T', ' ').slice(0, 16)
+}
+
+export function normalizeSellerChannelOrderRow(row = {}) {
+  return {
+    ...row,
+    id: normalizeText(row.id ?? row.orderId),
+    channel: normalizeText(row.channel, 'MANUAL').toUpperCase(),
+    channelOrderNo: normalizeText(row.channelOrderNo),
+    conkOrderNo: normalizeText(row.conkOrderNo ?? row.id ?? row.orderId),
+    recipient: normalizeText(row.recipient),
+    itemsSummary: normalizeText(row.itemsSummary),
+    orderAmount: normalizeNumber(row.orderAmount),
+    orderedAt: normalizeSellerChannelDateTime(row.orderedAt),
+    status: normalizeText(row.status, 'NEW').toUpperCase(),
+  }
+}
+
+export function normalizeSellerChannelOrderPage(payload = {}) {
+  const itemsSource = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.items)
+      ? payload.items
+      : []
+
+  const items = itemsSource.map(normalizeSellerChannelOrderRow)
+
+  return {
+    items,
+    total: normalizeNumber(payload?.total, items.length),
+    page: normalizeNumber(payload?.page),
+    size: normalizeNumber(payload?.size, items.length),
+  }
 }
 
 export function buildSellerChannelOrderExportRows(rows = []) {
