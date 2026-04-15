@@ -17,6 +17,8 @@ import SellerChannelConnectModal from '@/components/seller/SellerChannelConnectM
 import { downloadExcel } from '@/utils/excel.js'
 import {
   buildSellerChannelOrderExportRows,
+  getSellerChannelCardActions,
+  getSellerChannelCardDescription,
   getSellerChannelMeta,
   getSellerChannelOrderStatusMeta,
   getSellerChannelSyncStatusMeta,
@@ -37,6 +39,8 @@ const channelOrderRows = ref([])
 const selectedChannelKey = ref('')
 const isConnectModalOpen = ref(false)
 const connectForm = reactive({
+  storeName: '',
+  channelApi: '',
   storeAlias: '',
   contactEmail: '',
   syncMode: 'AUTO',
@@ -83,7 +87,8 @@ async function fetchSellerChannelData() {
     channelCards.value = Array.isArray(cardsRes.data?.data)
       ? cardsRes.data.data.map((card) => ({
           ...card,
-          actions: Array.isArray(card.actions) ? card.actions.map((action) => ({ ...action })) : [],
+          description: getSellerChannelCardDescription(card.key),
+          actions: getSellerChannelCardActions(card.syncStatus),
         }))
       : []
 
@@ -118,6 +123,8 @@ const selectedChannelCard = computed(() => {
 })
 
 function resetConnectForm() {
+  connectForm.storeName = ''
+  connectForm.channelApi = ''
   connectForm.storeAlias = ''
   connectForm.contactEmail = ''
   connectForm.syncMode = 'AUTO'
@@ -125,10 +132,17 @@ function resetConnectForm() {
 
 function handleOpenConnectModal(card) {
   selectedChannelKey.value = card.key
+  connectForm.storeName = ''
+  connectForm.channelApi = ''
   connectForm.storeAlias = `${card.label} KR Store`
   connectForm.contactEmail = ''
   connectForm.syncMode = 'AUTO'
   isConnectModalOpen.value = true
+}
+
+function handleHeaderConnectClick() {
+  const card = channelCards.value.find((c) => c.key === activeChannel.value)
+  if (card) handleOpenConnectModal(card)
 }
 
 function handleCloseConnectModal() {
@@ -285,6 +299,15 @@ function handleCardAction(card, action) {
               @click="handleExportChannelOrders"
             >
               내보내기
+            </button>
+
+            <button
+              class="ui-btn ui-btn--primary toolbar-btn"
+              type="button"
+              :disabled="activeChannel === 'all'"
+              @click="handleHeaderConnectClick"
+            >
+              + 채널 연결
             </button>
           </div>
         </div>

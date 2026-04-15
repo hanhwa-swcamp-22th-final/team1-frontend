@@ -65,3 +65,38 @@ export function buildSellerChannelOrderExportRows(rows = []) {
     처리상태: getSellerChannelOrderStatusMeta(row.status).label,
   }))
 }
+
+// 채널별 고정 설명 문구 (BE가 내려주지 않으므로 FE에서 정의)
+const SELLER_CHANNEL_CARD_DESCRIPTION = {
+  SHOPIFY: 'Shopify 스토어와 연동하여 주문을 자동으로 동기화합니다.',
+  AMAZON: 'Amazon 채널과 연동하여 주문을 통합 관리합니다.',
+  MANUAL: '수동으로 주문을 입력하고 관리합니다.',
+  QOO10: 'Qoo10 채널과 연동하여 주문을 통합 관리합니다.',
+}
+
+// syncStatus별 액션 버튼 목록 (BE가 내려주지 않으므로 FE에서 정의)
+const SELLER_CHANNEL_CARD_ACTIONS = {
+  CONNECTED: [
+    { key: 'sync', label: '동기화', variant: 'primary', disabled: false },
+    { key: 'import', label: '주문 가져오기', variant: 'ghost', disabled: false },
+  ],
+  DISCONNECTED: [
+    { key: 'connect', label: '연동하기', variant: 'primary', disabled: false },
+  ],
+  NOT_CONFIGURED: [
+    { key: 'connect', label: '연동하기', variant: 'primary', disabled: false },
+  ],
+  PLANNED: [],
+}
+
+export function getSellerChannelCardDescription(channelKey) {
+  return SELLER_CHANNEL_CARD_DESCRIPTION[channelKey] ?? ''
+}
+
+export function getSellerChannelCardActions(syncStatus) {
+  return (
+    SELLER_CHANNEL_CARD_ACTIONS[syncStatus] ?? [
+      { key: 'connect', label: '연동하기', variant: 'primary', disabled: false },
+    ]
+  )
+}

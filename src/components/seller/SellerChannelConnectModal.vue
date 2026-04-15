@@ -41,6 +41,16 @@ const emit = defineEmits(['cancel', 'confirm'])
 
       <div class="form-grid">
         <label class="field">
+          <span class="field-label">스토어명 <span class="required">*</span></span>
+          <input v-model="form.storeName" type="text" placeholder="예: mystore.myshopify.com" />
+        </label>
+
+        <label class="field">
+          <span class="field-label">API 토큰 <span class="required">*</span></span>
+          <input v-model="form.channelApi" type="password" placeholder="예: shpat_xxxxxxxxxxxx" />
+        </label>
+
+        <label class="field">
           <span class="field-label">스토어 별칭</span>
           <input v-model="form.storeAlias" type="text" placeholder="예: Qoo10 KR Store" />
         </label>
@@ -59,7 +69,7 @@ const emit = defineEmits(['cancel', 'confirm'])
         </label>
       </div>
 
-      <p class="helper-text">실제 API 키 저장은 범위에서 제외하고, 연결 완료 상태와 운영 설정 UI만 확인합니다.</p>
+      <p class="helper-text">스토어명과 API 토큰은 채널 연결 검증에 사용됩니다.</p>
 
       <div class="modal-actions">
         <button type="button" class="ui-btn ui-btn--ghost" @click="emit('cancel')">닫기</button>
@@ -161,6 +171,11 @@ const emit = defineEmits(['cancel', 'confirm'])
   color: var(--t2);
   font-size: var(--font-size-sm);
   font-weight: 600;
+}
+
+.required {
+  color: var(--red);
+  margin-left: 2px;
 }
 
 .field input,
