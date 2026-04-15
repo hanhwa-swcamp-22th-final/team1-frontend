@@ -45,6 +45,7 @@ import pinia from '@/pinia'
 import { useAuthStore } from '@/stores/auth'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+const API_PREFIX = import.meta.env.VITE_API_PREFIX ?? ''
 const REQUEST_TIMEOUT_MS = 10000
 
 /**
@@ -54,7 +55,7 @@ const REQUEST_TIMEOUT_MS = 10000
 let refreshPromise = null
 
 const instance = axios.create({
-  baseURL: API_BASE_URL /* .env의 VITE_API_BASE_URL */,
+  baseURL: API_BASE_URL + API_PREFIX /* VITE_API_BASE_URL + VITE_API_PREFIX */,
   timeout: REQUEST_TIMEOUT_MS /* 10초 초과 시 AxiosError(timeout) 발생 */,
   withCredentials: true /* HttpOnly refresh cookie 자동 포함 */,
 })
@@ -92,7 +93,7 @@ async function refreshAccessToken() {
   if (!refreshPromise) {
     refreshPromise = axios
       .post('/member/auth/refresh', null, {
-        baseURL: API_BASE_URL,
+        baseURL: API_BASE_URL + API_PREFIX,
         timeout: REQUEST_TIMEOUT_MS,
         withCredentials: true,
       })

@@ -28,7 +28,8 @@ function readAccessToken() {
 
 function buildNotificationSseUrl() {
   const baseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '')
-  return `${baseUrl}/notifications/sse/subscribe`
+  const prefix = (import.meta.env.VITE_API_PREFIX ?? '').replace(/\/$/, '')
+  return `${baseUrl}${prefix}/notifications/sse/subscribe`
 }
 
 function formatTimeLabel(createdAt) {
