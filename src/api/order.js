@@ -71,6 +71,12 @@ export function getSellerMarginPresets() {
   return instance.get('/orders/seller/margin-presets')
 }
 
+/*
+ * 아래 3개의
+ * GET /orders/seller/list       → 주문 목록
+ * GET /wms/inventories          → 재고 목록
+ * GET /integrations/...orders   → 채널 주문 목록
+ */
 export function getSellerOrderKpi() {
   return instance.get('/orders/seller/kpi')
 }
