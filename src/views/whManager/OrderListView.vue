@@ -8,6 +8,7 @@ import OrderDetailModal from '@/components/whManager/OrderDetailModal.vue'
 import { getWhmOrders } from '@/api/order'
 import { ORDER_STATUS } from '@/constants'
 import { normalizeOrderStatusRows } from '@/utils/orderStatus.utils.js'
+import { useAuthStore } from '@/stores/auth'
 
 // ── 탭
 const TABS = [
@@ -48,14 +49,24 @@ const PAGE_SIZE   = 8
 
 // ── 데이터
 const orders = ref([])
+const auth = useAuthStore()
 
 async function fetchOrders() {
   try {
-    const { data } = await getWhmOrders()
+    const warehouseId = auth.user?.warehouseId
+
+    if (!warehouseId) {
+      console.error('창고관리자 warehouseId가 없습니다.')
+      orders.value = []
+      return
+    }
+
+    const { data } = await getWhmOrders({ warehouseId })
     const payload = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []
     orders.value = normalizeOrderStatusRows(payload)
   } catch (e) {
     console.error('주문 데이터 로드 실패:', e)
+    orders.value = []
   }
 }
 onMounted(fetchOrders)

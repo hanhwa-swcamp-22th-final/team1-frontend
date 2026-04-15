@@ -117,6 +117,21 @@ const selectedChannelCard = computed(() => {
   return channelCards.value.find((card) => card.key === selectedChannelKey.value) ?? null
 })
 
+const headerConnectTarget = computed(() => {
+  const normalizedActiveChannel = String(activeChannel.value ?? '').toUpperCase()
+
+  if (normalizedActiveChannel && normalizedActiveChannel !== 'ALL') {
+    return channelCards.value.find((card) => card.key === normalizedActiveChannel) ?? null
+  }
+
+  return (
+    channelCards.value.find((card) => card.key === 'SHOPIFY')
+    ?? channelCards.value.find((card) => card.actions?.some((action) => action.key === 'connect'))
+    ?? channelCards.value[0]
+    ?? null
+  )
+})
+
 function resetConnectForm() {
   connectForm.storeName = ''
   connectForm.channelApi = ''
@@ -136,7 +151,7 @@ function handleOpenConnectModal(card) {
 }
 
 function handleHeaderConnectClick() {
-  const card = channelCards.value.find((c) => c.key === activeChannel.value)
+  const card = headerConnectTarget.value
   if (card) handleOpenConnectModal(card)
 }
 
@@ -299,7 +314,7 @@ function handleCardAction(card, action) {
             <button
               class="ui-btn ui-btn--primary toolbar-btn"
               type="button"
-              :disabled="activeChannel === 'all'"
+              :disabled="!headerConnectTarget"
               @click="handleHeaderConnectClick"
             >
               + 채널 연결
