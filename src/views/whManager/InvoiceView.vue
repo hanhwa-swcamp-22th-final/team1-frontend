@@ -207,14 +207,14 @@ const breadcrumb = [
         <circle cx="7" cy="7" r="5.5"/>
         <path d="M7 5v4M7 3.5v.5" stroke-linecap="round"/>
       </svg>
-      <p>포장 완료된 주문에 대해 USPS·UPS·FedEx 요금을 비교하여 최적 배송사를 선택하고 라벨을 출력합니다.</p>
+      <p>출고 지시가 생성된 주문의 송장 발행 상태를 확인하고, 자동 발행 실패 건은 수동 발행하거나 이미 발행된 라벨을 재출력합니다.</p>
     </div>
 
     <!-- ── 카드 ───────────────────────────────────── -->
     <div class="card">
       <div class="card-header">
         <div class="card-title-wrap">
-          <span class="card-title">포장 완료 — 송장 발행 대기</span>
+          <span class="card-title">출고 지시 완료 — 송장 발행 / 재출력</span>
           <span class="badge badge--amber">{{ orders.filter(o => o.labelStatus === LABEL_STATUS.NOT_ISSUED).length }}건 대기</span>
         </div>
         <span v-if="selectedIds.size > 0" class="selected-info">
