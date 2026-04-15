@@ -478,9 +478,16 @@ function resetPrimaryChannelState() {
 
 function findPrimaryChannelCard(cards = []) {
   return cards.find((card) => {
-    const channelKey = String(card.channelKey ?? card.channel ?? card.name ?? '').toUpperCase()
+    const channelKey = String(card.key ?? card.channelKey ?? card.channel ?? card.name ?? '').toUpperCase()
     return channelKey === PRIMARY_CHANNEL_KEY
   }) ?? null
+}
+
+function shouldFetchPrimaryChannelDetail(card) {
+  if (!card) return false
+
+  const syncStatus = String(card.syncStatus ?? card.status ?? '').trim().toUpperCase()
+  return ['CONNECTED', 'DISCONNECTED', 'ACTIVE'].includes(syncStatus) || Boolean(card.connected)
 }
 
 function applyChannelPayload(payload = {}) {
@@ -529,12 +536,14 @@ async function fetchOrderOptions() {
       applyChannelPayload(primaryChannelCard)
     }
 
-    try {
-      const detailResponse = await getSellerChannelDetail(PRIMARY_CHANNEL_KEY)
-      const channelDetail = detailResponse.data?.data ?? {}
-      applyChannelPayload(channelDetail)
-    } catch {
-      // 카드 응답만으로도 1차 렌더가 가능하므로 상세 조회 실패는 여기서 무시한다.
+    if (shouldFetchPrimaryChannelDetail(primaryChannelCard)) {
+      try {
+        const detailResponse = await getSellerChannelDetail(PRIMARY_CHANNEL_KEY)
+        const channelDetail = detailResponse.data?.data ?? {}
+        applyChannelPayload(channelDetail)
+      } catch {
+        // 카드 응답만으로도 1차 렌더가 가능하므로 상세 조회 실패는 여기서 무시한다.
+      }
     }
   } catch (error) {
     productOptions.value = []
@@ -553,10 +562,7 @@ async function handleChannelConnectionCheck() {
 
   try {
     isCheckingChannel.value = true
-    const [cardsResponse, detailResponse] = await Promise.all([
-      getSellerChannelCards(),
-      getSellerChannelDetail(PRIMARY_CHANNEL_KEY),
-    ])
+    const cardsResponse = await getSellerChannelCards()
     const cards = Array.isArray(cardsResponse.data?.data) ? cardsResponse.data.data : []
     const primaryChannelCard = findPrimaryChannelCard(cards)
 
@@ -568,7 +574,12 @@ async function handleChannelConnectionCheck() {
     }
 
     applyChannelPayload(primaryChannelCard)
-    applyChannelPayload(detailResponse.data?.data ?? {})
+
+    if (shouldFetchPrimaryChannelDetail(primaryChannelCard)) {
+      const detailResponse = await getSellerChannelDetail(PRIMARY_CHANNEL_KEY)
+      applyChannelPayload(detailResponse.data?.data ?? {})
+    }
+
     channelFeedbackTone.value = channelConnection.connected ? 'success' : 'error'
     channelFeedbackMessage.value = channelConnection.connected
       ? `${PRIMARY_CHANNEL_LABEL} 채널 연결 상태를 확인했습니다.`

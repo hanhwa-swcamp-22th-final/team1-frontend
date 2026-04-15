@@ -4,6 +4,7 @@
 
 export const SELLER_CHANNEL_SYNC_STATUS_META = {
   CONNECTED: { label: '연결됨', tone: 'green' },
+  NOT_CONFIGURED: { label: '연결 필요', tone: 'red' },
   PLANNED: { label: 'Phase 2 예정', tone: 'gold' },
   DISCONNECTED: { label: '미연결', tone: 'red' },
 }
