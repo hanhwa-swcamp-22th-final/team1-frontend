@@ -15,44 +15,45 @@ export const SELLER_BULK_ORDER_REGISTER_TABS = [
 ]
 
 export const ORDER_UPLOAD_REQUIRED_COLUMNS = [
-  '주문번호',
-  '주문일자',
+  '주문일시(yyyy-MM-dd HH:mm:ss)',
+  'SKU',
+  '수량',
   '수령인',
-  '연락처',
+  '수령인 연락처',
+  '기본 배송지',
   'State',
   'City',
   'Zip Code',
-  '배송지',
-  'SKU',
-  '수량',
 ]
 
 export const ORDER_PREVIEW_COLUMNS = [
-  { key: 'orderNo', label: '주문번호', width: '150px' },
-  { key: 'orderDate', label: '주문일자', width: '120px' },
-  { key: 'recipient', label: '수령인', width: '100px' },
-  { key: 'contact', label: '연락처', width: '140px' },
-  { key: 'state', label: 'State', width: '120px' },
-  { key: 'city', label: 'City', width: '120px' },
-  { key: 'zipCode', label: 'Zip', width: '100px' },
-  { key: 'address', label: '배송지' },
+  { key: 'orderDate', label: '주문일시', width: '180px' },
   { key: 'sku', label: 'SKU', width: '150px' },
   { key: 'quantity', label: '수량', width: '90px', align: 'right' },
-  { key: 'requestNote', label: '요청사항', width: '180px' },
+  { key: 'productName', label: '상품명', width: '200px' },
+  { key: 'recipient', label: '수령인', width: '100px' },
+  { key: 'contact', label: '연락처', width: '140px' },
+  { key: 'address1', label: '기본 배송지', width: '250px' },
+  { key: 'address2', label: '상세 배송지', width: '150px' },
+  { key: 'state', label: 'State', width: '120px' },
+  { key: 'city', label: 'City', width: '120px' },
+  { key: 'zipCode', label: 'Zip Code', width: '100px' },
+  { key: 'memo', label: '메모', width: '180px' },
 ]
 
 const ORDER_TEMPLATE_DOWNLOAD_COLUMNS = [
-  '주문번호',
-  '주문일자',
+  '주문일시(yyyy-MM-dd HH:mm:ss)',
+  'SKU',
+  '수량',
+  '상품명',
   '수령인',
-  '연락처',
+  '수령인 연락처',
+  '기본 배송지',
+  '상세 배송지',
   'State',
   'City',
   'Zip Code',
-  '배송지',
-  'SKU',
-  '수량',
-  '요청사항',
+  '메모',
 ]
 
 /* 테스트·데모용 샘플 상품 목록. */
@@ -164,17 +165,18 @@ export function getMissingOrderUploadColumns(headers = []) {
 export function mapOrderUploadRows(rows = []) {
   return rows.map((row, index) => ({
     id: `upload-order-${index + 1}`,
-    orderNo: String(row['주문번호'] ?? '').trim(),
-    orderDate: String(row['주문일자'] ?? '').trim(),
+    orderDate: String(row['주문일시(yyyy-MM-dd HH:mm:ss)'] ?? '').trim(),
+    sku: String(row.SKU ?? '').trim(),
+    quantity: String(row['수량'] ?? '').trim(),
+    productName: String(row['상품명'] ?? '').trim(),
     recipient: String(row['수령인'] ?? '').trim(),
-    contact: String(row['연락처'] ?? '').trim(),
+    contact: String(row['수령인 연락처'] ?? '').trim(),
+    address1: String(row['기본 배송지'] ?? '').trim(),
+    address2: String(row['상세 배송지'] ?? '').trim(),
     state: String(row.State ?? '').trim(),
     city: String(row.City ?? '').trim(),
     zipCode: String(row['Zip Code'] ?? '').trim(),
-    address: String(row['배송지'] ?? '').trim(),
-    sku: String(row.SKU ?? '').trim(),
-    quantity: String(row['수량'] ?? '').trim(),
-    requestNote: String(row['요청사항'] ?? '').trim(),
+    memo: String(row['메모'] ?? '').trim(),
   }))
 }
 
@@ -223,17 +225,18 @@ export function buildBulkOrderPayload(rows = []) {
 }
 
 const ORDER_TEMPLATE_SAMPLE_ROW = {
-  orderNo: 'ORD-20260321-001',
-  orderDate: '2026-03-21',
+  orderDate: '2026-03-21 14:30:00',
+  sku: 'LB-AMP-30',
+  quantity: 1,
+  productName: '루미에르 앰플 30ml',
   recipient: '홍길동',
   contact: '010-1234-5678',
+  address1: '123 Flower Ave',
+  address2: 'Apt 101',
   state: 'California',
   city: 'Los Angeles',
   zipCode: '90001',
-  address: '123 Flower Ave',
-  sku: 'LB-AMP-30',
-  quantity: 1,
-  requestNote: '',
+  memo: '문 앞 보관',
 }
 
 export function buildOrderTemplateCsv(rows = []) {
@@ -242,17 +245,18 @@ export function buildOrderTemplateCsv(rows = []) {
     ORDER_TEMPLATE_DOWNLOAD_COLUMNS.map(escapeCsvValue).join(','),
     ...normalizedRows.map((row) => (
       [
-        row.orderNo,
         row.orderDate,
+        row.sku,
+        row.quantity,
+        row.productName,
         row.recipient,
         row.contact,
+        row.address1,
+        row.address2,
         row.state,
         row.city,
         row.zipCode,
-        row.address,
-        row.sku,
-        row.quantity,
-        row.requestNote,
+        row.memo,
       ]
         .map(escapeCsvValue)
         .join(',')

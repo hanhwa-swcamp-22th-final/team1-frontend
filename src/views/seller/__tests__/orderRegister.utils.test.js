@@ -73,48 +73,49 @@ describe('orderRegister utils', () => {
   })
 
   it('필수 업로드 헤더가 빠지면 누락 컬럼을 순서대로 반환한다', () => {
-    const result = getMissingOrderUploadColumns(['주문번호', '주문일자', '수령인', '배송지', 'SKU'])
+    const result = getMissingOrderUploadColumns(['주문일시(yyyy-MM-dd HH:mm:ss)', 'SKU', '수량', '수령인', 'City'])
 
     expect(result).toEqual([
-      ORDER_UPLOAD_REQUIRED_COLUMNS[3],
-      ORDER_UPLOAD_REQUIRED_COLUMNS[4],
-      ORDER_UPLOAD_REQUIRED_COLUMNS[5],
-      ORDER_UPLOAD_REQUIRED_COLUMNS[6],
-      ORDER_UPLOAD_REQUIRED_COLUMNS[9],
+      ORDER_UPLOAD_REQUIRED_COLUMNS[4], // 수령인 연락처
+      ORDER_UPLOAD_REQUIRED_COLUMNS[5], // 기본 배송지
+      ORDER_UPLOAD_REQUIRED_COLUMNS[6], // State
+      ORDER_UPLOAD_REQUIRED_COLUMNS[8], // Zip Code
     ])
   })
 
   it('업로드 행 데이터를 미리보기 테이블 형식으로 변환한다', () => {
     const result = mapOrderUploadRows([
       {
-        주문번호: ' ORD-20260321-009 ',
-        주문일자: '2026-03-21',
-        수령인: '홍길동',
-        연락처: '010-1111-2222',
-        State: ' California ',
-        City: ' Los Angeles ',
-        'Zip Code': ' 90001 ',
-        배송지: '서울시 강남구 테헤란로 1',
+        '주문일시(yyyy-MM-dd HH:mm:ss)': '2026-03-21 14:30:00',
         SKU: ' LB-AMP-30 ',
         수량: 3,
-        요청사항: '문 앞 보관',
+        상품명: '루미에르 앰플 30ml',
+        수령인: '홍길동',
+        '수령인 연락처': '010-1111-2222',
+        '기본 배송지': '서울시 강남구 테헤란로 1',
+        '상세 배송지': '101호',
+        State: ' Seoul ',
+        City: ' Gangnam ',
+        'Zip Code': ' 06234 ',
+        메모: '문 앞 보관',
       },
     ])
 
     expect(result).toEqual([
       {
         id: 'upload-order-1',
-        orderNo: 'ORD-20260321-009',
-        orderDate: '2026-03-21',
-        recipient: '홍길동',
-        contact: '010-1111-2222',
-        state: 'California',
-        city: 'Los Angeles',
-        zipCode: '90001',
-        address: '서울시 강남구 테헤란로 1',
+        orderDate: '2026-03-21 14:30:00',
         sku: 'LB-AMP-30',
         quantity: '3',
-        requestNote: '문 앞 보관',
+        productName: '루미에르 앰플 30ml',
+        recipient: '홍길동',
+        contact: '010-1111-2222',
+        address1: '서울시 강남구 테헤란로 1',
+        address2: '101호',
+        state: 'Seoul',
+        city: 'Gangnam',
+        zipCode: '06234',
+        memo: '문 앞 보관',
       },
     ])
   })
@@ -228,11 +229,11 @@ describe('orderRegister utils', () => {
     ])
   })
 
-  it('템플릿 CSV 는 State, City, Zip Code 컬럼을 포함한다', () => {
+  it('템플릿 CSV 는 새로운 주소 컬럼들을 포함한다', () => {
     const result = buildOrderTemplateCsv()
 
-    expect(result).toContain('"State","City","Zip Code"')
-    expect(result).toContain('"California","Los Angeles","90001"')
+    expect(result).toContain('"기본 배송지","상세 배송지","State","City","Zip Code"')
+    expect(result).toContain('"123 Flower Ave","Apt 101","California","Los Angeles","90001"')
   })
 
   it('템플릿 다운로드 파일명은 Content-Disposition 헤더에서 추출한다', () => {
@@ -247,13 +248,11 @@ describe('orderRegister utils', () => {
     const result = buildOrderUploadResultSummary(
       [
         {
-          orderNo: 'ORD-20260321-009',
           recipient: '홍길동',
           sku: 'LB-AMP-30',
           quantity: '3',
         },
         {
-          orderNo: 'ORD-20260321-010',
           recipient: '김영희',
           sku: 'LB-MSK-5P',
           quantity: '2',
@@ -268,7 +267,7 @@ describe('orderRegister utils', () => {
       totalQuantity: 5,
       uniqueSkuCount: 2,
       uniqueRecipientCount: 2,
-      firstOrderNo: 'ORD-20260321-009',
+      firstOrderNo: '-',
       totalRows: 2,
       validRows: 2,
       errorCount: 0,
