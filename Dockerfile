@@ -17,7 +17,9 @@ COPY . .
 # VITE_API_BASE_URL: 배포 시 docker-compose build.args 로 주입
 # (.dockerignore가 .env.* 제외하므로 env 파일 복사 불가 → ARG 방식 필수)
 ARG VITE_API_BASE_URL
+ARG VITE_API_PREFIX
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ENV VITE_API_PREFIX=${VITE_API_PREFIX}
 
 # 배포용 prod 모드 빌드 (dist/ 디렉토리 생성)
 RUN npm run build:prod
