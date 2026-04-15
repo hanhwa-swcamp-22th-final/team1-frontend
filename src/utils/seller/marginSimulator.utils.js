@@ -13,22 +13,9 @@ function normalizeMarginProduct(product = {}) {
     sku: String(product.sku ?? '').trim(),
     productName: String(product.productName ?? product.name ?? '').trim(),
     defaultSalePrice: Number(product.defaultSalePrice ?? product.salePrice ?? product.price ?? 0),
-    declaredValue: Number(product.declaredValue ?? product.customsValue ?? 0),
     productCost: Number(product.productCost ?? product.costPrice ?? 0),
     packagingCost: Number(product.packagingCost ?? 0),
     fulfillmentFee: Number(product.fulfillmentFee ?? 0),
-    seaShippingCost: Number(
-      product.seaShippingCost
-      ?? product.shippingCosts?.SEA
-      ?? product.shippingCosts?.sea
-      ?? 0,
-    ),
-    airShippingCost: Number(
-      product.airShippingCost
-      ?? product.shippingCosts?.AIR
-      ?? product.shippingCosts?.air
-      ?? 0,
-    ),
     storageUnitCost: Number(product.storageUnitCost ?? 0),
   }
 }
@@ -38,13 +25,6 @@ function normalizeMarginChannel(channel = {}) {
     key: String(channel.key ?? channel.channelKey ?? '').trim(),
     label: String(channel.label ?? channel.name ?? channel.channelName ?? '').trim(),
     defaultFeeRate: Number(channel.defaultFeeRate ?? channel.feeRate ?? 0),
-  }
-}
-
-function normalizeShippingMode(mode = {}) {
-  return {
-    key: String(mode.key ?? mode.code ?? '').trim(),
-    label: String(mode.label ?? mode.name ?? '').trim(),
   }
 }
 
@@ -60,12 +40,6 @@ export function normalizeMarginChannelOptions(channels = []) {
     .filter((channel) => channel.key)
 }
 
-export function normalizeMarginShippingOptions(shippingModes = []) {
-  return (Array.isArray(shippingModes) ? shippingModes : [])
-    .map((mode) => (typeof mode === 'string' ? { key: mode, label: mode } : normalizeShippingMode(mode)))
-    .filter((mode) => mode.key)
-}
-
 export function getMarginProductBySku(sku, products = []) {
   return normalizeMarginProductOptions(products).find((item) => item.sku === sku) ?? null
 }
@@ -74,37 +48,27 @@ export function getMarginChannelByKey(channelKey, channels = []) {
   return normalizeMarginChannelOptions(channels).find((item) => item.key === channelKey) ?? null
 }
 
-export function getShippingModeByKey(modeKey, shippingModes = []) {
-  return normalizeMarginShippingOptions(shippingModes).find((item) => item.key === modeKey) ?? null
-}
-
 export function createInitialMarginForm({
   products = [],
   channels = [],
-  shippingModes = [],
   defaultScenario = {},
 } = {}) {
   const normalizedProducts = normalizeMarginProductOptions(products)
   const normalizedChannels = normalizeMarginChannelOptions(channels)
-  const normalizedShippingModes = normalizeMarginShippingOptions(shippingModes)
   const product = getMarginProductBySku(defaultScenario.productSku, normalizedProducts) ?? normalizedProducts[0] ?? null
   const channel = getMarginChannelByKey(defaultScenario.salesChannel, normalizedChannels) ?? normalizedChannels[0] ?? null
-  const shippingMode = getShippingModeByKey(defaultScenario.shippingMode, normalizedShippingModes)?.key
-    ?? normalizedShippingModes[0]?.key
-    ?? 'SEA'
 
   return {
     productSku: product?.sku ?? '',
     salesChannel: channel?.key ?? '',
-    shippingMode,
     salePrice: defaultScenario.salePrice ?? product?.defaultSalePrice ?? 0,
     channelFeeRate: defaultScenario.channelFeeRate ?? channel?.defaultFeeRate ?? 0,
     fulfillmentFee: defaultScenario.fulfillmentFee ?? product?.fulfillmentFee ?? 0,
-    internationalShippingFee: defaultScenario.internationalShippingFee ?? getProductShippingCost(product, shippingMode),
+    internationalShippingFee: defaultScenario.internationalShippingFee ?? 0,
     otherCost: defaultScenario.otherCost ?? 120,
     monthlySalesQty: defaultScenario.monthlySalesQty ?? 200,
     storageUnitCost: defaultScenario.storageUnitCost ?? product?.storageUnitCost ?? 0,
-    declaredValue: defaultScenario.declaredValue ?? product?.declaredValue ?? 0,
+    declaredValue: defaultScenario.declaredValue ?? 0,
     dutyMode: defaultScenario.dutyMode ?? 'rate',
     vatRate: defaultScenario.vatRate ?? 10,
     dutyRate: defaultScenario.dutyRate ?? 8,
@@ -112,11 +76,6 @@ export function createInitialMarginForm({
     productCost: defaultScenario.productCost ?? product?.productCost ?? 0,
     packagingCost: defaultScenario.packagingCost ?? product?.packagingCost ?? 0,
   }
-}
-
-export function getProductShippingCost(product, shippingMode) {
-  if (!product) return 0
-  return shippingMode === 'AIR' ? product.airShippingCost : product.seaShippingCost
 }
 
 export function calculateMarginResult(form = {}) {
@@ -198,36 +157,12 @@ export function calculateMarginResult(form = {}) {
   }
 }
 
-export function buildMarginScenarioCards(form = {}, { product = null } = {}) {
-  const seaForm = {
-    ...form,
-    shippingMode: 'SEA',
-    internationalShippingFee: getProductShippingCost(product, 'SEA'),
-  }
-  const airForm = {
-    ...form,
-    shippingMode: 'AIR',
-    internationalShippingFee: getProductShippingCost(product, 'AIR'),
-  }
-
+export function buildMarginScenarioCards(form = {}) {
   return [
-    {
-      key: 'SEA_BASE',
-      label: '해상 기준',
-      shippingLabel: '해상',
-      ...calculateMarginResult(seaForm),
-    },
     {
       key: 'CURRENT',
       label: '현재 설정',
-      shippingLabel: form.shippingMode === 'AIR' ? '항공' : '해상',
       ...calculateMarginResult(form),
-    },
-    {
-      key: 'AIR_BASE',
-      label: '항공 기준',
-      shippingLabel: '항공',
-      ...calculateMarginResult(airForm),
     },
   ]
 }

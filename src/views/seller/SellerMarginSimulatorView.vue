@@ -13,24 +13,21 @@ import {
   createInitialMarginForm,
   getMarginChannelByKey,
   getMarginProductBySku,
-  getProductShippingCost,
   normalizeMarginChannelOptions,
   normalizeMarginProductOptions,
-  normalizeMarginShippingOptions,
 } from '@/utils/seller/marginSimulator.utils.js'
 
 const breadcrumb = [{ label: 'Seller' }, { label: '마진 시뮬레이터' }]
 
 const productOptions = ref([])
 const channelOptions = ref([])
-const shippingOptions = ref([])
 const presetsErrorMessage = ref('')
 const isLoadingPresets = ref(false)
 const form = reactive(createInitialMarginForm())
 
 const currentProduct = computed(() => getMarginProductBySku(form.productSku, productOptions.value))
 const result = computed(() => calculateMarginResult(form))
-const scenarioCards = computed(() => buildMarginScenarioCards(form, { product: currentProduct.value }))
+const scenarioCards = computed(() => buildMarginScenarioCards(form))
 const maxBreakdownValue = computed(() => {
   return Math.max(...result.value.breakdown.map((item) => item.value), 1)
 })
@@ -43,7 +40,7 @@ function formatPercent(value) {
   return `${Number(value || 0).toFixed(1)}%`
 }
 
-// 상품이 바뀌면 원가, 신고가, 기본 물류비 같은 추천값을 다시 불러온다.
+// 상품이 바뀌면 원가, 기본 물류비 같은 추천값을 다시 불러온다.
 watch(
   () => form.productSku,
   (sku) => {
@@ -53,10 +50,8 @@ watch(
     form.salePrice = product.defaultSalePrice
     form.fulfillmentFee = product.fulfillmentFee
     form.storageUnitCost = product.storageUnitCost
-    form.declaredValue = product.declaredValue
     form.productCost = product.productCost
     form.packagingCost = product.packagingCost
-    form.internationalShippingFee = getProductShippingCost(product, form.shippingMode)
   },
 )
 
@@ -70,19 +65,10 @@ watch(
   },
 )
 
-// 운송 방식이 바뀌면 선택한 상품 기준 기본 국제 배송비를 다시 반영한다.
-watch(
-  () => form.shippingMode,
-  (shippingMode) => {
-    form.internationalShippingFee = getProductShippingCost(currentProduct.value, shippingMode)
-  },
-)
-
 function resetForm() {
   Object.assign(form, createInitialMarginForm({
     products: productOptions.value,
     channels: channelOptions.value,
-    shippingModes: shippingOptions.value,
   }))
 }
 
@@ -95,18 +81,15 @@ async function fetchMarginPresets() {
     const payload = response.data?.data ?? {}
     productOptions.value = normalizeMarginProductOptions(payload.products)
     channelOptions.value = normalizeMarginChannelOptions(payload.channels)
-    shippingOptions.value = normalizeMarginShippingOptions(payload.shippingModes)
 
     Object.assign(form, createInitialMarginForm({
       products: productOptions.value,
       channels: channelOptions.value,
-      shippingModes: shippingOptions.value,
       defaultScenario: payload.defaultScenario ?? {},
     }))
   } catch (error) {
     productOptions.value = []
     channelOptions.value = []
-    shippingOptions.value = []
     Object.assign(form, createInitialMarginForm())
     presetsErrorMessage.value = error.response?.data?.message ?? '마진 시뮬레이터 preset을 불러오지 못했습니다.'
   } finally {
@@ -159,18 +142,6 @@ onMounted(() => {
                 </select>
               </BaseForm>
 
-              <BaseForm label="운송 모드" required>
-                <select v-model="form.shippingMode">
-                  <option v-if="!shippingOptions.length" value="">선택 가능한 운송 방식이 없습니다</option>
-                  <option
-                    v-for="option in shippingOptions"
-                    :key="option.key"
-                    :value="option.key"
-                  >
-                    {{ option.label }}
-                  </option>
-                </select>
-              </BaseForm>
             </div>
           </section>
 
@@ -367,7 +338,7 @@ onMounted(() => {
                 <span class="scenario-label">{{ scenario.label }}</span>
                 <strong class="scenario-value">{{ formatUsd(scenario.netProfit) }}</strong>
                 <span class="scenario-meta">
-                  {{ scenario.shippingLabel }} · {{ formatPercent(scenario.marginRate) }}
+                  {{ formatPercent(scenario.marginRate) }}
                 </span>
               </div>
             </div>
@@ -621,7 +592,7 @@ onMounted(() => {
 
 .scenario-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
 }
 
