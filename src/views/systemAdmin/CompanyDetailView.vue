@@ -7,7 +7,7 @@ import BaseTable from '@/components/common/BaseTable.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import { formatDate } from '@/utils/format'
-import { createCompanyLog, createUser, getCompanies, getCompanyLogs, getUsers, updateCompany } from '@/api/member'
+import { createCompanyLog, createUser, getCompany, getCompanyLogs, getUsers, updateCompany } from '@/api/member'
 import { useUiStore } from '@/stores/ui'
 
 const route = useRoute()
@@ -42,11 +42,11 @@ async function fetchData() {
   ui.setLoading(true)
   try {
     const [companyRes, userRes, logRes] = await Promise.all([
-      getCompanies({ id: companyId }),
+      getCompany(companyId),
       getUsers({ companyId }),
       getCompanyLogs(),
     ])
-    company.value = companyRes.data.data[0] || null
+    company.value = companyRes.data.data || null
     users.value = userRes.data.data
     logs.value = logRes.data.data.sort((a, b) => new Date(b.at) - new Date(a.at))
     if (company.value) {
