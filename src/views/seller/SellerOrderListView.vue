@@ -123,19 +123,24 @@ function handleCloseCsvDialog() {
   isCsvDialogOpen.value = false
 }
 
-function handleConfirmCsv() {
+async function handleConfirmCsv() {
   if (!orderRows.value.length) {
     handleCloseCsvDialog()
     showToolbarMessage('내보낼 주문이 없습니다.')
     return
   }
 
-  downloadExcel(
-    buildSellerOrderExportRows(orderRows.value),
-    `seller-orders-${new Date().toISOString().slice(0, 10)}`,
-  )
-  showToolbarMessage('현재 필터 기준 주문 목록을 다운로드했습니다.')
-  handleCloseCsvDialog()
+  try {
+    await downloadExcel(
+      buildSellerOrderExportRows(orderRows.value),
+      `seller-orders-${new Date().toISOString().slice(0, 10)}`,
+    )
+    showToolbarMessage('현재 필터 기준 주문 목록을 다운로드했습니다.')
+    handleCloseCsvDialog()
+  } catch (error) {
+    console.error('[SellerOrderListView] export error:', error)
+    showToolbarMessage('주문 목록 내보내기에 실패했습니다.')
+  }
 }
 
 async function handleOpenOrderDetail(row) {

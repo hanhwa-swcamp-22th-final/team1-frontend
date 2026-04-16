@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/ui'
 import { formatDate, formatNumber } from '@/utils/format'
@@ -15,7 +15,7 @@ import {
 } from '@/utils/masterAdmin/sellerMetrics.utils'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
-import VueApexCharts from 'vue3-apexcharts'
+const VueApexCharts = defineAsyncComponent(() => import('vue3-apexcharts'))
 
 const breadcrumb = [{ label: 'CONK' }, { label: '대시보드' }]
 

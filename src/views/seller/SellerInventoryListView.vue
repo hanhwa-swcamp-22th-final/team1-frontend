@@ -140,19 +140,24 @@ function handleCloseCsvDialog() {
   isCsvDialogOpen.value = false
 }
 
-function handleConfirmCsv() {
+async function handleConfirmCsv() {
   if (!inventoryRows.value.length) {
     handleCloseCsvDialog()
     showToolbarMessage('내보낼 재고가 없습니다.')
     return
   }
 
-  downloadExcel(
-    buildSellerInventoryExportRows(inventoryRows.value),
-    `seller-inventories-${new Date().toISOString().slice(0, 10)}`,
-  )
-  showToolbarMessage('현재 필터 기준 재고 목록을 다운로드했습니다.')
-  handleCloseCsvDialog()
+  try {
+    await downloadExcel(
+      buildSellerInventoryExportRows(inventoryRows.value),
+      `seller-inventories-${new Date().toISOString().slice(0, 10)}`,
+    )
+    showToolbarMessage('현재 필터 기준 재고 목록을 다운로드했습니다.')
+    handleCloseCsvDialog()
+  } catch (error) {
+    console.error('[SellerInventoryListView] export error:', error)
+    showToolbarMessage('재고 목록 내보내기에 실패했습니다.')
+  }
 }
 </script>
 

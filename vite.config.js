@@ -19,6 +19,16 @@ export default defineConfig(({ mode }) => {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            apexcharts: ['apexcharts', 'vue3-apexcharts'],
+            excel: ['xlsx'],
+          },
+        },
+      },
+    },
     // npm run dev 전용 프록시 설정 — 빌드(dist/)에는 영향 없음
     // prefix 포함 경로를 그대로 Nginx(:80)로 전달 → Nginx가 prefix 제거 후 라우팅
     server: {
