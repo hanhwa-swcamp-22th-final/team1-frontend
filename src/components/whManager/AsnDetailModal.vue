@@ -3,8 +3,8 @@ import { computed, ref, watch } from 'vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import TimelineStepper from '@/components/common/TimelineStepper.vue'
 import {
-  getAsnBinCandidates,
-  getAsnDetail,
+  getAsnBinMatches,
+  getAsnRecommendedBins,
   saveAsnBinAssignments,
 } from '@/api/wms'
 import { INBOUND_STATUS } from '@/constants/status'
@@ -12,6 +12,7 @@ import { INBOUND_STATUS } from '@/constants/status'
 const props = defineProps({
   isOpen: { type: Boolean, required: true },
   asnId: { type: String, default: '' },
+  asnSummary: { type: Object, default: null },
   canAssign: { type: Boolean, default: false },
 })
 
@@ -41,8 +42,8 @@ const isSaving = ref(false)
 const loadErrorMessage = ref('')
 const binCandidateErrorMessage = ref('')
 const saveErrorMessage = ref('')
-const asnDetail = ref(null)
-const binCandidates = ref({})
+const binMatches = ref([])
+const recommendedBins = ref({})
 const tempBins = ref({})
 const changingBins = ref({})
 
@@ -50,8 +51,8 @@ function resetModalState() {
   loadErrorMessage.value = ''
   binCandidateErrorMessage.value = ''
   saveErrorMessage.value = ''
-  asnDetail.value = null
-  binCandidates.value = {}
+  binMatches.value = []
+  recommendedBins.value = {}
   tempBins.value = {}
   changingBins.value = {}
 }
@@ -66,85 +67,114 @@ function normalizeNumber(value, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback
 }
 
-function normalizeBinCandidate(bin) {
-  return normalizeText(bin?.bin ?? bin?.binCode ?? bin?.location ?? bin?.value ?? bin)
+function normalizeInboundStatus(status) {
+  if (!status) return INBOUND_STATUS.PENDING
+
+  return ({
+    REGISTERED: INBOUND_STATUS.PENDING,
+    ARRIVED: INBOUND_STATUS.TRANSIT,
+    INSPECTING_PUTAWAY: INBOUND_STATUS.MISMATCH,
+    STORED: INBOUND_STATUS.RECEIVED,
+    RECEIVED: INBOUND_STATUS.RECEIVED,
+    PENDING: INBOUND_STATUS.PENDING,
+    TRANSIT: INBOUND_STATUS.TRANSIT,
+    MISMATCH: INBOUND_STATUS.MISMATCH,
+  })[status] ?? status
 }
 
-function normalizeCandidateMap(payload = {}) {
-  const data = payload?.data ?? payload
-
-  if (Array.isArray(data)) {
-    return {
-      default: data.map(normalizeBinCandidate).filter(Boolean),
-    }
-  }
-
-  const normalizedMap = {}
-  const candidateMap = data?.candidatesBySku ?? data?.itemsBySku ?? data ?? {}
-
-  Object.entries(candidateMap).forEach(([sku, values]) => {
-    if (!Array.isArray(values)) return
-    normalizedMap[sku] = values.map(normalizeBinCandidate).filter(Boolean)
-  })
-
-  const defaultCandidates = Array.isArray(data?.candidates)
-    ? data.candidates.map(normalizeBinCandidate).filter(Boolean)
-    : []
-
-  if (defaultCandidates.length) {
-    normalizedMap.default = defaultCandidates
-  }
-
-  return normalizedMap
-}
-
-function normalizeAsnItem(item = {}) {
-  const code = normalizeText(item.sku ?? item.code)
-  const registryBin = normalizeText(item.currentBin ?? item.bin ?? item.binCode, '')
-  const currentTempBin = normalizeText(tempBins.value[code], '')
-
+function normalizeRecommendedBin(bin = {}) {
   return {
-    code,
-    name: normalizeText(item.productName ?? item.name, '-'),
-    qty: normalizeNumber(item.quantity ?? item.qty),
-    avail: normalizeNumber(item.availableStock ?? item.avail),
-    isNewSku: Boolean(item.isNewSku ?? !registryBin),
-    registryBin: registryBin || null,
-    currentBin: currentTempBin || registryBin || null,
-    isChanging: Boolean(changingBins.value[code]),
+    locationId: normalizeText(bin.locationId),
+    bin: normalizeText(bin.bin ?? bin.binCode),
+    availableCapacity: normalizeNumber(bin.availableCapacity),
   }
 }
+
+function normalizeRecommendedBinMap(payload = {}) {
+  const data = payload?.data ?? payload
+  const items = Array.isArray(data?.items) ? data.items : []
+
+  return items.reduce((map, item) => {
+    const skuId = normalizeText(item.skuId)
+    if (!skuId) return map
+
+    map[skuId] = Array.isArray(item.recommendedBins)
+      ? item.recommendedBins.map(normalizeRecommendedBin).filter((candidate) => candidate.bin)
+      : []
+    return map
+  }, {})
+}
+
+function normalizeBinMatchList(payload = {}) {
+  const data = payload?.data ?? payload
+  const items = Array.isArray(data?.items) ? data.items : []
+
+  return items
+    .map((item) => ({
+      skuId: normalizeText(item.skuId),
+      productName: normalizeText(item.productName, '-'),
+      plannedQuantity: normalizeNumber(item.plannedQuantity),
+      matchedLocationId: normalizeText(item.matchedLocationId),
+      matchedBin: normalizeText(item.matchedBin),
+      matchType: normalizeText(item.matchType),
+      requiresManualAssign: Boolean(item.requiresManualAssign),
+    }))
+    .filter((item) => item.skuId)
+}
+
+const newSkuCodeSet = computed(() => new Set(
+  Array.isArray(props.asnSummary?.newSkus)
+    ? props.asnSummary.newSkus.map((sku) => normalizeText(sku.code)).filter(Boolean)
+    : [],
+))
+
+const asnStatus = computed(() => normalizeInboundStatus(props.asnSummary?.status))
+const statusInfo = computed(() => STATUS_MAP[asnStatus.value] ?? { label: '-', badge: 'gray' })
+const plannedQuantity = computed(() => {
+  if (props.asnSummary?.plannedQty != null) return normalizeNumber(props.asnSummary.plannedQty)
+  return binMatches.value.reduce((sum, item) => sum + item.plannedQuantity, 0)
+})
 
 const skuList = computed(() => {
-  const items = Array.isArray(asnDetail.value?.items) ? asnDetail.value.items : []
-  return items.map(normalizeAsnItem).filter((item) => item.code)
+  return binMatches.value.map((item) => {
+    const currentTempBin = normalizeText(tempBins.value[item.skuId])
+    const candidateList = recommendedBins.value[item.skuId] ?? []
+    const currentBin = currentTempBin || item.matchedBin || null
+    const selectedCandidate = candidateList.find((candidate) => candidate.bin === currentBin)
+    const maxCapacity = candidateList.reduce((max, candidate) => Math.max(max, candidate.availableCapacity), 0)
+    const isNewSku = item.requiresManualAssign || newSkuCodeSet.value.has(item.skuId)
+
+    return {
+      code: item.skuId,
+      name: item.productName,
+      qty: item.plannedQuantity,
+      avail: selectedCandidate?.availableCapacity ?? maxCapacity,
+      isNewSku,
+      registryBin: item.matchedBin || null,
+      currentBin,
+      isChanging: Boolean(changingBins.value[item.skuId]),
+    }
+  })
 })
 
-const usedBins = computed(() => {
-  return new Set(
-    skuList.value
-      .map((sku) => sku.currentBin)
-      .filter(Boolean),
-  )
-})
+const usedBins = computed(() => new Set(
+  skuList.value
+    .map((sku) => sku.currentBin)
+    .filter(Boolean),
+))
 
 const newSkus = computed(() => skuList.value.filter((sku) => sku.isNewSku))
 const canConfirm = computed(() => {
   if (!props.canAssign || isSaving.value) return false
+  if (!skuList.value.length || !newSkus.value.length) return false
   return newSkus.value.every((sku) => sku.currentBin)
-})
-const asnStatus = computed(() => asnDetail.value?.status ?? '')
-const statusInfo = computed(() => STATUS_MAP[asnStatus.value] ?? { label: '-', badge: 'gray' })
-const plannedQuantity = computed(() => {
-  if (asnDetail.value?.plannedQty != null) return normalizeNumber(asnDetail.value.plannedQty)
-  return skuList.value.reduce((sum, sku) => sum + sku.qty, 0)
 })
 
 function availableBinsFor(sku) {
-  const candidateList = binCandidates.value[sku.code] ?? binCandidates.value.default ?? []
+  const candidateList = recommendedBins.value[sku.code] ?? []
   const ownBin = sku.currentBin
 
-  return candidateList.filter((bin) => !usedBins.value.has(bin) || bin === ownBin)
+  return candidateList.filter((candidate) => !usedBins.value.has(candidate.bin) || candidate.bin === ownBin)
 }
 
 function selectBin(skuCode, bin) {
@@ -192,18 +222,18 @@ async function fetchAsnData() {
   saveErrorMessage.value = ''
 
   try {
-    const [detailResponse, candidateResponse] = await Promise.all([
-      getAsnDetail(props.asnId),
-      getAsnBinCandidates(props.asnId).catch((error) => {
+    const [matchResponse, recommendedResponse] = await Promise.all([
+      getAsnBinMatches(props.asnId),
+      getAsnRecommendedBins(props.asnId).catch((error) => {
         binCandidateErrorMessage.value = error.response?.data?.message ?? 'Bin 후보 목록을 불러오지 못했습니다.'
-        return { data: { data: {} } }
+        return { data: { data: { items: [] } } }
       }),
     ])
 
-    asnDetail.value = detailResponse.data?.data ?? null
-    binCandidates.value = normalizeCandidateMap(candidateResponse.data)
+    binMatches.value = normalizeBinMatchList(matchResponse.data)
+    recommendedBins.value = normalizeRecommendedBinMap(recommendedResponse.data)
   } catch (error) {
-    asnDetail.value = null
+    binMatches.value = []
     loadErrorMessage.value = error.response?.data?.message ?? 'ASN 상세 정보를 불러오지 못했습니다.'
   } finally {
     loading.value = false
@@ -258,12 +288,12 @@ watch(
       {{ loadErrorMessage }}
     </div>
 
-    <div v-else-if="asnDetail">
+    <div v-else-if="props.asnSummary || skuList.length">
       <div class="modal-hero">
         <div class="modal-hero-top">
           <div>
             <div class="modal-eyebrow">Inbound ASN</div>
-            <div class="modal-hero-title">{{ asnDetail.id ?? props.asnId }}</div>
+            <div class="modal-hero-title">{{ props.asnSummary?.id ?? props.asnId }}</div>
             <div class="modal-hero-copy">
               셀러가 등록한 입고 예정 데이터를 확인합니다.
               신규 SKU는 Bin을 직접 배정하고, 기존 SKU는 API가 내려준 기존 Bin 상태를 기준으로 표시합니다.
@@ -274,8 +304,8 @@ watch(
         <div class="metric-grid">
           <div class="metric-card">
             <span class="metric-label">셀러사</span>
-            <span class="metric-value">{{ (asnDetail.sellerCompany ?? asnDetail.company ?? '-').split(' ')[0] }}</span>
-            <span class="metric-sub">{{ asnDetail.sellerCompany ?? asnDetail.company ?? '-' }}</span>
+            <span class="metric-value">{{ (props.asnSummary?.company ?? props.asnSummary?.seller ?? '-').split(' ')[0] }}</span>
+            <span class="metric-sub">{{ props.asnSummary?.company ?? props.asnSummary?.seller ?? '-' }}</span>
           </div>
           <div class="metric-card">
             <span class="metric-label">예정 수량</span>
@@ -284,7 +314,7 @@ watch(
           </div>
           <div class="metric-card">
             <span class="metric-label">예정 도착일</span>
-            <span class="metric-value">{{ (asnDetail.eta ?? asnDetail.expectedDate ?? '-').slice(0, 10) }}</span>
+            <span class="metric-value">{{ (props.asnSummary?.expectedDate ?? '-').slice(0, 10) }}</span>
           </div>
           <div class="metric-card">
             <span class="metric-label">현재 상태</span>
@@ -329,6 +359,9 @@ watch(
               </tr>
             </thead>
             <tbody>
+              <tr v-if="!skuList.length">
+                <td colspan="5" class="empty-row">SKU 정보를 불러오지 못했습니다.</td>
+              </tr>
               <tr
                 v-for="sku in skuList"
                 :key="sku.code"
@@ -364,7 +397,13 @@ watch(
                           @change="(event) => selectBin(sku.code, event.target.value)"
                         >
                           <option value="">Bin 선택</option>
-                          <option v-for="bin in availableBinsFor(sku)" :key="bin" :value="bin">{{ bin }}</option>
+                          <option
+                            v-for="candidate in availableBinsFor(sku)"
+                            :key="candidate.locationId || candidate.bin"
+                            :value="candidate.bin"
+                          >
+                            {{ candidate.bin }} (잔여 {{ candidate.availableCapacity }})
+                          </option>
                         </select>
                       </div>
                     </template>
@@ -393,7 +432,13 @@ watch(
                           @change="(event) => selectBin(sku.code, event.target.value)"
                         >
                           <option value="">Bin 선택</option>
-                          <option v-for="bin in availableBinsFor(sku)" :key="bin" :value="bin">{{ bin }}</option>
+                          <option
+                            v-for="candidate in availableBinsFor(sku)"
+                            :key="candidate.locationId || candidate.bin"
+                            :value="candidate.bin"
+                          >
+                            {{ candidate.bin }} (잔여 {{ candidate.availableCapacity }})
+                          </option>
                         </select>
                         <button class="ui-btn ui-btn--ghost ui-btn--xs" @click="cancelChanging(sku.code)">취소</button>
                       </div>
@@ -602,6 +647,12 @@ watch(
 
 .table-wrap tr:last-child td {
   border-bottom: none;
+}
+
+.empty-row {
+  text-align: center;
+  color: var(--t3);
+  font-style: italic;
 }
 
 .row--new td {

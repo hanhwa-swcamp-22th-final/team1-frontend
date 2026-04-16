@@ -426,6 +426,7 @@ const binPendingColumns = [
     <AsnDetailModal
       :is-open="showDetailModal"
       :asn-id="selectedAsn?.id ?? ''"
+      :asn-summary="selectedAsn"
       :can-assign="detailCanAssign"
       @cancel="showDetailModal = false"
       @confirm="handleDetailConfirm"
