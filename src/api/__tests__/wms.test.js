@@ -58,7 +58,7 @@ describe('wms API', () => {
   it('getSellerAsnList는 GET /wms/seller/asns를 호출한다', async () => {
     await getSellerAsnList()
     expect(instance.get).toHaveBeenCalledOnce()
-    expect(instance.get).toHaveBeenCalledWith('/wms/seller/asns')
+    expect(instance.get).toHaveBeenCalledWith('/wms/seller/asns', { params: {} })
   })
 
   it('createSellerAsn는 POST /wms/seller/asns를 호출한다', async () => {
@@ -73,7 +73,7 @@ describe('wms API', () => {
   it('getSellerInventoryList는 GET /wms/seller/inventories를 호출한다', async () => {
     await getSellerInventoryList()
     expect(instance.get).toHaveBeenCalledOnce()
-    expect(instance.get).toHaveBeenCalledWith('/wms/seller/inventories')
+    expect(instance.get).toHaveBeenCalledWith('/wms/seller/inventories', { params: {} })
   })
 
   it('getAsnBinCandidates는 GET /wms/asns/{asnId}/bin-candidates를 호출한다', async () => {
