@@ -283,7 +283,17 @@ function buildWorkerTaskPayload(task, overrides = {}) {
   }
 }
 
-const flatTasks = computed(() => {
+function compareTaskOrder(a, b) {
+  const aAssigned = a.assigned ? 0 : 1
+  const bAssigned = b.assigned ? 0 : 1
+  if (aAssigned !== bAssigned) return aAssigned - bAssigned
+  const statusOrder = { 대기: 0, 진행중: 1, 완료: 2 }
+  const statusDiff = (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9)
+  if (statusDiff !== 0) return statusDiff
+  return (a.routeOrder ?? 0) - (b.routeOrder ?? 0)
+}
+
+const taskCollections = computed(() => {
   const rows = []
   workerRecords.value.forEach((record) => {
     if (record.category === 'INBOUND') {
@@ -460,28 +470,72 @@ const flatTasks = computed(() => {
     })
   })
 
-  return rows.sort((a, b) => {
-    const aAssigned = a.assigned ? 0 : 1
-    const bAssigned = b.assigned ? 0 : 1
-    if (aAssigned !== bAssigned) return aAssigned - bAssigned
-    const statusOrder = { 대기: 0, 진행중: 1, 완료: 2 }
-    const statusDiff = (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9)
-    if (statusDiff !== 0) return statusDiff
-    return (a.routeOrder ?? 0) - (b.routeOrder ?? 0)
+  rows.sort(compareTaskOrder)
+
+  const assignedTasks = []
+  const completedInboundTasks = []
+  const completedOutboundTasks = []
+  const exceptionEntries = []
+  const seedLogsByParent = {}
+  const summary = {
+    total: 0,
+    waiting: 0,
+    inProgress: 0,
+    withException: 0,
+  }
+
+  rows.forEach((task) => {
+    if (task.assigned) {
+      assignedTasks.push(task)
+      summary.total += 1
+      if (task.status === '대기') summary.waiting += 1
+      if (task.status === '진행중') summary.inProgress += 1
+      if (task.hasException) summary.withException += 1
+    }
+
+    if (task.kind === '입고' && task.status === '완료') {
+      completedInboundTasks.push(task)
+    }
+
+    if (task.kind === '출고' && task.status === '완료') {
+      completedOutboundTasks.push(task)
+    }
+
+    if (task.status === '완료' && task.hasException) {
+      const exceptionEntry = buildExceptionEntryFromRow(task)
+      if (exceptionEntry) exceptionEntries.push(exceptionEntry)
+    }
+
+    if (task.status === '완료' && (task.edited || task.hasException)) {
+      if (!seedLogsByParent[task.parentId]) seedLogsByParent[task.parentId] = []
+      seedLogsByParent[task.parentId].push(buildSeedLogFromTask(task))
+    }
   })
+
+  exceptionEntries.sort((a, b) => (b.time || '').localeCompare(a.time || ''))
+
+  return {
+    flatTasks: rows,
+    assignedTasks,
+    completedInboundTasks,
+    completedOutboundTasks,
+    exceptionEntries,
+    seedLogsByParent,
+    summary,
+  }
 })
 
-const assignedTasks = computed(() => flatTasks.value.filter((task) => task.assigned))
-const completedInboundTasks = computed(() => flatTasks.value.filter((task) => task.kind === '입고' && task.status === '완료'))
-const completedOutboundTasks = computed(() => flatTasks.value.filter((task) => task.kind === '출고' && task.status === '완료'))
+const assignedTasks = computed(() => taskCollections.value.assignedTasks)
+const completedInboundTasks = computed(() => taskCollections.value.completedInboundTasks)
+const completedOutboundTasks = computed(() => taskCollections.value.completedOutboundTasks)
 
 const summaryCards = computed(() => {
-  const assigned = assignedTasks.value
+  const summary = taskCollections.value.summary
   return [
-    ['오늘 배정 작업', assigned.length],
-    ['대기', assigned.filter((task) => task.status === '대기').length],
-    ['진행중', assigned.filter((task) => task.status === '진행중').length],
-    ['예외 포함', assigned.filter((task) => task.hasException).length],
+    ['오늘 배정 작업', summary.total],
+    ['대기', summary.waiting],
+    ['진행중', summary.inProgress],
+    ['예외 포함', summary.withException],
   ]
 })
 
@@ -528,11 +582,23 @@ function buildExceptionEntryFromRow(task) {
   }
 }
 
-const exceptionEntries = computed(() => flatTasks.value
-  .filter((task) => task.status === '완료' && task.hasException)
-  .map(buildExceptionEntryFromRow)
-  .filter(Boolean)
-  .sort((a, b) => (b.time || '').localeCompare(a.time || '')))
+function buildSeedLogFromTask(task) {
+  return {
+    area: task.kind,
+    stage: task.stage,
+    kind: task.hasException ? '예외 등록' : '완료건 수정',
+    docLabel: task.kind === '입고' ? task.docNo : `${task.pickNo}${task.orderNo ? ` · ${task.orderNo}` : ''}`,
+    seller: task.seller,
+    target: task.stage === '패킹' ? `주문 ${task.orderNo} · ${task.sku}` : `Bin ${task.bin} · ${task.sku}`,
+    message: task.hasException
+      ? `${task.stage} ${task.actualQty ?? task.qty}/${task.qty}EA 처리 · ${task.exceptionType || '예외'}`
+      : `수량 ${task.actualQty ?? task.qty}EA 기준으로 수정됨`,
+    reason: task.reason || '사유 미입력',
+    time: task.completedAt || nowStamp(),
+  }
+}
+
+const exceptionEntries = computed(() => taskCollections.value.exceptionEntries)
 
 const inboundExceptionRows = computed(() => exceptionEntries.value
   .filter((entry) => entry.area === '입고' && entry.stage === tabs.inboundException)
@@ -545,21 +611,7 @@ const outboundExceptionRows = computed(() => exceptionEntries.value
   .filter((entry) => matchText([entry.pickNo, entry.orderNo, entry.seller, entry.bin, entry.sku, entry.type, entry.reason], search.outboundException)))
 
 function seedLogsFromRecord(record) {
-  return flatTasks.value
-    .filter((task) => task.parentId === record.id && task.status === '완료' && (task.edited || task.hasException))
-    .map((task) => ({
-      area: task.kind,
-      stage: task.stage,
-      kind: task.hasException ? '예외 등록' : '완료건 수정',
-      docLabel: task.kind === '입고' ? task.docNo : `${task.pickNo}${task.orderNo ? ` · ${task.orderNo}` : ''}`,
-      seller: task.seller,
-      target: task.stage === '패킹' ? `주문 ${task.orderNo} · ${task.sku}` : `Bin ${task.bin} · ${task.sku}`,
-      message: task.hasException
-        ? `${task.stage} ${task.actualQty ?? task.qty}/${task.qty}EA 처리 · ${task.exceptionType || '예외'}`
-        : `수량 ${task.actualQty ?? task.qty}EA 기준으로 수정됨`,
-      reason: task.reason || '사유 미입력',
-      time: task.completedAt || nowStamp(),
-    }))
+  return taskCollections.value.seedLogsByParent[record.id] || []
 }
 
 const historyEntries = computed(() => {
