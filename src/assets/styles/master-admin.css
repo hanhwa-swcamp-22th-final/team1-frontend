@@ -1,0 +1,221 @@
+/* Shared visual language for master admin pages.
+   Import this file from scoped SFC styles to keep behavior untouched
+   while aligning spacing, typography, cards, tables, and actions. */
+
+.ui-btn--gold {
+  background: var(--gold);
+  border: none;
+  color: var(--t1);
+  font-family: var(--font-barlow);
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(245, 166, 35, 0.24);
+}
+
+.ui-btn--gold:hover {
+  background: var(--gold-lt);
+  color: var(--t1);
+}
+
+.toolbar,
+.filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-refresh,
+.btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+}
+
+.summary-grid,
+.summary-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: clamp(18px, 1.25vw, 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: var(--shadow-sm);
+}
+
+.summary-label {
+  font-family: var(--font-barlow);
+  font-weight: 600;
+  font-size: var(--font-size-xs);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--t3);
+}
+
+.summary-value {
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  font-size: clamp(30px, 2vw, 36px);
+  line-height: 1;
+  color: var(--t1);
+}
+
+.summary-sub {
+  font-family: var(--font-base);
+  font-size: var(--font-size-xs);
+  color: var(--t3);
+}
+
+.section-title,
+.table-section-title {
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  font-size: var(--font-size-xl);
+  letter-spacing: 0.4px;
+  color: var(--t1);
+}
+
+.date-normal {
+  font-family: var(--font-base);
+  font-size: var(--font-size-sm);
+  color: var(--t3);
+  white-space: nowrap;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 24px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-label {
+  font-family: var(--font-barlow);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.detail-value {
+  font-family: var(--font-base);
+  font-size: var(--font-size-md);
+  color: var(--t1);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+.data-table thead tr {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.data-table th {
+  padding: 11px 16px;
+  font-family: var(--font-barlow);
+  font-weight: 600;
+  font-size: var(--font-size-xs);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--t3);
+  text-align: left;
+}
+
+.data-table td {
+  padding: 13px 16px;
+  font-family: var(--font-barlow);
+  font-size: var(--font-size-sm);
+  color: var(--t2);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover td {
+  background: var(--surface-2);
+  cursor: default;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 12px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-barlow);
+  font-weight: 600;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--t2);
+  transition: border-color var(--ease-fast), color var(--ease-fast), background var(--ease-fast);
+  white-space: nowrap;
+}
+
+.action-btn:hover {
+  border-color: var(--border-dk);
+  color: var(--t1);
+  background: var(--surface-2);
+}
+
+.action-btn--primary {
+  border-color: var(--gold);
+  color: #9a6500;
+}
+
+.action-btn--primary:hover {
+  border-color: var(--gold-lt);
+  color: #9a6500;
+  background: var(--gold-pale);
+}
+
+.action-btn--ghost {
+  background: var(--surface);
+}
+
+.action-btn--danger {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.action-btn--danger:hover {
+  background: var(--red-pale);
+  border-color: var(--red);
+  color: var(--red);
+}

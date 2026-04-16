@@ -237,25 +237,9 @@ function isUpcoming(date) {
 </template>
 
 <style scoped>
+@import '../../assets/styles/master-admin.css';
+
 /* -- 툴바 ------------------------------------------------------------------- */
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-/* -- 헤더 액션 버튼 ---------------------------------------------------------- */
-.btn-refresh {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-}
-
-/* -- 셀 커스텀 스타일 -------------------------------------------------------- */
 .asn-num {
   font-family: 'IBM Plex Sans', monospace;
   font-weight: 500;
@@ -275,13 +259,6 @@ function isUpcoming(date) {
   font-size: 12px;
   color: var(--gold);
   font-weight: 600;
-  white-space: nowrap;
-}
-
-.date-normal {
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  color: var(--t3);
   white-space: nowrap;
 }
 

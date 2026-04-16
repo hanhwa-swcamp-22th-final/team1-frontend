@@ -491,6 +491,8 @@ onMounted(fetchDashboard)
 </template>
 
 <style scoped>
+@import '../../assets/styles/master-admin.css';
+
 /* ── 에러 배너 ───────────────────────────────── */
 .fetch-error {
   display: flex;
@@ -510,41 +512,6 @@ onMounted(fetchDashboard)
   color: var(--t3);
 }
 
-/* ── 요약 카드 (5열) ─────────────────────────── */
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: var(--space-4);
-  margin-bottom: var(--space-8);
-}
-
-.summary-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--space-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  box-shadow: var(--shadow-sm);
-}
-
-.summary-label {
-  font-family: var(--font-barlow);
-  font-weight: 600;
-  font-size: var(--font-size-xs);
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--t3);
-}
-
-.summary-value {
-  font-family: var(--font-condensed);
-  font-weight: 700;
-  font-size: 30px;
-  color: var(--t1);
-  line-height: 1;
-}
 .summary-value--blue  { color: var(--blue); }
 .summary-value--amber { color: var(--amber); }
 .summary-value--red   { color: var(--red); }
@@ -575,14 +542,6 @@ onMounted(fetchDashboard)
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--space-3);
-}
-
-.section-title {
-  font-family: var(--font-condensed);
-  font-weight: 700;
-  font-size: var(--font-size-xl);
-  letter-spacing: 0.5px;
-  color: var(--t1);
 }
 
 .section-date {

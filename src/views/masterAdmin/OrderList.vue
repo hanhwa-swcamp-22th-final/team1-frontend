@@ -294,23 +294,7 @@ function closeOrderDetail() {
 </template>
 
 <style scoped>
-/* -- 툴바 ------------------------------------------------------------------- */
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-/* -- 헤더 액션 버튼 ---------------------------------------------------------- */
-.btn-refresh {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-}
+@import '../../assets/styles/master-admin.css';
 
 /* -- 셀 커스텀 스타일 -------------------------------------------------------- */
 .order-num {
@@ -360,55 +344,10 @@ function closeOrderDetail() {
   white-space: nowrap;
 }
 
-.date-normal {
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  color: var(--t3);
-  white-space: nowrap;
-}
-
-/* -- 주문 상세 모달 ---------------------------------------------------------- */
-.detail-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-bottom: 16px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-}
-
 .detail-order-id {
   font-family: 'IBM Plex Sans', monospace;
   font-weight: 600;
   font-size: 15px;
   color: var(--blue);
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px 24px;
-}
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.detail-label {
-  font-family: 'Barlow', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--t3);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.detail-value {
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  color: var(--t1);
 }
 </style>

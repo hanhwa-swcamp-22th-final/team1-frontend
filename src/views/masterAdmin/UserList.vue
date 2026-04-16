@@ -387,24 +387,7 @@ function isInactive(user) { return user.accountStatus === ACCOUNT_STATUS.INACTIV
 </template>
 
 <style scoped>
-/* ── 헤더 버튼 ── */
-.ui-btn--gold {
-  background: var(--gold);
-  border: none;
-  color: var(--t1);
-  font-weight: 700;
-  box-shadow: 0 2px 8px rgba(245,166,35,0.3);
-}
-
-/* ── 툴바 ── */
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 10px;
-}
+@import '../../assets/styles/master-admin.css';
 
 /* ── 셀 스타일 ── */
 .user-name-cell {
@@ -481,68 +464,9 @@ function isInactive(user) { return user.accountStatus === ACCOUNT_STATUS.INACTIV
   font-style: italic;
 }
 
-.date-normal {
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  color: var(--t3);
-  white-space: nowrap;
-}
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-family: 'Inter', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.status-active   { background: var(--green-pale); color: var(--green); }
-.status-temp     { background: var(--amber-pale); color: #92400E; }
-.status-inactive { background: var(--border);     color: var(--t3); }
-
-.status-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
 /* ── 액션 버튼 ── */
 .action-btn-group {
   display: flex;
   gap: 6px;
 }
-
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  height: 26px;
-  border-radius: 3px;
-  font-family: 'Barlow', sans-serif;
-  font-weight: 600;
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-
-.action-btn--ghost {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--t2);
-}
-.action-btn--ghost:hover { border-color: var(--t3); background: var(--surface-2); }
-
-.action-btn--danger {
-  background: transparent;
-  border: 1px solid var(--red);
-  color: var(--red);
-}
-.action-btn--danger:hover { background: var(--red-pale); }
 </style>
