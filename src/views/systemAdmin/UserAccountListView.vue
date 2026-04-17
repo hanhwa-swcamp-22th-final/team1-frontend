@@ -16,7 +16,7 @@ const users = ref([])
 const page = ref(1)
 const PAGE_SIZE = 10
 const filters = reactive({ role: 'ALL', companyId: 'ALL', status: 'ALL' })
-const actionModal = reactive({ open: false, mode: 'unlock', user: null })
+const actionModal = reactive({ open: false, user: null })
 
 const columns = [
   { key: 'name', label: '이름' },
@@ -53,22 +53,19 @@ const paginatedRows = computed(() => filteredUsers.value.slice((page.value - 1) 
 const pagination = computed(() => ({ page: page.value, pageSize: PAGE_SIZE, total: filteredUsers.value.length }))
 
 function statusText(status) {
-  return { ACTIVE: '활성', INACTIVE: '비활성', LOCKED: '잠금', INVITE_PENDING: '초대대기', INVITE_EXPIRED: '초대만료' }[status] ?? status
+  return { ACTIVE: '활성', INACTIVE: '비활성', TEMP_PASSWORD: '임시비밀번호' }[status] ?? status
 }
 
 function statusClass(status) {
   return {
     ACTIVE: 'chip chip--green',
     INACTIVE: 'chip chip--red',
-    LOCKED: 'chip chip--purple',
-    INVITE_PENDING: 'chip chip--amber',
-    INVITE_EXPIRED: 'chip chip--blue',
+    TEMP_PASSWORD: 'chip chip--amber',
   }[status] ?? 'chip'
 }
 
-function openAction(user, mode) {
+function openAction(user) {
   actionModal.user = user
-  actionModal.mode = mode
   actionModal.open = true
 }
 
@@ -76,8 +73,7 @@ async function confirmAction() {
   if (!actionModal.user) return
   ui.setLoading(true)
   try {
-    if (actionModal.mode === 'unlock') await updateUser(actionModal.user.id, { status: 'ACTIVE' })
-    if (actionModal.mode === 'reset') await updateUser(actionModal.user.id, { status: 'INVITE_PENDING' })
+    await updateUser(actionModal.user.id, { status: 'TEMP_PASSWORD' })
     actionModal.open = false
     await fetchData()
   } finally {
@@ -95,7 +91,7 @@ async function confirmAction() {
         <header class="section-head">
           <div>
             <h3 class="section-title">플랫폼 전체 사용자 조회</h3>
-            <p class="section-sub">역할, 업체, 상태 조건으로 계정을 조회하고 잠금 해제나 비밀번호 초기화를 수행합니다.</p>
+            <p class="section-sub">역할, 업체, 상태 조건으로 계정을 조회하고 비밀번호 초기화를 수행합니다.</p>
           </div>
         </header>
 
@@ -119,9 +115,7 @@ async function confirmAction() {
               <option value="ALL">전체</option>
               <option value="ACTIVE">활성</option>
               <option value="INACTIVE">비활성</option>
-              <option value="LOCKED">잠금</option>
-              <option value="INVITE_PENDING">초대대기</option>
-              <option value="INVITE_EXPIRED">초대만료</option>
+              <option value="TEMP_PASSWORD">임시비밀번호</option>
             </select>
           </BaseForm>
         </div>
@@ -133,18 +127,16 @@ async function confirmAction() {
           <template #cell-status="{ value }"><span :class="statusClass(value)">{{ statusText(value) }}</span></template>
           <template #cell-actions="{ row }">
             <div class="action-row">
-              <button v-if="row.status === 'LOCKED'" class="ui-btn ui-btn--ghost btn-sm" type="button" @click="openAction(row, 'unlock')">잠금 해제</button>
-              <button class="ui-btn ui-btn--gold btn-sm" type="button" @click="openAction(row, 'reset')">비밀번호 초기화</button>
+              <button class="ui-btn ui-btn--gold btn-sm" type="button" @click="openAction(row)">비밀번호 초기화</button>
             </div>
           </template>
         </BaseTable>
       </section>
     </div>
 
-    <BaseModal :is-open="actionModal.open" :title="actionModal.mode === 'unlock' ? '계정 잠금 해제' : '비밀번호 초기화'" width="480px" @cancel="actionModal.open = false" @confirm="confirmAction">
+    <BaseModal :is-open="actionModal.open" title="비밀번호 초기화" width="480px" @cancel="actionModal.open = false" @confirm="confirmAction">
       <p>
-        <strong>{{ actionModal.user?.name }}</strong> 계정에 대해
-        {{ actionModal.mode === 'unlock' ? '잠금 해제를' : '비밀번호 초기화를' }} 진행합니다.
+        <strong>{{ actionModal.user?.name }}</strong> 계정에 대해 비밀번호 초기화를 진행합니다.
       </p>
     </BaseModal>
   </AppLayout>
@@ -205,9 +197,7 @@ async function confirmAction() {
 
 .chip--green { background: var(--green-pale); color: var(--green); }
 .chip--red { background: var(--red-pale); color: var(--red); }
-.chip--purple { background: var(--purple-pale); color: var(--purple); }
 .chip--amber { background: var(--amber-pale); color: #b45309; }
-.chip--blue { background: var(--blue-pale); color: var(--blue); }
 
 .action-row {
   display: flex;
