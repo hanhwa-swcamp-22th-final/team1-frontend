@@ -209,6 +209,8 @@ async function confirmAction() {
 .btn-sm {
   padding: 7px 10px;
   font-size: var(--font-size-xs);
+  min-width: 80px;
+  white-space: nowrap;
 }
 
 @media (max-width: 960px) {
