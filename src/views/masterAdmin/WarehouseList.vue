@@ -404,6 +404,8 @@ onMounted(fetchWarehouseList)
 </template>
 
 <style scoped>
+@import '../../assets/styles/master-admin.css';
+
 .btn-wh-register {
   border-radius: var(--radius-sm);
   background: var(--gold);
@@ -440,60 +442,13 @@ onMounted(fetchWarehouseList)
   font-size: var(--font-size-sm);
 }
 
-/* ── 요약 카드 5개 ────────────────────────────────────────────────────────── */
-.summary-row {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: var(--space-5);
-}
-
-.summary-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 20px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.summary-label {
-  font-family: 'Barlow', sans-serif;
-  font-weight: 600;
-  font-size: 10px;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--t3);
-}
-
-.summary-value {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 700;
-  font-size: 36px;
-  line-height: 1;
-  color: var(--t1);
-}
 .summary-value--sm { font-size: 30px; }
-
-.summary-sub {
-  font-family: 'Inter', sans-serif;
-  font-size: 11px;
-  color: var(--t3);
-}
 
 /* ── 섹션 헤더 + 뷰 토글 ─────────────────────────────────────────────────── */
 .section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.section-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: 0.5px;
-  color: var(--t1);
 }
 
 .view-toggle { display: flex; gap: 4px; }
@@ -775,52 +730,8 @@ onMounted(fetchWarehouseList)
   background: var(--surface);
 }
 
-.table-section-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 700;
-  font-size: 16px;
-  color: var(--t1);
-}
-
 /* 가로 스크롤 대응 */
 .table-wrap { overflow-x: auto; }
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  white-space: nowrap;
-}
-
-.data-table thead tr {
-  background: var(--surface-2);
-  border-bottom: 1px solid var(--border);
-}
-
-.data-table th {
-  padding: 11px 16px;
-  font-family: 'Barlow', sans-serif;
-  font-weight: 600;
-  font-size: 10px;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  color: var(--t3);
-  text-align: left;
-}
-
-.data-table td {
-  padding: 13px 16px;
-  font-family: 'Barlow', sans-serif;
-  font-size: 13px;
-  color: var(--t2);
-  border-bottom: 1px solid var(--border);
-  vertical-align: middle;
-}
-
-.data-table tbody tr:last-child td { border-bottom: none; }
-.data-table tbody tr:hover td {
-  background: var(--surface-2);
-  cursor: default;
-}
 
 /* 테이블 셀 컴포넌트 */
 .wh-name-cell {
@@ -876,31 +787,5 @@ onMounted(fetchWarehouseList)
 .action-group {
   display: flex;
   gap: 6px;
-}
-
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 11px;
-  height: 26px;
-  border-radius: 3px;
-  font-family: 'Barlow', sans-serif;
-  font-weight: 600;
-  font-size: 11px;
-  cursor: pointer;
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--t2);
-  transition: border-color var(--ease-fast), color var(--ease-fast);
-}
-.action-btn:hover { border-color: var(--border-dk); color: var(--t1); }
-
-.action-btn--primary {
-  border-color: var(--gold);
-  color: var(--gold);
-}
-.action-btn--primary:hover {
-  border-color: var(--gold-lt);
-  color: var(--gold-lt);
 }
 </style>

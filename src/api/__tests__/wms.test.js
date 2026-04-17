@@ -1,13 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import instance from '@/api/instance'
 import {
+  getAsnBinMatches,
   createSellerAsn,
   getAsnBinCandidates,
+  getAsnRecommendedBins,
   getAsnStats,
   getInventoryStats,
   getWarehouseStatus,
   getAsnList,
   getAsnKpi,
+  getWhmPickingListDetail,
+  getWhmPickingLists,
   saveAsnBinAssignments,
   getSellerAsnList,
   getSellerInventoryList,
@@ -58,7 +62,7 @@ describe('wms API', () => {
   it('getSellerAsnList는 GET /wms/seller/asns를 호출한다', async () => {
     await getSellerAsnList()
     expect(instance.get).toHaveBeenCalledOnce()
-    expect(instance.get).toHaveBeenCalledWith('/wms/seller/asns')
+    expect(instance.get).toHaveBeenCalledWith('/wms/seller/asns', { params: {} })
   })
 
   it('createSellerAsn는 POST /wms/seller/asns를 호출한다', async () => {
@@ -73,13 +77,25 @@ describe('wms API', () => {
   it('getSellerInventoryList는 GET /wms/seller/inventories를 호출한다', async () => {
     await getSellerInventoryList()
     expect(instance.get).toHaveBeenCalledOnce()
-    expect(instance.get).toHaveBeenCalledWith('/wms/seller/inventories')
+    expect(instance.get).toHaveBeenCalledWith('/wms/seller/inventories', { params: {} })
   })
 
   it('getAsnBinCandidates는 GET /wms/asns/{asnId}/bin-candidates를 호출한다', async () => {
     await getAsnBinCandidates('ASN-20260322-001')
     expect(instance.get).toHaveBeenCalledOnce()
     expect(instance.get).toHaveBeenCalledWith('/wms/asns/ASN-20260322-001/bin-candidates')
+  })
+
+  it('getAsnBinMatches는 GET /wms/asns/{asnId}/bin-matches를 호출한다', async () => {
+    await getAsnBinMatches('ASN-20260322-001')
+    expect(instance.get).toHaveBeenCalledOnce()
+    expect(instance.get).toHaveBeenCalledWith('/wms/asns/ASN-20260322-001/bin-matches')
+  })
+
+  it('getAsnRecommendedBins는 GET /wms/asns/{asnId}/recommended-bins를 호출한다', async () => {
+    await getAsnRecommendedBins('ASN-20260322-001')
+    expect(instance.get).toHaveBeenCalledOnce()
+    expect(instance.get).toHaveBeenCalledWith('/wms/asns/ASN-20260322-001/recommended-bins', { params: {} })
   })
 
   it('saveAsnBinAssignments는 POST /wms/asns/{asnId}/bin-assignments를 호출한다', async () => {
@@ -91,5 +107,17 @@ describe('wms API', () => {
 
     expect(instance.post).toHaveBeenCalledOnce()
     expect(instance.post).toHaveBeenCalledWith('/wms/asns/ASN-20260322-001/bin-assignments', payload)
+  })
+
+  it('getWhmPickingLists는 GET /wms/manager/picking-lists를 호출한다', async () => {
+    await getWhmPickingLists()
+    expect(instance.get).toHaveBeenCalledOnce()
+    expect(instance.get).toHaveBeenCalledWith('/wms/manager/picking-lists', { params: undefined })
+  })
+
+  it('getWhmPickingListDetail는 GET /wms/manager/picking-lists/{id}를 호출한다', async () => {
+    await getWhmPickingListDetail('WORK-OUT-CONK-ORD-001')
+    expect(instance.get).toHaveBeenCalledOnce()
+    expect(instance.get).toHaveBeenCalledWith('/wms/manager/picking-lists/WORK-OUT-CONK-ORD-001')
   })
 })

@@ -10,7 +10,15 @@
  *   - parseExcel()은 첫 번째 시트만 읽음. 다른 시트 필요 시 수정 필요.
  *   - 헤더 행(1행)의 셀 값이 JSON 키가 됨. 공백·특수문자 주의.
  */
-import * as XLSX from 'xlsx'
+
+let xlsxModulePromise
+
+function loadXlsx() {
+  if (!xlsxModulePromise) {
+    xlsxModulePromise = import('xlsx')
+  }
+  return xlsxModulePromise
+}
 
 /**
  * Excel 파일 파싱 → JSON 배열 변환
@@ -32,8 +40,9 @@ import * as XLSX from 'xlsx'
 export function parseExcel(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
+        const XLSX = await loadXlsx()
         // ArrayBuffer로 읽어 xlsx 파싱 (type: 'array')
         const wb = XLSX.read(e.target.result, { type: 'array' })
         // 첫 번째 시트만 처리
@@ -63,7 +72,8 @@ export function parseExcel(file) {
  *   downloadExcel(rows, '재고현황.xlsx')
  *   → '재고현황.xlsx' 파일 다운로드 (확장자 중복 없음)
  */
-export function downloadExcel(data, filename = 'download') {
+export async function downloadExcel(data, filename = 'download') {
+  const XLSX = await loadXlsx()
   // 확장자 중복 방지: 이미 .xlsx로 끝나면 그대로 사용
   const name = filename.endsWith('.xlsx') ? filename : `${filename}.xlsx`
   const ws = XLSX.utils.json_to_sheet(data)

@@ -129,6 +129,14 @@ export function getAsnDetail(asnId) {
   return instance.get(`/wms/asns/${encodeURIComponent(asnId)}`)
 }
 
+export function getAsnBinMatches(asnId) {
+  return instance.get(`/wms/asns/${encodeURIComponent(asnId)}/bin-matches`)
+}
+
+export function getAsnRecommendedBins(asnId, params = {}) {
+  return instance.get(`/wms/asns/${encodeURIComponent(asnId)}/recommended-bins`, { params })
+}
+
 export function getAsnBinCandidates(asnId) {
   return instance.get(`/wms/asns/${encodeURIComponent(asnId)}/bin-candidates`)
 }

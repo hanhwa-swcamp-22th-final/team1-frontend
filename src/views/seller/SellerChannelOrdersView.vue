@@ -202,13 +202,17 @@ async function handleImportChannelOrders(card) {
   }
 }
 
-function handleExportChannelOrders() {
-  downloadExcel(
-    buildSellerChannelOrderExportRows(channelOrderRows.value),
-    `seller-channel-orders-${new Date().toISOString().slice(0, 10)}`,
-  )
-
-  showToolbarMessage(`통합 주문 ${channelOrderRows.value.length}건을 내보냈습니다.`)
+async function handleExportChannelOrders() {
+  try {
+    await downloadExcel(
+      buildSellerChannelOrderExportRows(channelOrderRows.value),
+      `seller-channel-orders-${new Date().toISOString().slice(0, 10)}`,
+    )
+    showToolbarMessage(`통합 주문 ${channelOrderRows.value.length}건을 내보냈습니다.`)
+  } catch (error) {
+    console.error('[SellerChannelOrdersView] export error:', error)
+    showToolbarMessage('통합 주문 내보내기에 실패했습니다.')
+  }
 }
 
 function handleCardAction(card, action) {

@@ -190,13 +190,18 @@ function handleCloseCsvDialog() {
   isCsvDialogOpen.value = false
 }
 
-function handleConfirmCsv() {
-  downloadExcel(
-    buildSellerAsnExportRows(asnRows.value),
-    `seller-asn-list-${new Date().toISOString().slice(0, 10)}`,
-  )
-  toolbarMessage.value = `${asnRows.value.length}건 ASN 목록을 내보냈습니다.`
-  handleCloseCsvDialog()
+async function handleConfirmCsv() {
+  try {
+    await downloadExcel(
+      buildSellerAsnExportRows(asnRows.value),
+      `seller-asn-list-${new Date().toISOString().slice(0, 10)}`,
+    )
+    toolbarMessage.value = `${asnRows.value.length}건 ASN 목록을 내보냈습니다.`
+    handleCloseCsvDialog()
+  } catch (error) {
+    console.error('[SellerAsnListView] export error:', error)
+    toolbarMessage.value = 'ASN 목록 내보내기에 실패했습니다.'
+  }
 }
 </script>
 

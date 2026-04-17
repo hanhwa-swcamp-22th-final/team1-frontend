@@ -300,26 +300,7 @@ function closeSellerDetail() {
 </template>
 
 <style scoped>
-/* ── 헤더 버튼 ── */
-.ui-btn--gold {
-  background: var(--gold);
-  border: none;
-  color: var(--t1);
-  font-weight: 700;
-  box-shadow: 0 2px 8px rgba(245,166,35,0.3);
-}
-
-.btn-export { font-size: 13px; }
-
-/* ── 필터 바 ── */
-.filter-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+@import '../../assets/styles/master-admin.css';
 
 .filter-tabs {
   display: flex;
@@ -477,43 +458,7 @@ function closeSellerDetail() {
   white-space: nowrap;
 }
 
-.date-normal {
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  color: var(--t3);
-  white-space: nowrap;
-}
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-family: 'Barlow', sans-serif;
-  font-weight: 600;
-  font-size: 11px;
-  white-space: nowrap;
-}
-
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
 /* ── 셀러 상세 모달 ─────────────────────────────────────────────── */
-.detail-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding-bottom: 16px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-}
-
 .detail-logo {
   width: 44px;
   height: 44px;
@@ -548,33 +493,6 @@ function closeSellerDetail() {
   font-family: 'Inter', sans-serif;
   font-size: 12px;
   color: var(--t3);
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px 24px;
-}
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.detail-label {
-  font-family: 'Barlow', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--t3);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.detail-value {
-  font-family: 'Inter', sans-serif;
-  font-size: 13px;
-  color: var(--t1);
 }
 
 .detail-code {

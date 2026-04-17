@@ -32,7 +32,7 @@
  *   이 컴포넌트에서는 사용하지 않음. Sidebar는 토글 버튼으로만 닫힘.
  *   (Header.vue의 알림 패널은 @click.stop + document listener 패턴 사용)
  */
-import { computed } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ROLES, ROUTE_NAMES } from '@/constants'
@@ -41,6 +41,8 @@ import { MENU_BY_ROLE } from '@/components/layout/menus'
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
+const navRef = ref(null)
+const SIDEBAR_SCROLL_STORAGE_PREFIX = 'sidebar-nav-scroll'
 
 function routeExists(name) {
   try {
@@ -78,11 +80,23 @@ const ROLE_INITIALS = {
   [ROLES.SELLER]: 'SR',
 }
 
+const ROLE_THEME_CLASS = {
+  [ROLES.SYSTEM_ADMIN]: 'theme-system-admin',
+  [ROLES.MASTER_ADMIN]: 'theme-master-admin',
+  [ROLES.WH_MANAGER]: 'theme-wh-manager',
+  [ROLES.WH_WORKER]: 'theme-wh-worker',
+  [ROLES.SELLER]: 'theme-seller',
+}
+
 /**
  * 유저 이름의 앞 2글자 대문자 → 아바타 이니셜 표시
  * 이름이 없거나 빈 문자열이면 'CK' 기본값
  */
 const initials = computed(() => ROLE_INITIALS[auth.role] ?? 'DV')
+const roleThemeClass = computed(() => ROLE_THEME_CLASS[auth.role] ?? 'theme-system-admin')
+const sidebarScrollStorageKey = computed(
+  () => `${SIDEBAR_SCROLL_STORAGE_PREFIX}:${auth.role ?? 'guest'}`
+)
 
 /** Role 영문 라벨 (사이드바 role 배지 표시용) */
 const roleLabel = computed(
@@ -115,10 +129,39 @@ const menuGroups = computed(() => {
 function isActive(name) {
   return route.name === name || route.meta.activeMenu === name
 }
+
+function persistSidebarScroll() {
+  if (!navRef.value) return
+  try {
+    sessionStorage.setItem(sidebarScrollStorageKey.value, String(navRef.value.scrollTop))
+  } catch {
+    // Ignore storage errors and keep navigation working.
+  }
+}
+
+function restoreSidebarScroll() {
+  if (!navRef.value) return
+  try {
+    const savedScrollTop = Number(sessionStorage.getItem(sidebarScrollStorageKey.value) ?? 0)
+    navRef.value.scrollTop = Number.isFinite(savedScrollTop) ? savedScrollTop : 0
+  } catch {
+    navRef.value.scrollTop = 0
+  }
+}
+
+onMounted(() => {
+  nextTick(() => {
+    restoreSidebarScroll()
+  })
+})
+
+onBeforeUnmount(() => {
+  persistSidebarScroll()
+})
 </script>
 
 <template>
-  <aside class="sidebar">
+  <aside :class="['sidebar', roleThemeClass]">
     <!-- ① 로고 영역 (108px) — 헤더와 동일 높이로 맞춰 수평 정렬 -->
     <div class="sidebar-logo">
       <div class="logo-icon">CK</div>
@@ -153,7 +196,12 @@ function isActive(name) {
     </div>
 
     <!-- ③ 네비게이션 (flex:1, 스크롤 가능) -->
-    <nav aria-label="메인 내비게이션" class="sidebar-nav">
+    <nav
+      ref="navRef"
+      aria-label="메인 내비게이션"
+      class="sidebar-nav"
+      @scroll="persistSidebarScroll"
+    >
       <template v-if="menuGroups.length">
         <div v-for="group in menuGroups" :key="group.label" class="nav-group">
           <!-- 그룹 제목 -->
@@ -182,16 +230,55 @@ function isActive(name) {
 <style scoped>
 /* ── 전체 사이드바 ───────────────────────────────── */
 .sidebar {
+  --sidebar-role-main: var(--sidebar);
+  --sidebar-role-lt: var(--sidebar-lt);
+  --sidebar-role-bd: var(--sidebar-bd);
+  --sidebar-role-dark: var(--sidebar);
   width: var(--sidebar-width); /* 250px */
   height: calc(100vh - var(--footer-height)); /* 푸터 위까지만 */
   position: fixed;
   left: 0;
   top: 0;
-  background: var(--sidebar);
+  background: var(--sidebar-role-main);
   display: flex;
   flex-direction: column;
   z-index: var(--z-sidebar);
   overflow: hidden;
+}
+
+.theme-system-admin {
+  --sidebar-role-main: #5a4334;
+  --sidebar-role-lt: #705442;
+  --sidebar-role-bd: #9a7860;
+  --sidebar-role-dark: #433124;
+}
+
+.theme-master-admin {
+  --sidebar-role-main: #1e4673;
+  --sidebar-role-lt: #2a5c92;
+  --sidebar-role-bd: #4f7fb6;
+  --sidebar-role-dark: #173557;
+}
+
+.theme-wh-manager {
+  --sidebar-role-main: #1f5a61;
+  --sidebar-role-lt: #2a727b;
+  --sidebar-role-bd: #4b969f;
+  --sidebar-role-dark: #174449;
+}
+
+.theme-wh-worker {
+  --sidebar-role-main: #53643b;
+  --sidebar-role-lt: #687c4b;
+  --sidebar-role-bd: #8da46a;
+  --sidebar-role-dark: #3f4c2c;
+}
+
+.theme-seller {
+  --sidebar-role-main: #704056;
+  --sidebar-role-lt: #8a4f6b;
+  --sidebar-role-bd: #b27a96;
+  --sidebar-role-dark: #543043;
 }
 
 /* ── ① 로고 (108px) ────────────────────────────── */
@@ -202,7 +289,7 @@ function isActive(name) {
   align-items: center;
   gap: 14px;
   padding: 0 var(--sidebar-px);
-  background: #0d0d0d; /* 로고 배경: 더 진한 검정 */
+  background: var(--sidebar-role-dark);
   border-bottom: 1px solid var(--gold); /* 금색 구분선 */
 }
 
@@ -253,8 +340,8 @@ function isActive(name) {
   display: flex;
   flex-direction: column;
   padding: 16px var(--sidebar-px) 18px;
-  background: var(--sidebar-lt); /* 강조 배경 */
-  border-bottom: 1px solid var(--sidebar-bd);
+  background: var(--sidebar-role-lt); /* 강조 배경 */
+  border-bottom: 1px solid var(--sidebar-role-bd);
   overflow: hidden;
 }
 
@@ -330,7 +417,7 @@ function isActive(name) {
 /* profile-divider: 구분선 */
 .profile-divider {
   height: 1px;
-  background: var(--sidebar-bd);
+  background: var(--sidebar-role-bd);
   margin-bottom: 10px; /* 기존 0 var(--sidebar-px) */
   flex-shrink: 0;
 }
@@ -362,7 +449,7 @@ function isActive(name) {
 .profile-icon-btn {
   width: 24px;
   height: 24px; /* 기존 28px → 24px */
-  border: 1px solid var(--sidebar-bd); /* 테두리 추가 */
+  border: 1px solid var(--sidebar-role-bd); /* 테두리 추가 */
   border-radius: 3px; /* 기존 radius-sm(4px) → 3px */
   background: rgba(0, 0, 0, 0.3); /* 기존 sidebar-lt → 반투명 검정 */
   color: rgba(255, 255, 255, 0.5);

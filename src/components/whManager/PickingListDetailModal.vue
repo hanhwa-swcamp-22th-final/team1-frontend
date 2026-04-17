@@ -1,6 +1,7 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import BaseModal from '@/components/common/BaseModal.vue'
+import { getWhmPickingListDetail } from '@/api/wms'
 import { PICKING_LIST_STATUS } from '@/constants'
 
 const props = defineProps({
@@ -10,17 +11,57 @@ const props = defineProps({
 
 defineEmits(['cancel'])
 
+const loading = ref(false)
+const loadErrorMessage = ref('')
+const detail = ref(null)
+
 const ITEM_STATUS_MAP = {
   [PICKING_LIST_STATUS.COMPLETED]:   { label: '완료',    color: 'green'  },
   [PICKING_LIST_STATUS.IN_PROGRESS]: { label: '진행중',  color: 'amber'  },
   [PICKING_LIST_STATUS.WAITING]:     { label: '대기',    color: 'gray'   },
 }
 
+const currentPickingList = computed(() => detail.value ?? props.pickingList)
+const detailItems = computed(() => Array.isArray(currentPickingList.value?.items) ? currentPickingList.value.items : [])
+
 const progressPct = computed(() => {
-  if (!props.pickingList) return 0
-  const { completedBins, totalBins } = props.pickingList
+  if (!currentPickingList.value) return 0
+  const { completedBins, totalBins } = currentPickingList.value
   return totalBins > 0 ? Math.round((completedBins / totalBins) * 100) : 0
 })
+
+async function fetchDetail() {
+  const workId = props.pickingList?.id
+  if (!workId) return
+
+  loading.value = true
+  loadErrorMessage.value = ''
+
+  try {
+    const response = await getWhmPickingListDetail(workId)
+    detail.value = response.data?.data ?? null
+  } catch (error) {
+    detail.value = null
+    loadErrorMessage.value = error.response?.data?.message ?? '피킹 리스트 상세를 불러오지 못했습니다.'
+  } finally {
+    loading.value = false
+  }
+}
+
+watch(
+  () => [props.isOpen, props.pickingList?.id],
+  ([isOpen, workId]) => {
+    if (!isOpen) {
+      detail.value = null
+      loadErrorMessage.value = ''
+      return
+    }
+
+    if (workId) {
+      void fetchDetail()
+    }
+  },
+)
 </script>
 
 <template>
@@ -30,13 +71,19 @@ const progressPct = computed(() => {
     width="720px"
     @cancel="$emit('cancel')"
   >
-    <template v-if="pickingList">
+    <div v-if="loading" class="state-box">피킹 리스트 상세를 불러오는 중입니다.</div>
+
+    <div v-else-if="loadErrorMessage" class="state-box state-box--error">
+      {{ loadErrorMessage }}
+    </div>
+
+    <template v-else-if="currentPickingList">
       <!-- 히어로 -->
       <div class="hero">
         <div class="hero-top">
           <div>
             <div class="eyebrow">Picking Route</div>
-            <div class="hero-title">{{ pickingList.id }}</div>
+            <div class="hero-title">{{ currentPickingList.id }}</div>
             <div class="hero-copy">동선 순서, Bin 위치, SKU, 피킹 상태를 확인합니다.</div>
           </div>
           <span class="badge badge--amber">{{ progressPct }}% 진행</span>
@@ -46,22 +93,22 @@ const progressPct = computed(() => {
         <div class="metric-grid">
           <div class="metric-card">
             <span class="metric-label">담당 작업자</span>
-            <span class="metric-value">{{ pickingList.assignedWorker }}</span>
+            <span class="metric-value">{{ currentPickingList.assignedWorker }}</span>
             <span class="metric-sub">배정 작업자</span>
           </div>
           <div class="metric-card">
             <span class="metric-label">총 Bin</span>
-            <span class="metric-value">{{ pickingList.totalBins }}</span>
+            <span class="metric-value">{{ currentPickingList.totalBins }}</span>
             <span class="metric-sub">동선 기준 정렬</span>
           </div>
           <div class="metric-card">
             <span class="metric-label">완료 Bin</span>
-            <span class="metric-value">{{ pickingList.completedBins }}</span>
-            <span class="metric-sub">나머지 {{ pickingList.totalBins - pickingList.completedBins }}개 진행</span>
+            <span class="metric-value">{{ currentPickingList.completedBins }}</span>
+            <span class="metric-sub">나머지 {{ currentPickingList.totalBins - currentPickingList.completedBins }}개 진행</span>
           </div>
           <div class="metric-card">
             <span class="metric-label">총 수량</span>
-            <span class="metric-value">{{ pickingList.itemCount }}</span>
+            <span class="metric-value">{{ currentPickingList.itemCount }}</span>
             <span class="metric-sub">피킹 대상 EA</span>
           </div>
         </div>
@@ -81,7 +128,10 @@ const progressPct = computed(() => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in pickingList.items" :key="item.sequence">
+            <tr v-if="!detailItems.length">
+              <td colspan="6" class="empty-cell">표시할 상세 항목이 없습니다.</td>
+            </tr>
+            <tr v-for="item in detailItems" :key="item.sequence">
               <td class="text-muted text-center">{{ item.sequence }}</td>
               <td><span class="location-tag">{{ item.bin }}</span></td>
               <td><span class="mono">{{ item.sku }}</span></td>
@@ -111,6 +161,17 @@ const progressPct = computed(() => {
 </template>
 
 <style scoped>
+.state-box {
+  padding: 48px 0;
+  text-align: center;
+  color: var(--t3);
+  font-size: var(--font-size-sm);
+}
+
+.state-box--error {
+  color: var(--red);
+}
+
 /* ── 히어로 ─────────────────────────────────────── */
 .hero {
   background: var(--surface-2);
@@ -215,6 +276,12 @@ const progressPct = computed(() => {
 
 .pick-table tr:last-child td { border-bottom: none; }
 .pick-table tr:hover td { background: var(--surface-2); }
+
+.empty-cell {
+  text-align: center;
+  color: var(--t3);
+  font-style: italic;
+}
 
 .col-seq    { width: 48px; }
 .col-bin    { width: 80px; }

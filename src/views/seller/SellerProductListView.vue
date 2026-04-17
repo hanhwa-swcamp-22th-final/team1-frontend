@@ -151,19 +151,24 @@ function handleCloseCsvDialog() {
   isCsvDialogOpen.value = false
 }
 
-function handleConfirmCsv() {
+async function handleConfirmCsv() {
   if (!productRows.value.length) {
     handleCloseCsvDialog()
     showToolbarMessage('내보낼 상품이 없습니다.')
     return
   }
 
-  downloadExcel(
-    buildSellerProductExportRows(productRows.value),
-    `seller-products-${new Date().toISOString().slice(0, 10)}`,
-  )
-  showToolbarMessage('현재 필터 기준 상품 목록을 다운로드했습니다.')
-  handleCloseCsvDialog()
+  try {
+    await downloadExcel(
+      buildSellerProductExportRows(productRows.value),
+      `seller-products-${new Date().toISOString().slice(0, 10)}`,
+    )
+    showToolbarMessage('현재 필터 기준 상품 목록을 다운로드했습니다.')
+    handleCloseCsvDialog()
+  } catch (error) {
+    console.error('[SellerProductListView] export error:', error)
+    showToolbarMessage('상품 목록 내보내기에 실패했습니다.')
+  }
 }
 
 function handleEditProduct(row) {
