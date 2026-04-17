@@ -3,7 +3,7 @@
  * OrderDetailModal — 주문 상세 모달 (재사용 컴포넌트)
  *
  * props:
- *   warehouseId (Number) — 창고 ID
+ *   warehouseId (String) — 창고 ID
  *   orderId     (String) — 주문번호 (예: 'ORD-2026-03810')
  *   isOpen      (Boolean) — 모달 표시 여부
  *
@@ -21,7 +21,7 @@ import BaseModal from '@/components/common/BaseModal.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 
 const props = defineProps({
-  warehouseId: { type: Number,  default: 0 },
+  warehouseId: { type: String,  default: '' },
   orderId:     { type: String,  default: '' },
   isOpen:      { type: Boolean, default: false },
 })
