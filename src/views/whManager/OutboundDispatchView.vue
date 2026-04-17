@@ -172,11 +172,29 @@ async function handleBulkConfirm(payload) {
     return o?.stockStatus !== STOCK_STATUS.INSUFFICIENT
   })
   try {
-    await bulkDispatchOrders({ orderIds: ids, ...payload })
-    orders.value = orders.value.filter(o => !ids.includes(o.id))
-    selectedIds.value = new Set()
+    const { data } = await bulkDispatchOrders({ orderIds: ids, ...payload })
+    const result = data?.data ?? {}
+    const succeededOrderIds = Array.isArray(result.succeededOrderIds) ? result.succeededOrderIds : []
+    const failedOrders = Array.isArray(result.failedOrders) ? result.failedOrders : []
+
+    orders.value = orders.value.filter(o => !succeededOrderIds.includes(o.id))
+    selectedIds.value = new Set(failedOrders.map(order => order.orderId))
     showBulkModal.value = false
-    showToast(`${ids.length}건 일괄 출고 지시가 발행되었습니다.`, 'success')
+
+    if (!failedOrders.length) {
+      showToast(`${succeededOrderIds.length}건 일괄 출고 지시가 완료되었습니다.`, 'success')
+      return
+    }
+
+    const failedSummary = failedOrders
+      .slice(0, 2)
+      .map(order => `${order.orderId}(${order.reason ?? '실패'})`)
+      .join(', ')
+
+    showToast(
+      `${succeededOrderIds.length}건 성공, ${failedOrders.length}건 실패했습니다. ${failedSummary}`,
+      succeededOrderIds.length ? 'success' : 'error',
+    )
   } catch (e) {
     showToast('일괄 출고 지시 처리 중 오류가 발생했습니다.', 'error')
   }
