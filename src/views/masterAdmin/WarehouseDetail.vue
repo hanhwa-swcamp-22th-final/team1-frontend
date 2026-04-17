@@ -32,7 +32,7 @@ const router = useRouter()
 const ui     = useUiStore()
 
 // ── 상태 ─────────────────────────────────────────────────────────────────────
-const warehouseId     = computed(() => Number(route.params.id))
+const warehouseId     = computed(() => String(route.params.id ?? '').trim())
 const warehouse       = ref(null)
 const inventory       = ref([])
 const outboundTab     = ref('today')
@@ -96,6 +96,12 @@ async function fetchDetail() {
   ui.setLoading(true)
   try {
     const id = warehouseId.value
+    if (!id) {
+      warehouse.value = null
+      allWarehouses.value = []
+      errorMsg.value = '유효한 창고를 찾을 수 없습니다.'
+      return
+    }
 
     // 1단계: 창고 목록 (드롭다운 + 현재 창고 정보)
     const listRes = await getWarehouseList()

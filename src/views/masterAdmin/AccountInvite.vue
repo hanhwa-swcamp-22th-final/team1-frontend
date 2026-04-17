@@ -62,18 +62,34 @@ const errors = reactive({
 const submitError = ref('')
 // 저장 완료 배너 대신 공통 ToastMessage 표시 상태를 사용한다.
 const submitSuccess = ref(false)
+const organizationLoadError = ref('')
 
 // ── 조직 목록 ─────────────────────────────────────────────────────────────────
 const sellers    = ref([])
 const warehouses = ref([])
 
 async function loadOrganizations() {
-  try {
-    const [selRes, whRes] = await Promise.all([getSellerList(), getWarehouseList()])
-    sellers.value    = selRes.data.data ?? []
-    warehouses.value = whRes.data.data  ?? []
-  } catch (e) {
-    console.error('[AccountInvite] loadOrganizations error:', e)
+  organizationLoadError.value = ''
+
+  const [sellerResult, warehouseResult] = await Promise.allSettled([
+    getSellerList(),
+    getWarehouseList(),
+  ])
+
+  if (sellerResult.status === 'fulfilled') {
+    sellers.value = sellerResult.value.data.data ?? []
+  } else {
+    sellers.value = []
+    organizationLoadError.value = '조직 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
+    console.error('[AccountInvite] load seller organizations error:', sellerResult.reason)
+  }
+
+  if (warehouseResult.status === 'fulfilled') {
+    warehouses.value = warehouseResult.value.data.data ?? []
+  } else {
+    warehouses.value = []
+    organizationLoadError.value = '조직 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
+    console.error('[AccountInvite] load warehouse organizations error:', warehouseResult.reason)
   }
 }
 
@@ -84,9 +100,47 @@ const orgOptions = computed(() => {
   return warehouses.value.map(w => ({ id: w.id, label: w.name }))
 })
 
+const selectedWarehouse = computed(() => {
+  if (selectedRole.value !== 'WH_WORKER') return null
+  return warehouses.value.find((warehouse) => warehouse.id === form.organizationId) ?? null
+})
+
+function extractWorkerCodePrefix(warehouse) {
+  const code = String(warehouse?.code ?? '').trim().toUpperCase()
+  const name = String(warehouse?.name ?? '').trim().toUpperCase()
+
+  const codeMatch = code.match(/^WH-([A-Z0-9]+)-/)
+  if (codeMatch) {
+    return `${codeMatch[1]}-`
+  }
+
+  const nameMatch = name.match(/^([A-Z0-9]+)(?:[\s_-]|$)/)
+  if (nameMatch) {
+    return `${nameMatch[1]}-`
+  }
+
+  return ''
+}
+
+const workerCodePrefix = computed(() => extractWorkerCodePrefix(selectedWarehouse.value))
+
+const issuedWorkerCode = computed(() => {
+  if (selectedRole.value !== 'WH_WORKER') return ''
+  const suffix = String(form.employeeNumber ?? '').trim().toUpperCase()
+  if (!suffix) return workerCodePrefix.value
+  return `${workerCodePrefix.value}${suffix}`
+})
+
 const orgPlaceholder = computed(() =>
   selectedRole.value === 'SELLER' ? '셀러사 선택' : '창고 선택'
 )
+
+const organizationEmptyMessage = computed(() => {
+  if (selectedRole.value === 'SELLER') {
+    return '등록된 셀러사가 없습니다. 셀러 등록 후 계정을 발급해주세요.'
+  }
+  return '등록된 창고가 없습니다. 창고 등록 후 계정을 발급해주세요.'
+})
 
 // 역할 변경 시 조직 선택 및 에러 초기화
 watch(selectedRole, () => { 
@@ -94,6 +148,26 @@ watch(selectedRole, () => {
   form.email = ''
   form.employeeNumber = ''
   Object.keys(errors).forEach(k => (errors[k] = ''))
+})
+
+watch(() => form.organizationId, () => {
+  if (selectedRole.value !== 'WH_WORKER') return
+  errors.employeeNumber = ''
+})
+
+watch(() => form.employeeNumber, (value) => {
+  if (selectedRole.value !== 'WH_WORKER') return
+
+  const prefix = workerCodePrefix.value
+  let normalized = String(value ?? '').trim().toUpperCase().replace(/\s+/g, '')
+
+  if (prefix && normalized.startsWith(prefix)) {
+    normalized = normalized.slice(prefix.length)
+  }
+
+  if (normalized !== value) {
+    form.employeeNumber = normalized
+  }
 })
 
 // ── 페이지 타이틀 / 브레드크럼 ────────────────────────────────────────────────
@@ -115,7 +189,11 @@ function validate() {
   
   if (selectedRole.value === 'WH_WORKER') {
     errors.email = ''
-    errors.employeeNumber = form.employeeNumber.trim() ? '' : '사번을 입력해주세요.'
+    if (!form.organizationId) {
+      errors.employeeNumber = '창고를 먼저 선택해주세요.'
+    } else {
+      errors.employeeNumber = form.employeeNumber.trim() ? '' : '사번을 입력해주세요.'
+    }
   } else {
     errors.employeeNumber = ''
     errors.email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)
@@ -144,12 +222,12 @@ async function submitForm() {
   try {
     const payload = {
       role:           selectedRole.value,
-      organizationId: Number(form.organizationId),
+      organizationId: form.organizationId,
       name:           form.name,
     }
 
     if (selectedRole.value === 'WH_WORKER') {
-      payload.employeeNumber = form.employeeNumber
+      payload.employeeNumber = issuedWorkerCode.value
     } else {
       payload.email = form.email
     }
@@ -158,7 +236,17 @@ async function submitForm() {
     submitSuccess.value = true
     resetForm()
   } catch (err) {
-    submitError.value = '초대 메일 발송 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+    const responseMessage = err.response?.data?.data?.message || err.response?.data?.message
+
+    if (err.response?.status === 409) {
+      submitError.value = responseMessage || '이미 사용 중인 이메일 또는 사번입니다.'
+    } else if (err.response?.status === 400) {
+      submitError.value = responseMessage || '선택한 소속 조직이 유효하지 않습니다.'
+    } else if (err.response?.status === 403) {
+      submitError.value = responseMessage || '현재 권한으로는 해당 계정을 발급할 수 없습니다.'
+    } else {
+      submitError.value = '초대 메일 발송 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+    }
     console.error('[AccountInvite] submitForm error:', err)
   } finally {
     ui.setLoading(false)
@@ -212,6 +300,9 @@ onMounted(loadOrganizations)
           <!-- Step 2: 소속 조직 매핑 -->
           <div class="form-section">
             <div class="form-section-title">2. 소속 조직 매핑</div>
+            <p v-if="organizationLoadError" class="submit-error organization-error" role="alert">
+              {{ organizationLoadError }}
+            </p>
             <div class="form-row">
               <BaseForm label="셀러사 / 창고 선택" :error="errors.organizationId" required>
                 <select v-model="form.organizationId">
@@ -224,6 +315,9 @@ onMounted(loadOrganizations)
                 </select>
               </BaseForm>
             </div>
+            <p v-if="!orgOptions.length && !organizationLoadError" class="org-empty-message">
+              {{ organizationEmptyMessage }}
+            </p>
           </div>
 
           <!-- Step 3: 사용자 정보 입력 -->
@@ -254,15 +348,30 @@ onMounted(loadOrganizations)
 
               <BaseForm
                 v-else
-                label="사번 (ID)"
+                label="사번 입력"
                 :error="errors.employeeNumber"
-                hint="작업자 로그인 ID로 사용됩니다."
+                hint="창고 접두사를 제외한 사번만 입력하세요."
                 required
               >
                 <input
                   v-model="form.employeeNumber"
                   type="text"
-                  placeholder="사번을 입력하세요"
+                  :placeholder="workerCodePrefix ? `${workerCodePrefix} 뒤에 붙을 사번` : '먼저 창고를 선택하세요'"
+                  :disabled="!workerCodePrefix"
+                />
+              </BaseForm>
+            </div>
+
+            <div v-if="selectedRole === 'WH_WORKER'" class="form-row">
+              <BaseForm
+                label="발급 사번 ID"
+                hint="실제 로그인에 사용될 최종 작업자 ID입니다."
+              >
+                <input
+                  :value="issuedWorkerCode || workerCodePrefix || '창고를 선택해주세요.'"
+                  type="text"
+                  readonly
+                  class="readonly-worker-code"
                 />
               </BaseForm>
             </div>
@@ -379,6 +488,13 @@ onMounted(loadOrganizations)
 
 .form-row > :only-child { grid-column: 1 / -1; }
 
+.readonly-worker-code {
+  background: var(--surface-2);
+  color: var(--t1);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
 /* ── 역할 라디오 카드 ── */
 .role-radio-group {
   display: flex;
@@ -460,6 +576,14 @@ onMounted(loadOrganizations)
 }
 
 .submit-error { flex: 1; font-size: var(--font-size-xs); color: var(--red); }
+.organization-error {
+  margin: 0;
+}
+.org-empty-message {
+  margin: -4px 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--t3);
+}
 .footer-actions { display: flex; gap: 10px; }
 
 .ui-btn--gold {

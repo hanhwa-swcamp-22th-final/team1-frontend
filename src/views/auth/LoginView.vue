@@ -1,8 +1,8 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { login } from '@/api/member'
+import { login, logoutSession } from '@/api/member'
 import { ROUTE_NAMES } from '@/constants'
 import { getFirstMenuRoute } from '@/components/layout/menus'
 
@@ -18,10 +18,10 @@ const isLoading = ref(false)
 
 const roles = [
   { id: 'sys',    name: '시스템 관리자', desc: '플랫폼 전체 사용자·업체 관리',            loginId: 'sys.admin@conk.com',    pw: '1234', note: '정상 로그인 예시' },
-  { id: 'master', name: '총괄 관리자',   desc: '3PL 업체 운영, 셀러 회사·계정 관리',      loginId: 'master.admin@conk.com', pw: '1234', note: '정상 로그인 예시' },
-  { id: 'whm',    name: '창고 관리자',   desc: '창고 운영, 로케이션·재고·작업자 관리',    loginId: 'wh.manager@conk.com',   pw: '1234', note: '정상 로그인 예시' },
-  { id: 'worker', name: '창고 작업자',   desc: '이메일 미등록 가능 · 작업자 코드 로그인', loginId: 'WORKER-001',            pw: '1234', note: '로그인 시 작업 화면으로 이동' },
-  { id: 'seller', name: '셀러 담당자',   desc: '상품·ASN·주문·재고 알림 확인',           loginId: 'seller@conk.com',       pw: '1234', note: '정상 로그인 예시' },
+  { id: 'master', name: '총괄 관리자',   desc: '3PL 업체 운영, 셀러 회사·계정 관리',      loginId: 'master1@conk.com',      pw: '1234', note: 'Aurora 테스트 관리자' },
+  { id: 'whm',    name: '창고 관리자',   desc: '창고 운영, 로케이션·재고·작업자 관리',    loginId: 'whm.lax@conk.com',      pw: '1234', note: 'LAX 테스트 창고 관리자' },
+  { id: 'worker', name: '창고 작업자',   desc: '작업 피킹·패킹·입고 처리 화면 확인',      loginId: 'worker.lax1@conk.com',  pw: '1234', note: 'LAX 테스트 작업자 계정' },
+  { id: 'seller', name: '셀러 담당자',   desc: '상품·ASN·주문·재고 알림 확인',           loginId: 'seller1@conk.com',      pw: '1234', note: 'Aurora 테스트 셀러 계정' },
 ]
 
 const openRoles = ref({})
@@ -36,6 +36,28 @@ function fillCredentials(role) {
   errorMsg.value = ''
   infoMsg.value  = ''
 }
+
+onMounted(async () => {
+  const loginHint = typeof route.query.loginHint === 'string' ? route.query.loginHint : ''
+  const forceLogin = route.query.forceLogin === '1'
+
+  if (loginHint) {
+    loginId.value = loginHint
+  }
+
+  if (!forceLogin || !auth.isLoggedIn) {
+    return
+  }
+
+  try {
+    await logoutSession()
+  } catch {
+    // 쿠키 삭제 요청 실패 시에도 프런트 인증 상태는 비워서 재로그인을 유도한다.
+  } finally {
+    auth.clearAuth()
+    infoMsg.value = '기존 로그인 세션을 종료했습니다. 초대받은 계정으로 다시 로그인해주세요.'
+  }
+})
 
 async function handleSubmit() {
   errorMsg.value = ''

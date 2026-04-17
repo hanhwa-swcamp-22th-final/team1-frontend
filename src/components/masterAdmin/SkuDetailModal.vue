@@ -3,7 +3,7 @@
  * SkuDetailModal — SKU(상품) 상세 정보 모달 (재사용 컴포넌트)
  *
  * props:
- *   warehouseId (Number) — 창고 ID
+ *   warehouseId (String) — 창고 ID
  *   sku         (String) — SKU 코드 (예: 'KR-MASK-001')
  *   isOpen      (Boolean) — 모달 표시 여부
  *
@@ -20,7 +20,7 @@ import BaseModal from '@/components/common/BaseModal.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 
 const props = defineProps({
-  warehouseId: { type: Number,  default: 0 },
+  warehouseId: { type: String,  default: '' },
   sku:         { type: String,  default: '' },
   isOpen:      { type: Boolean, default: false },
 })

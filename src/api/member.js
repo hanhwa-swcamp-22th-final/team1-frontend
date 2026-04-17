@@ -26,6 +26,15 @@ export async function logoutSession() {
 }
 
 /**
+ * 임시 비밀번호 사용자 비밀번호 변경
+ * @param {{ newPassword: string }} payload
+ * @returns {Promise<AxiosResponse>}
+ */
+export async function changePassword(payload) {
+  return instance.post('/member/auth/change-password', payload, { _skipAuthRefresh: true })
+}
+
+/**
  * 대시보드용 활성 셀러 수 조회
  * @returns {Promise<AxiosResponse>}
  */
