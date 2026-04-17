@@ -127,7 +127,7 @@ async function confirmAction() {
           <template #cell-status="{ value }"><span :class="statusClass(value)">{{ statusText(value) }}</span></template>
           <template #cell-actions="{ row }">
             <div class="action-row">
-              <button class="ui-btn ui-btn--gold btn-sm" type="button" @click="openAction(row)">비밀번호 초기화</button>
+              <button class="ui-btn ui-btn--ghost btn-sm" type="button" @click="openAction(row)">비밀번호 초기화</button>
             </div>
           </template>
         </BaseTable>
