@@ -9,6 +9,7 @@ import { createSellerProduct, getSellerProductDetail, getSellerProductOptions, u
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import FileUpload from '@/components/common/FileUpload.vue'
+import ToastMessage from '@/components/common/ToastMessage.vue'
 import {
   buildProductFormFromProduct,
   buildSellerProductPayload,
@@ -43,8 +44,12 @@ const optionsErrorMessage = ref('')
 
 // 버튼 클릭 후 사용자에게 보여줄 안내 문구를 구분해서 관리한다.
 const infoMessage = ref('')
-const successMessage = ref('')
 const errorMessage = ref('')
+const toast = ref({
+  visible: false,
+  message: '',
+  type: 'success',
+})
 
 // 치수 입력이 있으면 부피중량을 자동 계산해 읽기 전용 필드에 표시한다.
 const volumeWeight = computed(() => {
@@ -59,9 +64,24 @@ const imageSlots = computed(() => {
 // 화면 메시지는 한 번에 하나만 보이도록 초기화한다.
 function clearMessages() {
   infoMessage.value = ''
-  successMessage.value = ''
   errorMessage.value = ''
   optionsErrorMessage.value = ''
+}
+
+function showToast(message, type = 'success') {
+  toast.value = {
+    visible: true,
+    message,
+    type,
+  }
+}
+
+function resolveSubmitSuccessMessage(message, fallback) {
+  const normalized = String(message ?? '').trim().toLowerCase()
+  if (!normalized || normalized === 'created' || normalized === 'ok' || normalized === 'success') {
+    return fallback
+  }
+  return message
 }
 
 // 상품 등록 검증 결과를 다시 보여주기 전 기존 에러를 비운다.
@@ -184,12 +204,22 @@ async function handleSubmit() {
 
     if (isEditMode.value) {
       applyEditableProduct(response.data?.data ?? { ...payload, detail: payload })
-      successMessage.value = response.data?.message ?? `${productLabel} 상품 정보가 수정되었습니다.`
+      showToast(
+        resolveSubmitSuccessMessage(
+          response.data?.message,
+          `${productLabel} 상품 정보가 수정되었습니다.`
+        )
+      )
       return
     }
 
     resetProductForm()
-    successMessage.value = response.data?.message ?? `${productLabel} 상품이 등록되었습니다.`
+    showToast(
+      resolveSubmitSuccessMessage(
+        response.data?.message,
+        `${productLabel} 상품이 등록되었습니다.`
+      )
+    )
   } catch (error) {
     errorMessage.value = error.response?.data?.message ?? (
       isEditMode.value
@@ -385,20 +415,6 @@ onMounted(() => {
             </div>
           </section>
 
-          <!-- Amazon 연동 코드는 ASIN만 입력할 수 있게 유지한다. -->
-          <section class="panel-card">
-            <header class="panel-header">
-              <span class="panel-accent" aria-hidden="true" />
-              <h2 class="panel-title">Amazon 연동</h2>
-            </header>
-
-            <div class="form-grid">
-              <BaseForm label="ASIN (Amazon)">
-                <input v-model="productForm.asin" type="text" placeholder="Amazon ASIN 코드" />
-              </BaseForm>
-            </div>
-          </section>
-
           <div class="action-row">
             <button class="ui-btn ui-btn--ghost" type="button" @click="handleCancel">취소</button>
             <button class="ui-btn ui-btn--ghost" type="button" @click="handleDraftSave">임시저장</button>
@@ -409,7 +425,6 @@ onMounted(() => {
 
           <p v-if="isLoadingEditProduct" class="page-message page-message--info">상품 정보를 불러오는 중입니다.</p>
           <p v-if="infoMessage" class="page-message page-message--info">{{ infoMessage }}</p>
-          <p v-if="successMessage" class="page-message page-message--success">{{ successMessage }}</p>
           <p v-if="optionsErrorMessage" class="page-message page-message--error">{{ optionsErrorMessage }}</p>
           <p v-if="errorMessage" class="page-message page-message--error">{{ errorMessage }}</p>
         </div>
@@ -470,7 +485,7 @@ onMounted(() => {
                 </button>
               </div>
 
-              <div class="setting-row">
+              <div class="setting-row setting-row--last">
                 <div>
                   <p class="setting-title">재고 부족 경고</p>
                   <p class="setting-description">임계치 이하 시 알림</p>
@@ -482,23 +497,6 @@ onMounted(() => {
                   type="button"
                   :aria-pressed="productForm.lowStockAlert"
                   @click="handleToggle('lowStockAlert')"
-                >
-                  <span class="toggle-switch-thumb" />
-                </button>
-              </div>
-
-              <div class="setting-row setting-row--last">
-                <div>
-                  <p class="setting-title">Amazon 채널 연동</p>
-                  <p class="setting-description">ASIN 연동 시 자동 수집</p>
-                </div>
-
-                <button
-                  class="toggle-switch"
-                  :class="{ 'toggle-switch--on': productForm.amazonSync }"
-                  type="button"
-                  :aria-pressed="productForm.amazonSync"
-                  @click="handleToggle('amazonSync')"
                 >
                   <span class="toggle-switch-thumb" />
                 </button>
@@ -532,6 +530,11 @@ onMounted(() => {
         </aside>
       </form>
     </section>
+    <ToastMessage
+      v-model:visible="toast.visible"
+      :message="toast.message"
+      :type="toast.type"
+    />
   </AppLayout>
 </template>
 
