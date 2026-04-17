@@ -114,6 +114,19 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
+   * 현재 로그인 사용자 상태를 부분 업데이트한다.
+   *
+   * @param {string|null} status
+   */
+  function updateUserStatus(status) {
+    if (!user.value) return
+    user.value = {
+      ...user.value,
+      status: status ?? user.value.status,
+    }
+  }
+
+  /**
    * 앱 시작 세션 복구 완료 여부를 갱신한다.
    *
    * @param {boolean} value
@@ -131,6 +144,7 @@ export const useAuthStore = defineStore('auth', () => {
     setAuth,
     applyLoginResponse,
     clearAuth,
+    updateUserStatus,
     markInitialized,
   }
 })

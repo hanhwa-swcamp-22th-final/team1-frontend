@@ -78,36 +78,54 @@ const router = createRouter({
  */
 router.beforeEach((to, _from, next) => {
   const auth = useAuthStore()
+  const isChangePasswordRoute = to.name === ROUTE_NAMES.CHANGE_PASSWORD
+  const isForceLogin = to.query.forceLogin === '1'
 
   // ─ 가드 #1: 로그인 상태에서 /login 재접근 시 첫 메뉴로 이동 ──────────
-  if (auth.isLoggedIn && to.name === ROUTE_NAMES.LOGIN) {
+  if (auth.isLoggedIn && to.name === ROUTE_NAMES.LOGIN && !isForceLogin) {
     const first = getFirstMenuRoute(auth.role)
     return next(first ? { name: first } : '/')
   }
 
-  // ─ 가드 #2: 비공개 페이지 + 미로그인 → /login?redirect=현재경로 ────────
+  // ─ 가드 #2: 비로그인 사용자의 /change-password 직접 접근 차단 ─────────
+  if (!auth.isLoggedIn && isChangePasswordRoute) {
+    return next({ name: ROUTE_NAMES.LOGIN })
+  }
+
+  // ─ 가드 #3: TEMP_PASSWORD가 아닌 사용자의 /change-password 접근 차단 ──
+  if (
+    auth.isLoggedIn &&
+    isChangePasswordRoute &&
+    auth.user?.status !== ACCOUNT_STATUS.TEMP_PASSWORD
+  ) {
+    const first = getFirstMenuRoute(auth.role)
+    return next(first ? { name: first } : '/')
+  }
+
+  // ─ 가드 #4: 비공개 페이지 + 미로그인 → /login?redirect=현재경로 ────────
   // meta.public: true 인 라우트(로그인, 비밀번호 설정)는 통과
   if (!to.meta.public && !auth.isLoggedIn) {
     return next({ name: ROUTE_NAMES.LOGIN, query: { redirect: to.fullPath } })
   }
 
-  // ─ 가드 #3: 임시 비밀번호 상태 강제 변경 ──────────────────────────────
+  // ─ 가드 #5: 임시 비밀번호 상태 강제 변경 ──────────────────────────────
   // TEMP_PASSWORD 상태인 사용자는 change-password 외 모든 페이지 접근 차단
   if (
     auth.isLoggedIn &&
     auth.user?.status === ACCOUNT_STATUS.TEMP_PASSWORD &&
-    to.name !== ROUTE_NAMES.CHANGE_PASSWORD
+    !isChangePasswordRoute &&
+    !(to.name === ROUTE_NAMES.LOGIN && isForceLogin)
   ) {
     return next({ name: ROUTE_NAMES.CHANGE_PASSWORD })
   }
 
-  // ─ 가드 #4: Role 불일치 → 403 ─────────────────────────────────────────
+  // ─ 가드 #6: Role 불일치 → 403 ─────────────────────────────────────────
   // meta.role 이 없는 라우트는 모든 로그인 사용자 접근 허용
   if (to.meta.role && to.meta.role !== auth.role) {
     return next({ name: ROUTE_NAMES.FORBIDDEN })
   }
 
-  // ─ 가드 #5: 존재하지 않는 경로 + 로그인 상태 → 첫 메뉴로 ─────────────
+  // ─ 가드 #7: 존재하지 않는 경로 + 로그인 상태 → 첫 메뉴로 ─────────────
   if (to.name === ROUTE_NAMES.NOT_FOUND && auth.isLoggedIn) {
     const first = getFirstMenuRoute(auth.role)
     if (first) return next({ name: first })

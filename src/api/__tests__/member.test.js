@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import instance from '@/api/instance'
-import { login, refreshSession, logoutSession, getSellerStats } from '@/api/member'
+import { changePassword, login, refreshSession, logoutSession, getSellerStats } from '@/api/member'
 
 vi.mock('@/api/instance', () => ({
   default: {
@@ -35,6 +35,15 @@ describe('member API', () => {
     await logoutSession()
     expect(instance.post).toHaveBeenCalledOnce()
     expect(instance.post).toHaveBeenCalledWith('/member/auth/logout')
+  })
+
+  it('changePassword는 POST /member/auth/change-password를 호출한다', async () => {
+    const payload = { newPassword: 'newPass123!' }
+    await changePassword(payload)
+    expect(instance.post).toHaveBeenCalledOnce()
+    expect(instance.post).toHaveBeenCalledWith('/member/auth/change-password', payload, {
+      _skipAuthRefresh: true,
+    })
   })
 
   it('getSellerStats는 GET /member/sellers/stats를 호출한다', async () => {

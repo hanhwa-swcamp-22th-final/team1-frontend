@@ -76,7 +76,8 @@ function shouldSkipAuthRefresh(config = {}) {
     config._skipAuthRefresh ||
       requestUrl.includes('/member/auth/login') ||
       requestUrl.includes('/member/auth/refresh') ||
-      requestUrl.includes('/member/auth/setup-password'),
+      requestUrl.includes('/member/auth/setup-password') ||
+      requestUrl.includes('/member/auth/change-password'),
   )
 }
 
