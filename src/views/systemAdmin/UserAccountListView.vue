@@ -127,6 +127,7 @@ async function confirmAction() {
         </div>
 
         <BaseTable :columns="columns" :pagination="pagination" :rows="paginatedRows" @page-change="page = $event">
+          <template #cell-email="{ row }">{{ row.email ?? row.workerCode }}</template>
           <template #cell-organization="{ row }">{{ row.organization }} / {{ row.warehouse }}</template>
           <template #cell-registeredAt="{ value }">{{ formatDate(value) }}</template>
           <template #cell-lastLoginAt="{ value }">{{ formatDate(value, 'datetime') }}</template>
