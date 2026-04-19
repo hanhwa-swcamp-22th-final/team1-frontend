@@ -1,7 +1,7 @@
 # ==========================================
 # 1. Build Stage — Node 22 (package.json engines 기준)
 # ==========================================
-FROM node:22-alpine AS build
+FROM node:22 AS build
 
 WORKDIR /app
 
