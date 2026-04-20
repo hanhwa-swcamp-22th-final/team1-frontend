@@ -13,9 +13,9 @@ import {
   createSellerBulkOrders,
   createSellerOrder,
   downloadSellerBulkOrderTemplate,
-  getSellerOrderOptions,
   validateSellerBulkOrders,
 } from '@/api/order'
+import { getSellerAsnOptions } from '@/api/wms'
 import BaseForm from '@/components/common/BaseForm.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import FileUpload from '@/components/common/FileUpload.vue'
@@ -510,15 +510,15 @@ async function fetchOrderOptions() {
 
   try {
     const [optionsResponse, channelCardsResponse] = await Promise.all([
-      getSellerOrderOptions(),
+      getSellerAsnOptions(),
       getSellerChannelCards(),
     ])
 
-    const optionsPayload = optionsResponse.data?.data ?? {}
+    const wmsOptions = optionsResponse.data?.data ?? {}
     const channelCards = Array.isArray(channelCardsResponse.data?.data) ? channelCardsResponse.data.data : []
-    productOptions.value = Array.isArray(optionsPayload.products) ? optionsPayload.products : []
+    productOptions.value = Array.isArray(wmsOptions.skus) ? wmsOptions.skus : []
     salesChannelOptions.value = normalizeSelectOptions(
-      optionsPayload.channels ?? channelCards.map((card) => ({
+      channelCards.map((card) => ({
         value: card.channelKey ?? card.channel ?? card.name,
         label: card.label ?? card.name ?? card.channelKey,
       })),
