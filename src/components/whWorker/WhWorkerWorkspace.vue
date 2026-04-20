@@ -90,10 +90,14 @@ watch(
 
 onMounted(loadTasks)
 
+function resolveWorkerTaskId() {
+  return auth.user?.workerCode || auth.user?.id || ''
+}
+
 async function loadTasks() {
   loading.value = true
   try {
-    const workerAccountId = auth.user?.id
+    const workerAccountId = resolveWorkerTaskId()
     if (!workerAccountId) {
       workerRecords.value = []
       toast('작업자 계정 정보를 확인할 수 없습니다.')
@@ -248,7 +252,7 @@ function parseInboundDetailKey(detailKey = '') {
 }
 
 function buildWorkerTaskPayload(task, overrides = {}) {
-  const workerAccountId = auth.user?.id ?? ''
+  const workerAccountId = resolveWorkerTaskId()
   const basePayload = {
     workerAccountId,
     stage: normalizeWorkerStage(task.stage),

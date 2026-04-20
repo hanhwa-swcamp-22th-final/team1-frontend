@@ -380,7 +380,7 @@ watch(
                         <span class="location-tag" :class="{ 'location-tag--new': sku.isNewSku }">
                           {{ sku.currentBin }}
                         </span>
-                        <span v-if="sku.isNewSku" class="badge badge--amber">미확정</span>
+                        <span v-if="sku.isNewSku" class="badge badge--green">배정 완료</span>
                         <span v-else class="badge badge--blue">기존</span>
                       </template>
                       <span v-else class="badge badge--amber">미배정</span>

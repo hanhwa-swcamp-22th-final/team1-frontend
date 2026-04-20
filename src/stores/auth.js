@@ -9,6 +9,7 @@
  * 저장되는 user 객체 예시:
  *   {
  *     id:           "ACC-001",
+ *     workerCode:   "WORKER-001",
  *     name:         "홍길동",
  *     email:        "hong@conk.io",
  *     role:         "MASTER_ADMIN",
@@ -51,6 +52,7 @@ function normalizeUser(rawUser) {
 
   return {
     id: rawUser.id ?? null,
+    workerCode: rawUser.workerCode ?? null,
     name: rawUser.name ?? null,
     email: rawUser.email ?? null,
     role: rawUser.role ?? null,
