@@ -198,7 +198,7 @@ async function handleSubmit() {
         <a href="#" class="footer-link">이용약관</a>
         <a href="#" class="footer-link">개인정보처리방침</a>
         <a href="#" class="footer-link">고객지원 문의</a>
-        <span class="footer-ver">v1.0.1</span>
+        <span class="footer-ver">v1.0.2</span>
       </div>
     </footer>
   </div>
