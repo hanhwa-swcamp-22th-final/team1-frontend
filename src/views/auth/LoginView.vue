@@ -18,10 +18,10 @@ const isLoading = ref(false)
 
 const roles = [
   { id: 'sys',    name: '시스템 관리자', desc: '플랫폼 전체 사용자·업체 관리',            loginId: 'sys.admin@conk.com',    pw: '1234', note: '정상 로그인 예시' },
-  { id: 'master', name: '총괄 관리자',   desc: '3PL 업체 운영, 셀러 회사·계정 관리',      loginId: 'master1@conk.com',      pw: '1234', note: 'Aurora 테스트 관리자' },
-  { id: 'whm',    name: '창고 관리자',   desc: '창고 운영, 로케이션·재고·작업자 관리',    loginId: 'whm.lax@conk.com',      pw: '1234', note: 'LAX 테스트 창고 관리자' },
-  { id: 'worker', name: '창고 작업자',   desc: '작업 피킹·패킹·입고 처리 화면 확인',      loginId: 'worker.lax1@conk.com',  pw: '1234', note: 'LAX 테스트 작업자 계정' },
-  { id: 'seller', name: '셀러 담당자',   desc: '상품·ASN·주문·재고 알림 확인',           loginId: 'seller1@conk.com',      pw: '1234', note: 'Aurora 테스트 셀러 계정' },
+  { id: 'master', name: '총괄 관리자',   desc: '3PL 업체 운영, 셀러 회사·계정 관리',      loginId: 'master.admin@conk.com', pw: '1234', note: 'dev seed 기본 총괄 관리자' },
+  { id: 'whm',    name: '창고 관리자',   desc: '창고 운영, 로케이션·재고·작업자 관리',    loginId: 'wh.manager@conk.com',   pw: '1234', note: 'dev seed 기본 창고 관리자' },
+  { id: 'worker', name: '창고 작업자',   desc: '작업 피킹·패킹·입고 처리 화면 확인',      loginId: 'WORKER-001',            pw: '1234', note: '작업자 코드는 이메일 대신 로그인 ID로 사용' },
+  { id: 'seller', name: '셀러 담당자',   desc: '상품·ASN·주문·재고 알림 확인',           loginId: 'seller@conk.com',       pw: '1234', note: 'dev seed 기본 셀러 계정' },
 ]
 
 const openRoles = ref({})
