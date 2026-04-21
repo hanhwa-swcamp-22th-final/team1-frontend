@@ -62,7 +62,19 @@ async function fetchOrders() {
     }
 
     const { data } = await getWhmOrders({ warehouseId })
-    const payload = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []
+    const raw = data?.data?.orders ?? (Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [])
+    const payload = raw.map(o => ({
+      id:        o.orderId,
+      channel:   (o.orderChannel ?? '').toLowerCase(),
+      seller:    o.receiverName ?? '',
+      company:   o.receiverName ?? '',
+      product:   `수량 ${o.itemCount ?? 0}`,
+      region:    [o.state, o.country].filter(Boolean).join(', '),
+      orderedAt: o.orderedAt ? o.orderedAt.slice(0, 10) : '',
+      warehouse: '',
+      status:    o.status,
+      _raw:      o,
+    }))
     orders.value = normalizeOrderStatusRows(payload)
   } catch (e) {
     console.error('주문 데이터 로드 실패:', e)
