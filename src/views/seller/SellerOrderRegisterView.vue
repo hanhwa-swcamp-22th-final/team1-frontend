@@ -398,10 +398,6 @@ async function handleManualSubmit() {
   submitErrorMessage.value = ''
   clearFormErrors()
 
-  const errors = validateOrderForm(manualForm.value, productOptions.value)
-  Object.entries(errors).forEach(([key, value]) => {
-    formErrors[key] = value
-  })
 
   if (Object.values(errors).some(Boolean)) return
 
