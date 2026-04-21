@@ -265,7 +265,8 @@ async function handleConfirmArrival() {
 
   try {
     isConfirmingArrival.value = true
-    await confirmAsnArrival(props.asnId)
+    const arrivedAt = new Date().toISOString().slice(0, 19)
+    await confirmAsnArrival(props.asnId, arrivedAt)
     emit('confirm', { asnId: props.asnId, action: 'arrival' })
   } catch (error) {
     saveErrorMessage.value = error.response?.data?.message ?? '입고 확인에 실패했습니다.'
