@@ -137,17 +137,25 @@ const showMismatchModal = ref(false)
 const selectedAsn       = ref(null)
 const detailCanAssign   = ref(false) // true = Bin 배정 편집 모드
 
-// ASN 목록 탭 → 읽기 전용으로 열기
+function canEditAsnBins(asn) {
+  return [
+    INBOUND_STATUS.PENDING,
+    INBOUND_STATUS.TRANSIT,
+    INBOUND_STATUS.MISMATCH,
+  ].includes(asn?.status)
+}
+
+// ASN 목록 탭 → 상태에 따라 읽기/편집 모드로 열기
 function openDetailModal(asn) {
   selectedAsn.value     = asn
-  detailCanAssign.value = false
+  detailCanAssign.value = canEditAsnBins(asn)
   showDetailModal.value = true
 }
 
-// Bin 미배정 ASN 탭 → 배정 편집 모드로 열기
+// Bin 미배정 ASN 탭 → 상태에 따라 읽기/편집 모드로 열기
 function openAssignModal(asn) {
   selectedAsn.value     = asn
-  detailCanAssign.value = true
+  detailCanAssign.value = canEditAsnBins(asn)
   showDetailModal.value = true
 }
 
@@ -342,7 +350,13 @@ const binPendingColumns = [
                 class="ui-btn ui-btn--ghost ui-btn--sm"
                 @click="row.status === INBOUND_STATUS.MISMATCH ? openMismatchModal(row) : openDetailModal(row)"
               >
-                {{ row.status === INBOUND_STATUS.MISMATCH ? '처리' : '상세' }}
+                {{
+                  row.status === INBOUND_STATUS.MISMATCH
+                    ? '처리'
+                    : canEditAsnBins(row)
+                      ? '배정'
+                      : '상세'
+                }}
               </button>
             </template>
           </BaseTable>
