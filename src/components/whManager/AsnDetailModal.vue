@@ -166,13 +166,15 @@ const usedBins = computed(() => new Set(
 ))
 
 const newSkus = computed(() => skuList.value.filter((sku) => sku.isNewSku))
+const canEditBins = computed(() =>
+  props.canAssign && asnStatus.value !== INBOUND_STATUS.PENDING
+)
 const canConfirmArrival = computed(() =>
   asnStatus.value === INBOUND_STATUS.PENDING && !isConfirmingArrival.value && !isSaving.value
 )
 
 const canSaveBinAssignments = computed(() => {
-  if (!props.canAssign || isSaving.value) return false
-  if (asnStatus.value === INBOUND_STATUS.PENDING) return false
+  if (!canEditBins.value || isSaving.value) return false
   if (!skuList.value.length) return false
 
   const changingSkuCodes = Object.keys(changingBins.value)
@@ -186,6 +188,14 @@ const canSaveBinAssignments = computed(() => {
   )
 
   return targetSkus.length > 0 && targetSkus.every((sku) => sku.currentBin)
+})
+
+const binSectionCopy = computed(() => {
+  if (asnStatus.value === INBOUND_STATUS.PENDING) {
+    return '등록됨 상태에서는 Bin 배정을 잠그고, 입고 확인이 끝난 뒤부터 Bin을 배정할 수 있습니다.'
+  }
+
+  return '신규 SKU는 직접 Bin을 배정해야 합니다. 배정된 Bin은 이후 같은 SKU 입고 시 자동으로 매핑됩니다.'
 })
 
 function availableBinsFor(sku) {
@@ -363,8 +373,7 @@ watch(
         <div class="modal-section-head">
           <div class="modal-section-title">SKU 구성 및 Bin 배정</div>
           <div class="modal-section-copy">
-            신규 SKU는 직접 Bin을 배정해야 합니다.
-            배정된 Bin은 이후 같은 SKU 입고 시 자동으로 매핑됩니다.
+            {{ binSectionCopy }}
           </div>
         </div>
 
@@ -375,7 +384,14 @@ watch(
           {{ saveErrorMessage }}
         </div>
 
-        <div v-if="canAssign && newSkus.length" class="new-sku-notice">
+        <div v-if="canConfirmArrival" class="new-sku-notice">
+          <span>
+            현재는 <strong>등록됨</strong> 상태입니다.
+            먼저 입고 확인을 완료하면 Bin 배정 저장 UI가 활성화됩니다.
+          </span>
+        </div>
+
+        <div v-else-if="canEditBins && newSkus.length" class="new-sku-notice">
           <span>
             <strong>{{ newSkus.length }}개의 신규 SKU</strong>가 있습니다.
             아직 Bin이 등록되지 않은 상품입니다. Bin을 배정하면 다음 입고부터 자동으로 매핑됩니다.
@@ -409,7 +425,7 @@ watch(
                 </td>
                 <td style="text-align:right">{{ sku.qty.toLocaleString() }}</td>
                 <td>
-                  <template v-if="!canAssign">
+                  <template v-if="!canEditBins">
                     <div class="bin-cell">
                       <template v-if="sku.currentBin">
                         <span class="location-tag" :class="{ 'location-tag--new': sku.isNewSku }">
@@ -512,10 +528,10 @@ watch(
       </button>
 
       <button
-        v-else-if="canAssign"
+        v-else-if="canEditBins"
         class="ui-btn ui-btn--primary"
         :disabled="!canSaveBinAssignments"
-        :title="canSaveBinAssignments ? '' : '모든 신규 SKU에 Bin을 배정하세요'"
+        :title="canSaveBinAssignments ? '' : '변경할 SKU의 Bin을 모두 선택하세요'"
         @click="handleSaveBinAssignments"
       >
         {{ isSaving ? '저장 중...' : 'Bin 배정 저장' }}

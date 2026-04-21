@@ -139,7 +139,6 @@ const detailCanAssign   = ref(false) // true = Bin 배정 편집 모드
 
 function canEditAsnBins(asn) {
   return [
-    INBOUND_STATUS.PENDING,
     INBOUND_STATUS.TRANSIT,
     INBOUND_STATUS.MISMATCH,
   ].includes(asn?.status)
@@ -372,8 +371,8 @@ const binPendingColumns = [
           <div>
             <div class="bin-header-title">Bin 배정 필요 ASN</div>
             <div class="bin-header-sub">
-              신규 SKU가 포함된 ASN입니다. <strong>배정하기</strong>를 클릭해 ASN 상세에서 Bin을 직접 배정하세요.
-              배정 완료 후 동일 SKU 재입고 시 자동으로 매핑됩니다.
+              신규 SKU가 포함된 ASN입니다. 등록됨 상태에서는 먼저 <strong>입고 확인</strong>을 진행하고,
+              입고됨 상태부터 ASN 상세에서 Bin을 직접 배정하세요. 배정 완료 후 동일 SKU 재입고 시 자동으로 매핑됩니다.
             </div>
           </div>
           <span v-if="unassignedAsns.length" class="badge badge--amber">
