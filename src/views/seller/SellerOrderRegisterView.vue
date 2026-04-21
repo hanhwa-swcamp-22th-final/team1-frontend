@@ -398,6 +398,8 @@ async function handleManualSubmit() {
   submitErrorMessage.value = ''
   clearFormErrors()
 
+  const errors = validateOrderForm(manualForm.value, productOptions.value)
+  Object.assign(formErrors, errors)
 
   if (Object.values(errors).some(Boolean)) return
 
