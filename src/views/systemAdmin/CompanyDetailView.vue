@@ -12,7 +12,7 @@ import { useUiStore } from '@/stores/ui'
 
 const route = useRoute()
 const ui = useUiStore()
-const companyId = Number(route.params.id)
+const companyId = String(route.params.id ?? '')
 const company = ref(null)
 const users = ref([])
 const logs = ref([])
