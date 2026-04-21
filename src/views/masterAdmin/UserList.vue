@@ -33,6 +33,8 @@ const COLUMNS = [
 ]
 
 const ROLE_LABELS = {
+  [ROLES.SYSTEM_ADMIN]: '시스템 관리자',
+  [ROLES.MASTER_ADMIN]: '총괄 관리자',
   [ROLES.WH_MANAGER]: '창고 관리자',
   [ROLES.WH_WORKER]: '창고 작업자',
   [ROLES.SELLER]: '셀러 담당자',
@@ -47,6 +49,16 @@ const STATUS_LABELS = {
 // ── 탭 정의 ───────────────────────────────────────────────────────────────────
 const TABS = [
   { key: 'ALL', label: '전체', color: null },
+  {
+    key: ROLES.SYSTEM_ADMIN,
+    label: ROLE_LABELS[ROLES.SYSTEM_ADMIN],
+    color: { bg: 'var(--slate-pale)', border: 'var(--slate)', text: 'var(--slate-dark)' },
+  },
+  {
+    key: ROLES.MASTER_ADMIN,
+    label: ROLE_LABELS[ROLES.MASTER_ADMIN],
+    color: { bg: 'var(--indigo-pale)', border: 'var(--indigo)', text: 'var(--indigo)' },
+  },
   {
     key: ROLES.WH_MANAGER,
     label: ROLE_LABELS[ROLES.WH_MANAGER],
@@ -245,6 +257,8 @@ function userInitials(name) {
 }
 
 function roleBadgeClass(role) {
+  if (role === ROLES.SYSTEM_ADMIN) return 'role-system'
+  if (role === ROLES.MASTER_ADMIN) return 'role-master'
   if (role === ROLES.WH_MANAGER) return 'role-manager'
   if (role === ROLES.WH_WORKER)  return 'role-worker'
   if (role === ROLES.SELLER)     return 'role-seller'
