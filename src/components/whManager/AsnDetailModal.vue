@@ -173,8 +173,19 @@ const canConfirmArrival = computed(() =>
 const canSaveBinAssignments = computed(() => {
   if (!props.canAssign || isSaving.value) return false
   if (asnStatus.value === INBOUND_STATUS.PENDING) return false
-  if (!skuList.value.length || !newSkus.value.length) return false
-  return newSkus.value.every((sku) => sku.currentBin)
+  if (!skuList.value.length) return false
+
+  const changingSkuCodes = Object.keys(changingBins.value)
+  const hasNewSkuAssignments = newSkus.value.length > 0
+  const hasExistingReassignments = changingSkuCodes.length > 0
+
+  if (!hasNewSkuAssignments && !hasExistingReassignments) return false
+
+  const targetSkus = skuList.value.filter(
+    (sku) => sku.isNewSku || changingBins.value[sku.code],
+  )
+
+  return targetSkus.length > 0 && targetSkus.every((sku) => sku.currentBin)
 })
 
 function availableBinsFor(sku) {
