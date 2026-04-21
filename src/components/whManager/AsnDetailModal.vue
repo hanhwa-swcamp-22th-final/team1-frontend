@@ -6,6 +6,7 @@ import {
   getAsnBinMatches,
   getAsnRecommendedBins,
   saveAsnBinAssignments,
+  confirmAsnArrival,
 } from '@/api/wms'
 import { INBOUND_STATUS } from '@/constants/status'
 
@@ -39,6 +40,7 @@ const ASN_STEPS = [
 
 const loading = ref(false)
 const isSaving = ref(false)
+const isConfirmingArrival = ref(false)
 const loadErrorMessage = ref('')
 const binCandidateErrorMessage = ref('')
 const saveErrorMessage = ref('')
@@ -164,8 +166,13 @@ const usedBins = computed(() => new Set(
 ))
 
 const newSkus = computed(() => skuList.value.filter((sku) => sku.isNewSku))
-const canConfirm = computed(() => {
+const canConfirmArrival = computed(() =>
+  asnStatus.value === INBOUND_STATUS.PENDING && !isConfirmingArrival.value && !isSaving.value
+)
+
+const canSaveBinAssignments = computed(() => {
   if (!props.canAssign || isSaving.value) return false
+  if (asnStatus.value === INBOUND_STATUS.PENDING) return false
   if (!skuList.value.length || !newSkus.value.length) return false
   return newSkus.value.every((sku) => sku.currentBin)
 })
@@ -240,15 +247,31 @@ async function fetchAsnData() {
   }
 }
 
-async function handleConfirm() {
-  if (!canConfirm.value) return
+async function handleConfirmArrival() {
+  if (!canConfirmArrival.value) return
+
+  saveErrorMessage.value = ''
+
+  try {
+    isConfirmingArrival.value = true
+    await confirmAsnArrival(props.asnId)
+    emit('confirm', { asnId: props.asnId, action: 'arrival' })
+  } catch (error) {
+    saveErrorMessage.value = error.response?.data?.message ?? '입고 확인에 실패했습니다.'
+  } finally {
+    isConfirmingArrival.value = false
+  }
+}
+
+async function handleSaveBinAssignments() {
+  if (!canSaveBinAssignments.value) return
 
   saveErrorMessage.value = ''
 
   try {
     isSaving.value = true
     await saveAsnBinAssignments(props.asnId, buildBinAssignmentPayload())
-    emit('confirm', { asnId: props.asnId })
+    emit('confirm', { asnId: props.asnId, action: 'bin-assignment' })
   } catch (error) {
     saveErrorMessage.value = error.response?.data?.message ?? 'Bin 배정 저장에 실패했습니다.'
   } finally {
@@ -467,14 +490,23 @@ watch(
 
     <template #footer>
       <button class="ui-btn ui-btn--ghost" @click="$emit('cancel')">닫기</button>
+
       <button
-        v-if="canAssign"
+        v-if="canConfirmArrival"
         class="ui-btn ui-btn--primary"
-        :disabled="!canConfirm"
-        :title="canConfirm ? '' : '모든 신규 SKU에 Bin을 배정하세요'"
-        @click="handleConfirm"
+        @click="handleConfirmArrival"
       >
-        {{ isSaving ? '저장 중...' : '입고 확인' }}
+        {{ isConfirmingArrival ? '처리 중...' : '입고 확인' }}
+      </button>
+
+      <button
+        v-else-if="canAssign"
+        class="ui-btn ui-btn--primary"
+        :disabled="!canSaveBinAssignments"
+        :title="canSaveBinAssignments ? '' : '모든 신규 SKU에 Bin을 배정하세요'"
+        @click="handleSaveBinAssignments"
+      >
+        {{ isSaving ? '저장 중...' : 'Bin 배정 저장' }}
       </button>
     </template>
   </BaseModal>

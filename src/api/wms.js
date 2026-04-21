@@ -145,6 +145,10 @@ export function saveAsnBinAssignments(asnId, payload) {
   return instance.post(`/wms/asns/${encodeURIComponent(asnId)}/bin-assignments`, payload)
 }
 
+export function confirmAsnArrival(asnId, arrivedAt = null) {
+  return instance.patch(`/wms/asns/${encodeURIComponent(asnId)}/arrival`, arrivedAt ? { arrivedAt } : {})
+}
+
 /**
  * ASN KPI 집계 — 상태별 건수
  * @returns {Promise<AxiosResponse>} { success, data: { total, submitted, received, cancelled } }
