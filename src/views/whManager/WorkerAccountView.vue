@@ -154,7 +154,6 @@ const locBins = computed(() =>
           status:    b.status,
           workerId:  asgn?.workerId  ?? '',
           workerName: asgn?.workerName ?? '',
-          taskType:  asgn?.taskType  ?? '',
           hasRecord: !!asgn,
         }
       })
@@ -288,14 +287,13 @@ async function handleBinAssign({ workerId, added, removed }) {
   try {
     await Promise.all([
       ...removed.map(binId =>
-        updateBinFixedAssignment(binId, { workerId: '', workerName: '', taskType: '' }),
+          updateBinFixedAssignment(binId, { workerId: '' }),
       ),
-      ...added.map(({ binId, taskType }) => {
+      ...added.map(({ binId }) => {
         const binInfo = locBins.value.find(b => b.id === binId)
-        const payload = { workerId, workerName: worker?.name ?? '', taskType }
         return binInfo?.hasRecord
-          ? updateBinFixedAssignment(binId, payload)
-          : createBinFixedAssignment({ id: binId, bin: binId, ...payload })
+            ? updateBinFixedAssignment(binId, { workerId })
+            : createBinFixedAssignment({ id: binId, bin: binId, workerId })
       }),
     ])
     await fetchBinTab()

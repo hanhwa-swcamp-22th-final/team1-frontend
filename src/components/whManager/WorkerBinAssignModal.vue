@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import BaseModal from '@/components/common/BaseModal.vue'
-import { BIN_STATUS, WORKER_STATUS } from '@/constants'
+import { BIN_STATUS } from '@/constants'
 
 const props = defineProps({
   isOpen:  { type: Boolean, required: true },
@@ -23,7 +23,6 @@ watch(
       const mine = b.workerId === props.worker.id
       state[b.id] = {
         checked:  mine,
-        taskType: mine ? (b.taskType ?? WORKER_STATUS.PICKING_PACKING) : WORKER_STATUS.PICKING_PACKING,
       }
     })
     localState.value = state
@@ -59,16 +58,14 @@ function confirm() {
   const removed = []
 
   props.allBins.forEach(b => {
-    const state       = localState.value[b.id]
+    const state = localState.value[b.id]
     const wasAssigned = b.workerId === props.worker.id
-    const nowChecked  = state?.checked ?? false
+    const nowChecked = state?.checked ?? false
 
     if (!wasAssigned && nowChecked) {
-      added.push({ binId: b.id, taskType: state.taskType })
+      added.push({ binId: b.id })
     } else if (wasAssigned && !nowChecked) {
       removed.push(b.id)
-    } else if (wasAssigned && nowChecked && state.taskType !== b.taskType) {
-      added.push({ binId: b.id, taskType: state.taskType })
     }
   })
 
@@ -123,14 +120,6 @@ function confirm() {
             </div>
 
             <div v-if="isOtherWorker(bin)" class="other-worker">{{ bin.workerName }}</div>
-            <select
-              v-else-if="localState[bin.id]?.checked"
-              v-model="localState[bin.id].taskType"
-              class="task-select"
-            >
-              <option :value="WORKER_STATUS.PICKING_PACKING">피킹&amp;패킹</option>
-              <option :value="WORKER_STATUS.INSPECTION_LOADING">검수&amp;적재</option>
-            </select>
           </div>
         </div>
       </div>
